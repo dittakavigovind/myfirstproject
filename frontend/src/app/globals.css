@@ -1,0 +1,424 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+
+  /* Theme Colors - Dynamic */
+  /* Fallbacks match current astro-navy, astro-yellow etc */
+  --theme-primary: #0E1A2B;
+  --theme-secondary: #fbbf24;
+  --theme-accent: #3b82f6;
+
+  /* Global Z-Index Scale */
+  --z-base: 0;
+  --z-dropdown: 50;
+  --z-sticky: 40;
+  --z-modal: 100;
+  --z-toast: 110;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: #f8fafe;
+  overflow-x: hidden;
+}
+
+/* React Datepicker Customization */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker {
+  font-family: inherit !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+
+  overflow: hidden;
+  z-index: var(--z-dropdown) !important;
+}
+
+.react-datepicker__header {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  padding: 10px 0 !important;
+}
+
+.react-datepicker__day-name {
+  color: #64748b !important;
+}
+
+.react-datepicker__day {
+  color: #334155 !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: #f1f5f9 !important;
+  border-radius: 50% !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: #2563eb !important;
+  border-radius: 50% !important;
+  color: white !important;
+}
+
+.react-datepicker__day--keyboard-selected {
+  background-color: #bfdbfe !important;
+  border-radius: 50% !important;
+  color: #1e293b !important;
+}
+
+.react-datepicker__triangle {
+  display: none !important;
+}
+
+/* Ensure portal content is high z-index */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker__time-container {
+  border-left: 1px solid #e2e8f0 !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background-color: #2563eb !important;
+}
+
+/* Light Mode Premium Datepicker - Professional Report */
+.custom-datepicker-report .react-datepicker {
+  background-color: white !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 1.5rem !important;
+  padding: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.custom-datepicker-report .react-datepicker__header {
+  background-color: white !important;
+  border-bottom: 2px solid #f8fafc !important;
+  padding-bottom: 1rem !important;
+}
+
+.custom-datepicker-report .react-datepicker__year-dropdown,
+.custom-datepicker-report .react-datepicker__month-dropdown {
+  background-color: white !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  padding: 0.5rem !important;
+  width: 100% !important;
+  left: 0 !important;
+}
+
+.custom-datepicker-report .react-datepicker__year-option,
+.custom-datepicker-report .react-datepicker__month-option {
+  padding: 0.75rem !important;
+  border-radius: 0.5rem !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  transition: all 0.2s !important;
+}
+
+.custom-datepicker-report .react-datepicker__year-option:hover,
+.custom-datepicker-report .react-datepicker__month-option:hover {
+  background-color: #f8fafc !important;
+  color: #4f46e5 !important;
+}
+
+.custom-datepicker-report .react-datepicker__month-select,
+.custom-datepicker-report .react-datepicker__year-select {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  margin: 0 4px !important;
+}
+
+.custom-datepicker-report .react-datepicker__month-select:hover,
+.custom-datepicker-report .react-datepicker__year-select:hover {
+  border-color: #4f46e5 !important;
+  background-color: white !important;
+}
+
+/* Dark Mode Datepicker - Global Styles */
+.custom-datepicker-dark-cal {
+  background-color: #0f131a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1.5rem !important;
+  color: white !important;
+  padding: 1rem !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+  font-family: inherit !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__header {
+  background-color: #0f131a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding-bottom: 1rem !important;
+  border-radius: 1.5rem 1.5rem 0 0 !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__current-month,
+.custom-datepicker-dark-cal .react-datepicker__day-name,
+.custom-datepicker-dark-cal .react-datepicker__day {
+  color: white !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__day:hover {
+  background-color: #4f46e5 !important;
+  border-radius: 50% !important;
+  color: white !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__day--selected {
+  background-color: #4f46e5 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.5) !important;
+  color: white !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__day--keyboard-selected {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 50% !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-read-view--down-arrow,
+.custom-datepicker-dark-cal .react-datepicker__month-read-view--down-arrow {
+  border-top-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-read-view,
+.custom-datepicker-dark-cal .react-datepicker__month-read-view {
+  color: white !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-read-view:hover,
+.custom-datepicker-dark-cal .react-datepicker__month-read-view:hover {
+  color: #818cf8 !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-dropdown,
+.custom-datepicker-dark-cal .react-datepicker__month-dropdown {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1rem !important;
+  overflow-y: auto !important;
+  max-height: 300px !important;
+  width: 60% !important;
+  left: 20% !important;
+  top: 100% !important;
+  z-index: 50 !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-option,
+.custom-datepicker-dark-cal .react-datepicker__month-option {
+  color: rgba(255, 255, 255, 0.8) !important;
+  padding: 0.75rem !important;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+  background-color: #1a1a1a !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-option:hover,
+.custom-datepicker-dark-cal .react-datepicker__month-option:hover {
+  background-color: #4f46e5 !important;
+  color: white !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__year-option--selected_year {
+  font-weight: bold !important;
+  color: #818cf8 !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__navigation-icon::before {
+  border-color: white !important;
+}
+
+.custom-datepicker-dark-cal .react-datepicker__triangle {
+  display: none !important;
+}
+
+/* Rich Text / HTML Content Support */
+.prose-astro {
+  color: #334155;
+  line-height: 1.75;
+}
+
+.prose-astro>*:first-child {
+  margin-top: 0 !important;
+}
+
+.prose-astro h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 1rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.1;
+}
+
+.prose-astro h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.prose-astro h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.prose-astro p {
+  margin-bottom: 1rem;
+}
+
+.prose-astro strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.prose-astro ul {
+  list-style-type: disc;
+  padding-left: 1.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.prose-astro li {
+  margin-bottom: 0.5rem;
+}
+
+.prose-astro hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 2rem 0;
+}
+
+.prose-astro a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.prose-astro a.underline {
+  text-decoration: underline;
+}
+
+
+.prose-astro a:hover {
+  color: #1d4ed8;
+}
+
+/* Allow links to inherit color if inside a text-colored container */
+.prose-astro [class*="text-"] a,
+.prose-astro .text-white a {
+  color: inherit !important;
+}
+
+
+/* Compatibility for arbitrary Tailwind classes in pasted content */
+.bg-\[\#0b1c3d\] {
+  background-color: #0b1c3d !important;
+}
+
+.text-\[\#0b1c3d\],
+.text-gray-900 {
+  color: #0b1c3d !important;
+}
+
+.text-white {
+  color: white !important;
+}
+
+.text-gray-200 {
+  color: #e5e7eb !important;
+}
+
+.text-yellow-500 {
+  color: #eab308 !important;
+}
+
+.bg-yellow-500 {
+  background-color: #eab308 !important;
+}
+
+/* Astro Card Design System for Page Descriptions */
+.prose-astro .grid>a,
+.prose-astro .astro-card {
+  position: relative;
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+  text-decoration: none !important;
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+}
+
+.prose-astro .grid>a:hover,
+.prose-astro .astro-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  border-color: #e2e8f0;
+}
+
+.prose-astro .grid>a h3 {
+  margin-top: 0 !important;
+  color: #0f172a !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+  transition: color 0.3s ease;
+}
+
+.prose-astro .grid>a:hover h3 {
+  color: #4f46e5 !important;
+}
+
+.prose-astro .grid>a p {
+  font-size: 0.875rem !important;
+  color: #64748b !important;
+  margin-bottom: 0 !important;
+  line-height: 1.5 !important;
+}
+
+/* Specific theme support for bg-yellow-50 / bg-gray-50 from pasted content */
+.prose-astro .grid>a.bg-yellow-50 {
+  background: linear-gradient(135deg, #fffef3 0%, #fff 100%) !important;
+  border-color: #fef3c7 !important;
+}
+
+.prose-astro .grid>a.bg-gray-50 {
+  background: linear-gradient(135deg, #f8fafc 0%, #fff 100%) !important;
+  border-color: #f1f5f9 !important;
+}
+
+.prose-astro .grid>a.bg-yellow-50:hover {
+  background: #fff !important;
+  border-color: #fbbf24 !important;
+}
