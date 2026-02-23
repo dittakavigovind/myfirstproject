@@ -1,4 +1,5 @@
 import { Poppins } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { AuthProvider } from '../context/AuthContext';
 import { AgoraProvider } from '../context/AgoraContext';
@@ -26,6 +27,7 @@ export async function generateMetadata() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.way2astro.com';
     let iconUrl = '/logo.png'; // Default fallback
     let googleAdsId = '';
+    let googleAnalyticsId = '';
 
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -41,6 +43,9 @@ export async function generateMetadata() {
             }
             if (adsId) {
                 googleAdsId = adsId;
+            }
+            if (data.settings.googleAnalyticsId) {
+                googleAnalyticsId = data.settings.googleAnalyticsId;
             }
         }
     } catch (error) {
@@ -60,7 +65,8 @@ export async function generateMetadata() {
             apple: iconUrl,
         },
         other: {
-            googleAdsId // Passing this to be used in layout if needed, though we fetch it again or pass via props
+            googleAdsId, // Passing this to be used in layout if needed, though we fetch it again or pass via props
+            googleAnalyticsId
         }
     };
 }
@@ -74,12 +80,14 @@ export default async function RootLayout({ children }) {
     // Actually, let's just fetch it here to pass to the client component.
 
     let googleAdsId = '';
+    let googleAnalyticsId = '';
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
         const res = await fetch(`${apiUrl}/site-settings`, { next: { revalidate: 60 } });
         const data = await res.json();
         if (data.success && data.settings) {
             googleAdsId = data.settings.googleAdsId;
+            googleAnalyticsId = data.settings.googleAnalyticsId;
         }
     } catch (e) {
         console.error("Error fetching settings for layout:", e);
@@ -88,6 +96,23 @@ export default async function RootLayout({ children }) {
     return (
         <html lang="en">
             <body className={`${poppins.variable} font-sans`}>
+                {googleAnalyticsId && (
+                    <>
+                        <Script
+                            src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+                            strategy="afterInteractive"
+                        />
+                        <Script id="google-analytics" strategy="afterInteractive">
+                            {`
+                                window.dataLayer = window.dataLayer || [];
+                                function gtag(){dataLayer.push(arguments);}
+                                gtag('js', new Date());
+
+                                gtag('config', '${googleAnalyticsId}');
+                            `}
+                        </Script>
+                    </>
+                )}
                 <GoogleAdSense publisherId={googleAdsId} />
                 <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
                 <AuthProvider>

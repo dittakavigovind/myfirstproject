@@ -10,6 +10,7 @@ export default function AdsSettings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [googleAdsId, setGoogleAdsId] = useState('');
+    const [googleAnalyticsId, setGoogleAnalyticsId] = useState('');
 
     useEffect(() => {
         fetchSettings();
@@ -20,6 +21,7 @@ export default function AdsSettings() {
             const res = await API.get('/site-settings');
             if (res.data.success) {
                 setGoogleAdsId(res.data.settings?.googleAdsId || '');
+                setGoogleAnalyticsId(res.data.settings?.googleAnalyticsId || '');
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -32,7 +34,7 @@ export default function AdsSettings() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await API.put('/site-settings', { googleAdsId });
+            const res = await API.put('/site-settings', { googleAdsId, googleAnalyticsId });
             if (res.data.success) {
                 toast.success('Ad settings updated successfully');
             } else {
@@ -96,6 +98,41 @@ export default function AdsSettings() {
                                 onChange={(e) => setGoogleAdsId(e.target.value)}
                                 placeholder="ca-pub-XXXXXXXXXXXXXXXX"
                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-slate-700 font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Google Analytics 4 */}
+                <div className="flex items-start gap-6 p-6 rounded-xl border border-slate-100 hover:border-green-100 transition bg-slate-50/30">
+                    <div className="p-3 bg-green-100 text-green-600 rounded-lg">
+                        <AlertCircle size={24} />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-bold text-slate-800 text-lg">Google Analytics (GA4)</h3>
+                            <a
+                                href="https://analytics.google.com/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                            >
+                                Get Measurement ID <ExternalLink size={12} />
+                            </a>
+                        </div>
+                        <p className="text-slate-500 text-sm leading-relaxed mb-4">
+                            Enter your Google Analytics 4 Measurement ID (e.g., <code>G-XXXXXXXXXX</code>).
+                            Required to automatically track page views and events.
+                        </p>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">Measurement ID</label>
+                            <input
+                                type="text"
+                                value={googleAnalyticsId}
+                                onChange={(e) => setGoogleAnalyticsId(e.target.value)}
+                                placeholder="G-XXXXXXXXXX"
+                                className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all font-medium text-slate-700 font-mono"
                             />
                         </div>
                     </div>

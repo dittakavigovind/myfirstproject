@@ -118,6 +118,7 @@ exports.updateSiteSettings = async (req, res) => {
         if (req.body.promotionImage !== undefined) settings.promotionImage = req.body.promotionImage;
         if (req.body.promotionUrl !== undefined) settings.promotionUrl = req.body.promotionUrl;
         if (req.body.googleAdsId !== undefined) settings.googleAdsId = req.body.googleAdsId;
+        if (req.body.googleAnalyticsId !== undefined) settings.googleAnalyticsId = req.body.googleAnalyticsId;
 
         // Feature Flags
         if (req.body.featureFlags) {

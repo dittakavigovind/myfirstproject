@@ -36,6 +36,11 @@ const siteSettingsSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    googleAnalyticsId: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     featureFlags: {
         enableChat: {
             type: Boolean,
