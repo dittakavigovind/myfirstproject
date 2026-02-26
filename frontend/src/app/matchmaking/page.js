@@ -6,6 +6,8 @@ import { useBirthDetails } from '../../context/BirthDetailsContext';
 import API from '../../lib/api';
 import LocationSearch from '../../components/LocationSearch';
 import DatePicker from "react-datepicker";
+import CustomDateInput from '../../components/common/CustomDateInput';
+
 import TimeInput from '../../components/TimeInput';
 import "react-datepicker/dist/react-datepicker.css";
 import { Download, Heart, ShieldCheck, Info, Sparkles, ArrowLeft } from 'lucide-react';
@@ -226,19 +228,7 @@ export default function MatchMakingPage() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Date of Birth</label>
-                                <DatePicker
-                                    selected={boy.date}
-                                    onChange={date => setBoy({ ...boy, date })}
-                                    dateFormat="dd/MM/yyyy"
-                                    placeholderText="dd/mm/yyyy"
-                                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none transition-all duration-300 font-medium"
-                                    wrapperClassName="w-full"
-                                    showMonthDropdown
-                                    showYearDropdown
-                                    dropdownMode="select"
-                                    portalId="root-portal"
-                                    popperClassName="!z-[100]"
-                                />
+                                <DatePicker customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Heart} iconColor="text-blue-500" />} selected={boy.date} onChange={date => setBoy({ ...boy, date })} dateFormat="dd/MM/yyyy" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none transition-all duration-300 font-medium" wrapperClassName="w-full" showMonthDropdown showYearDropdown dropdownMode="select" portalId="root-portal" popperClassName="!z-[100]" />
                             </div>
 
                             <div>
@@ -265,19 +255,7 @@ export default function MatchMakingPage() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Date of Birth</label>
-                                <DatePicker
-                                    selected={girl.date}
-                                    onChange={date => setGirl({ ...girl, date })}
-                                    dateFormat="dd/MM/yyyy"
-                                    placeholderText="dd/mm/yyyy"
-                                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-pink-500 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none transition-all duration-300 font-medium"
-                                    wrapperClassName="w-full"
-                                    showMonthDropdown
-                                    showYearDropdown
-                                    dropdownMode="select"
-                                    portalId="root-portal"
-                                    popperClassName="!z-[100]"
-                                />
+                                <DatePicker customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Heart} iconColor="text-pink-500" />} selected={girl.date} onChange={date => setGirl({ ...girl, date })} dateFormat="dd/MM/yyyy" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-pink-500 rounded-xl py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none transition-all duration-300 font-medium" wrapperClassName="w-full" showMonthDropdown showYearDropdown dropdownMode="select" portalId="root-portal" popperClassName="!z-[100]" />
                             </div>
 
                             <div>

@@ -8,6 +8,8 @@ import { Phone, Video, X, Check, MessageSquare, Calendar, Clock, History } from 
 import { motion, AnimatePresence } from 'framer-motion';
 import ActivityStats from '../../../components/astrologer/ActivityStats';
 import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function AstrologerDashboard() {
@@ -178,7 +180,7 @@ export default function AstrologerDashboard() {
         if (incomingCall) {
             startCall(incomingCall.channelId, incomingCall.token, incomingCall.uid);
             setIncomingCall(null);
-            router.push(`/call/${incomingCall.channelId}`);
+            router.push(`/call/session?id=${incomingCall.channelId}`);
         }
     };
 
@@ -268,13 +270,8 @@ export default function AstrologerDashboard() {
                                 <History className="text-orange-500" /> Session History
                             </h2>
                             <div className="relative">
-                                <DatePicker
-                                    selected={selectedDate}
-                                    onChange={(date) => setSelectedDate(date)}
-                                    className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-600 font-medium"
-                                    dateFormat="dd/MM/yyyy"
-                                />
-                                <Calendar className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                                <DatePicker customInput={<CustomDateInput Icon={Calendar} />} selected={selectedDate} onChange={(date) => setSelectedDate(date)} className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-600 font-medium" dateFormat="dd/MM/yyyy" />
+
                             </div>
                         </div>
 

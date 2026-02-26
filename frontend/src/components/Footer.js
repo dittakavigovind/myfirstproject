@@ -33,7 +33,7 @@ const Footer = () => {
                         <h4 className="text-white font-black uppercase tracking-widest text-xs mb-6">Calculators</h4>
                         <ul className="space-y-3">
                             <li><Link href="/kundli" className="text-slate-400 hover:text-astro-yellow transition-colors text-sm font-bold">Free Kundli</Link></li>
-                            <li><Link href="/today-panchang" className="text-slate-400 hover:text-astro-yellow transition-colors text-sm font-bold">Daily Panchang</Link></li>
+                            <li><Link href="/panchang" className="text-slate-400 hover:text-astro-yellow transition-colors text-sm font-bold">Daily Panchang</Link></li>
                             <li><Link href="/horoscope" className="text-slate-400 hover:text-astro-yellow transition-colors text-sm font-bold">Horoscope</Link></li>
                             <li><Link href="/divisional-charts" className="text-slate-400 hover:text-astro-yellow transition-colors text-sm font-bold">Divisional Charts</Link></li>
                         </ul>

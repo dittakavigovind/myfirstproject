@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, Star, Sun } from 'lucide-react';
 import Link from 'next/link';
 import DatePicker from "react-datepicker";
+import CustomDateInput from '../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import LocationSearch from '../../../components/LocationSearch';
 import TimeInput from '../../../components/TimeInput';
@@ -240,19 +242,8 @@ export default function AscendantCalculator() {
                                     <div className="group space-y-2">
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
                                         <div className="relative custom-datepicker-dark">
-                                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 z-10"><Calendar size={20} /></div>
-                                            <DatePicker
-                                                selected={formData.date}
-                                                onChange={(date) => setFormData({ ...formData, date })}
-                                                dateFormat="dd/MM/yyyy"
-                                                placeholderText="dd/mm/yyyy"
-                                                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-indigo-400 rounded-2xl py-4 pl-14 pr-6 text-slate-800 font-bold text-lg focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
-                                                wrapperClassName="w-full"
-                                                showMonthDropdown
-                                                showYearDropdown
-                                                dropdownMode="select"
-                                                calendarClassName="custom-datepicker-dark-cal"
-                                            />
+
+                                            <DatePicker customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Calendar} />} selected={formData.date} onChange={(date) => setFormData({ ...formData, date })} dateFormat="dd/MM/yyyy" className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-indigo-400 rounded-2xl py-4 px-6 text-slate-800 font-bold text-lg focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" wrapperClassName="w-full" showMonthDropdown showYearDropdown dropdownMode="select" calendarClassName="custom-datepicker-dark-cal" />
                                         </div>
                                     </div>
                                     <div className="group space-y-2">

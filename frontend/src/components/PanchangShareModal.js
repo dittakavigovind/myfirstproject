@@ -4,6 +4,8 @@ import { X, Download, ImageIcon, Copy, MessageCircle, Sun, Moon, ArrowDown, Shar
 import { motion, AnimatePresence } from 'framer-motion';
 import { toPng } from 'html-to-image';
 import analytics from '../lib/analytics';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 export default function PanchangShareModal({ isOpen, onClose, data, location, date }) {
     const cardRef = useRef(null); // Ref for visible modal content
@@ -124,30 +126,46 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
             const dataUrl = await generateImage(instaRef);
             if (!dataUrl) throw new Error("Image generation failed");
 
-            const blob = await (await fetch(dataUrl)).blob();
             const d = new Date(date);
             const safeDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            const file = new File([blob], `way2astro-panchang-insta-${safeDate}.png`, { type: 'image/png' });
+            const fileName = `way2astro-panchang-insta-${safeDate}.png`;
 
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file]
+            if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform()) {
+                // Capacitor Native Sharing
+                const base64Data = dataUrl.split(',')[1];
+                const savedFile = await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64Data,
+                    directory: Directory.Cache
+                });
+                await Share.share({
+                    title: 'Way2Astro Panchang',
+                    url: savedFile.uri,
+                    dialogTitle: 'Share to Instagram'
                 });
             } else {
-                // Fallback to download if sharing not supported
-                const link = document.createElement('a');
-                const d = new Date(date);
-                const safeDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                link.download = `way2astro-panchang-insta-${safeDate}.png`;
-                link.href = dataUrl;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // Web Fallback: Web Share API or Download
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], fileName, { type: 'image/png' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file] });
+                } else {
+                    const link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = dataUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
             }
             analytics.track('SHARE', 'PANCHANG', 'instagram_share', { location, date });
         } catch (error) {
             console.error('Failed to share to Instagram', error);
-            alert("Failed to share image.");
+            // Ignore AbortError when user cancels share
+            if (error && error.message !== 'Share canceled') {
+                console.error(error);
+            }
         } finally {
             setIsGenerating(false);
         }
@@ -260,7 +278,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
     return createPortal(
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-[max(4rem,env(safe-area-inset-top,4rem))] sm:items-center sm:pt-4 pb-[max(1rem,env(safe-area-inset-bottom,1rem))]">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -274,10 +292,10 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-800 z-10"
+                        className="relative bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-800 z-10 flex flex-col max-h-[85vh]"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
+                        <div className="flex-shrink-0 flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <Share2 size={18} className="text-astro-yellow" /> Share Panchang
                             </h3>
@@ -287,14 +305,14 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                         </div>
 
                         {/* Visible Preview Card */}
-                        <div ref={cardRef} className="relative w-full bg-[#0B1120] p-6 flex justify-center">
-                            <div className="w-full max-w-[320px] rounded-xl overflow-hidden shadow-2xl ring-4 ring-slate-800">
+                        <div ref={cardRef} className="relative w-full bg-[#0B1120] p-4 sm:p-6 flex justify-center flex-1 overflow-y-auto min-h-0">
+                            <div className="w-full max-w-[320px] rounded-xl overflow-hidden shadow-2xl ring-4 ring-slate-800 h-max mx-auto mt-0 lg:my-auto">
                                 <CardContent isHighRes={false} />
                             </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="p-4 bg-[#0F1623] border-t border-slate-800 flex items-center justify-between gap-3">
+                        <div className="flex-shrink-0 p-4 bg-[#0F1623] border-t border-slate-800 flex items-center justify-between gap-3">
                             <button
                                 onClick={handleDownloadImage}
                                 disabled={isGenerating}

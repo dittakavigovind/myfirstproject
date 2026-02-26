@@ -87,7 +87,7 @@ export default function SinglePostSidebar({ currentPostId, currentCategory }) {
                 <div className="ml-6 pl-6 pt-2 mb-4 border-l border-dotted border-gray-300">
                     <div className="flex flex-col gap-4">
                         {posts.length > 0 ? posts.map((post, idx) => (
-                            <Link key={post._id || idx} href={`/blog/${post.categories?.[0]?.slug || 'general'}/${post.slug}`} className="group flex items-start gap-3">
+                            <Link key={post._id || idx} href={`/blog/category/article?category=${post.categories?.[0]?.slug || 'general'}&slug=${post.slug}`} className="group flex items-start gap-3">
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-astro-maroon transition-colors flex-shrink-0 mt-2"></span>
                                 <div>
                                     <h4 className="font-medium text-gray-600 group-hover:text-astro-maroon transition-colors line-clamp-2 text-sm leading-snug">
@@ -157,7 +157,7 @@ export default function SinglePostSidebar({ currentPostId, currentCategory }) {
                 <div className="ml-6 pl-6 pt-2 mb-4 border-l border-dotted border-gray-300">
                     <div className="flex flex-col gap-3">
                         {categories.map(cat => (
-                            <Link key={cat._id} href={`/blog/${cat.slug}`} className="flex items-center gap-3 text-gray-600 hover:text-astro-maroon transition-colors group">
+                            <Link key={cat._id} href={`/blog/category?category=${cat.slug}`} className="flex items-center gap-3 text-gray-600 hover:text-astro-maroon transition-colors group">
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-astro-maroon transition-colors"></span>
                                 <span className="text-sm font-medium uppercase tracking-wide">{cat.name}</span>
                             </Link>

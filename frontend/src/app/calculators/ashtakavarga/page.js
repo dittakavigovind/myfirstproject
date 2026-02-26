@@ -7,6 +7,8 @@ import { useBirthDetails } from '@/context/BirthDetailsContext';
 import LocationSearch from '@/components/LocationSearch';
 import TimeInput from '@/components/TimeInput';
 import DatePicker from "react-datepicker";
+import CustomDateInput from '../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +21,7 @@ import {
     Info,
     Layers,
     Sparkles,
+    Calendar,
 } from 'lucide-react';
 import PageContentSection from '@/components/common/PageContentSection';
 import API from '@/lib/api';
@@ -354,17 +357,7 @@ export default function AshtakavargaCalculator() {
                         {/* Row 2: Date & Time */}
                         <div className="md:col-span-2">
                             <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Birth Date</label>
-                            <DatePicker
-                                selected={formData.date ? new Date(formData.date) : null}
-                                onChange={(date) => setFormData({ ...formData, date: date ? date.toISOString().split('T')[0] : '' })}
-                                dateFormat={["dd-MMM-yyyy", "dd-MM-yyyy", "dd/MM/yyyy"]}
-                                className="w-full p-3.5 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                                placeholderText="Select Birth Date"
-                                showYearDropdown
-                                showMonthDropdown
-                                scrollableYearDropdown
-                                yearDropdownItemNumber={100}
-                            />
+                            <DatePicker customInput={<CustomDateInput placeholder='Select Birth Date' Icon={Calendar} />} selected={formData.date ? new Date(formData.date) : null} onChange={(date) => setFormData({ ...formData, date: date ? date.toISOString().split('T')[0] : '' })} dateFormat={["dd-MMM-yyyy", "dd-MM-yyyy", "dd/MM/yyyy"]} className="w-full p-3.5 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500" showYearDropdown showMonthDropdown scrollableYearDropdown yearDropdownItemNumber={100} />
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Birth Time</label>

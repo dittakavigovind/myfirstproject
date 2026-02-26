@@ -147,7 +147,7 @@ export default function DivisionalChartsResult() {
                                 className="bg-slate-900 rounded-2xl border border-white/10 overflow-hidden hover:border-purple-500/50 transition-colors shadow-2xl shadow-black/20 cursor-pointer group relative"
                                 onClick={() => {
                                     const params = new URLSearchParams(searchParams);
-                                    router.push(`/divisional-charts/result/${key}?${params.toString()}`);
+                                    router.push(`/divisional-charts/result/details?slug=${key}&${params.toString()}`);
                                 }}
                             >
                                 <div className="absolute inset-0 bg-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />

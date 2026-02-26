@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Sparkles, RefreshCw, ArrowLeft, Star, Send } from 'lucide-react';
+import { Sun, Sparkles, RefreshCw, ArrowLeft, Star, Send, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import DatePicker from "react-datepicker";
+import CustomDateInput from '../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import StandardResultHeader from '../../../components/calculators/StandardResultHeader';
 import PageContentSection from '../../../components/common/PageContentSection';
@@ -113,19 +115,7 @@ export default function SunSignCalculator() {
                             <form onSubmit={findSunSign} className="space-y-8">
                                 <div className="group space-y-2 text-center custom-datepicker-dark">
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Select Your Date of Birth</label>
-                                    <DatePicker
-                                        selected={dob}
-                                        onChange={(date) => setDob(date)}
-                                        dateFormat="dd/MM/yyyy"
-                                        placeholderText="Select Date"
-                                        required
-                                        className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-amber-400 rounded-2xl py-5 px-6 text-slate-800 font-black text-2xl text-center focus:ring-4 focus:ring-amber-500/10 outline-none transition-all cursor-pointer"
-                                        showYearDropdown
-                                        scrollableYearDropdown
-                                        yearDropdownItemNumber={100}
-                                        maxDate={new Date()}
-                                        calendarClassName="custom-datepicker-dark-cal"
-                                    />
+                                    <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={dob} onChange={(date) => setDob(date)} dateFormat="dd/MM/yyyy" required className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-amber-400 rounded-2xl py-5 px-6 text-slate-800 font-black text-2xl text-center focus:ring-4 focus:ring-amber-500/10 outline-none transition-all cursor-pointer" showYearDropdown scrollableYearDropdown yearDropdownItemNumber={100} maxDate={new Date()} calendarClassName="custom-datepicker-dark-cal" />
                                 </div>
 
                                 <button

@@ -14,9 +14,7 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import KundliChart from '../KundliChart';
 import LocationSearch from '../LocationSearch';
-import TimeInput from '../TimeInput';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from '../common/CustomDateInput';
 import CosmicLoader from '../CosmicLoader';
 import toast from 'react-hot-toast';
 
@@ -383,17 +381,7 @@ export default function ProfessionalReport() {
                                             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Date of Birth</label>
                                             <div className="relative custom-datepicker-report">
                                                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10" size={18} />
-                                                <DatePicker
-                                                    selected={formData.date}
-                                                    onChange={(date) => setFormData(prev => ({ ...prev, date }))}
-                                                    dateFormat="dd/MM/yyyy"
-                                                    placeholderText="dd/mm/yyyy"
-                                                    maxDate={new Date()}
-                                                    showMonthDropdown
-                                                    showYearDropdown
-                                                    dropdownMode="select"
-                                                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-400 outline-none transition-all font-bold text-slate-700 pointer-events-auto"
-                                                />
+                                                <DatePicker customInput={<CustomDateInput />} selected={formData.date} onChange={(date) => setFormData(prev => ({ ...prev, date }))} dateFormat="dd/MM/yyyy" maxDate={new Date()} showMonthDropdown showYearDropdown dropdownMode="select" className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-400 outline-none transition-all font-bold text-slate-700 pointer-events-auto" />
                                             </div>
                                         </div>
                                     </div>

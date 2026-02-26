@@ -9,7 +9,7 @@ const activityLogSchema = new mongoose.Schema({
     actionType: {
         type: String,
         required: true,
-        enum: ['KUNDLI', 'MATCHMAKING', 'DOSHA', 'HOROSCOPE', 'PANCHANG', 'VARGA', 'CALC', 'ASHTAKAVARGA']
+        enum: ['KUNDLI', 'MATCHMAKING', 'DOSHA', 'HOROSCOPE', 'PANCHANG', 'VARGA', 'CALC', 'ASHTAKAVARGA', 'JAIMINI', 'YOGINI']
     },
     description: {
         type: String,

@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import API from '../../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Calendar, Palette, Star, Zap, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SignClient() {
-    const params = useParams();
-    const sign = params.sign;
+    const searchParams = useSearchParams();
+    const sign = searchParams.get('sign');
     const [activeTab, setActiveTab] = useState('daily');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);

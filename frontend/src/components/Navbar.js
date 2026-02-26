@@ -73,7 +73,7 @@ export default function Navbar() {
             />
 
             <nav
-                className={`sticky top-0 z-[100] transition-all duration-300 shadow-md ${scrolled ? 'bg-[#0b1c3d]' : 'bg-[#0b1c3d]'}`}
+                className={`sticky top-0 z-[100] transition-all duration-300 shadow-md ${scrolled ? 'bg-[#0b1c3d]' : 'bg-[#0b1c3d]'} pt-[env(safe-area-inset-top,0px)]`}
                 style={{ backgroundColor: '#0b1c3d' }}
             >
                 {/* TOP ROW: Logo and Actions */}
@@ -211,7 +211,7 @@ export default function Navbar() {
                                             { name: 'All Horoscopes', path: '/horoscope' }
                                         ]
                                     },
-                                    { name: 'PANCHANG', path: '/today-panchang' },
+                                    { name: 'PANCHANG', path: '/panchang' },
                                     { name: 'CALENDAR', path: '/calculators/indian-calendar' },
                                     { name: 'GOCHAR', path: '/calculators/gochar' },
                                     {
@@ -335,7 +335,7 @@ export default function Navbar() {
                                 { name: 'Dasha Periods', path: '/calculators/dasha-periods' },
                                 { name: 'Matchmaking', path: '/matchmaking' },
                                 { name: 'Horoscope', path: '/horoscope' },
-                                { name: 'Panchang', path: '/today-panchang' },
+                                { name: 'Panchang', path: '/panchang' },
                                 { name: 'Calendar', path: '/calculators/indian-calendar' },
                                 { name: 'Planetary Transit', path: '/calculators/gochar' },
                                 { name: 'Blog', path: '/blog' },

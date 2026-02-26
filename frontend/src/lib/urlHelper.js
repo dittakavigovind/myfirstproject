@@ -3,7 +3,7 @@
  * Resolves a potentially relative image path into a full URL.
  * Checks if the path is already absolute, otherwise prepends the backend base URL.
  */
-export const SERVER_BASE = 'http://localhost:5000';
+export const SERVER_BASE = 'http://192.168.29.133:5000'; // Changed from localhost to local IP for mobile access
 export const API_BASE = `${SERVER_BASE}/api`;
 
 export const resolveImageUrl = (path) => {
@@ -11,6 +11,9 @@ export const resolveImageUrl = (path) => {
 
     // If it's already a full URL (starts with http or data:), return as is
     if (path.startsWith('http') || path.startsWith('data:')) {
+        if (path.includes('localhost:5000')) {
+            return path.replace('http://localhost:5000', SERVER_BASE);
+        }
         return path;
     }
 

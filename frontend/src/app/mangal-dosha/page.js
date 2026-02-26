@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import API from '@/lib/api';
 import { useBirthDetails } from '../../context/BirthDetailsContext';
 import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import { Loader2, Calendar, Clock, MapPin, AlertCircle, CheckCircle, Flame, User, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -194,21 +196,7 @@ export default function MangalDoshaPage() {
                                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 z-10">
                                         <Calendar className="w-5 h-5" />
                                     </div>
-                                    <DatePicker
-                                        selected={formData.date}
-                                        onChange={(date) => setFormData({ ...formData, date })}
-                                        dateFormat="dd/MM/yyyy"
-                                        placeholderText="dd/mm/yyyy"
-                                        className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-red-500 rounded-2xl py-4 pl-12 pr-4 text-slate-900 placeholder-slate-400 focus:ring-4 focus:ring-red-500/10 focus:outline-none transition-all duration-300 font-bold"
-                                        wrapperClassName="w-full"
-                                        showMonthDropdown
-                                        showYearDropdown
-                                        dropdownMode="select"
-                                        maxDate={new Date()}
-                                        portalId="root-portal"
-                                        popperClassName="!z-[100]"
-                                        closeOnScroll={true}
-                                    />
+                                    <DatePicker customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Calendar} />} selected={formData.date} onChange={(date) => setFormData({ ...formData, date })} dateFormat="dd/MM/yyyy" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-red-500 rounded-2xl py-4 px-6 text-slate-900 placeholder-slate-400 focus:ring-4 focus:ring-red-500/10 focus:outline-none transition-all duration-300 font-bold" wrapperClassName="w-full" showMonthDropdown showYearDropdown dropdownMode="select" maxDate={new Date()} portalId="root-portal" popperClassName="!z-[100]" closeOnScroll={true} />
                                 </div>
                             </div>
                             <div className="group space-y-2">

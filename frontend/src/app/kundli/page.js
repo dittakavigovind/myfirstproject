@@ -8,10 +8,9 @@ import FAQDisplay from '../../components/FAQDisplay';
 import { User, Calendar, Clock, MapPin, Search, CheckCircle2, ArrowRight, ShieldCheck, Star, Sparkles } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import TimeInput from '../../components/TimeInput';
-import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from '../../components/common/CustomDateInput';
 import { useBirthDetails } from '../../context/BirthDetailsContext';
 import API from '@/lib/api';
-
 import toast from 'react-hot-toast';
 
 export default function KundliForm() {
@@ -251,24 +250,7 @@ export default function KundliForm() {
                                     <div className="group space-y-2">
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Date of Birth</label>
                                         <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors z-10">
-                                                <Calendar className="w-5 h-5" />
-                                            </div>
-                                            <DatePicker
-                                                selected={formData.date}
-                                                onChange={(date) => setFormData({ ...formData, date })}
-                                                dateFormat="dd/MM/yyyy"
-                                                placeholderText="dd/mm/yyyy"
-                                                className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 rounded-2xl py-4 pl-12 pr-4 text-slate-900 placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all duration-300 font-bold"
-                                                wrapperClassName="w-full"
-                                                showMonthDropdown
-                                                showYearDropdown
-                                                dropdownMode="select"
-                                                maxDate={maxDate}
-                                                portalId="root-portal"
-                                                popperClassName="!z-[100]"
-                                                closeOnScroll={true}
-                                            />
+                                            <DatePicker customInput={<CustomDateInput Icon={Calendar} />} selected={formData.date} onChange={(date) => setFormData({ ...formData, date })} dateFormat="dd/MM/yyyy" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-500 rounded-2xl py-4 px-6 text-slate-900 placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all duration-300 font-bold" wrapperClassName="w-full" showMonthDropdown showYearDropdown dropdownMode="select" maxDate={maxDate} portalId="root-portal" popperClassName="!z-[100]" closeOnScroll={true} />
                                         </div>
                                     </div>
 

@@ -43,7 +43,7 @@ export default function AstrologersPage() {
 
     const handleCardClick = (astro) => {
         // Navigate to Profile on Card Click
-        router.push(`/astrologers/${astro.slug || astro._id}`);
+        router.push(`/astrologers/details?id=${astro.slug || astro._id}`);
     };
 
     const handleAuthAction = (e, actionUrl) => {
@@ -66,7 +66,7 @@ export default function AstrologersPage() {
             router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
         } else {
             // Redirect to Chat page where call can be initiated (In-App)
-            router.push(`/chat-with-astrologer/${astro.slug || astro._id}`);
+            router.push(`/chat-with-astrologer/session?id=${astro.slug || astro._id}`);
         }
     };
 
@@ -198,7 +198,7 @@ export default function AstrologersPage() {
                                         {featureFlags?.enableChat && (
                                             <button
                                                 className="border border-indigo-500 text-indigo-600 hover:bg-indigo-50 font-bold py-1.5 px-4 rounded-lg text-xs transition-all bg-white flex items-center justify-center gap-2 hover:scale-105 min-w-[90px]"
-                                                onClick={(e) => handleAuthAction(e, `/chat-with-astrologer/${astro.slug || astro._id}`)}
+                                                onClick={(e) => handleAuthAction(e, `/chat-with-astrologer/session?id=${astro.slug || astro._id}`)}
                                             >
                                                 <MessageCircle size={14} /> Chat
                                             </button>

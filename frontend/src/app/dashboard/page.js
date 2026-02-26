@@ -5,8 +5,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import API from '../../lib/api';
+import { SERVER_BASE } from '../../lib/urlHelper';
 import LocationSearch from '../../components/LocationSearch';
 import DatePicker from "react-datepicker";
+import CustomDateInput from '../../components/common/CustomDateInput';
+
 import TimeInput from '../../components/TimeInput';
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -133,8 +136,7 @@ export default function Dashboard() {
                 // If it starts with http, use it. If not, prepend.
                 let fullUrl = res.data.filePath;
                 if (!fullUrl.startsWith('http')) {
-                    const serverBase = 'http://localhost:5000';
-                    fullUrl = serverBase + fullUrl;
+                    fullUrl = SERVER_BASE + fullUrl;
                 }
 
                 setEditForm(prev => ({ ...prev, profileImage: fullUrl }));
@@ -436,7 +438,7 @@ export default function Dashboard() {
                                     desc="Auspicious Timings for Today"
                                     icon={<Calendar size={24} />}
                                     color="orange"
-                                    link="/today-panchang"
+                                    link="/panchang"
                                 />
                                 <ActionCard
                                     title="Matchmaking"
@@ -651,23 +653,8 @@ export default function Dashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <InputGroup label="Date of Birth" className="relative z-30">
                                             <div className="relative">
-                                                <DatePicker
-                                                    selected={editForm.date}
-                                                    onChange={(date) => setEditForm({ ...editForm, date })}
-                                                    dateFormat="dd/MM/yyyy"
-                                                    className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300 pr-10"
-                                                    showMonthDropdown
-                                                    showYearDropdown
-                                                    dropdownMode="select"
-                                                    wrapperClassName="w-full"
-                                                    placeholderText="Select Date"
-                                                    popperClassName="!z-[9999]"
-                                                    portalId="root-portal"
-                                                    autoComplete="off"
-                                                />
-                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                                    <Calendar size={20} />
-                                                </div>
+                                                <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={editForm.date} onChange={(date) => setEditForm({ ...editForm, date })} dateFormat="dd/MM/yyyy" className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300 px-4" showMonthDropdown showYearDropdown dropdownMode="select" wrapperClassName="w-full" popperClassName="!z-[9999]" portalId="root-portal" autoComplete="off" />
+
                                             </div>
                                         </InputGroup>
 
@@ -766,23 +753,8 @@ export default function Dashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <InputGroup label="Date of Birth" required className="relative z-30">
                                             <div className="relative">
-                                                <DatePicker
-                                                    selected={chartForm.date}
-                                                    onChange={(date) => setChartForm({ ...chartForm, date })}
-                                                    dateFormat="dd/MM/yyyy"
-                                                    className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300 pr-10"
-                                                    showMonthDropdown
-                                                    showYearDropdown
-                                                    dropdownMode="select"
-                                                    wrapperClassName="w-full"
-                                                    placeholderText="Select Date"
-                                                    popperClassName="!z-[9999]"
-                                                    portalId="root-portal"
-                                                    autoComplete="off"
-                                                />
-                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                                    <Calendar size={20} />
-                                                </div>
+                                                <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={chartForm.date} onChange={(date) => setChartForm({ ...chartForm, date })} dateFormat="dd/MM/yyyy" className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300 px-4" showMonthDropdown showYearDropdown dropdownMode="select" wrapperClassName="w-full" popperClassName="!z-[9999]" portalId="root-portal" autoComplete="off" />
+
                                             </div>
                                         </InputGroup>
 

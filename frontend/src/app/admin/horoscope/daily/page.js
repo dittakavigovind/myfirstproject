@@ -5,6 +5,8 @@ import API from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { Loader2, Calendar as CalendarIcon, Save, Trash2, ArrowLeft, AlignLeft, Sun, RotateCcw } from 'lucide-react';
 import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -239,20 +241,15 @@ export default function DailyHoroscopeAdmin() {
                         </h3>
                         <div className="custom-datepicker-wrapper">
                             <DatePicker
+                                customInput={<CustomDateInput />}
                                 selected={selectedDate}
                                 onChange={(date) => setSelectedDate(date)}
                                 onMonthChange={(date) => fetchAvailability(date.getFullYear())}
                                 onYearChange={(date) => fetchAvailability(date.getFullYear())}
                                 inline
-                                highlightDates={[{
-                                    "react-datepicker__day--highlighted-custom-1": filledDates,
-                                }]}
+                                highlightDates={[{ "react-datepicker__day--highlighted-custom-1": filledDates, }]}
                                 className="border rounded-lg"
-                                dayClassName={(date) =>
-                                    filledDates.some(d => d.toDateString() === date.toDateString())
-                                        ? "bg-green-100 text-green-600 font-bold rounded-full"
-                                        : undefined
-                                }
+                                dayClassName={(date) => filledDates.some(d => d.toDateString() === date.toDateString()) ? "bg-green-100 text-green-600 font-bold rounded-full" : undefined}
                             />
                         </div>
                     </div>

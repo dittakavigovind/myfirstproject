@@ -37,7 +37,7 @@ export async function generateSeoMetadata(slug, defaultMeta = {}) {
     console.log(`[SEO Debug] Fetching for slug: ${slug} from ${baseUrl}/seo/${slug}`);
 
     try {
-        const res = await fetch(`${baseUrl}/seo/${slug}`, { next: { revalidate: 0 } }); // Disable cache for debug
+        const res = await fetch(`${baseUrl}/seo/${slug}`);
 
         console.log(`[SEO Debug] Response status: ${res.status}`);
 

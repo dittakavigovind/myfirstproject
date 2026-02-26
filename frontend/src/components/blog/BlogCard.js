@@ -6,7 +6,7 @@ import { resolveImageUrl } from '@/lib/urlHelper';
 export default function BlogCard({ post }) {
     return (
         <Link
-            href={`/blog/${post.categories?.[0]?.slug || 'general'}/${post.slug}`}
+            href={`/blog/category/article?category=${post.categories?.[0]?.slug || 'general'}&slug=${post.slug}`}
             className="flex flex-col bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group h-full"
         >
             <div className="h-48 bg-gray-200 overflow-hidden relative">

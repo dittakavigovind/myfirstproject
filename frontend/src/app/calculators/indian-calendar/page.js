@@ -172,7 +172,7 @@ export default function IndianCalendar() {
                             return (
                                 <div
                                     key={day}
-                                    className={`py-3 text-center font-black border-r border-slate-400 dark:border-slate-700 last:border-r-0 uppercase text-[10px] tracking-[0.2em] transition-all
+                                    className={`py-2 md:py-3 text-center font-black border-r border-slate-400 dark:border-slate-700 last:border-r-0 uppercase text-[8px] md:text-[10px] tracking-normal md:tracking-[0.2em] transition-all
                                         ${isSunday ? 'text-amber-400' : 'text-slate-100'}
                                     `}
                                 >
@@ -184,7 +184,7 @@ export default function IndianCalendar() {
 
                     {/* Days */}
                     {loading ? (
-                        <div className="h-[600px] flex flex-col items-center justify-center text-slate-400 bg-white dark:bg-slate-900">
+                        <div className="h-[400px] md:h-[600px] flex flex-col items-center justify-center text-slate-400 bg-white dark:bg-slate-900">
                             <div className="relative">
                                 <Loader2 size={48} className="animate-spin text-amber-500 opacity-20" />
                                 <Loader2 size={48} className="animate-spin text-amber-500 absolute top-0 left-0" style={{ animationDuration: '3s' }} />
@@ -192,11 +192,11 @@ export default function IndianCalendar() {
                             <p className="mt-6 font-medium tracking-widest uppercase text-xs opacity-60">Consulting Heavens...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-7 auto-rows-[120px] md:auto-rows-[140px]">
+                        <div className="grid grid-cols-7 auto-rows-[85px] md:auto-rows-[140px]">
                             {/* Previous Month Cells */}
                             {getPreviousMonthDays().map((dayNum, i) => (
-                                <div key={`prev-${i}`} className="border-r border-b border-slate-100 dark:border-slate-800 bg-[#fffcf7] dark:bg-slate-900/50 p-4 flex flex-col items-start pointer-events-none opacity-40">
-                                    <span className="text-3xl md:text-4xl font-black mb-1 text-slate-400">
+                                <div key={`prev-${i}`} className="border-r border-b border-slate-100 dark:border-slate-800 bg-[#fffcf7] dark:bg-slate-900/50 p-1 md:p-4 flex flex-col items-center md:items-start pointer-events-none opacity-40 overflow-hidden">
+                                    <span className="text-xl md:text-3xl lg:text-4xl font-black mb-1 text-slate-400">
                                         {dayNum}
                                     </span>
                                 </div>
@@ -237,8 +237,8 @@ export default function IndianCalendar() {
                                         animate={{ opacity: 1 }}
                                         whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.03)" }}
                                         onClick={() => handleDateClick(day)}
-                                        className={`relative border-r border-b border-slate-100 p-4 flex flex-col transition-all duration-300 group
-                                            ${isToday ? 'bg-amber-50/40 z-10 overflow-hidden' : isThisWeek ? 'bg-slate-100/30' : ''}
+                                        className={`relative border-r border-b border-slate-100 p-1 md:p-4 flex flex-col items-center md:items-start transition-all duration-300 group overflow-hidden
+                                            ${isToday ? 'bg-amber-50/40 z-10' : isThisWeek ? 'bg-slate-100/30' : ''}
                                             ${hasFestival ? 'cursor-pointer' : 'cursor-default'}
                                         `}
                                     >
@@ -247,16 +247,16 @@ export default function IndianCalendar() {
                                             <div className="absolute top-0 left-0 w-1 h-full bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
                                         )}
 
-                                        <div className="flex flex-col h-full">
-                                            <div className="flex items-start justify-between">
-                                                <span className={`text-3xl md:text-4xl font-black mb-1 leading-none tracking-tighter transition-all duration-300
+                                        <div className="flex flex-col h-full w-full">
+                                            <div className="flex flex-col md:flex-row items-center md:items-start justify-center md:justify-between w-full">
+                                                <span className={`text-xl md:text-3xl lg:text-4xl font-black mb-0.5 md:mb-1 leading-none tracking-tighter transition-all duration-300
                                                     ${isSundayDay ? 'text-amber-500' : isToday ? 'text-amber-600 drop-shadow-sm' : 'text-slate-900 opacity-90 group-hover:opacity-100'}
                                                 `}>
                                                     {day.day}
                                                 </span>
 
-                                                {/* Lunar Phase Icon (Aligned Right of Date) */}
-                                                <div className="flex items-center">
+                                                {/* Lunar Phase Icon (Aligned Right of Date, Hidden on mobile to save space) */}
+                                                <div className="hidden md:flex items-center">
                                                     {isPurnima && (
                                                         <div className="flex items-center justify-center group-hover:scale-110 transition-transform duration-500" title="Purnima (Full Moon)">
                                                             <div className="relative">
@@ -280,8 +280,8 @@ export default function IndianCalendar() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex flex-col items-start mt-2">
-                                                <div className="inline-flex items-center mb-1.5 py-0.5 px-2 bg-slate-100 rounded-full border border-slate-200/50 transition-all duration-300 group-hover:bg-amber-100">
+                                            <div className="flex flex-col items-center md:items-start mt-0.5 md:mt-2 w-full">
+                                                <div className="hidden md:inline-flex items-center mb-1.5 py-0.5 px-2 bg-slate-100 rounded-full border border-slate-200/50 transition-all duration-300 group-hover:bg-amber-100">
                                                     <span className="text-[10px] text-slate-500 uppercase font-black tracking-tight whitespace-nowrap">
                                                         {day.masa.purnimanta}
                                                         <span className="mx-1 text-slate-300">|</span>
@@ -290,16 +290,16 @@ export default function IndianCalendar() {
                                                         </span>
                                                     </span>
                                                 </div>
-                                                <span className="text-[10px] md:text-[11px] text-slate-500 font-bold tracking-widest line-clamp-1 uppercase opacity-90 group-hover:opacity-100">
+                                                <span className="text-[7.5px] md:text-[11px] text-slate-500 font-bold tracking-tighter md:tracking-widest line-clamp-1 uppercase opacity-90 group-hover:opacity-100 text-center md:text-left w-full overflow-hidden text-ellipsis">
                                                     {day.tithi.name}
                                                 </span>
                                             </div>
 
                                             {hasFestival && (
-                                                <div className="mt-auto pt-2 transform group-hover:-translate-y-1 transition-transform duration-300">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
-                                                        <span className="text-[10px] font-black text-amber-600 leading-tight line-clamp-1 uppercase tracking-wider">
+                                                <div className="mt-auto md:pt-2 transform group-hover:-translate-y-1 transition-transform duration-300 w-full flex justify-center md:justify-start">
+                                                    <div className="flex items-center gap-1 md:gap-1.5 w-full justify-center md:justify-start">
+                                                        <div className="hidden md:block w-1.5 h-1.5 rounded-full shrink-0 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
+                                                        <span className="text-[7.5px] md:text-[10px] font-black text-amber-600 leading-[10px] md:leading-tight line-clamp-2 md:line-clamp-1 uppercase tracking-tighter md:tracking-wider text-center md:text-left break-words w-full overflow-hidden text-ellipsis">
                                                             {day.festivals[0].name}
                                                         </span>
                                                     </div>
@@ -311,8 +311,8 @@ export default function IndianCalendar() {
                             })}
                             {/* Next Month Cells */}
                             {getNextMonthDays().map((dayNum, i) => (
-                                <div key={`next-${i}`} className="border-r border-b border-slate-100 dark:border-slate-800 bg-[#fffcf7] dark:bg-slate-900/50 p-4 flex flex-col items-start pointer-events-none opacity-40">
-                                    <span className="text-3xl md:text-4xl font-black mb-1 text-slate-400">
+                                <div key={`next-${i}`} className="border-r border-b border-slate-100 dark:border-slate-800 bg-[#fffcf7] dark:bg-slate-900/50 p-1 md:p-4 flex flex-col items-center md:items-start pointer-events-none opacity-40 overflow-hidden">
+                                    <span className="text-xl md:text-3xl lg:text-4xl font-black mb-1 text-slate-400">
                                         {dayNum}
                                     </span>
                                 </div>

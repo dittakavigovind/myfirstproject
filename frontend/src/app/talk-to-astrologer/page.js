@@ -52,7 +52,7 @@ export default function TalkPage() {
             router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
         } else {
             // Redirect to Chat page where call can be initiated (In-App)
-            router.push(`/chat-with-astrologer/${astro.slug || astro._id}`);
+            router.push(`/chat-with-astrologer/session?id=${astro.slug || astro._id}`);
         }
     };
 
@@ -132,7 +132,7 @@ export default function TalkPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
                                     className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 p-4 flex gap-4 items-start relative group cursor-pointer"
-                                    onClick={() => router.push(`/astrologers/${astro.slug || astro._id}`)}
+                                    onClick={() => router.push(`/astrologers/details?id=${astro.slug || astro._id}`)}
                                 >
                                     {/* Left: Image & Stats */}
                                     <div className="flex flex-col items-center gap-2 flex-shrink-0">

@@ -47,11 +47,11 @@ export default function ChatAstrologersPage() {
     }, []);
 
     const handleProfileClick = (astro) => {
-        router.push(`/astrologers/${astro.slug || astro._id}`);
+        router.push(`/astrologers/details?id=${astro.slug || astro._id}`);
     };
 
     const handleChatClick = (astroId) => {
-        router.push(`/chat-with-astrologer/${astroId}`);
+        router.push(`/chat-with-astrologer/session?id=${astroId}`);
     };
 
     const filteredAstrologers = astrologers.filter(astro =>

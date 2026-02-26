@@ -1,10 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function BlogSidebar({ categories }) {
-    const pathname = usePathname();
+function BlogSidebarContent({ categories }) {
+    const searchParams = useSearchParams();
+    const currentCategory = searchParams.get('category');
 
     return (
         <aside className="w-full lg:w-1/4 mb-8 lg:mb-0">
@@ -24,15 +26,15 @@ export default function BlogSidebar({ categories }) {
                 <div className="space-y-1">
                     <Link
                         href="/blog"
-                        className={`block px-4 py-3 rounded-lg transition-colors ${pathname === '/blog' ? 'bg-orange-50 text-orange-600 font-medium border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50'}`}
+                        className={`block px-4 py-3 rounded-lg transition-colors ${!currentCategory ? 'bg-orange-50 text-orange-600 font-medium border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50'}`}
                     >
                         All Categories
                     </Link>
                     {categories.filter(cat => cat.postCount > 0).map(cat => (
                         <Link
                             key={cat._id}
-                            href={`/blog/${cat.slug}`}
-                            className={`block px-4 py-3 rounded-lg transition-colors ${pathname.includes(`/blog/${cat.slug}`) ? 'bg-orange-50 text-orange-600 font-medium border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50'}`}
+                            href={`/blog/category?category=${cat.slug}`}
+                            className={`block px-4 py-3 rounded-lg transition-colors ${currentCategory === cat.slug ? 'bg-orange-50 text-orange-600 font-medium border-l-4 border-orange-500' : 'text-gray-600 hover:bg-gray-50'}`}
                         >
                             {cat.name}
                             <span className="text-xs text-gray-400 ml-2">({cat.postCount})</span>
@@ -41,5 +43,13 @@ export default function BlogSidebar({ categories }) {
                 </div>
             </div>
         </aside>
+    );
+}
+
+export default function BlogSidebar({ categories }) {
+    return (
+        <Suspense fallback={<aside className="w-full lg:w-1/4 mb-8 lg:mb-0"><div className="bg-white p-6 rounded-xl shadow-md sticky top-24">Loading...</div></aside>}>
+            <BlogSidebarContent categories={categories} />
+        </Suspense>
     );
 }

@@ -1,0 +1,434 @@
+﻿
+> way2astro-frontend@1.0.0 build:mobile
+> next build && npx cap sync
+
+   Γû▓ Next.js 14.0.3
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+node.exe :  Γ¿» ESLint: Invalid Options: - 
+Unknown options: useEslintrc, extensions - 
+'extensions' has been removed.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Γ¿ 
+   » ESLint: In...s been removed.:String) [], R  
+  emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Collecting page data ...
+   Generating static pages (0/81) ...
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Response status: 200
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: home from http://localhost:5000/api/seo/home
+[SEO Debug] Fetching for slug: home from http://localhost:5000/api/seo/home
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: weekly-horoscope from http://localhost:5000/api/seo/weekly-horoscope
+[SEO Debug] Fetching for slug: weekly-horoscope from http://localhost:5000/api/seo/weekly-horoscope
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: kaalsarp-dosha from http://localhost:5000/api/seo/kaalsarp-dosha
+[SEO Debug] Fetching for slug: kaalsarp-dosha from http://localhost:5000/api/seo/kaalsarp-dosha
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: talk from http://localhost:5000/api/seo/talk
+[SEO Debug] Fetching for slug: talk from http://localhost:5000/api/seo/talk
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Fetching for slug: matchmaking/zodiac-compatibility from http://localhost:5000/api/seo/matchmaking/zodiac-compatibility
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Fetching for slug: matchmaking/zodiac-compatibility from http://localhost:5000/api/seo/matchmaking/zodiac-compatibility
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: daily-horoscope from http://localhost:5000/api/seo/daily-horoscope
+[SEO Debug] Fetching for slug: daily-horoscope from http://localhost:5000/api/seo/daily-horoscope
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: monthly-horoscope from http://localhost:5000/api/seo/monthly-horoscope
+[SEO Debug] Fetching for slug: monthly-horoscope from http://localhost:5000/api/seo/monthly-horoscope
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: mangal-dosha from http://localhost:5000/api/seo/mangal-dosha
+[SEO Debug] Fetching for slug: mangal-dosha from http://localhost:5000/api/seo/mangal-dosha
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO] Fallback for 
+matchmaking/zodiac-compatibility Failed to fetch
+[SEO] Fallback for 
+matchmaking/zodiac-compatibility Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+ ΓÜá Entire page 
+/calculators/marriage-career/result deopted into 
+client-side rendering. https://nextjs.org/docs/me
+ssages/deopted-into-client-rendering 
+/calculators/marriage-career/result
+ ΓÜá Entire page /divisional-charts/result 
+deopted into client-side rendering. https://nextj
+s.org/docs/messages/deopted-into-client-rendering
+ /divisional-charts/result
+[SEO] Fallback for weekly-horoscope Failed to 
+fetch
+[SEO] Fallback for weekly-horoscope Failed to 
+fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+ ΓÜá Entire page /login deopted into client-side 
+rendering. https://nextjs.org/docs/messages/deopt
+ed-into-client-rendering /login
+[SEO] Fallback for daily-horoscope Failed to 
+fetch
+[SEO] Fallback for daily-horoscope Failed to 
+fetch
+[SEO] Fallback for talk Failed to fetch
+[SEO] Fallback for talk Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+ ΓÜá Entire page /kundli/result deopted into 
+client-side rendering. https://nextjs.org/docs/me
+ssages/deopted-into-client-rendering 
+/kundli/result
+[SEO] Fallback for kundli Failed to fetch
+
+   Generating static pages (20/81) 
+[SEO] Fallback for monthly-horoscope Failed to 
+fetch
+[SEO] Fallback for monthly-horoscope Failed to 
+fetch
+[SEO] Fallback for kundli Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+
+   Generating static pages (40/81) 
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+
+   Generating static pages (60/81) 
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+
+ Γ£ô Generating static pages (81/81) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: home from http://localhost:5000/api/seo/home
+[SEO Debug] Fetching for slug: home from http://localhost:5000/api/seo/home
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: monthly-horoscope from http://localhost:5000/api/seo/monthly-horoscope
+[SEO Debug] Fetching for slug: monthly-horoscope from http://localhost:5000/api/seo/monthly-horoscope
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: talk from http://localhost:5000/api/seo/talk
+[SEO Debug] Fetching for slug: talk from http://localhost:5000/api/seo/talk
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: kaalsarp-dosha from http://localhost:5000/api/seo/kaalsarp-dosha
+[SEO Debug] Fetching for slug: kaalsarp-dosha from http://localhost:5000/api/seo/kaalsarp-dosha
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Response status: 200
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Fetching for slug: horoscope from http://localhost:5000/api/seo/horoscope
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: daily-horoscope from http://localhost:5000/api/seo/daily-horoscope
+[SEO Debug] Fetching for slug: daily-horoscope from http://localhost:5000/api/seo/daily-horoscope
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: weekly-horoscope from http://localhost:5000/api/seo/weekly-horoscope
+[SEO Debug] Fetching for slug: weekly-horoscope from http://localhost:5000/api/seo/weekly-horoscope
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Fetching for slug: blog from http://localhost:5000/api/seo/blog
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Fetching for slug: matchmaking/zodiac-compatibility from http://localhost:5000/api/seo/matchmaking/zodiac-compatibility
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Fetching for slug: matchmaking/zodiac-compatibility from http://localhost:5000/api/seo/matchmaking/zodiac-compatibility
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: mangal-dosha from http://localhost:5000/api/seo/mangal-dosha
+[SEO Debug] Fetching for slug: mangal-dosha from http://localhost:5000/api/seo/mangal-dosha
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Response status: 200
+[SEO Debug] Data received: true
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Fetching for slug: chat from http://localhost:5000/api/seo/chat
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Fetching for slug: matchmaking from http://localhost:5000/api/seo/matchmaking
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Fetching for slug: astrologers from http://localhost:5000/api/seo/astrologers
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Fetching for slug: kundli from http://localhost:5000/api/seo/kundli
+[SEO Debug] Response status: 404
+[SEO Debug] Response status: 404
+[SEO] Fallback for 
+matchmaking/zodiac-compatibility Failed to fetch
+[SEO] Fallback for 
+matchmaking/zodiac-compatibility Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for talk Failed to fetch
+[SEO] Fallback for talk Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for monthly-horoscope Failed to 
+fetch
+[SEO] Fallback for monthly-horoscope Failed to 
+fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+ ΓÜá Entire page /kundli/result deopted into 
+client-side rendering. https://nextjs.org/docs/me
+ssages/deopted-into-client-rendering 
+/kundli/result
+[SEO] Fallback for kundli Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for blog Failed to fetch
+[SEO] Fallback for weekly-horoscope Failed to 
+fetch
+[SEO] Fallback for weekly-horoscope Failed to 
+fetch
+[SEO] Fallback for daily-horoscope Failed to 
+fetch
+[SEO] Fallback for daily-horoscope Failed to 
+fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for astrologers Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for chat Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+[SEO] Fallback for kundli Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+[SEO] Fallback for matchmaking Failed to fetch
+
+Route (app)                              Size     First Load JS
+Γöî ╬╗ /                                    8.39 kB         160 kB
+Γö£ Γùï /_not-found                          878 B          85.4 kB
+Γö£ Γùï /admin                               142 kB          301 kB
+Γö£ Γùï /admin/activity                      2.54 kB         110 kB
+Γö£ Γùï /admin/astrologer/details            10.6 kB         124 kB
+Γö£ Γùï /admin/blog                          3.45 kB         117 kB
+Γö£ Γùï /admin/blog/categories               3.84 kB         111 kB
+Γö£ Γùï /admin/blog/create                   5.3 kB          160 kB
+Γö£ Γùï /admin/blog/edit/details             5.59 kB         161 kB
+Γö£ Γùï /admin/horoscope                     6.69 kB         211 kB
+Γö£ Γùï /admin/horoscope/daily               9.25 kB         172 kB
+Γö£ Γùï /admin/horoscope/monthly             9.34 kB         172 kB
+Γö£ Γùï /admin/horoscope/weekly              9.44 kB         172 kB
+Γö£ Γùï /admin/professional-report           442 B           346 kB
+Γö£ Γùï /admin/seo                           10.3 kB         151 kB
+Γö£ Γùï /admin/settings/ads                  7.5 kB          115 kB
+Γö£ Γùï /admin/settings/features             8.84 kB         116 kB
+Γö£ Γùï /admin/users/details                 8.12 kB         156 kB
+Γö£ Γùï /arudha-lagna                        16.5 kB         207 kB
+Γö£ Γùï /astrologer                          1.65 kB         109 kB
+Γö£ Γùï /astrologer-terms                    7.14 kB         133 kB
+Γö£ Γùï /astrologer/chats                    3.67 kB         124 kB
+Γö£ Γùï /astrologer/dashboard                7.99 kB         198 kB
+Γö£ Γùï /astrologer/earnings                 106 kB          219 kB
+Γö£ Γùï /astrologer/professional-report      450 B           346 kB
+Γö£ Γùï /astrologer/profile                  4.01 kB         111 kB
+Γö£ ╬╗ /astrologers                         5.05 kB         153 kB
+Γö£ ╬╗ /astrologers/details                 13.1 kB         161 kB
+Γö£ Γùï /astrology-session                   15.3 kB         173 kB
+Γö£ ╬╗ /blog                                3.45 kB         117 kB
+Γö£ ╬╗ /blog/category                       3.54 kB         117 kB
+Γö£ ╬╗ /blog/category/article               7.57 kB         159 kB
+Γö£ Γùï /calculators                         5.95 kB         154 kB
+Γö£ Γùï /calculators/ascendant-calculator    15.9 kB         213 kB
+Γö£ Γùï /calculators/ashtakavarga            15.9 kB         206 kB
+Γö£ Γùï /calculators/atmakaraka              11.3 kB         159 kB
+Γö£ Γùï /calculators/dasha-periods           12.7 kB         217 kB
+Γö£ Γùï /calculators/friendship-calculator   6.5 kB          154 kB
+Γö£ Γùï /calculators/gochar                  14.3 kB         164 kB
+Γö£ Γùï /calculators/indian-calendar         10.5 kB         164 kB
+Γö£ Γùï /calculators/love-calculator         6.81 kB         155 kB
+Γö£ Γùï /calculators/marriage-career         5.1 kB          146 kB
+Γö£ Γùï /calculators/marriage-career/result  3.77 kB         111 kB
+Γö£ Γùï /calculators/moon-sign-calculator    15.8 kB         213 kB
+Γö£ Γùï /calculators/nakshatra-calculator    15.8 kB         213 kB
+Γö£ Γùï /calculators/numerology-calculator   7.88 kB         205 kB
+Γö£ Γùï /calculators/sade-sati-calculator    11.8 kB         217 kB
+Γö£ Γùï /calculators/sun-sign-calculator     8.35 kB         205 kB
+Γö£ Γùï /calculators/yogini-dasha            16.1 kB         213 kB
+Γö£ Γùï /call/session                        4.34 kB         111 kB
+Γö£ ╬╗ /chat-with-astrologer                4.98 kB         153 kB
+Γö£ ╬╗ /chat-with-astrologer/session        7.85 kB         162 kB
+Γö£ ╬╗ /daily-horoscope                     7.31 kB         155 kB
+Γö£ Γùï /dashboard                           17.3 kB         214 kB
+Γö£ Γùï /disclaimer                          5.11 kB         130 kB
+Γö£ Γùï /divisional-charts                   12.9 kB         203 kB
+Γö£ Γùï /divisional-charts/result            9 kB            159 kB
+Γö£ Γùï /divisional-charts/result/details    16.8 kB         167 kB
+Γö£ ╬╗ /horoscope                           5.14 kB         157 kB
+Γö£ ╬╗ /horoscope/details                   6.11 kB         154 kB
+Γö£ Γùï /join-astrologer                     6.34 kB         113 kB
+Γö£ ╬╗ /kaalsarp-dosha                      13.2 kB         203 kB
+Γö£ ╬╗ /kundli                              14.1 kB         208 kB
+Γö£ ╬╗ /kundli/result                       11.3 kB         298 kB
+Γö£ Γùï /login                               6.75 kB         155 kB
+Γö£ Γùï /manager                             8.96 kB         123 kB
+Γö£ ╬╗ /mangal-dosha                        13.6 kB         206 kB
+Γö£ ╬╗ /matchmaking                         9.1 kB          309 kB
+Γö£ ╬╗ /matchmaking/zodiac-compatibility    22.9 kB         153 kB
+Γö£ ╬╗ /monthly-horoscope                   7.17 kB         154 kB
+Γö£ Γùï /my-chats                            3.71 kB         124 kB
+Γö£ ╬╗ /panchang                            16.3 kB         222 kB
+Γö£ Γùï /privacy-policy                      6.04 kB         131 kB
+Γö£ Γùï /signup                              763 B          85.3 kB
+Γö£ ╬╗ /talk-to-astrologer                  4.93 kB         146 kB
+Γö£ Γùï /terms                               7.29 kB         133 kB
+Γö£ Γùï /today-panchang                      765 B          85.3 kB
+Γö£ Γùï /wallet                              8.29 kB         115 kB
+Γöö ╬╗ /weekly-horoscope                    7.34 kB         155 kB
++ First Load JS shared by all            84.5 kB
+  Γö£ chunks/2472-d818ceb69cd46d20.js      29 kB
+  Γö£ chunks/fd9d1056-1bd562f60b43a697.js  53.3 kB
+  Γö£ chunks/main-app-605919863b1a4180.js  225 B
+  Γöö chunks/webpack-8fcb8326fbef186f.js   1.98 kB
+
+
+Γùï  (Static)   prerendered as static content
+╬╗  (Dynamic)  server-rendered on demand using Node.js
+
+[error] The web assets directory (.\out) must contain an index.html file.
+        It will be the entry point for the web portion of the Capacitor app.

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, CheckCircle2, Star, Zap, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
 import DatePicker from "react-datepicker";
+import CustomDateInput from '../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import LocationSearch from '../../../components/LocationSearch';
 import TimeInput from '../../../components/TimeInput';
@@ -279,18 +281,7 @@ export default function DashaPeriodsCalculator() {
                                             <Calendar size={14} /> Date of Birth
                                         </label>
                                         <div className="relative custom-datepicker-dark">
-                                            <DatePicker
-                                                selected={formData.date}
-                                                onChange={(date) => setFormData({ ...formData, date })}
-                                                dateFormat="dd/MM/yyyy"
-                                                placeholderText="Select Date"
-                                                className="w-full bg-white/[0.05] border border-white/10 focus:bg-white/[0.08] focus:border-indigo-500/50 rounded-2xl py-5 px-6 text-white font-bold text-lg outline-none transition-all cursor-pointer"
-                                                showYearDropdown
-                                                scrollableYearDropdown
-                                                yearDropdownItemNumber={100}
-                                                maxDate={new Date()}
-                                                calendarClassName="custom-datepicker-dark-cal"
-                                            />
+                                            <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={formData.date} onChange={(date) => setFormData({ ...formData, date })} dateFormat="dd/MM/yyyy" className="w-full bg-white/[0.05] border border-white/10 focus:bg-white/[0.08] focus:border-indigo-500/50 rounded-2xl py-5 px-6 text-white font-bold text-lg outline-none transition-all cursor-pointer" showYearDropdown scrollableYearDropdown yearDropdownItemNumber={100} maxDate={new Date()} calendarClassName="custom-datepicker-dark-cal" />
                                         </div>
                                     </div>
 

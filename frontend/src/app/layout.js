@@ -19,7 +19,7 @@ const poppins = Poppins({
     variable: '--font-poppins'
 })
 
-import { resolveImageUrl } from '../lib/urlHelper';
+import { resolveImageUrl, API_BASE } from '../lib/urlHelper';
 
 import GoogleAdSense from '../components/GoogleAdSense';
 
@@ -30,8 +30,8 @@ export async function generateMetadata() {
     let googleAnalyticsId = '';
 
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${apiUrl}/site-settings`, { next: { revalidate: 60 } });
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
+        const res = await fetch(`${apiUrl}/site-settings`);
         const data = await res.json();
 
         if (data.success && data.settings) {
@@ -71,6 +71,13 @@ export async function generateMetadata() {
     };
 }
 
+export const viewport = {
+    themeColor: '#0b1c3d',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    viewportFit: 'cover',
+};
 
 
 export default async function RootLayout({ children }) {
@@ -82,8 +89,8 @@ export default async function RootLayout({ children }) {
     let googleAdsId = '';
     let googleAnalyticsId = '';
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${apiUrl}/site-settings`, { next: { revalidate: 60 } });
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
+        const res = await fetch(`${apiUrl}/site-settings`);
         const data = await res.json();
         if (data.success && data.settings) {
             googleAdsId = data.settings.googleAdsId;

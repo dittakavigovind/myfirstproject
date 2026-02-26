@@ -6,6 +6,8 @@ import { toast } from 'react-hot-toast';
 import { Loader2, Save, Upload, User, Phone, FileText, ToggleLeft, ToggleRight, Calendar as CalendarIcon } from 'lucide-react';
 import { resolveImageUrl } from '@/lib/urlHelper';
 import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function FeaturedAstrologerManager() {
@@ -462,31 +464,14 @@ export default function FeaturedAstrologerManager() {
                         <div className="flex flex-col">
                             <label className="block text-sm font-bold text-slate-700 mb-2">Start Date</label>
                             <div className="relative">
-                                <DatePicker
-                                    selected={formData.startDate ? new Date(formData.startDate) : null}
-                                    onChange={(date) => setFormData(prev => ({ ...prev, startDate: date ? date.toISOString() : null }))}
-                                    className="w-full px-4 py-2 pl-10 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none text-sm bg-white"
-                                    placeholderText="Select start date"
-                                    dateFormat="dd-MM-yyyy"
-                                    closeOnScroll={true}
-                                    highlightDates={[{ "react-datepicker__day--highlighted-custom-green": scheduledDates }]}
-                                />
+                                <DatePicker customInput={<CustomDateInput placeholder='Select start date' />} selected={formData.startDate ? new Date(formData.startDate) : null} onChange={(date) => setFormData(prev => ({ ...prev, startDate: date ? date.toISOString() : null }))} className="w-full px-4 py-2 pl-10 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none text-sm bg-white" dateFormat="dd-MM-yyyy" closeOnScroll={true} highlightDates={[{ "react-datepicker__day--highlighted-custom-green": scheduledDates }]} />
                                 <CalendarIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>
                         </div>
                         <div className="flex flex-col">
                             <label className="block text-sm font-bold text-slate-700 mb-2">End Date</label>
                             <div className="relative">
-                                <DatePicker
-                                    selected={formData.endDate ? new Date(formData.endDate) : null}
-                                    onChange={(date) => setFormData(prev => ({ ...prev, endDate: date ? date.toISOString() : null }))}
-                                    className="w-full px-4 py-2 pl-10 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none text-sm bg-white"
-                                    placeholderText="Select end date"
-                                    dateFormat="dd-MM-yyyy"
-                                    minDate={formData.startDate ? new Date(formData.startDate) : null}
-                                    closeOnScroll={true}
-                                    highlightDates={[{ "react-datepicker__day--highlighted-custom-green": scheduledDates }]}
-                                />
+                                <DatePicker customInput={<CustomDateInput placeholder='Select end date' />} selected={formData.endDate ? new Date(formData.endDate) : null} onChange={(date) => setFormData(prev => ({ ...prev, endDate: date ? date.toISOString() : null }))} className="w-full px-4 py-2 pl-10 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/20 outline-none text-sm bg-white" dateFormat="dd-MM-yyyy" minDate={formData.startDate ? new Date(formData.startDate) : null} closeOnScroll={true} highlightDates={[{ "react-datepicker__day--highlighted-custom-green": scheduledDates }]} />
                                 <CalendarIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>
                         </div>

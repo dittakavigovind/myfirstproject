@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">way2astro</string>
+    <string name="title_activity_main">way2astro</string>
+    <string name="package_name">org.way2astro.app</string>
+    <string name="custom_url_scheme">org.way2astro.app</string>
+</resources>

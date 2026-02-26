@@ -83,7 +83,7 @@ export default function BlogManager() {
                                 <td className="p-4 text-slate-500">{post.views}</td>
                                 <td className="p-4 text-slate-400">{new Date(post.publishedAt || post.createdAt).toLocaleDateString()}</td>
                                 <td className="p-4 flex gap-2">
-                                    <Link href={`/admin/blog/edit/${post._id}`} className="text-blue-500 hover:bg-blue-50 px-3 py-1.5 rounded transition">
+                                    <Link href={`/admin/blog/edit/details?id=${post._id}`} className="text-blue-500 hover:bg-blue-50 px-3 py-1.5 rounded transition">
                                         <Edit size={16} />
                                     </Link>
                                     <button onClick={() => handleDelete(post._id)} className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded transition">

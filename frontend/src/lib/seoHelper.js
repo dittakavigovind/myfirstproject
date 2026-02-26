@@ -1,8 +1,8 @@
-import { resolveImageUrl } from './urlHelper';
+import { resolveImageUrl, API_BASE } from './urlHelper';
 
 export async function getSEOMetadata(slug, defaultMetadata = {}) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.way2astro.com';
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
 
     let meta = {
         title: defaultMetadata.title || 'Way2Astro | Vedic Astrology',

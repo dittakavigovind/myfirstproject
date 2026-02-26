@@ -78,7 +78,7 @@ export default function AdminBlogPosts() {
                         {posts.map(post => (
                             <tr
                                 key={post._id}
-                                onClick={() => router.push(`/admin/blog/edit/${post._id}`)}
+                                onClick={() => router.push(`/admin/blog/edit/details?id=${post._id}`)}
                                 className="hover:bg-slate-50/80 transition duration-200 cursor-pointer group"
                             >
                                 <td className="p-4 font-medium text-slate-800">{post.title}</td>
@@ -102,7 +102,7 @@ export default function AdminBlogPosts() {
                                     })()}
                                 </td>
                                 <td className="p-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                    <Link href={`/admin/blog/edit/${post._id}`} className="text-blue-500 hover:bg-blue-50 px-3 py-1.5 rounded transition">
+                                    <Link href={`/admin/blog/edit/details?id=${post._id}`} className="text-blue-500 hover:bg-blue-50 px-3 py-1.5 rounded transition">
                                         <Edit size={16} />
                                     </Link>
                                     <button

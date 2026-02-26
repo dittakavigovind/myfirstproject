@@ -5,6 +5,8 @@ import API from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { Loader2, Calendar as CalendarIcon, Save, Trash2, ArrowLeft, Sun, RotateCcw } from 'lucide-react';
 import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../../../components/common/CustomDateInput';
+
 import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -225,6 +227,7 @@ export default function WeeklyHoroscopeAdmin() {
                         </h3>
                         <div className="custom-datepicker-wrapper weekly-picker">
                             <DatePicker
+                                customInput={<CustomDateInput />}
                                 selected={selectedDate}
                                 onChange={(date) => setSelectedDate(date)}
                                 inline
@@ -232,11 +235,7 @@ export default function WeeklyHoroscopeAdmin() {
                                 className="border rounded-lg"
                                 onMonthChange={(date) => fetchAvailability(date.getFullYear())}
                                 onYearChange={(date) => fetchAvailability(date.getFullYear())}
-                                dayClassName={(date) =>
-                                    filledWeeks.some(w => date >= w.start && date <= w.end)
-                                        ? "bg-green-100 text-green-600 font-bold"
-                                        : undefined
-                                }
+                                dayClassName={(date) => filledWeeks.some(w => date >= w.start && date <= w.end) ? "bg-green-100 text-green-600 font-bold" : undefined}
                             />
                         </div>
                         <p className="text-xs text-slate-400 mt-4 text-center">

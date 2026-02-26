@@ -111,7 +111,7 @@ export default function HoroscopeSelectClient() {
                 >
                     {SIGNS.map((sign) => (
                         <motion.div key={sign.name} variants={item}>
-                            <Link href={`/horoscope/${sign.name.toLowerCase()}`}>
+                            <Link href={`/horoscope/details?sign=${sign.name.toLowerCase()}`}>
                                 <div className="group relative bg-white rounded-[2rem] p-1 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer h-full">
                                     <div className="absolute inset-0 bg-gradient-to-br from-white to-slate-50 rounded-[2rem] z-0"></div>
 

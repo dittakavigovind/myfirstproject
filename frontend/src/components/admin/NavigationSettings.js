@@ -16,7 +16,7 @@ export default function NavigationSettings() {
         { name: 'FREE KUNDLI', path: '/kundli' },
         { name: 'DIVISIONAL CHARTS', path: '/divisional-charts' },
         { name: 'HOROSCOPES', path: '/horoscope' },
-        { name: 'PANCHANG', path: '/today-panchang' },
+        { name: 'PANCHANG', path: '/panchang' },
         { name: 'CALENDAR', path: '/calculators/indian-calendar' },
         { name: 'CALCULATORS', path: '/calculators' },
         { name: 'BLOG', path: '/blog' },

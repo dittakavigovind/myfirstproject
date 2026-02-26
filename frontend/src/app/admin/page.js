@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { SERVER_BASE } from '../../lib/urlHelper';
 import { useAdmin } from '../../context/AdminContext';
 import BlogManager from '../../components/admin/BlogManager';
 import LogoSettings from '../../components/admin/LogoSettings';
@@ -502,7 +503,7 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {allMembers.length > 0 ? allMembers.map(u => (
-                                <tr key={u._id} onClick={() => router.push(`/admin/users/${u.username || u._id}`)} className="hover:bg-slate-50/50 transition group cursor-pointer">
+                                <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition group cursor-pointer">
                                     <td className="p-4 font-medium text-slate-700">{u.name}</td>
                                     <td className="p-4 text-slate-500">
                                         {u.email || (
@@ -570,7 +571,7 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {userList.map(u => (
-                                <tr key={u._id} onClick={() => router.push(`/admin/users/${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
+                                <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
                                     <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
                                             {u.profileImage ? (
@@ -643,7 +644,7 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {managerList.map(u => (
-                                <tr key={u._id} onClick={() => router.push(`/admin/users/${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
+                                <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
                                     <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{u.name}</td>
                                     <td className="p-4 text-slate-500">
                                         {u.email || (
@@ -1266,8 +1267,7 @@ function AddAstrologerForm({ onSuccess, initialData }) {
             if (res.data.success) {
                 let fullUrl = res.data.filePath;
                 if (!fullUrl.startsWith('http')) {
-                    const serverBase = 'http://localhost:5000';
-                    fullUrl = serverBase + fullUrl;
+                    fullUrl = SERVER_BASE + fullUrl;
                 }
                 setFormData(prev => ({ ...prev, image: fullUrl }));
             }
