@@ -24,11 +24,11 @@ function CategoryStats() {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!params?.category) return;
+            if (!categoryQuery) return;
 
             try {
                 const [postRes, catRes] = await Promise.all([
-                    API.get(`/blog/posts?category=${params.category}&status=published`),
+                    API.get(`/blog/posts?category=${categoryQuery}&status=published`),
                     API.get('/blog/categories')
                 ]);
                 setPosts(postRes.data.data);
@@ -40,10 +40,10 @@ function CategoryStats() {
             }
         };
         fetchData();
-    }, [params]);
+    }, [categoryQuery]);
 
     // Helper to get current category name
-    const currentCategoryName = categories.find(c => c.slug === params?.category)?.name || 'Category';
+    const currentCategoryName = categories.find(c => c.slug === categoryQuery)?.name || 'Category';
 
     return (
         <div className="bg-gray-50 min-h-screen">
