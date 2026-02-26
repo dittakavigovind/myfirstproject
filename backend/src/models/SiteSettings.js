@@ -31,6 +31,16 @@ const siteSettingsSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    promotionType: {
+        type: String,
+        enum: ['image', 'video'],
+        default: 'image'
+    },
+    promotionVideoUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     googleAdsId: {
         type: String,
         trim: true,

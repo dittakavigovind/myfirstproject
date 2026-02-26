@@ -117,6 +117,8 @@ exports.updateSiteSettings = async (req, res) => {
         if (req.body.favicon) settings.favicon = req.body.favicon;
         if (req.body.promotionImage !== undefined) settings.promotionImage = req.body.promotionImage;
         if (req.body.promotionUrl !== undefined) settings.promotionUrl = req.body.promotionUrl;
+        if (req.body.promotionType !== undefined) settings.promotionType = req.body.promotionType;
+        if (req.body.promotionVideoUrl !== undefined) settings.promotionVideoUrl = req.body.promotionVideoUrl;
         if (req.body.googleAdsId !== undefined) settings.googleAdsId = req.body.googleAdsId;
         if (req.body.googleAnalyticsId !== undefined) settings.googleAnalyticsId = req.body.googleAnalyticsId;
 

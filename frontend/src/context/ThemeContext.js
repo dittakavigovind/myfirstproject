@@ -60,7 +60,9 @@ export const ThemeProvider = ({ children }) => {
                     setFeatureFlags({
                         ...settings.featureFlags,
                         promotionImage: settings.promotionImage,
-                        promotionUrl: settings.promotionUrl
+                        promotionUrl: settings.promotionUrl,
+                        promotionType: settings.promotionType || 'image',
+                        promotionVideoUrl: settings.promotionVideoUrl || ''
                     });
                 }
             }

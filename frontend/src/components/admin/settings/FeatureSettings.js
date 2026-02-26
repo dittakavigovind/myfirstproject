@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import API from '@/lib/api';
 import { toast } from 'react-hot-toast';
-import { MessageSquare, Phone, Save, AlertCircle, Users, Image as ImageIcon, Upload } from 'lucide-react';
+import { MessageSquare, Phone, Save, AlertCircle, Users, Image as ImageIcon, Upload, PlayCircle } from 'lucide-react';
 
 export default function FeatureSettings() {
     const [loading, setLoading] = useState(true);
@@ -11,6 +11,8 @@ export default function FeatureSettings() {
     const [uploading, setUploading] = useState(false);
     const [promotionImage, setPromotionImage] = useState('');
     const [promotionUrl, setPromotionUrl] = useState('');
+    const [promotionType, setPromotionType] = useState('image');
+    const [promotionVideoUrl, setPromotionVideoUrl] = useState('');
     const [featureFlags, setFeatureFlags] = useState({
         enableChat: true,
         enableCall: true,
@@ -29,6 +31,8 @@ export default function FeatureSettings() {
                 setFeatureFlags(settings.featureFlags || {});
                 setPromotionImage(settings.promotionImage || '');
                 setPromotionUrl(settings.promotionUrl || '');
+                setPromotionType(settings.promotionType || 'image');
+                setPromotionVideoUrl(settings.promotionVideoUrl || '');
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -74,7 +78,9 @@ export default function FeatureSettings() {
             const { data } = await API.put('/site-settings', {
                 featureFlags: featureFlags,
                 promotionImage: promotionImage,
-                promotionUrl: promotionUrl
+                promotionUrl: promotionUrl,
+                promotionType: promotionType,
+                promotionVideoUrl: promotionVideoUrl
             });
             if (data.success) {
                 toast.success("Feature settings updated successfully");
@@ -191,67 +197,112 @@ export default function FeatureSettings() {
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-bold text-slate-800 text-lg">Promotion Image</h3>
+                            <h3 className="font-bold text-slate-800 text-lg">Promotion Content</h3>
+                            <div className="flex bg-slate-100 p-1 rounded-lg">
+                                <button
+                                    onClick={() => setPromotionType('image')}
+                                    className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${promotionType === 'image' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Image
+                                </button>
+                                <button
+                                    onClick={() => setPromotionType('video')}
+                                    className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${promotionType === 'video' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    YouTube Video
+                                </button>
+                            </div>
                         </div>
                         <p className="text-slate-500 text-sm leading-relaxed mb-4">
-                            Upload a promotional image for banner or ad placements.
-                            <span className="font-bold text-slate-700 block mt-1">Recommended Size: 500x300px</span>
+                            {promotionType === 'image'
+                                ? "Upload a promotional image for banner or ad placements. Recommended Size: 500x300px"
+                                : "Add a YouTube video to be displayed in the promotion slot."}
                         </p>
 
                         {/* Image Upload UI */}
-                        <div className="w-full">
-                            <label className="block group cursor-pointer w-full">
-                                <div className={`bg-white rounded-xl p-6 flex flex-col items-center justify-center border-2 border-dashed ${uploading ? 'border-orange-400 bg-orange-50' : 'border-slate-300 group-hover:border-orange-400 group-hover:bg-orange-50'} transition-all min-h-[160px] relative overflow-hidden`}>
-                                    {uploading ? (
-                                        <div className="flex flex-col items-center text-orange-500">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-2"></div>
-                                            <span className="text-xs font-bold uppercase">Uploading...</span>
-                                        </div>
-                                    ) : promotionImage ? (
-                                        <>
-                                            <img src={promotionImage} alt="Promotion" className="max-h-40 w-auto object-contain z-10 relative rounded-lg shadow-sm" />
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                                <div className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 shadow-sm transform translate-y-2 group-hover:translate-y-0 transition-all">
-                                                    Change Image
-                                                </div>
+                        {promotionType === 'image' ? (
+                            <div className="w-full">
+                                <label className="block group cursor-pointer w-full">
+                                    <div className={`bg-white rounded-xl p-6 flex flex-col items-center justify-center border-2 border-dashed ${uploading ? 'border-orange-400 bg-orange-50' : 'border-slate-300 group-hover:border-orange-400 group-hover:bg-orange-50'} transition-all min-h-[160px] relative overflow-hidden`}>
+                                        {uploading ? (
+                                            <div className="flex flex-col items-center text-orange-500">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-2"></div>
+                                                <span className="text-xs font-bold uppercase">Uploading...</span>
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className="flex flex-col items-center text-slate-400 group-hover:text-orange-500 transition-colors">
-                                            <Upload size={32} className="mb-2" />
-                                            <span className="text-sm font-medium">Click to upload promotion image</span>
-                                        </div>
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleFileUpload}
-                                        disabled={uploading}
-                                    />
-                                </div>
-                            </label>
-                            {promotionImage && (
-                                <button
-                                    onClick={() => setPromotionImage('')}
-                                    className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
-                                >
-                                    Remove Image
-                                </button>
-                            )}
-                        </div>
+                                        ) : promotionImage ? (
+                                            <>
+                                                <img src={promotionImage} alt="Promotion" className="max-h-40 w-auto object-contain z-10 relative rounded-lg shadow-sm" />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                                    <div className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 shadow-sm transform translate-y-2 group-hover:translate-y-0 transition-all">
+                                                        Change Image
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center text-slate-400 group-hover:text-orange-500 transition-colors">
+                                                <Upload size={32} className="mb-2" />
+                                                <span className="text-sm font-medium">Click to upload promotion image</span>
+                                            </div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleFileUpload}
+                                            disabled={uploading}
+                                        />
+                                    </div>
+                                </label>
+                                {promotionImage && (
+                                    <button
+                                        onClick={() => setPromotionImage('')}
+                                        className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
+                                    >
+                                        Remove Image
+                                    </button>
+                                )}
 
-                        <div className="mt-4">
-                            <label className="block text-sm font-bold text-slate-700 mb-1">Target URL (Optional)</label>
-                            <input
-                                type="text"
-                                value={promotionUrl}
-                                onChange={(e) => setPromotionUrl(e.target.value)}
-                                placeholder="e.g., /offers/diwali-sale"
-                                className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700"
-                            />
-                            <p className="text-xs text-slate-400 mt-1">Enter a path (e.g., /astrologers) or full URL to make the image clickable.</p>
-                        </div>
+                                <div className="mt-4">
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Target URL (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={promotionUrl}
+                                        onChange={(e) => setPromotionUrl(e.target.value)}
+                                        placeholder="e.g., /offers/diwali-sale"
+                                        className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">Enter a path (e.g., /astrologers) or full URL to make the image clickable.</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="w-full space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">YouTube Video URL</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={promotionVideoUrl}
+                                            onChange={(e) => setPromotionVideoUrl(e.target.value)}
+                                            placeholder="https://www.youtube.com/watch?v=..."
+                                            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700"
+                                        />
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500">
+                                            <PlayCircle size={18} />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1">Paste the full YouTube URL or share link.</p>
+                                </div>
+
+                                {promotionVideoUrl && (
+                                    <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-900 flex items-center justify-center">
+                                        <div className="text-white text-center p-4">
+                                            <PlayCircle size={48} className="mx-auto mb-2 opacity-50" />
+                                            <p className="text-xs font-medium opacity-70">Video Preview will appear on Homepage</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 

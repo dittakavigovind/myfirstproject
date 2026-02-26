@@ -114,7 +114,7 @@ export default function HomeClient() {
                                 </Link>
 
                                 {/* Profile Card */}
-                                <Link href={`/astrologers/${user._id}`}>
+                                <Link href={`/astrologers/details?id=${user._id}`}>
                                     <motion.div
                                         whileHover={{ y: -5 }}
                                         className="bg-white/95 backdrop-blur-xl p-8 rounded-[2rem] border border-white/50 shadow-2xl shadow-indigo-900/10 group cursor-pointer h-full relative overflow-hidden"
@@ -143,7 +143,7 @@ export default function HomeClient() {
                                             </div>
                                         </motion.div>
                                     </Link>
-                                    <Link href="/today-panchang">
+                                    <Link href="/panchang">
                                         <motion.div whileHover={{ scale: 1.02 }} className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-white/50 shadow-lg flex items-center gap-4 cursor-pointer hover:bg-white transition-colors">
                                             <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
                                                 <Calendar size={20} />
@@ -246,6 +246,27 @@ export default function HomeClient() {
                                                         <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400" /> 24/7</span>
                                                     </div>
                                                 </div>
+                                            ) : featureFlags?.promotionType === 'video' && featureFlags?.promotionVideoUrl ? (
+                                                <div className="absolute inset-0 z-0 overflow-hidden rounded-[2.5rem]">
+                                                    {(() => {
+                                                        const getYouTubeID = (url) => {
+                                                            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                                                            const match = url?.match(regExp);
+                                                            return (match && match[2].length === 11) ? match[2] : null;
+                                                        };
+                                                        const videoId = getYouTubeID(featureFlags.promotionVideoUrl);
+                                                        return videoId ? (
+                                                            <iframe
+                                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto aspect-video scale-[1.05]"
+                                                                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0&iv_load_policy=3`}
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowFullScreen
+                                                            ></iframe>
+                                                        ) : (
+                                                            <div className="flex items-center justify-center h-full text-white opacity-50 font-bold">Invalid Video URL</div>
+                                                        );
+                                                    })()}
+                                                </div>
                                             ) : featureFlags?.promotionImage ? (
                                                 <div className="absolute inset-0 z-0 cursor-pointer block h-full w-full">
                                                     {featureFlags?.promotionUrl ? (() => {
@@ -321,7 +342,7 @@ export default function HomeClient() {
                                                 <ServiceCard icon={Users} title="Matchmaking" desc="Compatibility" color="indigo" href="/matchmaking" delay={0.4} badges={navBadges} />
                                                 <ServiceCard icon={Briefcase} title="Marriage & Career" desc="Timing Analysis" color="pink" href="/calculators/marriage-career" delay={0.45} badges={navBadges} />
                                                 <ServiceCard icon={PlayCircle} title="Horoscope" desc="Daily Insights" color="red" href="/horoscope" delay={0.5} badges={navBadges} />
-                                                <ServiceCard icon={Calendar} title="Panchang" desc="Muhurat" color="orange" href="/today-panchang" delay={0.5} badges={navBadges} />
+                                                <ServiceCard icon={Calendar} title="Panchang" desc="Muhurat" color="orange" href="/panchang" delay={0.5} badges={navBadges} />
                                             </>
                                         </>
                                     )}
@@ -382,7 +403,7 @@ export default function HomeClient() {
                                                 </div>
 
                                                 <div className="flex-1 min-w-0 pt-1">
-                                                    <Link href={`/astrologers/${astro.slug || astro._id}`}>
+                                                    <Link href={`/astrologers/details?id=${astro.slug || astro._id}`}>
                                                         <h4 className="font-bold text-lg text-slate-900 mb-0.5 flex items-center gap-1.5 truncate">
                                                             {astro.displayName}
                                                             <CheckCircle size={14} className="text-emerald-500 fill-emerald-50" />
@@ -397,14 +418,14 @@ export default function HomeClient() {
 
                                                 <div className="flex flex-col gap-2 w-28">
                                                     {featureFlags?.enableChat && (
-                                                        <Link href={`/chat-with-astrologer/${astro._id}`}>
+                                                        <Link href={`/chat-with-astrologer/session?id=${astro._id}`}>
                                                             <button className="w-full py-2 px-3 rounded-xl border border-indigo-500 text-indigo-600 font-bold text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5">
                                                                 <MessageCircle size={14} /> Chat
                                                             </button>
                                                         </Link>
                                                     )}
                                                     {featureFlags?.enableCall && (
-                                                        <Link href={`/astrologers/${astro.slug || astro._id}`}>
+                                                        <Link href={`/astrologers/details?id=${astro.slug || astro._id}`}>
                                                             <button className="w-full py-2 px-3 rounded-xl border border-emerald-500 text-emerald-600 font-bold text-sm hover:bg-emerald-50 transition-all flex items-center justify-center gap-1.5">
                                                                 <Phone size={14} /> Call
                                                             </button>
