@@ -215,7 +215,7 @@ export default function FeatureSettings() {
                         </div>
                         <p className="text-slate-500 text-sm leading-relaxed mb-4">
                             {promotionType === 'image'
-                                ? "Upload a promotional image for banner or ad placements. Recommended Size: 500x300px"
+                                ? "Upload a promotional image for banner or ad placements. Recommended Size: 500x281px"
                                 : "Add a YouTube video to be displayed in the promotion slot."}
                         </p>
 

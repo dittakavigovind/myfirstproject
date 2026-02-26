@@ -219,7 +219,7 @@ export default function HomeClient() {
 
                                     {/* RIGHT: Actions (Moved from Left) */}
                                     <div className="flex-1 w-full md:max-w-md">
-                                        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group min-h-[300px] flex flex-col justify-center">
+                                        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group max-w-[400px] mx-auto aspect-video md:max-w-none flex flex-col justify-center">
                                             {/* Subtle Decorative Background */}
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-colors pointer-events-none"></div>
 
