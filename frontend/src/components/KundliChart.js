@@ -71,18 +71,18 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
     // POSITIONS (x,y in 0-400 grid)
     // House positions for text
     const houses = [
-        { id: 1, x: 200, y: 80 },  // Top Diamond (1)
-        { id: 2, x: 100, y: 35 },  // Top Left (2)
-        { id: 3, x: 35, y: 100 },  // Left Top (3)
-        { id: 4, x: 80, y: 200 },  // Left Diamond (4)
-        { id: 5, x: 35, y: 300 },  // Left Bottom (5)
-        { id: 6, x: 100, y: 365 }, // Bottom Left (6)
-        { id: 7, x: 200, y: 320 }, // Bottom Diamond (7)
-        { id: 8, x: 300, y: 365 }, // Bottom Right (8)
-        { id: 9, x: 365, y: 300 }, // Right Bottom (9)
-        { id: 10, x: 320, y: 200 }, // Right Diamond (10)
-        { id: 11, x: 365, y: 100 }, // Right Top (11)
-        { id: 12, x: 300, y: 35 },  // Top Right (12)
+        { id: 1, x: 200, y: 190 },  // Top Diamond (1) - Adjusted Y for center
+        { id: 2, x: 100, y: 90 },   // Top Left (2)
+        { id: 3, x: 75, y: 110 },   // Left Top (3)
+        { id: 4, x: 90, y: 200 },   // Left Diamond (4)
+        { id: 5, x: 75, y: 290 },   // Left Bottom (5)
+        { id: 6, x: 100, y: 310 },  // Bottom Left (6)
+        { id: 7, x: 200, y: 210 },  // Bottom Diamond (7)
+        { id: 8, x: 300, y: 310 },  // Bottom Right (8)
+        { id: 9, x: 325, y: 290 },  // Right Bottom (9)
+        { id: 10, x: 310, y: 200 }, // Right Diamond (10)
+        { id: 11, x: 325, y: 110 }, // Right Top (11)
+        { id: 12, x: 300, y: 90 },   // Top Right (12)
     ];
 
     const renderHouse = (houseIndex) => {
@@ -91,31 +91,40 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
         const planets = planetsBySign[signVal] || [];
         const coord = houses[houseIndex - 1];
 
-        // Highlight planets vs empty
-        const hasPlanets = planets.length > 0;
-
         // Scaling for Small Mode
         const signSize = smallMode ? "8" : "10";
         const planetSize = smallMode ? "9" : "12";
 
+        const hasLagna = planets.includes('Lagna');
+        const otherPlanets = planets.filter(p => p !== 'Lagna');
+
+        // Split other planets into lines of 3
+        const lines = [];
+        for (let i = 0; i < otherPlanets.length; i += 3) {
+            lines.push(otherPlanets.slice(i, i + 3).join(', '));
+        }
+
         return (
             <g key={houseIndex}>
                 {/* Sign Number */}
-                <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={signSize} fill="#f59e0b" fillOpacity="0.5" fontWeight="bold" dy="-12">
+                <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={signSize} fill="#f59e0b" fillOpacity="0.4" fontWeight="bold" dy="-25">
                     {signVal}
                 </text>
                 {/* Planets */}
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={planetSize} fontWeight="bold">
-                    {/* Render Lagna */}
-                    {planets.some(p => p === 'Lagna') && (
-                        <tspan x={coord.x} dy="8" fill="#d8b4fe">Lagna</tspan>
+                    {hasLagna && (
+                        <tspan x={coord.x} dy="0" fill="#d8b4fe">Lagna</tspan>
                     )}
-                    {/* Render Other Planets */}
-                    {planets.filter(p => p !== 'Lagna').length > 0 && (
-                        <tspan x={coord.x} dy={planets.some(p => p === 'Lagna') ? "14" : "8"} fill="#fcd34d">
-                            {planets.filter(p => p !== 'Lagna').join(', ')}
+                    {lines.map((line, idx) => (
+                        <tspan
+                            key={idx}
+                            x={coord.x}
+                            dy={idx === 0 ? (hasLagna ? (smallMode ? "11" : "14") : "5") : (smallMode ? "10" : "13")}
+                            fill="#fcd34d"
+                        >
+                            {line}
                         </tspan>
-                    )}
+                    ))}
                 </text>
             </g>
         );
@@ -203,7 +212,6 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
             <rect x="1" y="1" width="398" height="398" fill="none" stroke="#f59e0b" strokeWidth="2" strokeOpacity="0.4" rx="4" />
 
             {/* Grid Lines */}
-            {/* Grid Lines */}
             <g stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.4">
                 {/* Vertical Lines */}
                 <line x1="100" y1="0" x2="100" y2="400" />
@@ -224,9 +232,7 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
 
             {/* Center Branding */}
             <g opacity="1">
-                {/* Halo/Glow behind logo */}
                 <circle cx="200" cy="200" r="60" fill="url(#cosmicGradient)" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" filter="url(#goldGlow)" />
-
                 <image
                     href="/logo.svg"
                     x="130"
@@ -240,6 +246,15 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
             {/* Boxes */}
             {GRID.map(box => {
                 const planets = planetsBySign[box.sign] || [];
+                const hasLagna = planets.includes('Lagna');
+                const otherPlanets = planets.filter(p => p !== 'Lagna');
+
+                // Split other planets into lines of 3 or 4 based on density
+                const lines = [];
+                const chunkSize = otherPlanets.length > 5 ? 3 : 4;
+                for (let i = 0; i < otherPlanets.length; i += chunkSize) {
+                    lines.push(otherPlanets.slice(i, i + chunkSize).join(', '));
+                }
 
                 return (
                     <g key={box.sign}>
@@ -249,19 +264,24 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
                         )}
 
                         {/* Sign Name (Small) */}
-                        <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#f59e0b" fillOpacity="0.5" fontWeight="bold">
+                        <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#f59e0b" fillOpacity="0.4" fontWeight="bold">
                             {SIGNS[box.sign - 1]}
                         </text>
 
                         <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="11" fontWeight="bold">
-                            {planets.some(p => p === 'Lagna') && (
-                                <tspan x={box.x + 50} dy="0" fill="#d8b4fe">Lagna</tspan>
+                            {hasLagna && (
+                                <tspan x={box.x + 50} dy={lines.length > 0 ? "-5" : "5"} fill="#d8b4fe">Lagna</tspan>
                             )}
-                            {planets.filter(p => p !== 'Lagna').length > 0 && (
-                                <tspan x={box.x + 50} dy={planets.some(p => p === 'Lagna') ? "14" : "0"} fill="#fcd34d">
-                                    {planets.filter(p => p !== 'Lagna').join(', ')}
+                            {lines.map((line, idx) => (
+                                <tspan
+                                    key={idx}
+                                    x={box.x + 50}
+                                    dy={idx === 0 ? (hasLagna ? "14" : "5") : "12"}
+                                    fill="#fcd34d"
+                                >
+                                    {line}
                                 </tspan>
-                            )}
+                            ))}
                         </text>
                     </g>
                 );
