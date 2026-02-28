@@ -369,14 +369,17 @@ export default function DashaPeriodsCalculator() {
                                             className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl overflow-y-auto max-h-[80vh]"
                                         >
                                             <div className="flex justify-between items-start mb-6">
-                                                <div>
-                                                    {selectedDashaForAnalysis.lord} {viewStack.length === 0 ? 'Mahadasha' :
-                                                        viewStack.length === 1 ? 'Antardasha' :
-                                                            viewStack.length === 2 ? 'Pratyantar' :
-                                                                viewStack.length === 3 ? 'Sookshma' : 'Prana'} Analysis
-                                                    <p className="text-white/40 text-sm mt-1 font-medium bg-white/5 inline-block px-3 py-1 rounded-md">
+                                                <div className="flex-1">
+                                                    <h3 className="text-2xl font-black text-white flex items-center gap-2 mb-2">
+                                                        {selectedDashaForAnalysis.lord} {viewStack.length === 0 ? 'Mahadasha' :
+                                                            viewStack.length === 1 ? 'Antardasha' :
+                                                                viewStack.length === 2 ? 'Pratyantar' :
+                                                                    viewStack.length === 3 ? 'Sookshma' : 'Prana'} Analysis
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 text-indigo-300/80 font-bold text-xs uppercase tracking-wider bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 w-fit">
+                                                        <Calendar size={12} className="shrink-0" />
                                                         {formatDate(selectedDashaForAnalysis.start)} — {formatDate(selectedDashaForAnalysis.end)}
-                                                    </p>
+                                                    </div>
                                                 </div>
                                                 <button
                                                     onClick={() => setSelectedDashaForAnalysis(null)}
@@ -386,29 +389,35 @@ export default function DashaPeriodsCalculator() {
                                                 </button>
                                             </div>
 
-                                            {selectedDashaForAnalysis.analysis ? (
+                                            {(selectedDashaForAnalysis.analysis || (selectedDashaForAnalysis.remedies && selectedDashaForAnalysis.remedies.length > 0)) ? (
                                                 <div className="space-y-6">
-                                                    <div className="pl-4 border-l-4 border-indigo-500 bg-white/5 p-4 rounded-r-xl">
-                                                        <p className="text-sm font-bold text-white leading-relaxed">
-                                                            Your <span className="uppercase text-indigo-400">{selectedDashaForAnalysis.lord}</span> is sitting in <span className="text-indigo-300">{selectedDashaForAnalysis.analysis.sign}</span> sign and <span className="text-indigo-300">{selectedDashaForAnalysis.analysis.house}th</span> house.
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-justify">
-                                                        <p className="whitespace-pre-line text-indigo-100/90 text-sm leading-relaxed font-medium">
-                                                            {selectedDashaForAnalysis.analysis.text}
-                                                        </p>
-                                                    </div>
+                                                    {selectedDashaForAnalysis.analysis && (
+                                                        <div className="space-y-4">
+                                                            <div className="pl-4 border-l-4 border-indigo-500 bg-white/5 p-4 rounded-r-xl">
+                                                                <p className="text-sm font-bold text-white leading-relaxed">
+                                                                    Your <span className="uppercase text-indigo-400">{selectedDashaForAnalysis.lord}</span> is sitting in <span className="text-indigo-300">{selectedDashaForAnalysis.analysis.sign}</span> sign and <span className="text-indigo-300">{selectedDashaForAnalysis.analysis.house}th</span> house.
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-justify">
+                                                                <p className="whitespace-pre-line text-indigo-100/90 text-sm leading-relaxed font-medium">
+                                                                    {selectedDashaForAnalysis.analysis.text}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )}
 
                                                     {selectedDashaForAnalysis.remedies && selectedDashaForAnalysis.remedies.length > 0 && (
                                                         <div className="space-y-3">
-                                                            <h4 className="text-indigo-400 font-bold text-sm uppercase tracking-wider">Suggested Remedies</h4>
+                                                            <h4 className="text-indigo-400 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                                                                <Sparkles size={14} /> Suggested Remedies
+                                                            </h4>
                                                             <div className="grid grid-cols-1 gap-2">
                                                                 {selectedDashaForAnalysis.remedies.map((remedy, i) => (
-                                                                    <div key={i} className="flex gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                                                                        <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                                                            <CheckCircle2 size={12} className="text-indigo-400" />
+                                                                    <div key={i} className="flex gap-3 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-indigo-500/20 transition-colors group">
+                                                                        <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-indigo-500/40 transition-colors">
+                                                                            <CheckCircle2 size={14} className="text-indigo-400" />
                                                                         </div>
-                                                                        <p className="text-xs text-white/70 font-medium leading-relaxed">{remedy}</p>
+                                                                        <p className="text-sm text-white/70 font-medium leading-relaxed group-hover:text-white/90 transition-colors">{remedy}</p>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -416,8 +425,10 @@ export default function DashaPeriodsCalculator() {
                                                     )}
                                                 </div>
                                             ) : (
-                                                <div className="text-center py-8 text-white/40">
-                                                    <p>Detailed analysis is not available for this period.</p>
+                                                <div className="text-center py-12 px-6 bg-white/5 rounded-3xl border border-white/5">
+                                                    <Zap size={40} className="text-white/10 mx-auto mb-4" />
+                                                    <p className="text-white/60 font-bold">Comprehensive analysis details are still being updated for this very granular period.</p>
+                                                    <p className="text-white/30 text-xs mt-2">Try viewing high-level levels for more details.</p>
                                                 </div>
                                             )}
                                         </motion.div>
