@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
     Heart, Moon, Sun, Stars, Sparkles, Layout, Clock,
     ArrowRight, Activity, Users, AlertCircle, Shield,
-    Hash, Calendar, Star
+    Hash, Calendar, Star, Briefcase, Crown
 } from 'lucide-react';
 import CalculatorCard from '../../components/calculators/CalculatorCard';
 import PageContentSection from '../../components/common/PageContentSection';
@@ -109,12 +109,28 @@ const calculators = [
         delay: 0.9
     },
     {
+        title: "Marriage & Career Timing",
+        description: "Discover your most favorable periods for marriage and professional growth through Vedic Astrology.",
+        icon: Briefcase,
+        href: "/calculators/marriage-career",
+        color: "indigo",
+        delay: 0.92
+    },
+    {
+        title: "Atmakaraka Calculator",
+        description: "Discover your Soul Planet (Atmakaraka) and Spouse Planet (Darakaraka) using Jaimini Astrology.",
+        icon: Crown,
+        href: "/calculators/atmakaraka",
+        color: "amber",
+        delay: 0.95
+    },
+    {
         title: "Arudha Lagna",
         description: "Discover your public image and how the world perceives you based on Jaimini astrology.",
         icon: Shield,
         href: "/arudha-lagna",
         color: "indigo",
-        delay: 0.95
+        delay: 0.98
     }
 ];
 
@@ -129,7 +145,7 @@ export default function CalculatorsLanding() {
                     <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
                 </div>
 
-                <div className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-40 flex flex-col items-center text-center">
+                <div className="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-20 md:pt-16 md:pb-32 flex flex-col items-center text-center">
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -152,7 +168,7 @@ export default function CalculatorsLanding() {
             </div>
 
             {/* Calculators Grid */}
-            <div className="max-w-7xl mx-auto px-6 -mt-16 md:-mt-24 relative z-20">
+            <div className="max-w-7xl mx-auto px-6 -mt-12 md:-mt-20 relative z-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {calculators.map((calc, index) => (
                         <CalculatorCard key={index} {...calc} />
