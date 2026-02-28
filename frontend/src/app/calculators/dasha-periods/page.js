@@ -62,6 +62,7 @@ export default function DashaPeriodsCalculator() {
     const [viewStack, setViewStack] = useState([]);
     const [selectedDashaForAnalysis, setSelectedDashaForAnalysis] = useState(null);
     const [currentPath, setCurrentPath] = useState([]);
+    const [lordInterpretations, setLordInterpretations] = useState({});
 
     // Helper to calculate next level periods recursively
     const calculateNextLevel = (parent) => {
@@ -85,11 +86,15 @@ export default function DashaPeriodsCalculator() {
             const daysToAdd = duration * 365.2425;
             endDate.setTime(endDate.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
 
+            const info = lordInterpretations[subLord];
+
             subPeriods.push({
                 lord: subLord,
                 start: currentDate.toISOString().split('T')[0],
                 end: endDate.toISOString().split('T')[0],
-                duration: duration
+                duration: duration,
+                analysis: info?.analysis,
+                remedies: info?.remedies || []
             });
 
             currentDate = endDate;
@@ -170,6 +175,7 @@ export default function DashaPeriodsCalculator() {
             if (res.data.success) {
                 setResult(res.data.data.dashas.list);
                 setCurrentPath(res.data.data.dashas.currentPath || []);
+                setLordInterpretations(res.data.data.dashas.lordInterpretations || {});
             } else {
                 toast.error("Failed to calculate Dasha periods. Please try again.");
             }
@@ -364,11 +370,10 @@ export default function DashaPeriodsCalculator() {
                                         >
                                             <div className="flex justify-between items-start mb-6">
                                                 <div>
-                                                    <h3 className="text-2xl font-black text-white flex items-center gap-2">
-                                                        {selectedDashaForAnalysis.lord} {viewStack.length === 0 ? 'Mahadasha' :
-                                                            viewStack.length === 1 ? 'Antardasha' :
-                                                                viewStack.length === 2 ? 'Pratyantar' : 'Sookshma'} Analysis
-                                                    </h3>
+                                                    {selectedDashaForAnalysis.lord} {viewStack.length === 0 ? 'Mahadasha' :
+                                                        viewStack.length === 1 ? 'Antardasha' :
+                                                            viewStack.length === 2 ? 'Pratyantar' :
+                                                                viewStack.length === 3 ? 'Sookshma' : 'Prana'} Analysis
                                                     <p className="text-white/40 text-sm mt-1 font-medium bg-white/5 inline-block px-3 py-1 rounded-md">
                                                         {formatDate(selectedDashaForAnalysis.start)} — {formatDate(selectedDashaForAnalysis.end)}
                                                     </p>
@@ -412,7 +417,7 @@ export default function DashaPeriodsCalculator() {
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8 text-white/40">
-                                                    <p>Detailed analysis is available for Mahadasha levels.</p>
+                                                    <p>Detailed analysis is not available for this period.</p>
                                                 </div>
                                             )}
                                         </motion.div>
@@ -429,7 +434,8 @@ export default function DashaPeriodsCalculator() {
                                             {viewStack.length === 0 ? `${formData.name}'s Dasha Cycle` :
                                                 viewStack.length === 1 ? `${viewStack[0].lord} Mahadasha (Antardasha)` :
                                                     viewStack.length === 2 ? `${viewStack[1].lord} Antardasha (Pratyantar)` :
-                                                        `${viewStack[2].lord} Pratyantar Dasha (Sookshma)`}
+                                                        viewStack.length === 3 ? `${viewStack[2].lord} Pratyantar (Sookshma)` :
+                                                            `${viewStack[3].lord} Sookshma (Prana)`}
                                         </h2>
                                         <p className="text-indigo-200/60 text-sm font-medium mt-1">
                                             Analysis of your planetary periods and their influences
@@ -461,7 +467,8 @@ export default function DashaPeriodsCalculator() {
                                                     <span className="text-white font-bold">
                                                         {viewStack.length === 1 ? 'Antardasha' :
                                                             viewStack.length === 2 ? 'Pratyantar' :
-                                                                'Sookshma'}
+                                                                viewStack.length === 3 ? 'Sookshma' :
+                                                                    'Pranadasha'}
                                                     </span>
                                                 </>
                                             )}
@@ -545,7 +552,8 @@ export default function DashaPeriodsCalculator() {
                                                     <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1 block">
                                                         {viewStack.length === 0 ? 'Mahadasha' :
                                                             viewStack.length === 1 ? 'Antardasha' :
-                                                                viewStack.length === 2 ? 'Pratyantar' : 'Sookshma Dasha'}
+                                                                viewStack.length === 2 ? 'Pratyantar' :
+                                                                    viewStack.length === 3 ? 'Sookshma' : 'Pranadasha'}
                                                     </span>
                                                     <h3 className="text-2xl font-black text-white">{dasha.lord}</h3>
                                                 </div>

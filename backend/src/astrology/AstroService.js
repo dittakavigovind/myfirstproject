@@ -355,9 +355,18 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
         subPeriods: calculateSubPeriods(new Date(dasha.startISO), dasha.lord, dasha.duration, 2)
     }));
 
+    const lordInterpretations = {};
+    dashaLords.forEach(lord => {
+        lordInterpretations[lord] = {
+            analysis: getAnalysis(lord),
+            remedies: dashaInterpretations[lord]?.remedies || []
+        };
+    });
+
     return {
         list: dashaList,
         currentPath: findCurrentPath(dashaList),
+        lordInterpretations,
         birthNakshatra: NAKSHATRAS[nakshatraIndex]
     };
 };
