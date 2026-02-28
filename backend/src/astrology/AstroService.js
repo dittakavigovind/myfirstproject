@@ -251,7 +251,7 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
     }
 
     const calculateSubPeriods = (startDate, parentLord, parentDurationYears, level) => {
-        if (level > 3) return null; // Max Level 3 (Pratyantardasha)
+        if (level > 3) return null; // Static tree limited to Level 3 (Pratyantardasha) for performance
 
         const subPeriods = [];
         let currentSubDate = new Date(startDate);
@@ -262,7 +262,6 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
             const subLord = dashaLords[idx];
             const subLordYears = dashaYears[idx];
 
-            // Vimshottari Rule: Sub-period years = (Parent Years * This Planet Years) / 120
             const subDurationYears = (parentDurationYears * subLordYears) / 120;
 
             const subEndDate = new Date(currentSubDate);
@@ -276,12 +275,11 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
                 startISO: currentSubDate.toISOString(),
                 endISO: subEndDate.toISOString(),
                 duration: subDurationYears,
-                analysis: getAnalysis(subLord)
+                analysis: getAnalysis(subLord),
+                remedies: dashaInterpretations[subLord]?.remedies || []
             };
 
-            // Recursively calculate next level
             if (level < 3) {
-                // For Pratyantardasha
                 subP.subPeriods = calculateSubPeriods(currentSubDate, subLord, subDurationYears, level + 1);
             }
 
@@ -291,12 +289,75 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
         return subPeriods;
     };
 
+    const findCurrentPath = (fullList) => {
+        const now = new Date();
+        const path = [];
+
+        const traverse = (list, level) => {
+            if (!list || level > 5) return;
+            const active = list.find(d => {
+                const start = new Date(d.startISO || d.start);
+                const end = new Date(d.endISO || d.end);
+                return now >= start && now <= end;
+            });
+
+            if (active) {
+                path.push({
+                    level,
+                    lord: active.lord,
+                    start: active.start,
+                    end: active.end,
+                    analysis: active.analysis,
+                    remedies: active.remedies
+                });
+
+                // If subPeriods exists in static tree, use it
+                if (active.subPeriods) {
+                    traverse(active.subPeriods, level + 1);
+                } else if (level < 5) {
+                    // Calculate next level dynamically for current path only
+                    const nextLevel = [];
+                    let currentSubDate = new Date(active.startISO || active.start);
+                    const parentIndex = dashaLords.indexOf(active.lord);
+                    const parentDuration = active.duration;
+
+                    for (let i = 0; i < 9; i++) {
+                        const idx = (parentIndex + i) % 9;
+                        const subLord = dashaLords[idx];
+                        const subLordYears = dashaYears[idx];
+                        const subDuration = (parentDuration * subLordYears) / 120;
+                        const subEndDate = new Date(currentSubDate);
+                        subEndDate.setTime(subEndDate.getTime() + (subDuration * 365.2425 * 24 * 60 * 60 * 1000));
+
+                        nextLevel.push({
+                            lord: subLord,
+                            start: format(currentSubDate),
+                            end: format(subEndDate),
+                            startISO: currentSubDate.toISOString(),
+                            duration: subDuration,
+                            analysis: getAnalysis(subLord),
+                            remedies: dashaInterpretations[subLord]?.remedies || []
+                        });
+                        currentSubDate = subEndDate;
+                    }
+                    traverse(nextLevel, level + 1);
+                }
+            }
+        };
+
+        traverse(fullList, 1);
+        return path;
+    };
+
+    const dashaList = dashas.map(dasha => ({
+        ...dasha,
+        remedies: dashaInterpretations[dasha.lord]?.remedies || [],
+        subPeriods: calculateSubPeriods(new Date(dasha.startISO), dasha.lord, dasha.duration, 2)
+    }));
+
     return {
-        list: dashas.map(dasha => ({
-            ...dasha,
-            // Calculate Antardasha (Level 2)
-            subPeriods: calculateSubPeriods(new Date(dasha.startISO), dasha.lord, dasha.duration, 2)
-        })),
+        list: dashaList,
+        currentPath: findCurrentPath(dashaList),
         birthNakshatra: NAKSHATRAS[nakshatraIndex]
     };
 };

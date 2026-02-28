@@ -60,7 +60,8 @@ export default function DashaPeriodsCalculator() {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [viewStack, setViewStack] = useState([]);
-    const [selectedDashaForAnalysis, setSelectedDashaForAnalysis] = useState(null); // Array of dasha objects path
+    const [selectedDashaForAnalysis, setSelectedDashaForAnalysis] = useState(null);
+    const [currentPath, setCurrentPath] = useState([]);
 
     // Helper to calculate next level periods recursively
     const calculateNextLevel = (parent) => {
@@ -97,14 +98,20 @@ export default function DashaPeriodsCalculator() {
     };
 
     const handleCardClick = (dasha) => {
-        if (viewStack.length >= 3) return; // Limit depth (Maha > Antar > Pratyantar > Sookshma)
+        if (viewStack.length >= 4) return; // Limit depth (Maha > Antar > Pratyantar > Sookshma > Prana)
 
         // If subPeriods already exist (from backend), use them. Otherwise calculate.
         const nextLevelData = dasha.subPeriods || calculateNextLevel(dasha);
-        // Enrich the clicked dasha with the calculated subPeriods for strict traversal
         const enrichedDasha = { ...dasha, subPeriods: nextLevelData };
 
         setViewStack([...viewStack, enrichedDasha]);
+    };
+
+    const isDashaActive = (dasha) => {
+        const now = new Date();
+        const start = new Date(dasha.startISO || dasha.start);
+        const end = new Date(dasha.endISO || dasha.end);
+        return now >= start && now <= end;
     };
 
     const currentViewData = viewStack.length === 0 ? result : viewStack[viewStack.length - 1].subPeriods;
@@ -162,6 +169,7 @@ export default function DashaPeriodsCalculator() {
 
             if (res.data.success) {
                 setResult(res.data.data.dashas.list);
+                setCurrentPath(res.data.data.dashas.currentPath || []);
             } else {
                 toast.error("Failed to calculate Dasha periods. Please try again.");
             }
@@ -385,6 +393,22 @@ export default function DashaPeriodsCalculator() {
                                                             {selectedDashaForAnalysis.analysis.text}
                                                         </p>
                                                     </div>
+
+                                                    {selectedDashaForAnalysis.remedies && selectedDashaForAnalysis.remedies.length > 0 && (
+                                                        <div className="space-y-3">
+                                                            <h4 className="text-indigo-400 font-bold text-sm uppercase tracking-wider">Suggested Remedies</h4>
+                                                            <div className="grid grid-cols-1 gap-2">
+                                                                {selectedDashaForAnalysis.remedies.map((remedy, i) => (
+                                                                    <div key={i} className="flex gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                                                        <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                                                                            <CheckCircle2 size={12} className="text-indigo-400" />
+                                                                        </div>
+                                                                        <p className="text-xs text-white/70 font-medium leading-relaxed">{remedy}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="text-center py-8 text-white/40">
@@ -444,12 +468,53 @@ export default function DashaPeriodsCalculator() {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => { setResult(null); setViewStack([]); }}
+                                        onClick={() => { setResult(null); setViewStack([]); setCurrentPath([]); }}
                                         className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all flex items-center gap-2 text-sm"
                                     >
                                         <RefreshCw size={16} /> New Check
                                     </button>
                                 </div>
+
+                                {/* Present Dasha Summary */}
+                                {currentPath.length > 0 && viewStack.length === 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-3xl relative overflow-hidden group"
+                                    >
+                                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <Zap size={80} className="text-indigo-400" />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <h3 className="text-indigo-300 font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                                <Zap size={14} className="animate-pulse" /> Your Present Planetary Influence
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-y-4 gap-x-6">
+                                                {currentPath.map((p, i) => (
+                                                    <div key={i} className="flex items-center gap-3">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-indigo-300/50 font-bold uppercase tracking-wider">
+                                                                {i === 0 ? 'Maha' : i === 1 ? 'Antar' : i === 2 ? 'Pratyantar' : i === 3 ? 'Sukshma' : 'Prana'}
+                                                            </span>
+                                                            <span className="text-lg font-black text-white">{p.lord}</span>
+                                                        </div>
+                                                        {i < currentPath.length - 1 && (
+                                                            <div className="h-8 w-px bg-white/10 mx-2" />
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-6 flex gap-4">
+                                                <button
+                                                    onClick={() => setSelectedDashaForAnalysis(currentPath[currentPath.length - 1])}
+                                                    className="text-sm bg-indigo-500 hover:bg-indigo-400 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+                                                >
+                                                    View Detailed Interpretation
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
 
                                 {/* Current Level Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -460,10 +525,19 @@ export default function DashaPeriodsCalculator() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.05 }}
                                             onClick={() => setSelectedDashaForAnalysis(dasha)}
-                                            className="bg-white/[0.03] hover:bg-white/[0.05] backdrop-blur-xl rounded-[2rem] p-8 border border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer relative overflow-hidden"
+                                            className={`backdrop-blur-xl rounded-[2rem] p-8 border shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer relative overflow-hidden ${isDashaActive(dasha)
+                                                ? 'bg-indigo-600/10 border-indigo-500/50 ring-1 ring-indigo-500/20'
+                                                : 'bg-white/[0.03] hover:bg-white/[0.05] border-white/10'
+                                                }`}
                                         >
+                                            {isDashaActive(dasha) && (
+                                                <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-tighter px-4 py-1.5 rounded-bl-2xl flex items-center gap-1 shadow-lg">
+                                                    <Zap size={10} fill="white" /> Active Now
+                                                </div>
+                                            )}
+
                                             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <ArrowRight size={20} className="text-white/20" />
+                                                {!isDashaActive(dasha) && <ArrowRight size={20} className="text-white/20" />}
                                             </div>
 
                                             <div className="flex items-center justify-between mb-6">
@@ -498,13 +572,13 @@ export default function DashaPeriodsCalculator() {
 
                                             <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
                                                 <span className="text-xs text-white/40 font-medium">Duration: {(dasha.duration * 12).toFixed(1)} months</span>
-                                                {viewStack.length < 3 && (
+                                                {viewStack.length < 4 && (
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleCardClick(dasha);
                                                         }}
-                                                        className="text-xs text-indigo-400 font-bold hover:text-indigo-300 transition-colors flex items-center gap-1 z-10 group-hover:translate-x-1 duration-300"
+                                                        className={`text-xs font-bold transition-colors flex items-center gap-1 z-10 group-hover:translate-x-1 duration-300 ${isDashaActive(dasha) ? 'text-indigo-300 hover:text-white' : 'text-indigo-400 hover:text-indigo-300'}`}
                                                     >
                                                         View Sub-periods <ArrowRight size={12} />
                                                     </button>

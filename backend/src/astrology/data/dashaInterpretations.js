@@ -34,7 +34,14 @@ const dashaInterpretations = {
             "Capricorn": "Sun in Capricorn brings a very disciplined and career-oriented dasha. You will be highly focused on your public image and professional achievements. This is a time of hard work followed by steady, structural growth in your life.",
             "Aquarius": "The Sun in the sign of Aquarius brings a period of social reform and intellectual exploration. While this placement can sometimes result in disputes or feuds due to unconventional views, it also provides the native with the ability to see beyond the ordinary. Your enemies might try to challenge your ideas, but your sharp intellect will always find a better reply.",
             "Pisces": "Imaginative and compassionate. You lead with intuition. A good time for spiritual pursuits and artistic expression."
-        }
+        },
+        remedies: [
+            "Perform Surya Namaskar (Sun Salutation) daily at sunrise.",
+            "Offer water (Arghya) to the Sun in a copper vessel every morning.",
+            "Chant 'Om Hram Hreem Hroum Sah Suryaya Namah' 108 times.",
+            "Donate wheat, copper, or jaggery on Sundays.",
+            "Respect and serve your father and elderly figures."
+        ]
     },
     Moon: {
         description: "The Moon represents the Mind, Emotions, Mother, and Public. Its Dasha is a period of emotional flux, nurturing, and changes in the immediate environment.",
@@ -65,7 +72,14 @@ const dashaInterpretations = {
             "Capricorn": "Reserved and disciplined. You mask your feelings. Ambition drives your emotional security.",
             "Aquarius": "Moon in Aquarius brings an innovative and humanitarian mindset. During this dasha, your emotions are guided by logic and a sense of social responsibility. You will feel a strong connection to community goals and may find peace in collective activities.",
             "Pisces": "Dreamy and psychic. You merge easily with others' feelings. Art and spirituality are your escape."
-        }
+        },
+        remedies: [
+            "Worship Lord Shiva, especially on Mondays.",
+            "Chant 'Om Shram Shreem Shroum Sah Chandraya Namah' 108 times.",
+            "Donate milk, rice, or white clothes to the needy on Mondays.",
+            "Drink water from a silver glass and wear white-colored clothes.",
+            "Respect and serve your mother or motherly figures."
+        ]
     },
     Mars: {
         description: "Mars represents Energy, Action, Courage, and Siblings. Its Dasha is a period of high activity, protecting what is yours, and overcoming resistance.",
@@ -96,7 +110,14 @@ const dashaInterpretations = {
             "Capricorn": "Mars is Exalted in Capricorn, making this a highly powerful and disciplined period. You will showcase great leadership, stamina, and organizational skills. Success in career, administrative roles, and physical challenges is likely. You are highly ambitious now and have the persistence to see your goals through to the end.",
             "Aquarius": "The planet Mars is camping with the Aquarius sign in the Kundli. This placement is synonymous with obstacles and hazards in the native's life. This is a period during which the native seems to be extravagantly reckless in everything he/she does. The placement of Mars in Aquarius suggests that your extravaganzas need to be controlled.",
             "Pisces": "Energy flows in waves. You act on intuition. Good for selfless service but can lack focus."
-        }
+        },
+        remedies: [
+            "Worship Lord Hanuman and recite Hanuman Chalisa daily.",
+            "Chant 'Om Kram Kreem Kroum Sah Bhaumaya Namah' 108 times.",
+            "Donate red lentils (Masoor Dal) or red-colored items on Tuesdays.",
+            "Keep a red handkerchief in your pocket for confidence.",
+            "Plant a Neem tree or care for thorny plants."
+        ]
     },
     Mercury: {
         description: "Mercury represents Intellect, Communication, Business, and Humor. Its Dasha is a period of learning, networking, and commercial success.",
@@ -127,7 +148,14 @@ const dashaInterpretations = {
             "Capricorn": "Mercury in Capricorn brings a practical and disciplined approach to your thoughts and communication. You will be focused on your career and long-term goals, making well-calculated decisions that lead to professional success.",
             "Aquarius": "Mercury in Aquarius gives a very innovative and scientific mind. You'll be drawn towards new-age ideas and community-building. Your intellect is sharp, and you can solve complex problems with ease. This period is great for networking and gain from friends.",
             "Pisces": "The planet Mercury is camping with the Pisces sign in the Kundli. This placement hints at a period where the native may have to deal with some temporary diseases. This Dasha period suggests that you adopt an active lifestyle for yourself."
-        }
+        },
+        remedies: [
+            "Worship Lord Ganesha and offer Durva grass on Wednesdays.",
+            "Chant 'Om Bram Breem Broum Sah Budhaya Namah' 108 times.",
+            "Donate green moong dal or green clothes to students.",
+            "Feed green grass to cows on Wednesdays.",
+            "Keep a small green jade or emerald-colored stone on your desk."
+        ]
     },
     Jupiter: {
         description: "Jupiter represents Wisdom, Expansion, Wealth, and Dharma. Its Dasha is often the most auspicious, bringing growth, optimism, and divine grace.",
@@ -158,7 +186,14 @@ const dashaInterpretations = {
             "Capricorn": "Jupiter is Debilitated. Materialism may cloud wisdom. You may struggle with ethics vs. ambition. Be careful.",
             "Aquarius": "Humanitarian expansion. You work for the greater good. Innovative social concepts.",
             "Pisces": "Jupiter is in its Own Sign. Spiritual and compassionate. You dissolve boundaries. Perfect for mystics."
-        }
+        },
+        remedies: [
+            "Worship Lord Vishnu or Brihaspati Deva on Thursdays.",
+            "Chant 'Om Gram Greem Groum Sah Gurave Namah' 108 times.",
+            "Donate yellow sweets, turmeric, or yellow gram dal on Thursdays.",
+            "Apply a tilak of yellow sandalwood or turmeric on your forehead.",
+            "Respect your teachers, mentors, and elders."
+        ]
     },
     Venus: {
         description: "Venus represents Love, Beauty, Luxury, and Relationships. Its Dasha is a time of enjoyment, artistic expression, and social charm.",
@@ -189,7 +224,14 @@ const dashaInterpretations = {
             "Capricorn": "Venus is camping with the Capricorn sign in the Kundli. With this positioning, the native may encounter happy times but with some ups and downs. Therefore, you may prefer to reside away from your homeland. The same shall prove a successful move in the long run. Also, with the placement of Venus in Capricorn, problems in business and progress would settle without long delay or hurdles.",
             "Aquarius": "Venus in Aquarius brings a unique approach to love and finances. You may value freedom and individuality in your relationships. This period encourages innovative creative projects and unconventional gains.",
             "Pisces": "Venus is Exalted. Unconditional, spiritual love. Highly artistic and compassionate. Supreme bliss."
-        }
+        },
+        remedies: [
+            "Worship Goddess Lakshmi or Durga on Fridays.",
+            "Chant 'Om Dram Dreem Droum Sah Shukraya Namah' 108 times.",
+            "Donate white clothes, sugar, or rice to women on Fridays.",
+            "Use pleasant perfumes and keep your surroundings clean and beautiful.",
+            "Feed white-colored birds or cows."
+        ]
     },
     Saturn: {
         description: "Saturn represents Discipline, Karma, Delay, and Structure. Its Dasha is a serious time for hard work, maturity, and facing reality.",
@@ -220,7 +262,14 @@ const dashaInterpretations = {
             "Capricorn": "Saturn is in its Own Sign. Ambitious, organized, and authoritative. Career is paramount.",
             "Aquarius": "Saturn in Aquarius is in its own Mooltrikona sign, making this a very powerful period for scientific or philosophical gains. You will be highly logical, disciplined, and focused on collective well-being. This is a time of achieving recognition through persistent effort.",
             "Pisces": "Spiritual discipline. You find structure in chaos. Ascetic tendencies."
-        }
+        },
+        remedies: [
+            "Worship Lord Shani or Hanuman on Saturdays.",
+            "Chant 'Om Pram Preem Proum Sah Shanaye Namah' 108 times.",
+            "Donate black sesame seeds, mustard oil, or iron items on Saturdays.",
+            "Light a mustard oil lamp under a Peepal tree on Saturday evenings.",
+            "Help the poor, disabled, or laborers."
+        ]
     },
     Rahu: {
         description: "Rahu represents Illusion, obsession, Foreign Lands, and Innovation. Its Dasha is unpredictable, bringing sudden rise or confusion.",
@@ -251,7 +300,14 @@ const dashaInterpretations = {
             "Capricorn": "Career obsession. You work tirelessly for status. Structural change.",
             "Aquarius": "Rahu in Aquarius sign makes you a visionary and a deep thinker. This placement during the dasha period often leads to innovations and success in technology or research-oriented fields. You will be drawn towards unconventional paths and may gain fame through unique contributions to society.",
             "Pisces": "Spiritual confusion or great psychic ability. Escapism through foreign lands."
-        }
+        },
+        remedies: [
+            "Worship Goddess Durga and chant Argala Stotram.",
+            "Chant 'Om Bhram Bhreem Bhroum Sah Rahave Namah' 108 times.",
+            "Donate black blankets or lead-based items on Saturdays.",
+            "Feed birds and maintain clean hygiene.",
+            "Avoid intoxicants and non-vegetarian food during this period."
+        ]
     },
     Ketu: {
         description: "Ketu represents Detachment, Spirituality, Moksha, and Past Life Skills. Its Dasha removes worldly attachments to focus on the inner self.",
@@ -282,7 +338,14 @@ const dashaInterpretations = {
             "Capricorn": "Ketu in Capricorn brings a period of hard work and possible changes in your professional path. You may feel a need to work in isolation or take on responsibilities that require high spiritual integrity.",
             "Aquarius": "Ketu in Aquarius sign of the Kundli. This placement is on the negative side for the native. Things may not go as per your plan and you may acquire stress due to this. However, the good news is that you will find yourself a loyal partner during this period who would work as a stress buster. The love that you two share will grow during this period.",
             "Pisces": "Complete surrender. vivid dreams. The mystic's path."
-        }
+        },
+        remedies: [
+            "Worship Lord Ganesha to remove obstacles.",
+            "Chant 'Om Sram Sreem Sroum Sah Ketave Namah' 108 times.",
+            "Donate dual-colored blankets or black and white sesame seeds.",
+            "Feed stray dogs, especially black and white ones.",
+            "Take a dip in holy rivers or perform charity during religious events."
+        ]
     }
 };
 
