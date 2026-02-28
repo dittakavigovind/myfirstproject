@@ -450,6 +450,39 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
+                    {/* Online Pooja Section */}
+                    {['admin', 'manager'].includes(user.role) && (
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-black text-astro-navy flex items-center gap-3">
+                                <div className="w-1.5 h-6 bg-astro-yellow rounded-full"></div>
+                                Online Pooja Management
+                            </h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    onClick={() => router.push('/admin/online-pooja/temples')}
+                                    className="group bg-white p-6 rounded-3xl border-2 border-slate-100 hover:border-astro-yellow hover:shadow-xl transition-all duration-300 cursor-pointer"
+                                >
+                                    <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                                        <span className="text-2xl">🛕</span>
+                                    </div>
+                                    <h3 className="text-lg font-black text-astro-navy mb-2">Temple Management</h3>
+                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">Add, edit and manage temples and their available sevas.</p>
+                                </div>
+
+                                <div
+                                    onClick={() => router.push('/admin/online-pooja/bookings')}
+                                    className="group bg-white p-6 rounded-3xl border-2 border-slate-100 hover:border-astro-yellow hover:shadow-xl transition-all duration-300 cursor-pointer"
+                                >
+                                    <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                                        <span className="text-2xl">📜</span>
+                                    </div>
+                                    <h3 className="text-lg font-black text-astro-navy mb-2">Pooja Bookings</h3>
+                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">Track bookings, verify payments and export devotee lists.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Real-time Interaction KPIs */}
                     <div className="space-y-4">
                         <h2 className="font-bold text-lg text-slate-700 flex items-center gap-2">

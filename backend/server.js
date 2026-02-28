@@ -26,6 +26,7 @@ const userRoutes = require('./src/routes/userRoutes');
 const earningsRoutes = require('./src/routes/earningsRoutes');
 const webhookRoutes = require('./src/routes/webhookRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
+const poojaRoutes = require('./src/routes/poojaRoutes');
 
 // Initialize App
 const app = express();
@@ -147,6 +148,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/activity', require('./src/routes/activityRoutes'));
 app.use('/api/page-content', require('./src/routes/pageContentRoutes'));
 app.use('/api/popups', require('./src/routes/popupRoutes'));
+app.use('/api/pooja', poojaRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

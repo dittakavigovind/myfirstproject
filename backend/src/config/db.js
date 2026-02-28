@@ -11,32 +11,16 @@ const connectDB = async () => {
         } else {
             // Attempt 1: Standard Connection
             try {
-                console.log("DB: Attempting standard connection...");
+                console.log("DB: Attempting Atlas connection...");
                 const conn = await mongoose.connect(uri, {
-                    serverSelectionTimeoutMS: 8000,
-                    connectTimeoutMS: 10000
+                    serverSelectionTimeoutMS: 5000,
+                    family: 4 // Force IPv4
                 });
                 console.log(`MongoDB Connected: ${conn.connection.host}`);
                 return;
             } catch (err) {
-                console.warn(`Primary connection failed: ${err.message}`);
-
-                // Attempt 2: Force IPv4 and Google DNS for SRV issues
-                try {
-                    console.log("DB: Attempting DNS fix (Google OpenDNS)...");
-                    const dns = require('dns');
-                    dns.setServers(['8.8.8.8', '8.8.4.4']);
-
-                    await mongoose.connect(uri, {
-                        family: 4,
-                        serverSelectionTimeoutMS: 5000 // Reduced timeout for faster fallback
-                    });
-                    console.log(`MongoDB Connected (via Google DNS): ${mongoose.connection.host}`);
-                    return;
-                } catch (dnsErr) {
-                    console.error(`DNS Fix failed: ${dnsErr.message}`);
-                    // Continue to fallback
-                }
+                console.warn(`Atlas connection failed: ${err.message}`);
+                console.log("TIP: Ensure your current IP is whitelisted in MongoDB Atlas Network Access.");
             }
         }
 

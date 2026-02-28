@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
-import API from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
+import API from '../../../../lib/api';
+import { useAuth } from '../../../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Mail, Calendar, Shield, Trash2, Save, User as UserIcon, AlertCircle, Sparkles, Star, Phone, Activity } from 'lucide-react';
 import Link from 'next/link';

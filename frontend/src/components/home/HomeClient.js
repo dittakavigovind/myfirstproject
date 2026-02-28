@@ -16,7 +16,7 @@ import {
     BookOpen, Sparkles, Star, ArrowRight, Activity,
     CheckCircle, Heart, Moon, Sun, Users, Clock,
     Hash, Shield, Zap, AlertTriangle, Briefcase,
-    ChevronDown
+    ChevronDown, Flower2
 } from 'lucide-react';
 
 // For dynamic services, we can import what we need or use a map
@@ -24,7 +24,7 @@ const LucideIconMap = {
     MessageCircle, Phone, FileText, Calendar, Sparkles,
     Star, ArrowRight, Activity, Heart, Moon, Sun,
     Users, Clock, Hash, Shield, Zap, AlertTriangle,
-    Briefcase, PlayCircle, BookOpen
+    Briefcase, PlayCircle, BookOpen, Flower2
 };
 
 
@@ -338,6 +338,7 @@ export default function HomeClient() {
                                             <>
                                                 {featureFlags?.enableChat && <ServiceCard icon={MessageCircle} title="Chat" desc="First Free" color="blue" href="/chat-with-astrologer" delay={0.1} badges={navBadges} />}
                                                 {featureFlags?.enableCall && <ServiceCard icon={Phone} title="Call" desc="Connect Now" color="green" href="/astrologers" delay={0.2} badges={navBadges} />}
+                                                <ServiceCard icon={Flower2} title="Online Pooja" desc="Temple Sevas" color="orange" href="/online-pooja" delay={0.25} badges={navBadges} />
                                                 <ServiceCard icon={FileText} title="Free Kundli" desc="Full Report" color="purple" href="/kundli" delay={0.3} badges={navBadges} />
                                                 <ServiceCard icon={Users} title="Matchmaking" desc="Compatibility" color="indigo" href="/matchmaking" delay={0.4} badges={navBadges} />
                                                 <ServiceCard icon={Briefcase} title="Marriage & Career" desc="Timing Analysis" color="pink" href="/calculators/marriage-career" delay={0.45} badges={navBadges} />
@@ -462,7 +463,7 @@ function ServiceCard({ icon: Icon, title, desc, color, href, delay, badges }) {
     };
 
     // Find badge for this path
-    const normalize = (p) => p?.replace(/\/+$/, '') || '';
+    const normalize = (p) => p?.replace(/^\/+|\/+$/g, '') || '';
     const badge = badges?.find(b => normalize(b.path) === normalize(href) && b.enabled);
 
     return (

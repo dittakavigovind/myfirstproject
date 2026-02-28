@@ -187,6 +187,27 @@ export default function AdminSidebar({ pendingRequestsCount = 0 }) {
                     SEO Settings
                 </Link>
 
+                {/* Online Pooja Section */}
+                {['admin', 'manager'].includes(user.role) && (
+                    <>
+                        <div className="px-3 mt-6 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Online Pooja</div>
+                        <Link href="/admin/online-pooja/temples"
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname.startsWith('/admin/online-pooja/temples') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <PenTool size={18} />
+                            Temple Management
+                        </Link>
+                        <Link href="/admin/online-pooja/bookings"
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname.startsWith('/admin/online-pooja/bookings') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <PenTool size={18} />
+                            Pooja Bookings
+                        </Link>
+                    </>
+                )}
+
                 {/* Settings Dropdown */}
                 {user.role === 'admin' && (
                     <div className="pt-2">

@@ -211,6 +211,7 @@ export default function Navbar() {
                                             { name: 'All Horoscopes', path: '/horoscope' }
                                         ]
                                     },
+                                    { name: 'ONLINE POOJA', path: '/online-pooja' },
                                     { name: 'PANCHANG', path: '/panchang' },
                                     { name: 'CALENDAR', path: '/calculators/indian-calendar' },
                                     { name: 'GOCHAR', path: '/calculators/gochar' },
@@ -236,7 +237,7 @@ export default function Navbar() {
                                     { name: 'BLOG', path: '/blog' },
                                 ].map((item) => {
                                     // Normalize path matching
-                                    const normalize = (p) => p?.replace(/\/+$/, '') || '';
+                                    const normalize = (p) => p?.replace(/^\/+|\/+$/g, '') || '';
                                     let badge = navBadges?.find(b => normalize(b.path) === normalize(item.path) && b.enabled);
 
                                     return (
@@ -337,12 +338,13 @@ export default function Navbar() {
                                 { name: 'Matchmaking', path: '/matchmaking' },
                                 { name: 'Zodiac Compatibility', path: '/matchmaking/zodiac-compatibility' },
                                 { name: 'Horoscope', path: '/horoscope' },
+                                { name: 'Online Pooja', path: '/online-pooja' },
                                 { name: 'Panchang', path: '/panchang' },
                                 { name: 'Calendar', path: '/calculators/indian-calendar' },
                                 { name: 'Planetary Transit', path: '/calculators/gochar' },
                                 { name: 'Blog', path: '/blog' },
                             ].map((item) => {
-                                const normalize = (p) => p?.replace(/\/+$/, '') || '';
+                                const normalize = (p) => p?.replace(/^\/+|\/+$/g, '') || '';
                                 let badge = navBadges?.find(b => normalize(b.path) === normalize(item.path) && b.enabled);
                                 return (
                                     <Link

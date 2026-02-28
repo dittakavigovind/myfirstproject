@@ -33,7 +33,6 @@ export default function Dashboard() {
         lat: '',
         lng: '',
         timezone: 5.5,
-        timezone: 5.5,
         profileImage: '',
         gender: 'male'
     });
@@ -573,14 +572,14 @@ export default function Dashboard() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
 
-                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4"
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
                             onClick={(e) => e.target === e.currentTarget && setShowEdit(false)}
                         >
                             <motion.div
-                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                                className="bg-white rounded-[2rem] w-full max-w-xl p-8 shadow-2xl border border-white/20 relative"
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="bg-white w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-6 sm:p-10 relative shadow-2xl flex flex-col"
                             >
                                 <div className="flex justify-between items-center mb-8">
                                     <h2 className="text-2xl font-black text-slate-800">Edit Profile</h2>
@@ -670,7 +669,7 @@ export default function Dashboard() {
                                     </div>
 
                                     <InputGroup label="Place of Birth" className="relative z-10">
-                                        <div className="[&_input]:py-4 [&_input]:border-none [&_input]:bg-slate-50 [&_input]:p-4 [&_input]:rounded-xl [&_input]:text-slate-800 [&_input]:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-blue-500/20 [&_input]:focus:bg-white [&_input]:transition-all [&_input]:font-bold [&_input]:w-full [&_input]:placeholder:text-slate-300">
+                                        <div className="[&_input]:border-none [&_input]:bg-slate-50 [&_input]:rounded-xl [&_input]:text-slate-800 [&_input]:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-blue-500/20 [&_input]:focus:bg-white [&_input]:transition-all [&_input]:font-bold [&_input]:w-full [&_input]:placeholder:text-slate-300">
                                             <LocationSearch
                                                 onLocationSelect={handleLocSelect}
                                                 placeholder="Search City"
@@ -715,14 +714,14 @@ export default function Dashboard() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4"
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
                             onClick={(e) => e.target === e.currentTarget && setShowAddChart(false)}
                         >
                             <motion.div
-                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                                className="bg-white rounded-[2rem] w-full max-w-xl p-8 shadow-2xl border border-white/20 relative"
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="bg-white w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-6 sm:p-10 relative shadow-2xl flex flex-col"
                             >
                                 <div className="flex justify-between items-center mb-8">
                                     <div className="flex items-center gap-3">
@@ -770,7 +769,7 @@ export default function Dashboard() {
                                     </div>
 
                                     <InputGroup label="Place of Birth" className="relative z-10">
-                                        <div className="[&_input]:py-4 [&_input]:border-none [&_input]:bg-slate-50 [&_input]:p-4 [&_input]:rounded-xl [&_input]:text-slate-800 [&_input]:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-blue-500/20 [&_input]:focus:bg-white [&_input]:transition-all [&_input]:font-bold [&_input]:w-full [&_input]:placeholder:text-slate-300">
+                                        <div className="[&_input]:border-none [&_input]:bg-slate-50 [&_input]:rounded-xl [&_input]:text-slate-800 [&_input]:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-blue-500/20 [&_input]:focus:bg-white [&_input]:transition-all [&_input]:font-bold [&_input]:w-full [&_input]:placeholder:text-slate-300">
                                             <LocationSearch
                                                 onLocationSelect={(loc) => setChartForm({
                                                     ...chartForm,

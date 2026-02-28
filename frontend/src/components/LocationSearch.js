@@ -94,10 +94,10 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     };
 
     const inputBaseHeader = darkMode
-        ? "w-full pr-12 py-4 bg-slate-900/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500/20 text-white placeholder-slate-500 focus:outline-none transition-all duration-300 backdrop-blur-sm shadow-xl"
-        : "w-full pr-12 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-400 outline-none transition-all font-bold text-slate-700 placeholder-slate-400 shadow-sm";
+        ? `w-full ${showIcon ? 'pr-12' : 'pr-3'} py-4 bg-slate-900/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500/20 text-white placeholder-slate-500 focus:outline-none transition-all duration-300 backdrop-blur-sm shadow-xl`
+        : `w-full ${showIcon ? 'pr-12' : 'pr-3'} py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-400 outline-none transition-all font-bold text-slate-700 placeholder-slate-400 shadow-sm`;
 
-    const inputClasses = `${inputBaseHeader} ${showLeftIcon ? 'pl-12' : 'pl-4'}`;
+    const inputClasses = `${inputBaseHeader} ${showLeftIcon ? 'pl-11' : 'pl-3'}`;
 
     const dropdownClasses = darkMode
         ? "absolute top-full left-0 z-50 w-full bg-slate-900 border border-white/10 mt-1 rounded-xl shadow-xl max-h-60 overflow-y-auto backdrop-blur-xl"
@@ -112,7 +112,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         : "absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-all active:scale-90";
 
     return (
-        <div className="relative h-full flex items-center" ref={wrapperRef}>
+        <div className="relative h-full w-full flex items-center" ref={wrapperRef}>
             <div className="relative w-full h-full group">
                 {showLeftIcon && (
                     <>
@@ -139,7 +139,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                         }
                     }}
                     placeholder={placeholder}
-                    className={inputClasses}
+                    className={`${inputClasses} min-w-0`}
                 />
                 {showIcon && (
                     <button
