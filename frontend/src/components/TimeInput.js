@@ -63,7 +63,7 @@ export default function TimeInput({ value, onChange, className, darkMode = false
 
     const wrapperClass = darkMode
         ? "relative bg-slate-900/50 border border-white/10 rounded-xl flex items-center justify-center focus-within:bg-slate-800 focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all duration-300 h-full w-full backdrop-blur-sm"
-        : "relative bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center focus-within:bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all duration-300 h-full w-full";
+        : "relative bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center focus-within:bg-white focus-within:border-yellow-500 focus-within:ring-4 focus-within:ring-yellow-500/10 transition-all duration-300 h-full w-full";
 
     const separatorClass = darkMode ? "flex items-center text-slate-500 font-bold text-xl pb-1" : "flex items-center text-slate-400 font-bold text-xl pb-1";
     const iconClass = darkMode ? "absolute right-1 pointer-events-none text-slate-500" : "absolute right-1 pointer-events-none text-slate-400";
