@@ -458,8 +458,7 @@ exports.getGeocode = async (req, res) => {
 
         const locationData = await geocodePlace(place, country, place_id);
         res.json({ success: true, data: locationData });
-    });
-} catch (error) {
+    } catch (error) {
     console.error('Geocode Error:', error);
     res.status(500).json({
         success: false,
