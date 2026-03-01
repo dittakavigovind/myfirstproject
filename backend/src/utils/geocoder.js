@@ -11,7 +11,7 @@ const agent = new https.Agent({
  * @param {String} placeName
  * @returns {Object} { lat, lng, timezone, formattedAddress }
  */
-const geocodePlace = async (placeName, country = null, place_id = null) => {
+const geocodePlace = async (placeName, filterCountry = null, place_id = null) => {
     try {
         const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
@@ -30,10 +30,14 @@ const geocodePlace = async (placeName, country = null, place_id = null) => {
         let geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?key=${apiKey}`;
         if (place_id) {
             geoUrl += `&place_id=${place_id}`;
+            // Always try to restrict even with place_id if filterCountry is provided
+            if (filterCountry) {
+                geoUrl += `&components=country:${filterCountry}`;
+            }
         } else {
             geoUrl += `&address=${encodeURIComponent(placeName)}`;
-            if (country) {
-                geoUrl += `&components=country:${country}`;
+            if (filterCountry) {
+                geoUrl += `&components=country:${filterCountry}`;
             }
         }
         const geoRes = await axios.get(geoUrl, { httpsAgent: agent });
@@ -69,6 +73,14 @@ const geocodePlace = async (placeName, country = null, place_id = null) => {
         if (!city) {
             const sublocality = addressComponents.find(c => c.types.includes('administrative_area_level_2'))?.long_name;
             city = sublocality || '';
+        }
+
+        // 1.5 Strict Country Validation (Second layer of defense)
+        if (filterCountry && filterCountry.toUpperCase() === 'IN') {
+            const isIndia = resCountry.toLowerCase() === 'india' || addressComponents.some(c => c.short_name === 'IN');
+            if (!isIndia) {
+                throw new Error("Delivery only to India");
+            }
         }
 
         // 2. Get Timezone
