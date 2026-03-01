@@ -5,6 +5,8 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const emailService = require('../services/emailService');
 const whatsappService = require('../services/whatsappService');
+const Counter = require('../models/Counter');
+const moment = require('moment-timezone');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -195,7 +197,15 @@ exports.createBookingOrder = async (req, res) => {
         const order = await razorpay.orders.create(options);
 
         // 5. Create a Pending Booking
-        const bookingId = `W2A-PJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        // 5. Create a Pending Booking with sequential ID
+        const counter = await Counter.findOneAndUpdate(
+            { id: 'pooja_booking_seq' },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        const timestampPart = moment().tz('Asia/Kolkata').format('YYMMDDHHmm');
+        const bookingId = `W2A-PJ-${timestampPart}-${counter.seq}`;
 
         await PoojaBooking.create({
             bookingId,
@@ -250,7 +260,7 @@ exports.verifyPayment = async (req, res) => {
         if (expectedSignature === razorpay_signature) {
             // Payment Success
             const booking = await PoojaBooking.findOne({ bookingId })
-                .populate('temple', 'name')
+                .populate('temple', 'name slug profileImage coverImage')
                 .populate('user', 'email phone name');
 
             if (!booking) {
@@ -284,6 +294,23 @@ exports.verifyPayment = async (req, res) => {
     } catch (error) {
         console.error('Verify Payment Error:', error);
         res.status(500).json({ success: false, message: 'Server verification error' });
+    }
+};
+
+// @desc    Get logged in user's pooja bookings
+// @route   GET /api/pooja/booking/my-bookings
+// @access  Private
+exports.getUserBookings = async (req, res) => {
+    try {
+        const bookings = await PoojaBooking.find({ user: req.user.id })
+            .populate('temple', 'name slug profileImage coverImage')
+            .populate('couponApplied', 'code discountValue')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, count: bookings.length, data: bookings });
+    } catch (error) {
+        console.error('Get User Bookings Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
@@ -344,15 +371,36 @@ exports.deleteTemple = async (req, res) => {
 // @access  Private/Admin
 exports.getAllBookings = async (req, res) => {
     try {
-        const { temple, status, startDate, endDate } = req.query;
+        const { temple, status, startDate, endDate, coupon, performStartDate, performEndDate, bookingId } = req.query;
         let query = {};
 
         if (temple) query.temple = temple;
         if (status) query['payment.status'] = status;
+
         if (startDate || endDate) {
             query.createdAt = {};
             if (startDate) query.createdAt.$gte = new Date(startDate);
             if (endDate) query.createdAt.$lte = new Date(endDate);
+        }
+
+        if (performStartDate || performEndDate) {
+            query.performDate = {};
+            if (performStartDate) query.performDate.$gte = new Date(performStartDate);
+            if (performEndDate) query.performDate.$lte = new Date(performEndDate);
+        }
+
+        if (bookingId) {
+            query.bookingId = { $regex: bookingId, $options: 'i' };
+        }
+
+        if (coupon) {
+            const coupons = await Coupon.find({ code: { $regex: coupon, $options: 'i' } });
+            if (coupons.length > 0) {
+                query.couponApplied = { $in: coupons.map(c => c._id) };
+            } else {
+                // If coupon provided but not found, ensure no results
+                query.couponApplied = '000000000000000000000000';
+            }
         }
 
         const bookings = await PoojaBooking.find(query)
@@ -373,15 +421,35 @@ exports.getAllBookings = async (req, res) => {
 // @access  Private/Admin
 exports.exportBookings = async (req, res) => {
     try {
-        const { temple, status, startDate, endDate } = req.query;
+        const { temple, status, startDate, endDate, coupon, performStartDate, performEndDate, bookingId } = req.query;
         let query = {};
 
         if (temple) query.temple = temple;
         if (status) query['payment.status'] = status;
+
         if (startDate || endDate) {
             query.createdAt = {};
             if (startDate) query.createdAt.$gte = new Date(startDate);
             if (endDate) query.createdAt.$lte = new Date(endDate);
+        }
+
+        if (performStartDate || performEndDate) {
+            query.performDate = {};
+            if (performStartDate) query.performDate.$gte = new Date(performStartDate);
+            if (performEndDate) query.performDate.$lte = new Date(performEndDate);
+        }
+
+        if (bookingId) {
+            query.bookingId = { $regex: bookingId, $options: 'i' };
+        }
+
+        if (coupon) {
+            const coupons = await Coupon.find({ code: { $regex: coupon, $options: 'i' } });
+            if (coupons.length > 0) {
+                query.couponApplied = { $in: coupons.map(c => c._id) };
+            } else {
+                query.couponApplied = '000000000000000000000000';
+            }
         }
 
         const bookings = await PoojaBooking.find(query)

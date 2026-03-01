@@ -16,7 +16,8 @@ const {
     createCoupon,
     updateCoupon,
     deleteCoupon,
-    updateBookingStatus
+    updateBookingStatus,
+    getUserBookings
 } = require('../controllers/poojaController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -26,6 +27,7 @@ router.get('/temples/:slug', getTempleBySlug);
 router.get('/coupons/active', getActiveCoupons);
 
 // User Protected Routes
+router.get('/booking/my-bookings', protect, getUserBookings); // Added this route
 router.post('/booking/create-order', protect, createBookingOrder);
 router.post('/booking/verify-payment', protect, verifyPayment);
 router.post('/coupons/validate', protect, validateCoupon);

@@ -12,18 +12,38 @@ const AdminBookings = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [exportLoading, setExportLoading] = useState(false);
+    const [temples, setTemples] = useState([]);
 
     // Filters
     const [filters, setFilters] = useState({
         status: '',
         startDate: '',
         endDate: '',
-        temple: ''
+        temple: '',
+        coupon: '',
+        performStartDate: '',
+        performEndDate: '',
+        bookingId: ''
     });
 
     useEffect(() => {
+        fetchTemples();
+    }, []);
+
+    useEffect(() => {
         fetchBookings();
-    }, [filters]);
+    }, [filters, token]);
+
+    const fetchTemples = async () => {
+        try {
+            const response = await axios.get(`${API_BASE}/pooja/temples`);
+            if (response.data.success) {
+                setTemples(response.data.data);
+            }
+        } catch (err) {
+            console.error('Failed to load temples');
+        }
+    };
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -110,7 +130,20 @@ const AdminBookings = () => {
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Status</label>
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Temple</label>
+                        <select
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.temple}
+                            onChange={(e) => setFilters({ ...filters, temple: e.target.value })}
+                        >
+                            <option value="">All Temples</option>
+                            {temples.map(t => (
+                                <option key={t._id} value={t._id}>{t.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Payment Status</label>
                         <select
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
                             value={filters.status}
@@ -123,7 +156,27 @@ const AdminBookings = () => {
                         </select>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Start Date</label>
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Booking ID</label>
+                        <input
+                            type="text"
+                            placeholder="W2A-PJ-..."
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.bookingId}
+                            onChange={(e) => setFilters({ ...filters, bookingId: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Coupon Code</label>
+                        <input
+                            type="text"
+                            placeholder="GOVIND10"
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy uppercase"
+                            value={filters.coupon}
+                            onChange={(e) => setFilters({ ...filters, coupon: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Booking Date (From)</label>
                         <input
                             type="date"
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
@@ -132,7 +185,7 @@ const AdminBookings = () => {
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">End Date</label>
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Booking Date (To)</label>
                         <input
                             type="date"
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
@@ -140,10 +193,37 @@ const AdminBookings = () => {
                             onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                         />
                     </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Perform Date (From)</label>
+                        <input
+                            type="date"
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.performStartDate}
+                            onChange={(e) => setFilters({ ...filters, performStartDate: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Perform Date (To)</label>
+                        <input
+                            type="date"
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.performEndDate}
+                            onChange={(e) => setFilters({ ...filters, performEndDate: e.target.value })}
+                        />
+                    </div>
                     <div className="flex items-end">
                         <button
-                            onClick={() => setFilters({ status: '', startDate: '', endDate: '', temple: '' })}
-                            className="w-full py-2.5 px-4 text-gray-400 hover:text-astro-navy font-bold transition-colors"
+                            onClick={() => setFilters({
+                                status: '',
+                                startDate: '',
+                                endDate: '',
+                                temple: '',
+                                coupon: '',
+                                performStartDate: '',
+                                performEndDate: '',
+                                bookingId: ''
+                            })}
+                            className="w-full py-2.5 px-4 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 font-bold transition-all"
                         >
                             Reset Filters
                         </button>
@@ -264,7 +344,7 @@ const AdminBookings = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center text-xs text-gray-500">
                                                 <Calendar className="w-3 h-3 mr-1" />
-                                                {new Date(booking.createdAt).toLocaleDateString()}
+                                                {new Date(booking.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')}
                                             </div>
                                         </td>
                                     </tr>

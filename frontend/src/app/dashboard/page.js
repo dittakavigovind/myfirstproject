@@ -39,6 +39,10 @@ export default function Dashboard() {
     const [recentActivity, setRecentActivity] = useState([]);
     const [activityLoading, setActivityLoading] = useState(true);
 
+    // Pooja Orders State
+    const [poojaOrders, setPoojaOrders] = useState([]);
+    const [poojaLoading, setPoojaLoading] = useState(true);
+
     // Saved Profiles State
     const [showAddChart, setShowAddChart] = useState(false);
     const [chartForm, setChartForm] = useState({
@@ -104,7 +108,24 @@ export default function Dashboard() {
                 setActivityLoading(false);
             }
         };
-        if (user) fetchActivity();
+
+        const fetchPoojaOrders = async () => {
+            try {
+                const { data } = await API.get('/pooja/booking/my-bookings');
+                if (data.success) {
+                    setPoojaOrders(data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch pooja orders", err);
+            } finally {
+                setPoojaLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchActivity();
+            fetchPoojaOrders();
+        }
     }, [user]);
 
     const handleLocSelect = (loc) => {
@@ -557,6 +578,94 @@ export default function Dashboard() {
                                         <Sparkles size={24} />
                                     </div>
                                     <p className="text-slate-400 font-bold text-sm uppercase tracking-widest text-center">Your cosmic journey history will appear here</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* My Pooja Orders */}
+                        <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/40 border border-slate-100 flex-1 min-h-[200px] flex flex-col">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-xl">My Pooja & Seva Orders</h3>
+                                    <p className="text-slate-400 text-sm font-medium">Track your booked rituals</p>
+                                </div>
+                                <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
+                                    <HeartHandshake size={24} />
+                                </div>
+                            </div>
+
+                            {poojaLoading ? (
+                                <div className="flex-1 flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                                </div>
+                            ) : poojaOrders.length > 0 ? (
+                                <div className="space-y-4">
+                                    {poojaOrders.map((order) => {
+                                        const isPaid = order.payment?.status === 'Paid';
+                                        const isFailed = order.payment?.status === 'Failed';
+
+                                        return (
+                                            <div key={order._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-orange-200 transition-colors">
+                                                <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-slate-200 shadow-inner">
+                                                    {order.temple?.profileImage || order.temple?.coverImage ? (
+                                                        <img src={order.temple.profileImage || order.temple.coverImage} className="w-full h-full object-cover" alt="Temple" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                            <HeartHandshake size={24} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${isPaid ? 'bg-green-100 text-green-700' : isFailed ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                                                            }`}>
+                                                            {order.payment?.status || 'Pending'}
+                                                        </span>
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${order.bookingStatus === 'Confirmed' ? 'bg-blue-100 text-blue-700' : order.bookingStatus === 'Completed' ? 'bg-emerald-100 text-emerald-700' : order.bookingStatus === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-700'
+                                                            }`}>
+                                                            {order.bookingStatus}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-slate-800 truncate leading-snug">{order.sevaDetails?.name}</h4>
+                                                    <Link href={`/online-pooja/details/?slug=${order.temple?.slug || ''}`} className="text-sm text-indigo-600 hover:text-indigo-700 font-bold transition-colors inline-block mb-1">
+                                                        {order.temple?.name || 'Unknown Temple'}
+                                                    </Link>
+
+                                                    <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium mt-1">
+                                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                                            <span className="flex items-center gap-1">
+                                                                <Calendar size={12} className="text-slate-400" />
+                                                                Perform Date: {order.performDate ? new Date(order.performDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD'}
+                                                            </span>
+                                                            <span className="flex items-center gap-1 font-bold">
+                                                                ₹{order.sevaDetails?.price - (order.discountAmount || 0)}
+                                                            </span>
+                                                            <span className="text-slate-400">ID: {order.bookingId}</span>
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-400">
+                                                            Booked on: {new Date(order.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(/\//g, '-')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {!isPaid && !isFailed && (
+                                                    <div className="w-full sm:w-auto mt-2 sm:mt-0 pt-3 flex sm:flex-col items-center sm:items-end gap-2 text-xs border-t sm:border-t-0 border-slate-200 sm:border-l sm:pl-4">
+                                                        <span className="text-slate-400">Complete payment to confirm</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                                    <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center text-orange-200 mb-4 border border-orange-50">
+                                        <HeartHandshake size={32} />
+                                    </div>
+                                    <h4 className="text-slate-700 font-black text-lg mb-1">No Orders Yet</h4>
+                                    <p className="text-slate-400 font-medium text-sm text-center mb-6 max-w-xs">You haven't booked any rituals or sevas yet.</p>
+                                    <Link href="/online-pooja" className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-0.5 active:scale-95">
+                                        Explore Pooja
+                                    </Link>
                                 </div>
                             )}
                         </div>
