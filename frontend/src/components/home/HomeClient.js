@@ -272,7 +272,12 @@ export default function HomeClient() {
                                                     {featureFlags?.promotionUrl ? (() => {
                                                         const url = featureFlags.promotionUrl;
                                                         const isExternal = url.startsWith('http') || url.startsWith('www');
-                                                        const href = url.startsWith('www') ? `https://${url}` : url;
+                                                        let href = url;
+                                                        if (isExternal) {
+                                                            href = url.startsWith('www') ? `https://${url}` : url;
+                                                        } else {
+                                                            href = url.startsWith('/') ? url : `/${url}`;
+                                                        }
 
                                                         return isExternal ? (
                                                             <Link href={href} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
