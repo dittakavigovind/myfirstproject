@@ -67,18 +67,26 @@ export default function LoginPage() {
     }, [user, router, redirectPath]);
 
     const countryCodes = [
-        { code: '+91', country: 'India' },
-        { code: '+1', country: 'USA' },
-        { code: '+44', country: 'UK' },
-        { code: '+971', country: 'UAE' },
-        { code: '+65', country: 'Singapore' },
+        { code: '+91', country: 'India', digits: 10 },
+        { code: '+1', country: 'USA', digits: 10 },
+        { code: '+44', country: 'UK', digits: 10 },
+        { code: '+971', country: 'UAE', digits: 9 },
+        { code: '+65', country: 'Singapore', digits: 8 },
     ];
+
+    // Reset phone number when country code changes
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, phone: '' }));
+    }, [countryCode]);
 
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
-        if (formData.phone.length !== 10) {
-            setError('Please enter a valid 10-digit mobile number');
+        const currentCountry = countryCodes.find(c => c.code === countryCode);
+        const requiredDigits = currentCountry?.digits || 10;
+
+        if (formData.phone.length !== requiredDigits) {
+            setError(`Please enter a valid ${requiredDigits}-digit mobile number`);
             return;
         }
         setLoading(true);
@@ -179,11 +187,14 @@ export default function LoginPage() {
                                             <input
                                                 type="tel"
                                                 required
-                                                placeholder="9999999999"
-                                                maxLength="10"
+                                                placeholder="Enter mobile number"
                                                 value={formData.phone}
                                                 className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2.5 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })}
+                                                onChange={(e) => {
+                                                    const currentCountry = countryCodes.find(c => c.code === countryCode);
+                                                    const digits = currentCountry?.digits || 10;
+                                                    setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, digits) });
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -203,7 +214,7 @@ export default function LoginPage() {
                                     </div>
                                     <button
                                         type="submit"
-                                        disabled={loading || formData.phone.length !== 10 || !acceptedTerms}
+                                        disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10) || !acceptedTerms}
                                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                     >
                                         {loading ? (

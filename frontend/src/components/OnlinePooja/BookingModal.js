@@ -16,11 +16,11 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
     // Country Codes matching login page
     const countryCodes = [
-        { code: '+91', country: 'India' },
-        { code: '+1', country: 'USA' },
-        { code: '+44', country: 'UK' },
-        { code: '+971', country: 'UAE' },
-        { code: '+65', country: 'Singapore' },
+        { code: '+91', country: 'India', digits: 10 },
+        { code: '+1', country: 'USA', digits: 10 },
+        { code: '+44', country: 'UK', digits: 10 },
+        { code: '+971', country: 'UAE', digits: 9 },
+        { code: '+65', country: 'Singapore', digits: 8 },
     ];
 
     const [countryCode, setCountryCode] = useState('+91');
@@ -37,6 +37,11 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         performDate: seva?.dateSelectionType === 'Fixed' ? new Date(seva.fixedDate).toISOString().split('T')[0] : ''
     });
 
+    // Reset phone number when country code changes
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, phoneNumber: '' }));
+    }, [countryCode]);
+
     // Initialize phone number and country code from user data
     useEffect(() => {
         if (user?.phone) {
@@ -45,7 +50,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                 setCountryCode(matchedCode.code);
                 setFormData(prev => ({
                     ...prev,
-                    phoneNumber: user.phone.replace(matchedCode.code, '').slice(0, 10)
+                    phoneNumber: user.phone.replace(matchedCode.code, '').slice(0, matchedCode.digits)
                 }));
             } else {
                 setFormData(prev => ({ ...prev, phoneNumber: user.phone.slice(-10) }));
@@ -119,14 +124,22 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
     const handleChange = (e) => {
         let { name, value } = e.target;
+
         if (name === 'phoneNumber') {
-            // Remove non-digits and limit to 10 characters
-            value = value.replace(/\D/g, '').slice(0, 10);
+            const currentCountry = countryCodes.find(c => c.code === countryCode);
+            const digits = currentCountry?.digits || 10;
+            value = value.replace(/\D/g, '').slice(0, digits);
         }
+
         if (name === 'pincode') {
-            // Remove non-digits and limit to 6 characters
             value = value.replace(/\D/g, '').slice(0, 6);
         }
+
+        // Text-only validation for city, state, country
+        if (['city', 'state', 'country'].includes(name)) {
+            value = value.replace(/[^a-zA-Z\s]/g, '');
+        }
+
         setFormData({ ...formData, [name]: value });
     };
 
@@ -220,8 +233,11 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             return;
         }
 
-        if (formData.phoneNumber.length !== 10) {
-            toast.error('Please enter a valid 10-digit phone number');
+        const currentCountry = countryCodes.find(c => c.code === countryCode);
+        const requiredDigits = currentCountry?.digits || 10;
+
+        if (!formData.phoneNumber || formData.phoneNumber.length !== requiredDigits) {
+            toast.error(`Please enter a valid ${requiredDigits}-digit phone number`);
             return;
         }
 
