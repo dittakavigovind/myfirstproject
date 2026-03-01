@@ -16,6 +16,7 @@ import CustomDateInput from '../../components/common/CustomDateInput';
 import analytics from '../../lib/analytics';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import HeroSection from '../../components/common/HeroSection';
 
 export default function PanchangPageWrapper() {
     return (
@@ -204,18 +205,8 @@ function PanchangPage() {
 
 
             {/* Header Section (Compact & Premium) */}
-            <div className="relative text-white">
-                {/* Background Layer */}
-                <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black shadow-2xl rounded-b-[2.5rem] md:rounded-b-[3.5rem] z-0 overflow-hidden transform scale-x-[1.02]">
-                    <div className="absolute top-[-50%] left-[-10%] w-[1000px] h-[1000px] rounded-full bg-indigo-600/20 blur-[130px] pointer-events-none animate-pulse"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-fuchsia-500/10 blur-[120px] pointer-events-none"></div>
-                    <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.04] mix-blend-overlay"></div>
-                </div>
-
-                {/* Foreground Content (Compact Layout) */}
-                {/* Foreground Content (Compact Layout) */}
-                <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 pb-28 pt-6 md:pt-12 px-4 sm:px-6 lg:px-8 pointer-events-none">
-
+            <HeroSection icon="📅" align="left" extraPaddingBottom={true}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 w-full pointer-events-none">
                     {/* LEFT COLUMN: Heading & Text */}
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
@@ -242,11 +233,9 @@ function PanchangPage() {
                             </button>
                         </div>
 
-                        <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight drop-shadow-xl">
+                        <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight drop-shadow-xl text-white">
                             Daily <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-amber-200 to-orange-300 drop-shadow-sm">Panchang</span>
                         </h1>
-
-
 
                         <p className="text-slate-300/90 text-sm md:text-base font-medium leading-relaxed max-w-lg mb-0 text-left">
                             Unlock the cosmic rhythm of your day. Precise auspicious timings calculated for <span className='text-white font-bold decoration-astro-yellow/30 underline decoration-2 underline-offset-4'>{place}</span>.
@@ -297,13 +286,10 @@ function PanchangPage() {
                                     </div>
                                 </div>
                             </div>
-
-
                         </div>
                     </motion.div>
                 </div>
-
-            </div>
+            </HeroSection>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-[5] -mt-10 md:-mt-24 pb-10">
                 <AnimatePresence mode="wait">

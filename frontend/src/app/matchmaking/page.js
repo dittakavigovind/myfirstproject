@@ -13,6 +13,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Download, Heart, ShieldCheck, Info, Sparkles, ArrowLeft } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
+import HeroSection from '../../components/common/HeroSection';
 
 export default function MatchMakingPage() {
     const { birthDetails, isInitialized } = useBirthDetails();
@@ -209,9 +210,13 @@ export default function MatchMakingPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
-            <div className="bg-astro-navy text-white p-4 sticky top-0 z-30 shadow-md">
-                <h1 className="font-bold text-lg">Kundli Matching</h1>
-            </div>
+            <HeroSection
+                title="Kundli"
+                highlightText="Matching"
+                subtitle="Check complete Ashtakoot Guna Milan compatibility between prospective partners."
+                icon="❤️"
+                align="center"
+            />
 
             <div className="p-4 max-w-4xl mx-auto space-y-6">
 

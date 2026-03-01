@@ -9,6 +9,7 @@ import PageContentSection from '../../components/common/PageContentSection';
 import { User, Calendar, Clock, MapPin, CheckCircle2, ArrowRight, Layers, Sparkles, Lock } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import CustomDateInput from '../../components/common/CustomDateInput';
+import HeroSection from '../../components/common/HeroSection';
 
 import "react-datepicker/dist/react-datepicker.css";
 import toast from 'react-hot-toast';
@@ -146,32 +147,24 @@ export default function DivisionalChartsForm() {
         <div className="min-h-screen font-sans bg-slate-50 selection:bg-purple-100 selection:text-purple-900 pb-20 overflow-x-hidden">
 
             {/* Header Section */}
-            <div className="relative text-white">
-                <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-sky-950 to-black shadow-2xl rounded-b-[2.5rem] md:rounded-b-[3.5rem] z-0 overflow-hidden transform scale-x-[1.02]">
-                    <div className="absolute top-[-50%] left-[-10%] w-[800px] h-[800px] rounded-full bg-purple-600/20 blur-[120px] pointer-events-none animate-pulse"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
-                    <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                </div>
-
-                <div className="relative z-10 max-w-6xl mx-auto flex flex-col items-center pt-10 pb-24 md:pb-32 px-6">
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="flex flex-col items-center text-center"
-                    >
-                        <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-purple-300 text-[10px] font-bold tracking-[0.2em] uppercase mb-4 backdrop-blur-md shadow-lg shadow-black/10">
-                            ✨ Detailed Analysis
-                        </span>
-                        <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight">
-                            Divisional <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-indigo-200 to-sky-300">Charts</span>
-                        </h1>
-                        <p className="text-slate-300/90 max-w-xl text-sm md:text-base font-medium leading-relaxed">
-                            Example the subtler aspects of your life with all 16 Varga Chakras (Shodashvarga), from Hora to Shashtyamsa.
-                        </p>
-                    </motion.div>
-                </div>
-            </div>
+            <HeroSection icon="📊" align="center" extraPaddingBottom={true}>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="flex flex-col items-center text-center"
+                >
+                    <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-purple-300 text-[10px] font-bold tracking-[0.2em] uppercase mb-4 backdrop-blur-md shadow-lg shadow-black/10">
+                        ✨ Detailed Analysis
+                    </span>
+                    <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight text-white">
+                        Divisional <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-indigo-200 to-sky-300">Charts</span>
+                    </h1>
+                    <p className="text-slate-300/90 max-w-xl text-sm md:text-base font-medium leading-relaxed">
+                        Example the subtler aspects of your life with all 16 Varga Chakras (Shodashvarga), from Hora to Shashtyamsa.
+                    </p>
+                </motion.div>
+            </HeroSection>
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-24 relative z-20">
                 <motion.div

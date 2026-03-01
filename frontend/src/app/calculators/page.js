@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import CalculatorCard from '../../components/calculators/CalculatorCard';
 import PageContentSection from '../../components/common/PageContentSection';
+import HeroSection from '../../components/common/HeroSection';
 
 const calculators = [
     {
@@ -138,34 +139,27 @@ export default function CalculatorsLanding() {
     return (
         <main className="min-h-screen font-sans bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900 pb-24 overflow-x-hidden">
             {/* Header Section */}
-            <div className="relative text-white overflow-hidden">
-                <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black shadow-2xl rounded-b-[3rem] md:rounded-b-[4.5rem] z-0 overflow-hidden transform scale-x-[1.05]">
-                    <div className="absolute top-[-50%] left-[-10%] w-[800px] h-[800px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none animate-pulse"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-fuchsia-500/10 blur-[100px] pointer-events-none"></div>
-                    <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                </div>
+            <HeroSection icon="🧮" align="center" extraPaddingBottom={true}>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="flex flex-col items-center text-center"
+                >
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6 shadow-xl">
+                        <Sparkles className="w-4 h-4 text-astro-yellow" />
+                        <span className="text-indigo-100 text-xs font-bold tracking-[0.2em] uppercase">Interactive Tools</span>
+                    </span>
 
-                <div className="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-20 md:pt-16 md:pb-32 flex flex-col items-center text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                    >
-                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6 shadow-xl">
-                            <Sparkles className="w-4 h-4 text-astro-yellow" />
-                            <span className="text-indigo-100 text-xs font-bold tracking-[0.2em] uppercase">Interactive Tools</span>
-                        </span>
+                    <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight text-white">
+                        Astrology <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-amber-200 to-orange-300">Calculators</span>
+                    </h1>
 
-                        <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight">
-                            Astrology <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-amber-200 to-orange-300">Calculators</span>
-                        </h1>
-
-                        <p className="text-lg md:text-xl text-indigo-100/80 max-w-2xl font-medium leading-relaxed">
-                            A suite of powerful tools to decode your personality, relationships, and destiny instantly.
-                        </p>
-                    </motion.div>
-                </div>
-            </div>
+                    <p className="text-lg md:text-xl text-indigo-100/80 max-w-2xl font-medium leading-relaxed">
+                        A suite of powerful tools to decode your personality, relationships, and destiny instantly.
+                    </p>
+                </motion.div>
+            </HeroSection>
 
             {/* Calculators Grid */}
             <div className="max-w-7xl mx-auto px-6 -mt-12 md:-mt-20 relative z-20">

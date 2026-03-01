@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import API from '@/lib/api';
 import FAQDisplay from '@/components/FAQDisplay';
 import FeaturedAstrologerCard from './FeaturedAstrologerCard';
+import HeroSection from '@/components/common/HeroSection';
 
 const SIGNS = [
     { name: 'Aries', icon: '♈', date: 'Mar 21 - Apr 19', element: 'Fire', color: 'from-red-500 to-orange-600', shadow: 'shadow-orange-500/20' },
@@ -61,16 +62,8 @@ export default function HoroscopeSelectClient() {
         <div id="horoscope-top" className="min-h-screen bg-slate-50 pb-20 font-sans overflow-x-hidden">
 
             {/* Premium Hero Section */}
-            <div className={`relative bg-gradient-to-br from-indigo-900 via-purple-800 to-slate-900 text-white pb-24 md:pb-32 pt-10 px-6 rounded-b-[2rem] md:rounded-b-[3.5rem] shadow-2xl overflow-hidden transition-all duration-700`}>
-
-                {/* Animated Orbs */}
-                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                    <div className="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-indigo-500/20 rounded-full blur-[100px] animate-pulse"></div>
-                    <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-fuchsia-500/10 rounded-full blur-[80px]"></div>
-                    <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                </div>
-
-                <div className="relative z-10 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12">
+            <HeroSection icon="🌟" extraPaddingBottom={true}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 w-full">
                     {/* Left: Text Content */}
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
@@ -81,7 +74,7 @@ export default function HoroscopeSelectClient() {
                         <span className="inline-block py-1 px-3 rounded-full bg-white/10 border border-white/20 text-white/90 text-[10px] font-bold tracking-[0.2em] uppercase mb-3 backdrop-blur-md shadow-lg">
                             ✨ Cosmic Guidance
                         </span>
-                        <h1 className="text-3xl md:text-5xl font-black mb-3 drop-shadow-xl tracking-tight leading-tight">
+                        <h1 className="text-3xl md:text-5xl font-black mb-3 drop-shadow-xl tracking-tight leading-tight text-white">
                             Cosmic Forecast
                         </h1>
                         <p className="text-white/80 font-medium max-w-lg mx-auto md:mx-0 text-sm md:text-base leading-relaxed">
@@ -99,7 +92,7 @@ export default function HoroscopeSelectClient() {
                         <FeaturedAstrologerCard />
                     </motion.div>
                 </div>
-            </div>
+            </HeroSection>
 
             {/* Zodiac Grid */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-24 relative z-20 mb-20">

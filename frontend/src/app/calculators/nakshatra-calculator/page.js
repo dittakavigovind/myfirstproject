@@ -14,8 +14,9 @@ import API from '@/lib/api';
 import toast from 'react-hot-toast';
 import ResultHeader from '../../../components/calculators/StandardResultHeader';
 
-import PageContentSection from '../../../components/common/PageContentSection';
 import { useBirthDetails } from '../../../context/BirthDetailsContext';
+import HeroSection from '../../../components/common/HeroSection';
+import PageContentSection from '../../../components/common/PageContentSection';
 
 export default function NakshatraCalculator() {
     // Use BirthDetailsContext
@@ -144,27 +145,20 @@ export default function NakshatraCalculator() {
     return (
         <main className={`min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200 pb-24 overflow-x-hidden ${result ? 'bg-[#05070a]' : 'bg-slate-50'}`}>
             {!result ? (
-                <div className="relative text-white overflow-hidden">
-                    <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-black shadow-2xl rounded-b-[3rem] z-0 overflow-hidden transform scale-x-[1.05]">
-                        <div className="absolute top-[-50%] left-[-10%] w-[800px] h-[800px] rounded-full bg-violet-600/10 blur-[120px] pointer-events-none"></div>
-                        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                    </div>
-
-                    <div className="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-24 text-center">
-                        <Link href="/calculators" className="inline-flex items-center gap-2 text-indigo-200/60 hover:text-indigo-200 transition-colors mb-8 font-bold text-sm uppercase tracking-widest">
-                            <ArrowLeft size={16} /> Back to Calculators
-                        </Link>
-                        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                            <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-500/20 rotate-12">
-                                <Star size={40} className="text-white" />
-                            </div>
-                            <h1 className="text-4xl md:text-5xl font-black mb-4">Nakshatra <span className="text-violet-400">Calculator</span></h1>
-                            <p className="text-indigo-100/70 max-w-xl mx-auto font-medium leading-relaxed">
-                                Know your Birth Star (Janma Nakshatra) and Pada. It reveals your core nature, destiny, and life purpose.
-                            </p>
-                        </motion.div>
-                    </div>
-                </div>
+                <HeroSection icon="✨" align="center" extraPaddingBottom={true}>
+                    <Link href="/calculators" className="inline-flex items-center gap-2 text-indigo-200/60 hover:text-indigo-200 transition-colors mb-8 font-bold text-sm uppercase tracking-widest text-center justify-center w-full">
+                        <ArrowLeft size={16} /> Back to Calculators
+                    </Link>
+                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-500/20 rotate-12">
+                            <Star size={40} className="text-white" />
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black mb-4 text-white">Nakshatra <span className="text-violet-400">Calculator</span></h1>
+                        <p className="text-indigo-100/70 max-w-xl mx-auto font-medium leading-relaxed text-center">
+                            Know your Birth Star (Janma Nakshatra) and Pada. It reveals your core nature, destiny, and life purpose.
+                        </p>
+                    </motion.div>
+                </HeroSection>
             ) : (
                 <ResultHeader
                     title="Birth Nakshatra"
@@ -175,7 +169,7 @@ export default function NakshatraCalculator() {
                 />
             )}
 
-            <div className="max-w-4xl mx-auto px-6 -mt-12 relative z-20">
+            <div className="max-w-4xl mx-auto px-6 -mt-12 md:-mt-24 relative z-20">
                 <AnimatePresence mode="wait">
                     {!result ? (
                         <motion.div

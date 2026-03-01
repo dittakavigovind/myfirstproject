@@ -5,6 +5,7 @@ import API from '../../lib/api';
 import BlogSidebar from '../../components/blog/BlogSidebar';
 import BlogCard from '../../components/blog/BlogCard';
 import Breadcrumbs from '../../components/common/Breadcrumbs';
+import HeroSection from '../../components/common/HeroSection';
 
 export default function BlogListing() {
     const [posts, setPosts] = useState([]);
@@ -30,24 +31,30 @@ export default function BlogListing() {
     }, []);
 
     return (
-        <div className="bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
-                {/* Search Bar / Header could go here */}
+        <div className="bg-slate-50 min-h-screen pb-20 overflow-x-hidden">
+            <HeroSection
+                title="Astrology"
+                highlightText="Blog"
+                subtitle="Explore our latest articles and updates on Vedic Astrology, Festivals, and Spirituality."
+                icon="📝"
+                align="center"
+                extraPaddingBottom={true}
+            />
 
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-24 relative z-20 pb-8">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar */}
                     <BlogSidebar categories={categories} />
 
                     {/* Main Content */}
-                    <div className="w-full lg:w-3/4">
+                    <div className="w-full lg:w-3/4 bg-white rounded-[2.5rem] p-6 shadow-2xl border border-slate-100">
                         <Breadcrumbs
                             items={[
                                 { label: 'Blog' }
                             ]}
                         />
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-gray-900">Latest Wisdom</h1>
-                            <p className="text-gray-500 text-sm">Explore our latest articles and updates.</p>
+                        <div className="mb-6 mt-4">
+                            <h2 className="text-2xl font-black text-slate-900">Latest Wisdom</h2>
                         </div>
 
                         {loading ? (

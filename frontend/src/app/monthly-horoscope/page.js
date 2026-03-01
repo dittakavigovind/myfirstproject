@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Sparkles, Droplet, ChevronLeft, ChevronRight, Briefcase, Heart, Activity, Calendar as CalendarIcon } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
 import FeaturedAstrologerCard from '@/components/horoscope/FeaturedAstrologerCard';
+import HeroSection from '@/components/common/HeroSection';
 
 const SIGNS = [
     { name: 'Aries', icon: '♈' }, { name: 'Taurus', icon: '♉' },
@@ -77,15 +78,8 @@ export default function MonthlyHoroscopePage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-20 overflow-x-hidden">
             {/* Premium Hero Section */}
-            <div className={`relative bg-gradient-to-br ${theme.color} text-white pb-20 pt-10 md:pt-14 px-6 rounded-b-[2rem] md:rounded-b-[3.5rem] shadow-2xl overflow-hidden transition-all duration-700`}>
-
-                {/* Animated Orbs */}
-                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                    <div className="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-white/10 rounded-full blur-[100px] animate-pulse"></div>
-                    <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-black/10 rounded-full blur-[80px]"></div>
-                </div>
-
-                <div className="relative z-10 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12">
+            <HeroSection icon={SIGNS.find(s => s.name.toLowerCase() === selectedSign)?.icon || "🌟"} extraPaddingBottom={true}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 w-full">
                     {/* Left: Text Content */}
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
@@ -96,7 +90,7 @@ export default function MonthlyHoroscopePage() {
                         <span className="inline-block py-1 px-3 rounded-full bg-white/10 border border-white/20 text-white/90 text-[10px] font-bold tracking-[0.2em] uppercase mb-3 backdrop-blur-md shadow-lg">
                             Monthly Vision
                         </span>
-                        <h1 className="text-3xl md:text-5xl font-black mb-3 drop-shadow-xl tracking-tight leading-tight">
+                        <h1 className="text-3xl md:text-5xl font-black mb-3 drop-shadow-xl tracking-tight leading-tight text-white">
                             The Month Ahead
                         </h1>
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold mb-4 shadow-lg">
@@ -118,7 +112,7 @@ export default function MonthlyHoroscopePage() {
                         <FeaturedAstrologerCard />
                     </motion.div>
                 </div>
-            </div>
+            </HeroSection>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20 -mt-16">
                 {/* Controls Card */}

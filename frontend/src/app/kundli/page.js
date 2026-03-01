@@ -12,6 +12,7 @@ import CustomDateInput from '../../components/common/CustomDateInput';
 import { useBirthDetails } from '../../context/BirthDetailsContext';
 import API from '@/lib/api';
 import toast from 'react-hot-toast';
+import HeroSection from '../../components/common/HeroSection';
 
 export default function KundliForm() {
     const router = useRouter();
@@ -146,36 +147,14 @@ export default function KundliForm() {
         <div className="min-h-screen font-sans bg-slate-50 selection:bg-blue-100 selection:text-blue-900 pb-20 overflow-x-hidden">
 
             {/* Header Section */}
-            <div className="relative text-white">
-                {/* Background Layer */}
-                <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black shadow-2xl rounded-b-[2.5rem] md:rounded-b-[3.5rem] z-0 overflow-hidden transform scale-x-[1.02]">
-                    {/* Decorative Elements */}
-                    <div className="absolute top-[-50%] left-[-10%] w-[800px] h-[800px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none animate-pulse"></div>
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-fuchsia-500/10 blur-[100px] pointer-events-none"></div>
-                    <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                </div>
-
-                {/* Foreground Content */}
-                <div className="relative z-10 max-w-6xl mx-auto flex flex-col items-center pt-10 pb-24 md:pb-32 px-6">
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="flex flex-col items-center text-center"
-                    >
-                        <div className="inline-block px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-4 flex items-center gap-2 shadow-lg shadow-black/10">
-                            <Sparkles size={12} className="text-astro-yellow fill-astro-yellow/20" />
-                            <span className="text-astro-yellow text-[10px] font-bold tracking-[0.2em] uppercase">Vedic Astrology</span>
-                        </div>
-                        <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight">
-                            Free <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-amber-200 to-orange-300">Janam Kundli</span>
-                        </h1>
-                        <p className="text-slate-300/90 max-w-xl text-sm md:text-base font-medium leading-relaxed">
-                            Unveil your destiny with precise birth chart calculations based on ancient Vedic principles.
-                        </p>
-                    </motion.div>
-                </div>
-            </div>
+            <HeroSection
+                title="Free"
+                highlightText="Janam Kundli"
+                subtitle="Unveil your destiny with precise birth chart calculations based on ancient Vedic principles."
+                icon="✨"
+                align="center"
+                extraPaddingBottom={true}
+            />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-24 relative z-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">

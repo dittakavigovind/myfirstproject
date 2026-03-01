@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { ZODIAC_SIGNS } from '@/lib/zodiacData';
 import { COMPATIBILITY_CONTENT, getGenericContent } from '@/lib/compatibilityData';
 import StandardResultHeader from '@/components/calculators/StandardResultHeader';
+import HeroSection from '@/components/common/HeroSection';
 
 export default function ZodiacCompatibilityPage() {
     const [sign1, setSign1] = useState(null);
@@ -110,30 +111,23 @@ export default function ZodiacCompatibilityPage() {
                         exit={{ opacity: 0 }}
                     >
                         {/* Hero Section */}
-                        <div className="relative text-white overflow-hidden">
-                            <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-black shadow-2xl rounded-b-[3rem] z-0 overflow-hidden transform scale-x-[1.05]">
-                                <div className="absolute top-[-50%] left-[-10%] w-[1000px] h-[1000px] rounded-full bg-indigo-600/10 blur-[130px] pointer-events-none"></div>
-                                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                            </div>
-
-                            <div className="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-24 text-center">
-                                <Link href="/matchmaking" className="inline-flex items-center gap-2 text-indigo-200/60 hover:text-indigo-200 transition-colors mb-8 font-bold text-xs uppercase tracking-widest">
-                                    <ArrowLeft size={14} /> Back to Matchmaking
-                                </Link>
-                                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                                    <div className="inline-flex items-center gap-2 py-1 px-3 rounded-full bg-white/10 border border-white/10 backdrop-blur-md shadow-lg mb-6">
-                                        <Sparkles className="w-3 h-3 text-astro-yellow" />
-                                        <span className="text-indigo-100 text-[10px] font-bold tracking-[0.2em] uppercase">Cosmic Compatibility</span>
-                                    </div>
-                                    <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">
-                                        Zodiac <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-orange-300 to-amber-200">Compatibility</span>
-                                    </h1>
-                                    <p className="text-indigo-100/70 max-w-2xl mx-auto font-medium leading-relaxed">
-                                        Explore the divine alignment between two souls. Select your zodiac signs to unlock deep insights into your shared journey across love, intimacy, and communication.
-                                    </p>
-                                </motion.div>
-                            </div>
-                        </div>
+                        <HeroSection icon="❤️" align="center" extraPaddingBottom={true}>
+                            <Link href="/matchmaking" className="inline-flex items-center gap-2 text-indigo-200/60 hover:text-indigo-200 transition-colors mb-8 font-bold text-xs uppercase tracking-widest">
+                                <ArrowLeft size={14} /> Back to Matchmaking
+                            </Link>
+                            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                                <div className="inline-flex items-center gap-2 py-1 px-3 rounded-full bg-white/10 border border-white/10 backdrop-blur-md shadow-lg mb-6">
+                                    <Sparkles className="w-3 h-3 text-astro-yellow" />
+                                    <span className="text-indigo-100 text-[10px] font-bold tracking-[0.2em] uppercase">Cosmic Compatibility</span>
+                                </div>
+                                <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">
+                                    Zodiac <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-orange-300 to-amber-200">Compatibility</span>
+                                </h1>
+                                <p className="text-indigo-100/70 max-w-2xl mx-auto font-medium leading-relaxed">
+                                    Explore the divine alignment between two souls. Select your zodiac signs to unlock deep insights into your shared journey across love, intimacy, and communication.
+                                </p>
+                            </motion.div>
+                        </HeroSection>
 
                         {/* Sign Selection Grid */}
                         <div className="max-w-6xl mx-auto px-6 -mt-12 relative z-20">
