@@ -460,7 +460,11 @@ exports.getGeocode = async (req, res) => {
         res.json({ success: true, data: locationData });
     } catch (error) {
         console.error('Geocode Error:', error);
-        res.status(500).json({ message: 'Failed to fetch location', error: error.message });
+        res.status(500).json({
+            success: false,
+            message: 'Location not found',
+            error: error.message
+        });
     }
 };
 
