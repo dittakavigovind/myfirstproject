@@ -71,18 +71,18 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
     // POSITIONS (x,y in 0-400 grid)
     // House positions for text
     const houses = [
-        { id: 1, x: 200, y: 190 },  // Top Diamond (1) - Adjusted Y for center
-        { id: 2, x: 100, y: 90 },   // Top Left (2)
-        { id: 3, x: 75, y: 110 },   // Left Top (3)
-        { id: 4, x: 90, y: 200 },   // Left Diamond (4)
-        { id: 5, x: 75, y: 290 },   // Left Bottom (5)
-        { id: 6, x: 100, y: 310 },  // Bottom Left (6)
-        { id: 7, x: 200, y: 210 },  // Bottom Diamond (7)
-        { id: 8, x: 300, y: 310 },  // Bottom Right (8)
-        { id: 9, x: 325, y: 290 },  // Right Bottom (9)
-        { id: 10, x: 310, y: 200 }, // Right Diamond (10)
-        { id: 11, x: 325, y: 110 }, // Right Top (11)
-        { id: 12, x: 300, y: 90 },   // Top Right (12)
+        { id: 1, x: 200, y: 100 },  // Top Diamond (1)
+        { id: 2, x: 100, y: 50 },   // Top Left (2)
+        { id: 3, x: 50, y: 100 },   // Left Top (3)
+        { id: 4, x: 100, y: 200 },  // Left Diamond (4)
+        { id: 5, x: 50, y: 300 },   // Left Bottom (5)
+        { id: 6, x: 100, y: 350 },  // Bottom Left (6)
+        { id: 7, x: 200, y: 300 },  // Bottom Diamond (7)
+        { id: 8, x: 300, y: 350 },  // Bottom Right (8)
+        { id: 9, x: 350, y: 300 },  // Right Bottom (9)
+        { id: 10, x: 300, y: 200 }, // Right Diamond (10)
+        { id: 11, x: 350, y: 100 }, // Right Top (11)
+        { id: 12, x: 300, y: 50 },  // Top Right (12)
     ];
 
     const renderHouse = (houseIndex) => {
