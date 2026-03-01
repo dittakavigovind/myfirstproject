@@ -17,7 +17,8 @@ const {
     updateCoupon,
     deleteCoupon,
     updateBookingStatus,
-    getUserBookings
+    getUserBookings,
+    updateBookingAddress
 } = require('../controllers/poojaController');
 const { protect, admin } = require('../middleware/authMiddleware');
 

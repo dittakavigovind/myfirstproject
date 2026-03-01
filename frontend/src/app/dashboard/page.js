@@ -56,6 +56,18 @@ export default function Dashboard() {
     });
     const [isSavingChart, setIsSavingChart] = useState(false);
 
+    // Edit Address State
+    const [showEditAddress, setShowEditAddress] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [addressForm, setAddressForm] = useState({
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: 'India'
+    });
+    const [isSavingAddress, setIsSavingAddress] = useState(false);
+
     // Effect to pre-fill data when modal opens or user changes
     useEffect(() => {
         if (showEdit && user) {
@@ -318,6 +330,47 @@ export default function Dashboard() {
         } catch (err) {
             console.error(err);
             toast.error('Failed to remove profile');
+        }
+    };
+
+    const handleEditAddress = (booking) => {
+        setSelectedBooking(booking);
+        setAddressForm({
+            address: booking.deliveryAddress?.address || '',
+            city: booking.deliveryAddress?.city || '',
+            state: booking.deliveryAddress?.state || '',
+            pincode: booking.deliveryAddress?.pincode || '',
+            country: 'India'
+        });
+        setShowEditAddress(true);
+    };
+
+    const handleUpdateAddress = async (e) => {
+        e.preventDefault();
+        if (!addressForm.address || !addressForm.city || !addressForm.state || !addressForm.pincode) {
+            toast.error("Please fill all address fields");
+            return;
+        }
+
+        setIsSavingAddress(true);
+        try {
+            const res = await API.put(`/pooja/booking/${selectedBooking._id}/address`, {
+                deliveryAddress: addressForm
+            });
+            if (res.data.success) {
+                // Refresh bookings
+                const { data } = await API.get('/pooja/booking/my-bookings');
+                if (data.success) {
+                    setPoojaOrders(data.data);
+                }
+                toast.success('Address updated successfully');
+                setShowEditAddress(false);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error(err?.response?.data?.message || 'Failed to update address');
+        } finally {
+            setIsSavingAddress(false);
         }
     };
 
