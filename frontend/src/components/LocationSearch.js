@@ -89,11 +89,11 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                     pincode
                 });
             } else {
-                setError(res.data.message || 'Location not found');
+                setError(restrictCountry ? "Please select within India" : (res.data.message || 'Location not found'));
             }
         } catch (error) {
             console.error("Geocode error details:", error.response ? error.response.data : error.message);
-            setError(error.response?.data?.message || 'Location not found');
+            setError(restrictCountry ? "Delivery only to India" : (error.response?.data?.message || 'Location not found'));
         } finally {
             setSearching(false);
         }
