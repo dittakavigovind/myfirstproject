@@ -70,12 +70,16 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         try {
             const res = await API.post('/astro/geocode', { place: placeName });
             if (res.data.success) {
-                const { lat, lng, timezone, formattedAddress } = res.data.data;
+                const { lat, lng, timezone, formattedAddress, city, state, country, pincode } = res.data.data;
                 onLocationSelect({
                     formattedAddress,
                     lat,
                     lng,
-                    timezone
+                    timezone,
+                    city,
+                    state,
+                    country,
+                    pincode
                 });
             } else {
                 setError(res.data.message || 'Location not found');

@@ -133,7 +133,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         }
 
         if (name === 'pincode') {
-            value = value.replace(/\D/g, '').slice(0, 6);
+            value = value.replace(/\D/g, '').slice(0, 10);
         }
 
         // Text-only validation for city, state, country
@@ -152,7 +152,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             city: city || prev.city,
             state: state || prev.state,
             country: country || prev.country,
-            pincode: (pincode && pincode.length === 6) ? pincode : prev.pincode
+            pincode: pincode || prev.pincode
         }));
 
         toast.success(`Location set to ${city || 'selected place'}`);
