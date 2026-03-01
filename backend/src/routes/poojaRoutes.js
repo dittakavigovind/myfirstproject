@@ -9,17 +9,26 @@ const {
     updateTemple,
     deleteTemple,
     getAllBookings,
-    exportBookings
+    exportBookings,
+    validateCoupon,
+    getCoupons,
+    getActiveCoupons,
+    createCoupon,
+    updateCoupon,
+    deleteCoupon,
+    updateBookingStatus
 } = require('../controllers/poojaController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Public Routes
 router.get('/temples', getTemples);
 router.get('/temples/:slug', getTempleBySlug);
+router.get('/coupons/active', getActiveCoupons);
 
 // User Protected Routes
 router.post('/booking/create-order', protect, createBookingOrder);
 router.post('/booking/verify-payment', protect, verifyPayment);
+router.post('/coupons/validate', protect, validateCoupon);
 
 // Admin Routes
 router.post('/admin/temples', protect, admin, createTemple);
@@ -27,5 +36,15 @@ router.put('/admin/temples/:id', protect, admin, updateTemple);
 router.delete('/admin/temples/:id', protect, admin, deleteTemple);
 router.get('/admin/bookings', protect, admin, getAllBookings);
 router.get('/admin/bookings/export', protect, admin, exportBookings);
+router.put('/admin/bookings/:id/status', protect, admin, updateBookingStatus);
+
+// Admin Coupon Routes
+router.route('/admin/coupons')
+    .get(protect, admin, getCoupons)
+    .post(protect, admin, createCoupon);
+
+router.route('/admin/coupons/:id')
+    .put(protect, admin, updateCoupon)
+    .delete(protect, admin, deleteCoupon);
 
 module.exports = router;

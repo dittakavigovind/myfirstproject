@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
     TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, HelpCircle,
-    ChevronDown, ChevronRight, Settings
+    ChevronDown, ChevronRight, Settings, Tag
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -202,8 +202,15 @@ export default function AdminSidebar({ pendingRequestsCount = 0 }) {
                             className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname.startsWith('/admin/online-pooja/bookings') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                         >
-                            <PenTool size={18} />
+                            <FileText size={18} />
                             Pooja Bookings
+                        </Link>
+                        <Link href="/admin/online-pooja/coupons"
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname.startsWith('/admin/online-pooja/coupons') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <Tag size={18} />
+                            Coupons
                         </Link>
                     </>
                 )}

@@ -20,7 +20,7 @@ const AdminTemples = () => {
         location: '',
         description: '',
         images: [],
-        sevas: [{ name: '', price: '', originalPrice: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
+        sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
         isActive: true
     });
 
@@ -52,11 +52,12 @@ const AdminTemples = () => {
                 sevas: temple.sevas.length > 0 ? temple.sevas.map(s => ({
                     ...s,
                     originalPrice: s.originalPrice || '',
+                    maxSlots: s.maxSlots || '',
                     dateSelectionType: s.dateSelectionType || 'Any',
                     fixedDate: s.fixedDate || '',
                     startDate: s.startDate || '',
                     endDate: s.endDate || ''
-                })) : [{ name: '', price: '', originalPrice: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
+                })) : [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
                 isActive: temple.isActive
             });
         } else {
@@ -66,7 +67,7 @@ const AdminTemples = () => {
                 location: '',
                 description: '',
                 images: [],
-                sevas: [{ name: '', price: '', originalPrice: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
+                sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
                 isActive: true
             });
         }
@@ -76,7 +77,7 @@ const AdminTemples = () => {
     const handleAddSeva = () => {
         setFormData({
             ...formData,
-            sevas: [...formData.sevas, { name: '', price: '', originalPrice: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }]
+            sevas: [...formData.sevas, { name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }]
         });
     };
 
@@ -359,21 +360,29 @@ const AdminTemples = () => {
                                                 onChange={(e) => handleSevaChange(idx, 'name', e.target.value)}
                                                 required
                                             />
-                                            <div className="flex gap-4">
+                                            <div className="flex gap-2">
                                                 <input
                                                     type="number"
-                                                    placeholder="Sale Price (₹)"
-                                                    className="flex-1 bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none"
+                                                    placeholder="Sale (₹)"
+                                                    className="w-full bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none"
                                                     value={seva.price}
                                                     onChange={(e) => handleSevaChange(idx, 'price', e.target.value)}
                                                     required
                                                 />
                                                 <input
                                                     type="number"
-                                                    placeholder="Original Price (₹)"
-                                                    className="flex-1 bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none"
+                                                    placeholder="Orig (₹)"
+                                                    className="w-full bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none"
                                                     value={seva.originalPrice}
                                                     onChange={(e) => handleSevaChange(idx, 'originalPrice', e.target.value)}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Max Slots"
+                                                    className="w-full bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none"
+                                                    value={seva.maxSlots}
+                                                    onChange={(e) => handleSevaChange(idx, 'maxSlots', e.target.value)}
+                                                    min="1"
                                                 />
                                             </div>
                                         </div>

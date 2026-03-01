@@ -26,6 +26,15 @@ const poojaBookingSchema = new mongoose.Schema({
             required: true
         }
     },
+    couponApplied: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Coupon',
+        default: null
+    },
+    discountAmount: {
+        type: Number,
+        default: 0
+    },
     performDate: {
         type: Date
     },

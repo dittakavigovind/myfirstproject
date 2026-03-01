@@ -66,6 +66,20 @@ const AdminBookings = () => {
         }
     };
 
+    const handleStatusChange = async (bookingId, newStatus) => {
+        try {
+            await axios.put(`${API_BASE}/pooja/admin/bookings/${bookingId}/status`, {
+                bookingStatus: newStatus
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success('Booking status updated');
+            fetchBookings();
+        } catch (error) {
+            toast.error('Failed to update status');
+        }
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'Paid': return 'bg-green-100 text-green-600';
@@ -147,8 +161,9 @@ const AdminBookings = () => {
                                 <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Devotee</th>
                                 <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Address</th>
                                 <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Temple & Seva</th>
-                                <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Amount</th>
-                                <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Status</th>
+                                <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Amount & Coupon</th>
+                                <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Payment</th>
+                                <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Booking Status</th>
                                 <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Perform Date</th>
                                 <th className="px-6 py-4 text-xs font-black text-astro-navy uppercase tracking-widest">Booking Date</th>
                             </tr>
@@ -204,12 +219,37 @@ const AdminBookings = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-black">₹{booking.sevaDetails.price}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-sm font-black">₹{booking.sevaDetails.price - (booking.discountAmount || 0)}</span>
+                                                {booking.discountAmount > 0 && (
+                                                    <div className="text-[10px] text-gray-500">
+                                                        <span className="line-through text-gray-400">₹{booking.sevaDetails.price}</span>
+                                                        <span className="ml-1 text-green-600 bg-green-50 px-1 rounded">-{booking.discountAmount} ({booking.couponApplied?.code})</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${getStatusColor(booking.payment.status)}`}>
                                                 {booking.payment.status}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <select
+                                                value={booking.bookingStatus || 'Pending'}
+                                                onChange={(e) => handleStatusChange(booking._id, e.target.value)}
+                                                className={`text-xs font-bold rounded-lg border-gray-200 py-1.5 px-2 outline-none cursor-pointer
+                                                    ${booking.bookingStatus === 'Completed' ? 'bg-green-50 text-green-700' : ''}
+                                                    ${booking.bookingStatus === 'Confirmed' ? 'bg-blue-50 text-blue-700' : ''}
+                                                    ${booking.bookingStatus === 'Cancelled' ? 'bg-red-50 text-red-700' : ''}
+                                                    ${(!booking.bookingStatus || booking.bookingStatus === 'Pending') ? 'bg-yellow-50 text-yellow-700' : ''}
+                                                `}
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Confirmed">Confirmed</option>
+                                                <option value="Completed">Completed</option>
+                                                <option value="Cancelled">Cancelled</option>
+                                            </select>
                                         </td>
                                         <td className="px-6 py-4">
                                             {booking.performDate ? (

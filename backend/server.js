@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ override: true, path: path.join(__dirname, '.env') });
 // Force Restart 2
 const express = require('express');
 const http = require('http');

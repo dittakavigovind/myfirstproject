@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import axios from 'axios';
 import { resolveImageUrl, API_BASE } from '../../../lib/urlHelper';
-import { Loader2, MapPin, ChevronLeft, Calendar, User, Phone, Mail, Home, Info, CheckCircle2 } from 'lucide-react';
+import { Loader2, MapPin, ChevronLeft, Calendar, User, Phone, Mail, Home, Info, CheckCircle2, Tag } from 'lucide-react';
 import BookingModal from '../../../components/OnlinePooja/BookingModal';
 
 const TempleDetailContent = () => {
@@ -38,6 +38,16 @@ const TempleDetailContent = () => {
 
         fetchTemple();
     }, [slug]);
+
+    useEffect(() => {
+        if (temple && temple.sevas && typeof window !== 'undefined') {
+            const sevaWithSavedProgress = temple.sevas.find(s => localStorage.getItem(`poojaBooking_${s._id}`));
+            if (sevaWithSavedProgress) {
+                setSelectedSeva(sevaWithSavedProgress);
+                setIsBookingModalOpen(true);
+            }
+        }
+    }, [temple]);
 
     const handleBookNow = (seva) => {
         setSelectedSeva(seva);
@@ -161,7 +171,7 @@ const TempleDetailContent = () => {
                                                 <h3 className="font-bold text-lg text-astro-yellow group-hover:scale-105 transition-transform origin-left">
                                                     {seva.name}
                                                 </h3>
-                                                <div className="text-right">
+                                                <div className="text-right flex flex-col items-end">
                                                     <div className="flex items-center gap-2">
                                                         {seva.originalPrice && seva.originalPrice > seva.price && (
                                                             <span className="text-white/40 text-sm line-through">
@@ -171,6 +181,11 @@ const TempleDetailContent = () => {
                                                         <span className="text-xl font-black text-astro-yellow">
                                                             ₹{seva.price}
                                                         </span>
+                                                    </div>
+
+                                                    {/* Coupon Badge */}
+                                                    <div className="mt-1 flex items-center gap-1 bg-green-500/20 text-green-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-green-500/30">
+                                                        <Tag className="w-3 h-3" /> Use Coupon
                                                     </div>
                                                 </div>
                                             </div>

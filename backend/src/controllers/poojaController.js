@@ -1,7 +1,10 @@
 const Temple = require('../models/Temple');
 const PoojaBooking = require('../models/PoojaBooking');
+const Coupon = require('../models/Coupon');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const emailService = require('../services/emailService');
+const whatsappService = require('../services/whatsappService');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -38,11 +41,78 @@ exports.getTempleBySlug = async (req, res) => {
     }
 };
 
+// @desc    Validate a coupon code
+// @route   POST /api/pooja/coupons/validate
+// @access  Private
+exports.validateCoupon = async (req, res) => {
+    try {
+        const { code, amount, templeId } = req.body;
+        if (!code || !amount || !templeId) {
+            return res.status(400).json({ success: false, message: 'Code, amount and templeId are required' });
+        }
+
+        const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true });
+
+        if (!coupon) {
+            return res.status(404).json({ success: false, message: 'Invalid or inactive coupon' });
+        }
+
+        // 0. Check Temple Specificity
+        if (coupon.temple && coupon.temple.toString() !== templeId) {
+            return res.status(400).json({ success: false, message: 'This coupon is not valid for this temple' });
+        }
+
+        // 1. Check Expiry
+        if (new Date() > new Date(coupon.validUntil)) {
+            return res.status(400).json({ success: false, message: 'Coupon has expired' });
+        }
+        if (new Date() < new Date(coupon.validFrom)) {
+            return res.status(400).json({ success: false, message: 'Coupon is not yet valid' });
+        }
+
+        // 2. Check Usage Limits
+        if (coupon.usedCount >= coupon.usageLimit) {
+            return res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+        }
+
+        // 3. Check Min Order Value
+        if (amount < coupon.minOrderValue) {
+            return res.status(400).json({ success: false, message: `Minimum order value for this coupon is ₹${coupon.minOrderValue}` });
+        }
+
+        // Calculate Discount
+        let calculatedDiscount = 0;
+        if (coupon.discountType === 'FIXED') {
+            calculatedDiscount = coupon.discountValue;
+        } else {
+            // PERCENTAGE
+            calculatedDiscount = (amount * coupon.discountValue) / 100;
+            if (coupon.maxDiscount && calculatedDiscount > coupon.maxDiscount) {
+                calculatedDiscount = coupon.maxDiscount;
+            }
+        }
+
+        // Safety check to not discount more than total amount
+        calculatedDiscount = Math.min(calculatedDiscount, amount);
+
+        res.status(200).json({
+            success: true,
+            discountAmount: calculatedDiscount,
+            finalAmount: amount - calculatedDiscount,
+            couponId: coupon._id
+        });
+
+    } catch (error) {
+        console.error('Validate Coupon Error:', error);
+        res.status(500).json({ success: false, message: 'Server error validating coupon' });
+    }
+};
+
 // @desc    Create Razorpay order for pooja booking
 // @route   POST /api/pooja/booking/create-order
 // @access  Private
 exports.createBookingOrder = async (req, res) => {
-    const { templeId, sevaName, sevaPrice, devoteeDetails, deliveryAddress, performDate } = req.body;
+    const { templeId, sevaName, sevaPrice, devoteeDetails, deliveryAddress, performDate, couponCode } = req.body;
 
     if (!templeId || !sevaName || !sevaPrice || !devoteeDetails || !deliveryAddress) {
         return res.status(400).json({ success: false, message: 'Please provide all required details' });
@@ -53,16 +123,78 @@ exports.createBookingOrder = async (req, res) => {
     }
 
     try {
-        // 1. Create Razorpay Order
+        // 1. Fetch Temple to determine Seva Slots
+        const temple = await Temple.findById(templeId);
+        if (!temple) return res.status(404).json({ success: false, message: 'Temple not found' });
+
+        const seva = temple.sevas.find(s => s.name === sevaName);
+        if (!seva) return res.status(404).json({ success: false, message: 'Seva not found' });
+
+        // 2. Enforce Max Slots if applicable
+        if (seva.maxSlots && performDate) {
+            // Check existing paid or scheduled bookings for this exact date
+            const startOfDay = new Date(performDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(performDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const existingBookingsCount = await PoojaBooking.countDocuments({
+                temple: templeId,
+                'sevaDetails.name': sevaName,
+                performDate: { $gte: startOfDay, $lte: endOfDay },
+                'payment.status': { $in: ['Paid', 'Pending'] } // Pending slots are reserved until failed
+            });
+
+            if (existingBookingsCount >= seva.maxSlots) {
+                return res.status(400).json({ success: false, message: 'All slots for this seva are booked on the selected date. Please choose another date.' });
+            }
+        }
+
+        // 3. Process Coupon Logic
+        let finalPrice = parseInt(sevaPrice);
+        let appliedCouponId = null;
+        let discountApplied = 0;
+
+        if (couponCode) {
+            const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+
+            // Validate the coupon hasn't expired, has uses left, meets min order, AND matches the temple (if specific)
+            if (
+                coupon &&
+                new Date() <= new Date(coupon.validUntil) &&
+                coupon.usedCount < coupon.usageLimit &&
+                finalPrice >= coupon.minOrderValue &&
+                (!coupon.temple || coupon.temple.toString() === templeId)
+            ) {
+                if (coupon.discountType === 'FIXED') {
+                    discountApplied = coupon.discountValue;
+                } else {
+                    discountApplied = (finalPrice * coupon.discountValue) / 100;
+                    if (coupon.maxDiscount && discountApplied > coupon.maxDiscount) discountApplied = coupon.maxDiscount;
+                }
+                discountApplied = Math.min(discountApplied, finalPrice);
+
+                finalPrice -= discountApplied;
+                appliedCouponId = coupon._id;
+
+                // Optimistically increment usage limit. 
+                // A more robust implementation handles incrementing only on payment success, 
+                // but incrementing now prevents rapid concurrency overflows.
+                coupon.usedCount += 1;
+                await coupon.save();
+            }
+        }
+
+        // 4. Create Razorpay Order
         const options = {
-            amount: sevaPrice * 100, // Amount in paise
+            amount: finalPrice * 100, // Amount in paise
             currency: "INR",
             receipt: `pooja_receipt_${Date.now()}`
         };
 
         const order = await razorpay.orders.create(options);
 
-        // 2. Create a Pending Booking
+        // 5. Create a Pending Booking
         const bookingId = `W2A-PJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
         await PoojaBooking.create({
@@ -71,8 +203,10 @@ exports.createBookingOrder = async (req, res) => {
             temple: templeId,
             sevaDetails: {
                 name: sevaName,
-                price: sevaPrice
+                price: sevaPrice // Store original price
             },
+            couponApplied: appliedCouponId,
+            discountAmount: discountApplied,
             devoteeDetails,
             deliveryAddress,
             performDate,
@@ -85,7 +219,9 @@ exports.createBookingOrder = async (req, res) => {
         res.status(200).json({
             success: true,
             order_id: order.id,
-            amount: sevaPrice,
+            amount: finalPrice, // Send discounted amount to client
+            original_amount: sevaPrice,
+            discount: discountApplied,
             currency: "INR",
             key_id: process.env.RAZORPAY_KEY_ID,
             bookingId
@@ -113,7 +249,9 @@ exports.verifyPayment = async (req, res) => {
 
         if (expectedSignature === razorpay_signature) {
             // Payment Success
-            const booking = await PoojaBooking.findOne({ bookingId });
+            const booking = await PoojaBooking.findOne({ bookingId })
+                .populate('temple', 'name')
+                .populate('user', 'email phone name');
 
             if (!booking) {
                 return res.status(404).json({ success: false, message: 'Booking not found' });
@@ -123,6 +261,10 @@ exports.verifyPayment = async (req, res) => {
             booking.payment.razorpaySignature = razorpay_signature;
             booking.payment.status = 'Paid';
             await booking.save();
+
+            // Send Notifications as fire-and-forget (do not block the response)
+            emailService.sendBookingConfirmationEmail(booking).catch(err => console.error("Email notification failed:", err));
+            whatsappService.sendBookingConfirmationWhatsapp(booking).catch(err => console.error("WhatsApp notification failed:", err));
 
             res.status(200).json({
                 success: true,
@@ -216,6 +358,7 @@ exports.getAllBookings = async (req, res) => {
         const bookings = await PoojaBooking.find(query)
             .populate('temple', 'name')
             .populate('user', 'name email phone')
+            .populate('couponApplied', 'code')
             .sort({ createdAt: -1 });
 
         res.status(200).json({ success: true, count: bookings.length, data: bookings });
@@ -244,16 +387,20 @@ exports.exportBookings = async (req, res) => {
         const bookings = await PoojaBooking.find(query)
             .populate('temple', 'name')
             .populate('user', 'name email phone')
+            .populate('couponApplied', 'code')
             .sort({ createdAt: -1 });
 
         // Generate CSV content
-        let csv = 'Booking ID,Devotee Name,Gotram,Phone,Email,Temple,Seva,Amount,Payment Status,Perform Date,Booking Date,Delivery Address\n';
+        let csv = 'Booking ID,Devotee Name,Gotram,Phone,Email,Temple,Seva,Base Amount,Discount,Coupon Used,Final Amount,Payment Status,Perform Date,Booking Date,Delivery Address\n';
 
         bookings.forEach(b => {
             const devoteeList = b.devoteeDetails.devotees?.map(d => `${d.name}${d.nakshatra ? ` (${d.nakshatra})` : ''}`).join(' | ');
             const performDate = b.performDate ? new Date(b.performDate).toLocaleDateString('en-IN') : 'Scheduled';
             const address = b.deliveryAddress ? `${b.deliveryAddress.address}, ${b.deliveryAddress.city}, ${b.deliveryAddress.state} - ${b.deliveryAddress.pincode}, ${b.deliveryAddress.country}` : 'N/A';
-            csv += `"${b.bookingId}","${devoteeList}","${b.devoteeDetails.gotram}","${b.devoteeDetails.phoneNumber}","${b.devoteeDetails.email}","${b.temple ? b.temple.name : 'N/A'}","${b.sevaDetails.name}",${b.sevaDetails.price},"${b.payment.status}","${performDate}","${b.createdAt.toISOString()}","${address}"\n`;
+            const finalAmount = b.sevaDetails.price - (b.discountAmount || 0);
+            const couponCode = b.couponApplied ? b.couponApplied.code : 'None';
+
+            csv += `"${b.bookingId}","${devoteeList}","${b.devoteeDetails.gotram}","${b.devoteeDetails.phoneNumber}","${b.devoteeDetails.email}","${b.temple ? b.temple.name : 'N/A'}","${b.sevaDetails.name}",${b.sevaDetails.price},${b.discountAmount || 0},"${couponCode}",${finalAmount},"${b.payment.status}","${performDate}","${b.createdAt.toISOString()}","${address}"\n`;
         });
 
         res.setHeader('Content-Type', 'text/csv');
@@ -262,6 +409,118 @@ exports.exportBookings = async (req, res) => {
 
     } catch (error) {
         console.error('Export Bookings Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Update booking status
+// @route   PUT /api/pooja/admin/bookings/:id/status
+// @access  Private/Admin
+exports.updateBookingStatus = async (req, res) => {
+    try {
+        const { bookingStatus } = req.body;
+
+        if (!['Confirmed', 'Completed', 'Cancelled'].includes(bookingStatus)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        const booking = await PoojaBooking.findByIdAndUpdate(
+            req.params.id,
+            { bookingStatus },
+            { new: true }
+        );
+
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Status updated successfully', data: booking });
+    } catch (error) {
+        console.error('Update Booking Status Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// --- Admin Coupon Controllers ---
+
+// @desc    Get active public coupons
+// @route   GET /api/pooja/coupons/active
+// @access  Public
+exports.getActiveCoupons = async (req, res) => {
+    try {
+        const { templeId } = req.query;
+        let query = {
+            isActive: true,
+            validUntil: { $gte: new Date() },
+            $expr: { $lt: ["$usedCount", "$usageLimit"] }
+        };
+
+        if (templeId) {
+            query.$or = [{ temple: templeId }, { temple: null }];
+        } else {
+            query.temple = null;
+        }
+
+        const coupons = await Coupon.find(query)
+            .select('-usageLimit -usedCount -createdAt -updatedAt -__v')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, count: coupons.length, data: coupons });
+    } catch (error) {
+        console.error('Get Active Coupons Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get all coupons
+// @route   GET /api/pooja/admin/coupons
+// @access  Private/Admin
+exports.getCoupons = async (req, res) => {
+    try {
+        const coupons = await Coupon.find().sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: coupons });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Create new coupon
+// @route   POST /api/pooja/admin/coupons
+// @access  Private/Admin
+exports.createCoupon = async (req, res) => {
+    try {
+        const coupon = await Coupon.create(req.body);
+        res.status(201).json({ success: true, data: coupon });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message || 'Server Error' });
+    }
+};
+
+// @desc    Update coupon
+// @route   PUT /api/pooja/admin/coupons/:id
+// @access  Private/Admin
+exports.updateCoupon = async (req, res) => {
+    try {
+        const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+        if (!coupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
+        res.status(200).json({ success: true, data: coupon });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message || 'Server Error' });
+    }
+};
+
+// @desc    Delete coupon
+// @route   DELETE /api/pooja/admin/coupons/:id
+// @access  Private/Admin
+exports.deleteCoupon = async (req, res) => {
+    try {
+        const coupon = await Coupon.findByIdAndDelete(req.params.id);
+        if (!coupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
+        res.status(200).json({ success: true, message: 'Coupon deleted' });
+    } catch (error) {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

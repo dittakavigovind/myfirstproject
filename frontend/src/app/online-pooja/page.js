@@ -145,6 +145,12 @@ const OnlinePoojaListing = () => {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Discount Badge */}
+                                    <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center gap-1.5 z-10 transform origin-right hover:scale-105 transition-transform cursor-default">
+                                        <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></div>
+                                        Offers Available
+                                    </div>
                                 </Link>
 
                                 {/* Content */}

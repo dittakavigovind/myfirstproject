@@ -40,6 +40,10 @@ const templeSchema = new mongoose.Schema({
         image: {
             type: String
         },
+        maxSlots: {
+            type: Number,
+            default: null // Null means unlimited
+        },
         dateSelectionType: {
             type: String,
             enum: ['Fixed', 'Range', 'Any'],

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE } from '../../lib/urlHelper';
-import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, MapPin } from 'lucide-react';
+import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, MapPin, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,66 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         country: 'India',
         performDate: seva?.dateSelectionType === 'Fixed' ? new Date(seva.fixedDate).toISOString().split('T')[0] : ''
     });
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [couponLoading, setCouponLoading] = useState(false);
+    const [couponMessage, setCouponMessage] = useState({ type: '', text: '' });
+    const [availableCoupons, setAvailableCoupons] = useState([]);
+
+    // Fetch Available Coupons on mount
+    useEffect(() => {
+        if (isOpen && temple?._id) {
+            const fetchCoupons = async () => {
+                try {
+                    const res = await axios.get(`${API_BASE}/pooja/coupons/active?templeId=${temple._id}`);
+                    if (res.data.success) {
+                        setAvailableCoupons(res.data.data);
+                    }
+                } catch (err) {
+                    console.error('Error fetching available coupons:', err);
+                }
+            };
+            fetchCoupons();
+        }
+    }, [isOpen, temple]);
+
+    // Restore saved progress on mount
+    useEffect(() => {
+        if (isOpen && typeof window !== 'undefined') {
+            const savedProgress = localStorage.getItem(`poojaBooking_${seva?._id}`);
+            if (savedProgress) {
+                try {
+                    const parsed = JSON.parse(savedProgress);
+                    setFormData(parsed.formData);
+                    if (parsed.couponCode) {
+                        setCouponCode(parsed.couponCode);
+                        // If token exists now, we should attempt to auto-apply it
+                        if (token) {
+                            setTimeout(() => {
+                                handleApplyCoupon(parsed.couponCode);
+                            }, 500); // Small delay to let states settle
+                        }
+                    }
+                    localStorage.removeItem(`poojaBooking_${seva?._id}`); // Clear after restore
+                    toast.success('Your previously entered details were restored!');
+                } catch (e) {
+                    console.error("Failed to parse saved booking progress");
+                }
+            }
+        }
+    }, [isOpen, seva?._id, token]);
+
+    const saveProgressAndLogin = () => {
+        localStorage.setItem(`poojaBooking_${seva?._id}`, JSON.stringify({
+            formData,
+            couponCode
+        }));
+        toast.error('Please login to continue');
+        // Redirect to login, then back to the current temple page
+        router.push(`/login?redirect=/online-pooja/details?slug=${temple.slug}`);
+    };
 
     const handleChange = (e) => {
         let { name, value } = e.target;
@@ -65,12 +125,58 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         });
     };
 
+    const handleApplyCoupon = async (autoCode = null) => {
+        const codeToApply = typeof autoCode === 'string' ? autoCode : couponCode;
+
+        if (!codeToApply.trim()) {
+            setCouponMessage({ type: 'error', text: 'Please enter a coupon code' });
+            return;
+        }
+
+        if (!token) {
+            saveProgressAndLogin();
+            return;
+        }
+
+        setCouponLoading(true);
+        setCouponMessage({ type: '', text: '' });
+
+        try {
+            const res = await axios.post(`${API_BASE}/pooja/coupons/validate`, {
+                code: codeToApply,
+                amount: seva.price,
+                templeId: temple._id
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data.success) {
+                setAppliedCoupon({
+                    code: codeToApply.toUpperCase(),
+                    discountAmount: res.data.discountAmount,
+                    finalAmount: res.data.finalAmount
+                });
+                setCouponMessage({ type: 'success', text: `Coupon applied! You saved ₹${res.data.discountAmount}` });
+            }
+        } catch (error) {
+            setAppliedCoupon(null);
+            setCouponMessage({ type: 'error', text: error.response?.data?.message || 'Invalid coupon code' });
+        } finally {
+            setCouponLoading(false);
+        }
+    };
+
+    const removeCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponCode('');
+        setCouponMessage({ type: '', text: '' });
+    };
+
     const handlePayment = async (e) => {
         e.preventDefault();
 
         if (!token) {
-            toast.error('Please login to book a seva');
-            router.push('/login');
+            saveProgressAndLogin();
             return;
         }
 
@@ -105,7 +211,8 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                     pincode: formData.pincode,
                     country: formData.country
                 },
-                performDate: formData.performDate
+                performDate: formData.performDate,
+                couponCode: appliedCoupon ? appliedCoupon.code : undefined
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -198,8 +305,32 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                             <p className="text-white/60 text-sm">{temple.name}</p>
                         </div>
 
-                        <div className="text-3xl font-black mb-8">
-                            ₹{seva.price}
+                        <div className="mb-8">
+                            {appliedCoupon ? (
+                                <div className="space-y-1 mt-2 p-4 bg-white/5 rounded-2xl border border-white/10">
+                                    <div className="flex justify-between items-center text-sm text-white/60">
+                                        <span>Original Price</span>
+                                        <span className="line-through">₹{seva.price}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm text-astro-yellow">
+                                        <span>Discount ({appliedCoupon.code})</span>
+                                        <span>- ₹{appliedCoupon.discountAmount}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-2xl font-black text-white pt-2 border-t border-white/10 mt-2">
+                                        <span>Total</span>
+                                        <span>₹{appliedCoupon.finalAmount}</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="text-3xl font-black">
+                                        ₹{seva.price}
+                                    </div>
+                                    <div className="mt-2 inline-flex items-center gap-1.5 bg-green-500/20 text-green-300 text-xs font-bold px-2.5 py-1 rounded-md border border-green-500/30">
+                                        <Tag className="w-3.5 h-3.5" /> Offers Available
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-6">
@@ -225,7 +356,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                             <div className="h-1 w-8 md:w-12 bg-astro-yellow rounded-full"></div>
                         </div>
 
-                        <form onSubmit={handlePayment} className="space-y-8">
+                        <form onSubmit={handlePayment} className="space-y-10">
                             {/* Devotee Info Section */}
                             <div className="space-y-5">
                                 <div className="flex items-center justify-between px-1">
@@ -241,9 +372,9 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                     )}
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     {formData.devotees.map((devotee, idx) => (
-                                        <div key={idx} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 relative group transition-all duration-300 hover:border-astro-yellow/30 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
+                                        <div key={idx} className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100 relative group transition-all duration-300 hover:border-astro-yellow/30 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
                                             {formData.devotees.length > 1 && (
                                                 <button
                                                     type="button"
@@ -262,7 +393,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                             required
                                                             value={devotee.name}
                                                             onChange={(e) => handleDevoteeChange(idx, 'name', e.target.value)}
-                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-3 pl-11 pr-4 focus:border-astro-navy focus:ring-4 focus:ring-astro-navy/5 outline-none transition-all placeholder:text-slate-300 font-medium"
+                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-2.5 pl-11 pr-4 focus:border-astro-navy focus:ring-4 focus:ring-astro-navy/5 outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
                                                             placeholder="Enter name"
                                                         />
                                                     </div>
@@ -270,12 +401,45 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nakshatra (Optional)</label>
                                                     <div className="relative">
-                                                        <input
+                                                        <select
                                                             value={devotee.nakshatra}
                                                             onChange={(e) => handleDevoteeChange(idx, 'nakshatra', e.target.value)}
-                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-3 px-5 focus:border-astro-navy focus:ring-4 focus:ring-astro-navy/5 outline-none transition-all placeholder:text-slate-300 font-medium"
-                                                            placeholder="e.g. Rohini, Ashwani"
-                                                        />
+                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-2.5 px-4 focus:border-astro-navy focus:ring-4 focus:ring-astro-navy/5 outline-none transition-all text-slate-700 font-medium cursor-pointer appearance-none text-sm"
+                                                        >
+                                                            <option value="" className="text-slate-400">Unknown / Don't Know</option>
+                                                            <option value="Ashwini">Ashwini</option>
+                                                            <option value="Bharani">Bharani</option>
+                                                            <option value="Krittika">Krittika</option>
+                                                            <option value="Rohini">Rohini</option>
+                                                            <option value="Mrigashira">Mrigashira</option>
+                                                            <option value="Ardra">Ardra</option>
+                                                            <option value="Punarvasu">Punarvasu</option>
+                                                            <option value="Pushya">Pushya</option>
+                                                            <option value="Ashlesha">Ashlesha</option>
+                                                            <option value="Magha">Magha</option>
+                                                            <option value="Purva Phalguni">Purva Phalguni</option>
+                                                            <option value="Uttara Phalguni">Uttara Phalguni</option>
+                                                            <option value="Hasta">Hasta</option>
+                                                            <option value="Chitra">Chitra</option>
+                                                            <option value="Swati">Swati</option>
+                                                            <option value="Vishakha">Vishakha</option>
+                                                            <option value="Anuradha">Anuradha</option>
+                                                            <option value="Jyeshtha">Jyeshtha</option>
+                                                            <option value="Mula">Mula</option>
+                                                            <option value="Purva Ashadha">Purva Ashadha</option>
+                                                            <option value="Uttara Ashadha">Uttara Ashadha</option>
+                                                            <option value="Shravana">Shravana</option>
+                                                            <option value="Dhanishta">Dhanishta</option>
+                                                            <option value="Shatabhisha">Shatabhisha</option>
+                                                            <option value="Purva Bhadrapada">Purva Bhadrapada</option>
+                                                            <option value="Uttara Bhadrapada">Uttara Bhadrapada</option>
+                                                            <option value="Revati">Revati</option>
+                                                        </select>
+
+                                                        {/* Custom dropdown arrow to replace native appearance-none */}
+                                                        <div className="absolute inset-y-0 right-4 items-center flex pointer-events-none">
+                                                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -292,7 +456,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                             name="gotram"
                                             value={formData.gotram}
                                             onChange={handleChange}
-                                            className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3.5 px-5 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium"
+                                            className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
                                             placeholder="e.g. Kasyapasa"
                                         />
                                     </div>
@@ -305,7 +469,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="phoneNumber"
                                                 value={formData.phoneNumber}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3.5 pl-10 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 pl-10 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
                                                 placeholder="Phone number"
                                             />
                                         </div>
@@ -320,7 +484,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3.5 pl-10 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 pl-10 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
                                                 placeholder="Email address"
                                             />
                                         </div>
@@ -409,7 +573,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 value={formData.address}
                                                 onChange={handleChange}
                                                 rows="3"
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3.5 pl-11 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium resize-none shadow-inner"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 pl-11 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium resize-none shadow-inner text-sm"
                                                 placeholder="Apartment name, Street, Land-mark..."
                                             />
                                         </div>
@@ -421,7 +585,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="city"
                                                 value={formData.city}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="City *"
                                             />
                                         </div>
@@ -431,7 +595,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="state"
                                                 value={formData.state}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="State *"
                                             />
                                         </div>
@@ -441,7 +605,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="pincode"
                                                 value={formData.pincode}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="Pincode *"
                                             />
                                         </div>
@@ -451,11 +615,89 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="country"
                                                 value={formData.country}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="Country *"
                                             />
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Coupon Section */}
+                            <div className="pt-6 border-t border-slate-100">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <h3 className="text-lg font-black text-astro-navy tracking-tight">Have a Coupon Code?</h3>
+                                </div>
+                                <div className="bg-slate-50 border border-slate-100 p-5 rounded-3xl">
+                                    {appliedCoupon ? (
+                                        <div className="flex items-center justify-between bg-green-50 border border-green-200 p-4 rounded-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-green-100 text-green-600 p-2 rounded-xl">
+                                                    <Tag className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-green-800">{appliedCoupon.code} Applied</p>
+                                                    <p className="text-xs text-green-600 font-medium">You saved ₹{appliedCoupon.discountAmount}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={removeCoupon}
+                                                className="text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-3">
+                                            {availableCoupons.length > 0 && (
+                                                <div className="relative">
+                                                    <select
+                                                        value={couponCode}
+                                                        onChange={(e) => setCouponCode(e.target.value)}
+                                                        className="w-full bg-white border-2 border-astro-yellow/50 rounded-2xl py-3.5 pl-4 pr-10 focus:border-astro-yellow outline-none font-bold text-sm h-14 cursor-pointer appearance-none shadow-sm"
+                                                    >
+                                                        <option value="">Select an available offer...</option>
+                                                        {availableCoupons.map((c) => (
+                                                            <option key={c._id} value={c.code}>
+                                                                {c.code} - Save {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="absolute inset-y-0 right-4 items-center flex pointer-events-none">
+                                                        <Tag className="w-5 h-5 text-astro-yellow" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col sm:flex-row gap-3 relative">
+                                                <div className="relative flex-1">
+                                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Or enter a discount code"
+                                                        value={couponCode}
+                                                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                        className="w-full bg-white border-2 border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 focus:border-astro-navy outline-none uppercase font-mono tracking-wider font-bold text-sm h-14"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleApplyCoupon}
+                                                    disabled={couponLoading || !couponCode.trim()}
+                                                    className="bg-astro-navy text-white px-6 py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs hover:bg-astro-yellow hover:text-astro-navy transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-14"
+                                                >
+                                                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Apply'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {couponMessage.text && !appliedCoupon && (
+                                        <p className={`text-xs font-bold mt-3 ml-2 flex items-center gap-1.5 ${couponMessage.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                                            {couponMessage.type === 'error' ? <X className="w-3.5 h-3.5" /> : null}
+                                            {couponMessage.text}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -495,7 +737,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                         </>
                                     ) : (
                                         <div className="relative flex items-center">
-                                            <span>Confirm & Pay ₹{seva.price}</span>
+                                            <span>Pay ₹{appliedCoupon ? appliedCoupon.finalAmount : seva.price}</span>
                                             <CreditCard className="w-5 h-5 ml-3 group-hover:rotate-12 transition-transform" />
                                         </div>
                                     )}
