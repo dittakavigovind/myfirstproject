@@ -51,7 +51,7 @@ const geocodePlace = async (placeName, country = null, place_id = null) => {
         console.log(`[GEOCODE DEBUG] ${placeName} components:`, JSON.stringify(addressComponents, null, 2));
 
         // Parse address components
-        let city = '', state = '', country = '', pincode = '';
+        let city = '', state = '', resCountry = '', pincode = '';
 
         addressComponents.forEach(component => {
             if (component.types.includes('locality')) {
@@ -59,7 +59,7 @@ const geocodePlace = async (placeName, country = null, place_id = null) => {
             } else if (component.types.includes('administrative_area_level_1')) {
                 state = component.long_name;
             } else if (component.types.includes('country')) {
-                country = component.long_name;
+                resCountry = component.long_name;
             } else if (component.types.includes('postal_code')) {
                 pincode = component.long_name;
             }
@@ -91,7 +91,7 @@ const geocodePlace = async (placeName, country = null, place_id = null) => {
             formattedAddress,
             city,
             state,
-            country,
+            country: resCountry,
             pincode
         };
 

@@ -93,7 +93,9 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
             }
         } catch (error) {
             console.error("Geocode error details:", error.response ? error.response.data : error.message);
-            setError(restrictCountry ? "Delivery only to India" : (error.response?.data?.message || 'Location not found'));
+            // Only set "Delivery only to India" if it's a catch-all for a failed request
+            // If the request succeeded but something else failed, use a generic error
+            setError(restrictCountry ? "Delivery only to India" : "Location not found");
         } finally {
             setSearching(false);
         }
