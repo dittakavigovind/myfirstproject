@@ -83,7 +83,10 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     };
 
     const handleSelectLocation = async (placeName, placeId = null) => {
-        setQuery(placeName);
+        // Don't setQuery yet if we are restricting, wait for geocode success
+        if (!restrictCountry) {
+            setQuery(placeName);
+        }
         setShowDropdown(false);
         setSearching(true);
         setError('');
@@ -99,10 +102,12 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                 // Extra safety: Check country on frontend too
                 if (restrictCountry === 'IN' && country && country.toLowerCase() !== 'india' && !formattedAddress.toLowerCase().includes('india')) {
                     setError("Delivery only to India");
+                    setQuery(''); // Reset query on failure
                     setSearching(false);
                     return;
                 }
 
+                setQuery(placeName); // Success! Now set the input text
                 onLocationSelect({
                     formattedAddress,
                     lat,
@@ -142,8 +147,8 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         : "absolute top-full left-0 z-50 w-full bg-white border border-slate-100 mt-2 rounded-[1.5rem] shadow-2xl shadow-yellow-500/10 max-h-80 overflow-y-auto overflow-x-hidden border-t-0 p-2 animate-in fade-in slide-in-from-top-2 duration-200";
 
     const itemClasses = darkMode
-        ? "px-4 py-3 hover:bg-white/5 cursor-pointer text-sm text-slate-300 hover:text-white border-b border-white/5 last:border-b-0 transition-colors"
-        : "px-6 py-3 hover:bg-yellow-50/50 cursor-pointer text-sm text-slate-600 font-bold border-b border-slate-50 last:border-b-0 transition-all rounded-xl hover:text-yellow-600";
+        ? "px-4 py-3 hover:bg-white/5 cursor-pointer text-sm text-slate-300 hover:text-white border-b border-white/5 last:border-b-0 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
+        : "px-6 py-3 hover:bg-yellow-50/50 cursor-pointer text-sm text-slate-600 font-bold border-b border-slate-50 last:border-b-0 transition-all rounded-xl hover:text-yellow-600 whitespace-nowrap overflow-hidden text-ellipsis";
 
     const buttonClasses = darkMode
         ? "absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors"
