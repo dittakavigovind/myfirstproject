@@ -150,13 +150,15 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
         setFormData(prev => ({
             ...prev,
-            city: city || prev.city,
-            state: state || prev.state,
+            city: city || '',
+            state: state || '',
             country: 'India', // Lock to India
-            pincode: pincode || prev.pincode
+            pincode: pincode || ''
         }));
 
-        toast.success(`Location set-up complete`);
+        if (city) {
+            toast.success(`Location set-up complete`);
+        }
     };
 
     const handleDevoteeChange = (index, field, value) => {

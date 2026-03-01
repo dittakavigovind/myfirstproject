@@ -57,8 +57,26 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         setQuery(val);
         setError('');
 
-        // Debounce logic
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+        if (!val) {
+            setSuggestions([]);
+            setShowDropdown(false);
+            if (onLocationSelect) {
+                onLocationSelect({
+                    formattedAddress: '',
+                    lat: null,
+                    lng: null,
+                    timezone: '',
+                    city: '',
+                    state: '',
+                    country: 'India',
+                    pincode: ''
+                });
+            }
+            return;
+        }
+
         debounceTimer.current = setTimeout(() => {
             fetchSuggestions(val);
         }, 300);
