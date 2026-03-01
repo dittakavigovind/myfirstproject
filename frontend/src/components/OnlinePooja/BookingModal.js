@@ -123,6 +123,10 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             // Remove non-digits and limit to 10 characters
             value = value.replace(/\D/g, '').slice(0, 10);
         }
+        if (name === 'pincode') {
+            // Remove non-digits and limit to 6 characters
+            value = value.replace(/\D/g, '').slice(0, 6);
+        }
         setFormData({ ...formData, [name]: value });
     };
 
@@ -218,6 +222,31 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
         if (formData.phoneNumber.length !== 10) {
             toast.error('Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        if (!formData.address?.trim()) {
+            toast.error('Please enter your full address');
+            return;
+        }
+
+        if (!formData.city?.trim()) {
+            toast.error('Please enter your city');
+            return;
+        }
+
+        if (!formData.state?.trim()) {
+            toast.error('Please enter your state');
+            return;
+        }
+
+        if (!formData.country?.trim()) {
+            toast.error('Please enter your country');
+            return;
+        }
+
+        if (formData.pincode?.length !== 6) {
+            toast.error('Please enter a valid 6-digit pincode');
             return;
         }
 
