@@ -11,7 +11,7 @@ const agent = new https.Agent({
  * @param {String} placeName
  * @returns {Object} { lat, lng, timezone, formattedAddress }
  */
-const geocodePlace = async (placeName) => {
+const geocodePlace = async (placeName, country = null, place_id = null) => {
     try {
         const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
@@ -27,7 +27,15 @@ const geocodePlace = async (placeName) => {
         }
 
         // 1. Get Lat/Lng
-        const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(placeName)}&key=${apiKey}`;
+        let geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?key=${apiKey}`;
+        if (place_id) {
+            geoUrl += `&place_id=${place_id}`;
+        } else {
+            geoUrl += `&address=${encodeURIComponent(placeName)}`;
+            if (country) {
+                geoUrl += `&components=country:${country}`;
+            }
+        }
         const geoRes = await axios.get(geoUrl, { httpsAgent: agent });
 
         if (geoRes.data.status !== 'OK') {
@@ -38,6 +46,9 @@ const geocodePlace = async (placeName) => {
         const addressComponents = geoRes.data.results[0].address_components;
         const formattedAddress = geoRes.data.results[0].formatted_address;
         const { lat, lng } = location;
+
+        // DEBUG: Log address components to see why pincode might be missing
+        console.log(`[GEOCODE DEBUG] ${placeName} components:`, JSON.stringify(addressComponents, null, 2));
 
         // Parse address components
         let city = '', state = '', country = '', pincode = '';
@@ -108,12 +119,15 @@ const geocodePlace = async (placeName) => {
  * @param {String} query
  * @returns {Array} [{ description, place_id }]
  */
-const searchPlaces = async (query) => {
+const searchPlaces = async (query, country = null) => {
     try {
         const apiKey = process.env.GOOGLE_MAPS_API_KEY;
         if (!apiKey) return [];
 
-        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${apiKey}`;
+        let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${apiKey}`;
+        if (country) {
+            url += `&components=country:${country}`;
+        }
 
         // Simple retry logic
         let retries = 3;

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 import API from '../lib/api';
 
-export default function LocationSearch({ onLocationSelect, placeholder = "Search City...", darkMode = false, showIcon = true, showLeftIcon = false, defaultValue = "" }) {
+export default function LocationSearch({ onLocationSelect, placeholder = "Search City...", darkMode = false, showIcon = true, showLeftIcon = false, defaultValue = "", restrictCountry = null }) {
     const [query, setQuery] = useState(defaultValue);
     const [suggestions, setSuggestions] = useState([]);
     const [searching, setSearching] = useState(false);
@@ -39,7 +39,10 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         }
 
         try {
-            const res = await API.get(`/astro/search-locations?query=${encodeURIComponent(input)}`);
+            const url = restrictCountry
+                ? `/astro/search-locations?query=${encodeURIComponent(input)}&country=${restrictCountry}`
+                : `/astro/search-locations?query=${encodeURIComponent(input)}`;
+            const res = await API.get(url);
             if (res.data.success) {
                 setSuggestions(res.data.data);
                 setShowDropdown(true);
@@ -61,14 +64,18 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         }, 300);
     };
 
-    const handleSelectLocation = async (placeName) => {
+    const handleSelectLocation = async (placeName, placeId = null) => {
         setQuery(placeName);
         setShowDropdown(false);
         setSearching(true);
         setError('');
 
         try {
-            const res = await API.post('/astro/geocode', { place: placeName });
+            const res = await API.post('/astro/geocode', {
+                place: placeName,
+                place_id: placeId,
+                country: restrictCountry
+            });
             if (res.data.success) {
                 const { lat, lng, timezone, formattedAddress, city, state, country, pincode } = res.data.data;
                 onLocationSelect({
@@ -166,7 +173,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                     {suggestions.map((place) => (
                         <li
                             key={place.place_id}
-                            onClick={() => handleSelectLocation(place.description)}
+                            onClick={() => handleSelectLocation(place.description, place.place_id)}
                             className={itemClasses}
                         >
                             {place.description}

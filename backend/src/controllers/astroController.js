@@ -451,12 +451,12 @@ exports.updateAstrologer = async (req, res) => {
  */
 exports.getGeocode = async (req, res) => {
     try {
-        const { place } = req.body;
+        const { place, country, place_id } = req.body;
         if (!place) {
             return res.status(400).json({ message: 'Place name is required' });
         }
 
-        const locationData = await geocodePlace(place);
+        const locationData = await geocodePlace(place, country, place_id);
         res.json({ success: true, data: locationData });
     } catch (error) {
         console.error('Geocode Error:', error);
@@ -470,11 +470,11 @@ exports.getGeocode = async (req, res) => {
  */
 exports.searchLocations = async (req, res) => {
     try {
-        const { query } = req.query;
+        const { query, country } = req.query;
         if (!query) return res.json({ success: true, data: [] });
 
         const { searchPlaces } = require('../utils/geocoder');
-        const results = await searchPlaces(query);
+        const results = await searchPlaces(query, country);
         res.json({ success: true, data: results });
     } catch (error) {
         console.error('Search Error:', error);

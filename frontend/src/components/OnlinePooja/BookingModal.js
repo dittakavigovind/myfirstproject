@@ -145,17 +145,18 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
     };
 
     const handleLocationSelect = (locationData) => {
-        const { city, state, country, pincode, formattedAddress } = locationData;
+        console.log('[BOOKING MODAL] Location Data Received:', locationData);
+        const { city, state, country, pincode } = locationData;
 
         setFormData(prev => ({
             ...prev,
             city: city || prev.city,
             state: state || prev.state,
-            country: country || prev.country,
+            country: 'India', // Lock to India
             pincode: pincode || prev.pincode
         }));
 
-        toast.success(`Location set to ${city || 'selected place'}`);
+        toast.success(`Location set-up complete`);
     };
 
     const handleDevoteeChange = (index, field, value) => {
@@ -690,6 +691,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 defaultValue={formData.city}
                                                 showLeftIcon={false}
                                                 showIcon={false}
+                                                restrictCountry="IN"
                                             />
                                         </div>
                                         <div className="col-span-1 sm:col-span-1 space-y-1.5">
@@ -714,11 +716,10 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                         </div>
                                         <div className="col-span-1 sm:col-span-1 space-y-1.5">
                                             <input
-                                                required
+                                                readOnly
                                                 name="country"
                                                 value={formData.country}
-                                                onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-100 border-slate-100 border-2 rounded-xl py-2.5 px-4 outline-none font-bold text-slate-500 text-sm cursor-not-allowed"
                                                 placeholder="Country *"
                                             />
                                         </div>
