@@ -143,8 +143,8 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     const inputClasses = `${inputBaseHeader} ${showLeftIcon ? 'pl-11' : 'pl-3'}`;
 
     const dropdownClasses = darkMode
-        ? "absolute top-full left-0 z-50 w-full bg-slate-900 border border-white/10 mt-1 rounded-xl shadow-xl max-h-60 overflow-y-auto backdrop-blur-xl"
-        : "absolute top-full left-0 z-50 w-full bg-white border border-slate-100 mt-2 rounded-[1.5rem] shadow-2xl shadow-yellow-500/10 max-h-80 overflow-y-auto overflow-x-hidden border-t-0 p-2 animate-in fade-in slide-in-from-top-2 duration-200";
+        ? "absolute top-full left-0 z-50 w-full min-w-[300px] bg-slate-900 border border-white/10 mt-1 rounded-xl shadow-xl max-h-60 overflow-y-auto backdrop-blur-xl"
+        : "absolute top-full left-0 z-50 w-[calc(100vw-3rem)] sm:w-[450px] bg-white border border-slate-100 mt-2 rounded-[1.5rem] shadow-2xl shadow-yellow-500/10 max-h-80 overflow-y-auto overflow-x-hidden border-t-0 p-2 animate-in fade-in slide-in-from-top-2 duration-200";
 
     const itemClasses = darkMode
         ? "px-4 py-3 hover:bg-white/5 cursor-pointer text-sm text-slate-300 hover:text-white border-b border-white/5 last:border-b-0 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
