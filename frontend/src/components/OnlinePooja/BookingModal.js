@@ -479,41 +479,43 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                 </div>
 
                                 {/* Common Fields Section */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Gotram *</label>
-                                        <input
-                                            required
-                                            name="gotram"
-                                            value={formData.gotram}
-                                            onChange={handleChange}
-                                            className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
-                                            placeholder="e.g. Kasyapasa"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone *</label>
-                                        <div className="flex group relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10 group-focus-within:text-astro-navy transition-colors">
-                                                <Smartphone className="w-4 h-4" />
-                                            </div>
-                                            <select
-                                                value={countryCode}
-                                                onChange={(e) => setCountryCode(e.target.value)}
-                                                className="pl-9 pr-2 border border-r-0 border-slate-100 bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-astro-navy rounded-l-2xl h-[48px] transition-all cursor-pointer hover:bg-slate-100"
-                                            >
-                                                {countryCodes.map(c => (
-                                                    <option key={c.code} value={c.code}>{c.code}</option>
-                                                ))}
-                                            </select>
+                                <div className="space-y-5 pt-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Gotram *</label>
                                             <input
                                                 required
-                                                name="phoneNumber"
-                                                value={formData.phoneNumber}
+                                                name="gotram"
+                                                value={formData.gotram}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-r-2xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
-                                                placeholder="9999999999"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
+                                                placeholder="e.g. Kasyapasa"
                                             />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone *</label>
+                                            <div className="flex group relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10 group-focus-within:text-astro-navy transition-colors">
+                                                    <Smartphone className="w-4 h-4" />
+                                                </div>
+                                                <select
+                                                    value={countryCode}
+                                                    onChange={(e) => setCountryCode(e.target.value)}
+                                                    className="pl-9 pr-2 border border-r-0 border-slate-100 bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-astro-navy rounded-l-2xl h-[48px] transition-all cursor-pointer hover:bg-slate-100"
+                                                >
+                                                    {countryCodes.map(c => (
+                                                        <option key={c.code} value={c.code}>{c.code}</option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    required
+                                                    name="phoneNumber"
+                                                    value={formData.phoneNumber}
+                                                    onChange={handleChange}
+                                                    className="w-full bg-slate-50 border-slate-100 border-2 rounded-r-2xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
+                                                    placeholder="9999999999"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -535,23 +537,23 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
                                 {/* Pooja Perform Date Selection */}
                                 <div className="pt-4 border-t border-slate-100/50">
-                                    <div className="bg-astro-navy/5 p-6 rounded-3xl border border-astro-navy/10">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <CreditCard className="w-5 h-5 text-astro-navy" />
-                                            <h4 className="text-sm font-black text-astro-navy uppercase tracking-wider">Pooja Performance Date</h4>
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <CreditCard className="w-4 h-4 text-astro-navy" />
+                                            <h4 className="text-[11px] font-black text-astro-navy uppercase tracking-wider">Pooja Performance Date</h4>
                                         </div>
 
                                         {seva?.dateSelectionType === 'Fixed' ? (
-                                            <div className="space-y-2 bg-white p-4 rounded-2xl border border-astro-navy/20 shadow-sm">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Date (Fixed)</label>
-                                                    <div className="bg-astro-navy text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Fixed</div>
+                                            <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                                <div className="flex items-center justify-between mb-0.5">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Date (Fixed)</label>
+                                                    <div className="bg-astro-navy text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">Fixed</div>
                                                 </div>
                                                 <input
                                                     type="date"
                                                     disabled
                                                     value={new Date(seva.fixedDate).toISOString().split('T')[0]}
-                                                    className="w-full bg-slate-50 border-slate-200 border-2 rounded-2xl py-3.5 px-5 font-black text-astro-navy opacity-70 cursor-not-allowed"
+                                                    className="w-full bg-slate-50 border-slate-200 border rounded-xl py-2.5 px-4 font-black text-astro-navy opacity-70 cursor-not-allowed text-sm"
                                                 />
                                                 <p className="text-[10px] text-slate-400 font-bold mt-1 ml-1">
                                                     {new Date(seva.fixedDate).toLocaleDateString('en-IN', {
@@ -577,7 +579,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                             onChange={handleChange}
                                                             min={seva?.dateSelectionType === 'Range' ? new Date(seva.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
                                                             max={seva?.dateSelectionType === 'Range' ? new Date(seva.endDate).toISOString().split('T')[0] : undefined}
-                                                            className="w-full bg-white border-slate-200 border-2 rounded-2xl py-3.5 px-5 focus:border-astro-navy outline-none transition-all font-black text-astro-navy"
+                                                            className="w-full bg-white border-slate-200 border rounded-xl py-2.5 px-4 focus:border-astro-navy outline-none transition-all font-black text-astro-navy text-sm"
                                                         />
                                                     </div>
                                                     {seva?.dateSelectionType === 'Range' && (
