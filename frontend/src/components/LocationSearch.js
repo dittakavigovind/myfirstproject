@@ -78,6 +78,13 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
             });
             if (res.data.success) {
                 const { lat, lng, timezone, formattedAddress, city, state, country, pincode } = res.data.data;
+                // Extra safety: Check country on frontend too
+                if (restrictCountry === 'IN' && country && country.toLowerCase() !== 'india' && !formattedAddress.toLowerCase().includes('india')) {
+                    setError("Delivery only to India");
+                    setSearching(false);
+                    return;
+                }
+
                 onLocationSelect({
                     formattedAddress,
                     lat,

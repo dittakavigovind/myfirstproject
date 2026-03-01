@@ -458,14 +458,15 @@ exports.getGeocode = async (req, res) => {
 
         const locationData = await geocodePlace(place, country, place_id);
         res.json({ success: true, data: locationData });
-    } catch (error) {
-        console.error('Geocode Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Location not found',
-            error: error.message
-        });
-    }
+    });
+} catch (error) {
+    console.error('Geocode Error:', error);
+    res.status(500).json({
+        success: false,
+        message: error.message === "Delivery only to India" ? "Delivery only to India" : "Location not found",
+        error: error.message
+    });
+}
 };
 
 /**
@@ -482,7 +483,11 @@ exports.searchLocations = async (req, res) => {
         res.json({ success: true, data: results });
     } catch (error) {
         console.error('Search Error:', error);
-        res.status(500).json({ message: 'Search Failed' });
+        res.status(500).json({
+            success: false,
+            message: 'Search Failed',
+            error: error.message
+        });
     }
 };
 

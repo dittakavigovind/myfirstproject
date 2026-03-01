@@ -9,9 +9,11 @@ const agent = new https.Agent({
  * Geocode Place Name to Coordinates and Timezone
  * Uses Google Maps Geocoding and Timezone APIs
  * @param {String} placeName
- * @returns {Object} { lat, lng, timezone, formattedAddress }
+ * @param {String} targetCountry
+ * @param {String} place_id
+ * @returns {Object} { lat, lng, timezone, formattedAddress, city, state, country, pincode }
  */
-const geocodePlace = async (placeName, filterCountry = null, place_id = null) => {
+const geocodePlace = async (placeName, targetCountry = null, place_id = null) => {
     try {
         const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
@@ -30,16 +32,18 @@ const geocodePlace = async (placeName, filterCountry = null, place_id = null) =>
         let geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?key=${apiKey}`;
         if (place_id) {
             geoUrl += `&place_id=${place_id}`;
-            // Always try to restrict even with place_id if filterCountry is provided
-            if (filterCountry) {
-                geoUrl += `&components=country:${filterCountry}`;
+            // Always try to restrict even with place_id if targetCountry is provided
+            if (targetCountry) {
+                geoUrl += `&components=country:${targetCountry}`;
             }
         } else {
             geoUrl += `&address=${encodeURIComponent(placeName)}`;
-            if (filterCountry) {
-                geoUrl += `&components=country:${filterCountry}`;
+            if (targetCountry) {
+                geoUrl += `&components=country:${targetCountry}`;
             }
         }
+
+        console.log(`[GEOCODE DEBUG] URL: ${geoUrl}`);
         const geoRes = await axios.get(geoUrl, { httpsAgent: agent });
 
         if (geoRes.data.status !== 'OK') {
@@ -69,6 +73,15 @@ const geocodePlace = async (placeName, filterCountry = null, place_id = null) =>
             }
         });
 
+        // Nellore fix: If pincode is missing, try to extract from formattedAddress
+        if (!pincode && formattedAddress) {
+            const pinMatch = formattedAddress.match(/\b\d{6}\b/);
+            if (pinMatch) {
+                pincode = pinMatch[0];
+                console.log(`[GEOCODE DEBUG] Extracted pincode from formattedAddress: ${pincode}`);
+            }
+        }
+
         // Fallback for city if locality is missing
         if (!city) {
             const sublocality = addressComponents.find(c => c.types.includes('administrative_area_level_2'))?.long_name;
@@ -76,9 +89,11 @@ const geocodePlace = async (placeName, filterCountry = null, place_id = null) =>
         }
 
         // 1.5 Strict Country Validation (Second layer of defense)
-        if (filterCountry && filterCountry.toUpperCase() === 'IN') {
+        if (targetCountry && targetCountry.toUpperCase() === 'IN') {
             const isIndia = resCountry.toLowerCase() === 'india' || addressComponents.some(c => c.short_name === 'IN');
+            console.log(`[GEOCODE DEBUG] ${placeName} Country Check:`, { resCountry, isIndia, targetCountry });
             if (!isIndia) {
+                console.warn(`[GEOCODE DEBUG] Rejected ${placeName} - Not in India`);
                 throw new Error("Delivery only to India");
             }
         }
@@ -129,17 +144,19 @@ const geocodePlace = async (placeName, filterCountry = null, place_id = null) =>
  * Search Places for Autocomplete
  * Uses Google Places Autocomplete API
  * @param {String} query
+ * @param {String} targetCountry
  * @returns {Array} [{ description, place_id }]
  */
-const searchPlaces = async (query, country = null) => {
+const searchPlaces = async (query, targetCountry = null) => {
     try {
         const apiKey = process.env.GOOGLE_MAPS_API_KEY;
         if (!apiKey) return [];
 
         let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${apiKey}`;
-        if (country) {
-            url += `&components=country:${country}`;
+        if (targetCountry) {
+            url += `&components=country:${targetCountry}`;
         }
+        console.log(`[SEARCH DEBUG] URL: ${url}`);
 
         // Simple retry logic
         let retries = 3;
