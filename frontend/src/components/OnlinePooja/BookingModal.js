@@ -7,6 +7,7 @@ import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, 
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
+import LocationSearch from '../LocationSearch';
 
 const BookingModal = ({ isOpen, onClose, temple, seva }) => {
     const { user, token } = useAuth();
@@ -668,14 +669,20 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                        <div className="col-span-1 sm:col-span-1 space-y-1.5">
-                                            <input
-                                                required
-                                                name="city"
-                                                value={formData.city}
-                                                onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                        <div className="col-span-1 sm:col-span-1 space-y-1.5 min-w-0">
+                                            <LocationSearch
                                                 placeholder="City *"
+                                                defaultValue={formData.city}
+                                                showIcon={false}
+                                                customClassName="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm shadow-inner"
+                                                onLocationSelect={(loc) => {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        city: loc.city || loc.formattedAddress.split(',')[0],
+                                                        state: loc.state || prev.state,
+                                                        country: loc.country || prev.country
+                                                    }));
+                                                }}
                                             />
                                         </div>
                                         <div className="col-span-1 sm:col-span-1 space-y-1.5">

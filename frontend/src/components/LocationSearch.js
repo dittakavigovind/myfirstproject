@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 import API from '../lib/api';
 
-export default function LocationSearch({ onLocationSelect, placeholder = "Search City...", darkMode = false, showIcon = true, showLeftIcon = false, defaultValue = "" }) {
+export default function LocationSearch({ onLocationSelect, placeholder = "Search City...", darkMode = false, showIcon = true, showLeftIcon = false, defaultValue = "", customClassName = "" }) {
     const [query, setQuery] = useState(defaultValue);
     const [suggestions, setSuggestions] = useState([]);
     const [searching, setSearching] = useState(false);
@@ -70,12 +70,15 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         try {
             const res = await API.post('/astro/geocode', { place: placeName });
             if (res.data.success) {
-                const { lat, lng, timezone, formattedAddress } = res.data.data;
+                const { lat, lng, timezone, formattedAddress, city, state, country } = res.data.data;
                 onLocationSelect({
                     formattedAddress,
                     lat,
                     lng,
-                    timezone
+                    timezone,
+                    city,
+                    state,
+                    country
                 });
             } else {
                 setError(res.data.message || 'Location not found');
@@ -101,7 +104,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
 
     const dropdownClasses = darkMode
         ? "absolute top-full left-0 z-50 w-full bg-slate-900 border border-white/10 mt-1 rounded-xl shadow-xl max-h-60 overflow-y-auto backdrop-blur-xl"
-        : "absolute top-full left-0 z-50 w-full bg-white border border-slate-100 mt-2 rounded-[1.5rem] shadow-2xl shadow-yellow-500/10 max-h-80 overflow-y-auto overflow-x-hidden border-t-0 p-2 animate-in fade-in slide-in-from-top-2 duration-200";
+        : "absolute top-full left-0 z-[100] w-full bg-white border border-slate-100 mt-2 rounded-[1.5rem] shadow-2xl shadow-yellow-500/10 max-h-80 overflow-y-auto overflow-x-hidden border-t-0 p-2 animate-in fade-in slide-in-from-top-2 duration-200";
 
     const itemClasses = darkMode
         ? "px-4 py-3 hover:bg-white/5 cursor-pointer text-sm text-slate-300 hover:text-white border-b border-white/5 last:border-b-0 transition-colors"
@@ -110,6 +113,8 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     const buttonClasses = darkMode
         ? "absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors"
         : "absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-yellow-600 transition-all active:scale-90";
+
+    const inputClassesSelection = customClassName || inputClasses;
 
     return (
         <div className="relative h-full w-full flex items-center" ref={wrapperRef}>
@@ -139,7 +144,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                         }
                     }}
                     placeholder={placeholder}
-                    className={`${inputClasses} min-w-0`}
+                    className={`${inputClassesSelection} min-w-0`}
                 />
                 {showIcon && (
                     <button
