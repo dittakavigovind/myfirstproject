@@ -274,8 +274,16 @@ export default function HomeClient() {
                                                         const isExternal = url.startsWith('http') || url.startsWith('www');
                                                         const href = url.startsWith('www') ? `https://${url}` : url;
 
-                                                        return (
+                                                        return isExternal ? (
                                                             <Link href={href} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                                                                <img
+                                                                    src={featureFlags.promotionImage}
+                                                                    alt="Promotion"
+                                                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                                                />
+                                                            </Link>
+                                                        ) : (
+                                                            <Link href={href} className="block w-full h-full">
                                                                 <img
                                                                     src={featureFlags.promotionImage}
                                                                     alt="Promotion"
