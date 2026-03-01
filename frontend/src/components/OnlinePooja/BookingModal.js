@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE } from '../../lib/urlHelper';
-import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, MapPin, Tag } from 'lucide-react';
+import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, MapPin, Tag, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -13,10 +13,21 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
+
+    // Country Codes matching login page
+    const countryCodes = [
+        { code: '+91', country: 'India' },
+        { code: '+1', country: 'USA' },
+        { code: '+44', country: 'UK' },
+        { code: '+971', country: 'UAE' },
+        { code: '+65', country: 'Singapore' },
+    ];
+
+    const [countryCode, setCountryCode] = useState('+91');
     const [formData, setFormData] = useState({
         devotees: [{ name: user?.name || '', nakshatra: '' }],
         gotram: '',
-        phoneNumber: user?.phone || '',
+        phoneNumber: '', // Will be initialized in useEffect
         email: user?.email || '',
         address: '',
         city: '',
@@ -25,6 +36,22 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         country: 'India',
         performDate: seva?.dateSelectionType === 'Fixed' ? new Date(seva.fixedDate).toISOString().split('T')[0] : ''
     });
+
+    // Initialize phone number and country code from user data
+    useEffect(() => {
+        if (user?.phone) {
+            const matchedCode = countryCodes.find(c => user.phone.startsWith(c.code));
+            if (matchedCode) {
+                setCountryCode(matchedCode.code);
+                setFormData(prev => ({
+                    ...prev,
+                    phoneNumber: user.phone.replace(matchedCode.code, '').slice(0, 10)
+                }));
+            } else {
+                setFormData(prev => ({ ...prev, phoneNumber: user.phone.slice(-10) }));
+            }
+        }
+    }, [user]);
 
     // Coupon State
     const [couponCode, setCouponCode] = useState('');
@@ -58,6 +85,9 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                 try {
                     const parsed = JSON.parse(savedProgress);
                     setFormData(parsed.formData);
+                    if (parsed.countryCode) {
+                        setCountryCode(parsed.countryCode);
+                    }
                     if (parsed.couponCode) {
                         setCouponCode(parsed.couponCode);
                         // If token exists now, we should attempt to auto-apply it
@@ -79,6 +109,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
     const saveProgressAndLogin = () => {
         localStorage.setItem(`poojaBooking_${seva?._id}`, JSON.stringify({
             formData,
+            countryCode,
             couponCode
         }));
         toast.error('Please login to continue');
@@ -201,7 +232,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                 devoteeDetails: {
                     devotees: formData.devotees,
                     gotram: formData.gotram,
-                    phoneNumber: formData.phoneNumber,
+                    phoneNumber: `${countryCode}${formData.phoneNumber}`,
                     email: formData.email
                 },
                 deliveryAddress: {
@@ -259,7 +290,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                 prefill: {
                     name: formData.devotees[0]?.name || '',
                     email: formData.email,
-                    contact: formData.phoneNumber
+                    contact: `${countryCode}${formData.phoneNumber}`
                 },
                 theme: {
                     color: "#0b1c3d"
@@ -462,15 +493,26 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Phone *</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
+                                        <div className="flex group relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10 group-focus-within:text-astro-navy transition-colors">
+                                                <Smartphone className="w-4 h-4" />
+                                            </div>
+                                            <select
+                                                value={countryCode}
+                                                onChange={(e) => setCountryCode(e.target.value)}
+                                                className="pl-9 pr-2 border border-r-0 border-slate-100 bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-astro-navy rounded-l-2xl h-[48px] transition-all cursor-pointer hover:bg-slate-100"
+                                            >
+                                                {countryCodes.map(c => (
+                                                    <option key={c.code} value={c.code}>{c.code}</option>
+                                                ))}
+                                            </select>
                                             <input
                                                 required
                                                 name="phoneNumber"
                                                 value={formData.phoneNumber}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 pl-10 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
-                                                placeholder="Phone number"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-r-2xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
+                                                placeholder="9999999999"
                                             />
                                         </div>
                                     </div>
