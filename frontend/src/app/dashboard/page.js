@@ -352,6 +352,11 @@ export default function Dashboard() {
             return;
         }
 
+        if (!/^\d{6}$/.test(addressForm.pincode)) {
+            toast.error("Please enter a valid 6-digit Pincode");
+            return;
+        }
+
         setIsSavingAddress(true);
         try {
             const res = await API.put(`/pooja/booking/${selectedBooking._id}/address`, {
@@ -678,6 +683,27 @@ export default function Dashboard() {
                                                             }`}>
                                                             {order.bookingStatus}
                                                         </span>
+
+                                                        {/* Edit Address Badge */}
+                                                        {(order.bookingStatus === 'Confirmed' || isPaid) && order.bookingStatus !== 'Completed' && (() => {
+                                                            const performDate = new Date(order.performDate);
+                                                            const now = new Date();
+                                                            const hoursUntilPooja = (performDate - now) / (1000 * 60 * 60);
+
+                                                            if (hoursUntilPooja >= 36) {
+                                                                return (
+                                                                    <button
+                                                                        onClick={() => handleEditAddress(order)}
+                                                                        className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors flex items-center gap-1"
+                                                                        title="Edit Delivery Address"
+                                                                    >
+                                                                        <Edit2 size={10} />
+                                                                        Edit Address
+                                                                    </button>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
                                                     </div>
                                                     <h4 className="font-bold text-slate-800 truncate leading-snug">{order.sevaDetails?.name}</h4>
                                                     <Link href={`/online-pooja/details/?slug=${order.temple?.slug || ''}`} className="text-sm text-indigo-600 hover:text-indigo-700 font-bold transition-colors inline-block mb-1">
@@ -961,6 +987,124 @@ export default function Dashboard() {
                                             className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all font-bold text-sm uppercase tracking-wide disabled:opacity-50"
                                         >
                                             {isSavingChart ? 'Saving...' : 'Save Profile'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Edit Address Modal */}
+                <AnimatePresence>
+                    {showEditAddress && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+                            onClick={(e) => e.target === e.currentTarget && setShowEditAddress(false)}
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="bg-white w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] p-6 sm:p-10 relative shadow-2xl flex flex-col"
+                            >
+                                <div className="flex justify-between items-center mb-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
+                                            <MapPin size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-black text-slate-800">Update Address</h2>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">For Order ID: {selectedBooking?.bookingId}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setShowEditAddress(false)} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-all">
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleUpdateAddress} className="space-y-6">
+                                    <InputGroup label="Complete House Address" required>
+                                        <textarea
+                                            value={addressForm.address}
+                                            onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                                            className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-medium placeholder:text-slate-300 min-h-[100px] resize-none"
+                                            placeholder="House No, Floor, Street Name..."
+                                        />
+                                    </InputGroup>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <InputGroup label="Search City (India Only)" required className="relative z-30">
+                                            <div className="[&_input]:border-none [&_input]:bg-slate-50 [&_input]:rounded-xl [&_input]:text-slate-800 [&_input]:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-blue-500/20 [&_input]:focus:bg-white [&_input]:transition-all [&_input]:font-bold [&_input]:w-full [&_input]:placeholder:text-slate-300">
+                                                <LocationSearch
+                                                    onLocationSelect={(loc) => setAddressForm(prev => ({
+                                                        ...prev,
+                                                        city: loc.city || '',
+                                                        state: loc.state || '',
+                                                        pincode: loc.pincode || '',
+                                                        country: 'India'
+                                                    }))}
+                                                    placeholder="Search City"
+                                                    defaultValue={addressForm.city}
+                                                    restrictCountry="IN"
+                                                    darkMode={false}
+                                                    showIcon={false}
+                                                />
+                                            </div>
+                                        </InputGroup>
+
+                                        <InputGroup label="State" required>
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value={addressForm.state}
+                                                className="w-full border-none bg-slate-100 p-4 rounded-xl text-slate-500 italic outline-none font-bold"
+                                                placeholder="State"
+                                            />
+                                        </InputGroup>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <InputGroup label="Pincode" required>
+                                            <input
+                                                type="text"
+                                                value={addressForm.pincode}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                    setAddressForm({ ...addressForm, pincode: value });
+                                                }}
+                                                className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300"
+                                                placeholder="Pincode"
+                                            />
+                                        </InputGroup>
+
+                                        <InputGroup label="Country">
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value="India"
+                                                className="w-full border-none bg-slate-100 p-4 rounded-xl text-slate-500 italic outline-none font-bold"
+                                            />
+                                        </InputGroup>
+                                    </div>
+
+                                    <div className="flex gap-4 mt-8 pt-6 border-t border-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEditAddress(false)}
+                                            className="flex-1 py-3.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 hover:text-slate-900 font-bold transition-all text-sm uppercase tracking-wide"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isSavingAddress}
+                                            className="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all font-bold text-sm uppercase tracking-wide disabled:opacity-50"
+                                        >
+                                            {isSavingAddress ? 'Saving...' : 'Update Address'}
                                         </button>
                                     </div>
                                 </form>

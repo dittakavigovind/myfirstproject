@@ -28,10 +28,11 @@ router.get('/temples/:slug', getTempleBySlug);
 router.get('/coupons/active', getActiveCoupons);
 
 // User Protected Routes
-router.get('/booking/my-bookings', protect, getUserBookings); // Added this route
+router.get('/booking/my-bookings', protect, getUserBookings);
 router.post('/booking/create-order', protect, createBookingOrder);
 router.post('/booking/verify-payment', protect, verifyPayment);
 router.post('/coupons/validate', protect, validateCoupon);
+router.put('/booking/:id/address', protect, updateBookingAddress);
 
 // Admin Routes
 router.post('/admin/temples', protect, admin, createTemple);

@@ -23,7 +23,10 @@ const AdminBookings = () => {
         coupon: '',
         performStartDate: '',
         performEndDate: '',
-        bookingId: ''
+        bookingId: '',
+        city: '',
+        state: '',
+        devoteeName: ''
     });
 
     useEffect(() => {
@@ -176,6 +179,36 @@ const AdminBookings = () => {
                         />
                     </div>
                     <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">City</label>
+                        <input
+                            type="text"
+                            placeholder="Hyd..."
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.city}
+                            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">State</label>
+                        <input
+                            type="text"
+                            placeholder="Andhra..."
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.state}
+                            onChange={(e) => setFilters({ ...filters, state: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Devotee Name</label>
+                        <input
+                            type="text"
+                            placeholder="Name..."
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                            value={filters.devoteeName}
+                            onChange={(e) => setFilters({ ...filters, devoteeName: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Booking Date (From)</label>
                         <input
                             type="date"
@@ -221,7 +254,10 @@ const AdminBookings = () => {
                                 coupon: '',
                                 performStartDate: '',
                                 performEndDate: '',
-                                bookingId: ''
+                                bookingId: '',
+                                city: '',
+                                state: '',
+                                devoteeName: ''
                             })}
                             className="w-full py-2.5 px-4 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 font-bold transition-all"
                         >

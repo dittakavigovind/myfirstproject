@@ -371,8 +371,14 @@ exports.deleteTemple = async (req, res) => {
 // @access  Private/Admin
 exports.getAllBookings = async (req, res) => {
     try {
-        const { temple, status, startDate, endDate, coupon, performStartDate, performEndDate, bookingId } = req.query;
+        const { temple, status, startDate, endDate, coupon, performStartDate, performEndDate, bookingId, city, state, devoteeName } = req.query;
         let query = {};
+
+        if (city) query['deliveryAddress.city'] = { $regex: city, $options: 'i' };
+        if (state) query['deliveryAddress.state'] = { $regex: state, $options: 'i' };
+        if (devoteeName) {
+            query['devoteeDetails.devotees.name'] = { $regex: devoteeName, $options: 'i' };
+        }
 
         if (temple) query.temple = temple;
         if (status) query['payment.status'] = status;
@@ -421,8 +427,14 @@ exports.getAllBookings = async (req, res) => {
 // @access  Private/Admin
 exports.exportBookings = async (req, res) => {
     try {
-        const { temple, status, startDate, endDate, coupon, performStartDate, performEndDate, bookingId } = req.query;
+        const { temple, status, startDate, endDate, coupon, performStartDate, performEndDate, bookingId, city, state, devoteeName } = req.query;
         let query = {};
+
+        if (city) query['deliveryAddress.city'] = { $regex: city, $options: 'i' };
+        if (state) query['deliveryAddress.state'] = { $regex: state, $options: 'i' };
+        if (devoteeName) {
+            query['devoteeDetails.devotees.name'] = { $regex: devoteeName, $options: 'i' };
+        }
 
         if (temple) query.temple = temple;
         if (status) query['payment.status'] = status;
@@ -590,5 +602,91 @@ exports.deleteCoupon = async (req, res) => {
         res.status(200).json({ success: true, message: 'Coupon deleted' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Update delivery address for a booking
+// @route   PUT /api/pooja/booking/:id/address
+// @access  Private
+exports.updateBookingAddress = async (req, res) => {
+    try {
+        let { address, city, state, pincode, country } = req.body;
+
+        // Handle nested deliveryAddress if present (from frontend)
+        if (req.body.deliveryAddress) {
+            ({ address, city, state, pincode, country } = req.body.deliveryAddress);
+        }
+
+        const fs = require('fs');
+        const logMsg = `\n[${new Date().toISOString()}] UPDATE ADDRESS - ID: ${req.params.id}\nData: ${JSON.stringify({ address, city, state, pincode, country })}\n`;
+        fs.appendFileSync('debug_address.log', logMsg);
+
+        if (!address || !city || !state || !pincode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide all address details'
+            });
+        }
+
+        if (!/^\d{6}$/.test(pincode)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pincode. Please provide a 6-digit numeric pincode'
+            });
+        }
+
+        const booking = await PoojaBooking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        // Check 36-hour restriction
+        if (booking.performDate) {
+            const performDate = new Date(booking.performDate);
+            const now = new Date();
+            const hoursUntilPooja = (performDate - now) / (1000 * 60 * 60);
+
+            if (hoursUntilPooja < 36) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Address updates are only allowed up to 36 hours before the Pooja performance time'
+                });
+            }
+        }
+
+        // Check ownership
+        if (booking.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ success: false, message: 'Not authorized' });
+        }
+
+        // Don't allow updates for completed or cancelled bookings
+        if (['Completed', 'Cancelled'].includes(booking.bookingStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot update address for ${booking.bookingStatus} orders`
+            });
+        }
+
+        booking.deliveryAddress = {
+            address,
+            city,
+            state,
+            pincode,
+            country: 'India' // Force lock to India as requested
+        };
+
+        await booking.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Delivery address updated successfully',
+            data: booking.deliveryAddress
+        });
+    } catch (error) {
+        console.error('Update address error:', error);
+        const fs = require('fs');
+        fs.appendFileSync('debug_address.log', `[${new Date().toISOString()}] ERROR: ${error.message}\n${error.stack}\n`);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
