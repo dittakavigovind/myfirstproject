@@ -34,23 +34,34 @@ const geocodePlace = async (placeName) => {
             throw new Error(`Geocoding Failed: ${geoRes.data.status}`);
         }
 
-        const result = geoRes.data.results[0];
-        const location = result.geometry.location;
-        const formattedAddress = result.formatted_address;
+        const location = geoRes.data.results[0].geometry.location;
+        const addressComponents = geoRes.data.results[0].address_components;
+        const formattedAddress = geoRes.data.results[0].formatted_address;
         const { lat, lng } = location;
 
-        // Extract address components
-        let city = "";
-        let state = "";
-        let country = "";
+        // Parse address components
+        let city = '', state = '', country = '', pincode = '';
 
-        result.address_components.forEach(comp => {
-            if (comp.types.includes("locality")) city = comp.long_name;
-            else if (comp.types.includes("administrative_area_level_1")) state = comp.long_name;
-            else if (comp.types.includes("country")) country = comp.long_name;
+        addressComponents.forEach(component => {
+            if (component.types.includes('locality')) {
+                city = component.long_name;
+            } else if (component.types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+            } else if (component.types.includes('country')) {
+                country = component.long_name;
+            } else if (component.types.includes('postal_code')) {
+                pincode = component.long_name;
+            }
         });
 
+        // Fallback for city if locality is missing
+        if (!city) {
+            const sublocality = addressComponents.find(c => c.types.includes('administrative_area_level_2'))?.long_name;
+            city = sublocality || '';
+        }
+
         // 2. Get Timezone
+        // Timestamp is required for timezone offset (DST awareness)
         const timestamp = Math.floor(Date.now() / 1000);
         const tzUrl = `https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${timestamp}&key=${apiKey}`;
         const tzRes = await axios.get(tzUrl, { httpsAgent: agent });
@@ -59,6 +70,7 @@ const geocodePlace = async (placeName) => {
             throw new Error(`Timezone Failed: ${tzRes.data.status}`);
         }
 
+        // We want the Timezone ID string for strict moment-timezone handling
         const timezone = tzRes.data.timeZoneId || "UTC";
 
         return {
@@ -68,7 +80,8 @@ const geocodePlace = async (placeName) => {
             formattedAddress,
             city,
             state,
-            country
+            country,
+            pincode
         };
 
     } catch (error) {

@@ -144,6 +144,20 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         setFormData({ ...formData, [name]: value });
     };
 
+    const handleLocationSelect = (locationData) => {
+        const { city, state, country, pincode, formattedAddress } = locationData;
+
+        setFormData(prev => ({
+            ...prev,
+            city: city || prev.city,
+            state: state || prev.state,
+            country: country || prev.country,
+            pincode: (pincode && pincode.length === 6) ? pincode : prev.pincode
+        }));
+
+        toast.success(`Location set to ${city || 'selected place'}`);
+    };
+
     const handleDevoteeChange = (index, field, value) => {
         const newDevotees = [...formData.devotees];
         newDevotees[index][field] = value;
@@ -669,20 +683,13 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                        <div className="col-span-1 sm:col-span-1 space-y-1.5 min-w-0">
+                                        <div className="col-span-2 sm:col-span-1 space-y-1.5 min-h-[48px]">
                                             <LocationSearch
+                                                onLocationSelect={handleLocationSelect}
                                                 placeholder="City *"
                                                 defaultValue={formData.city}
+                                                showLeftIcon={false}
                                                 showIcon={false}
-                                                customClassName="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm shadow-inner"
-                                                onLocationSelect={(loc) => {
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        city: loc.city || loc.formattedAddress.split(',')[0],
-                                                        state: loc.state || prev.state,
-                                                        country: loc.country || prev.country
-                                                    }));
-                                                }}
                                             />
                                         </div>
                                         <div className="col-span-1 sm:col-span-1 space-y-1.5">
