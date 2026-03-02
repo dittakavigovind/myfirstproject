@@ -3,9 +3,17 @@
  * Resolves a potentially relative image path into a full URL.
  * Checks if the path is already absolute, otherwise prepends the backend base URL.
  */
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-export const SERVER_BASE = isLocal ? 'http://localhost:5000' : 'http://192.168.29.133:5000';
-export const API_BASE = `${SERVER_BASE}/api`;
+// Build-time environment variables
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL; // e.g., 'http://192.168.29.133:5000/api'
+
+// Fallback logic for local development if not set in .env
+const fallbackServer = "http://192.168.29.133:5000";
+
+let computedApiBase = envApiUrl || `${fallbackServer}/api`;
+let computedServerBase = computedApiBase.replace(/\/api$/, '');
+
+export const SERVER_BASE = computedServerBase;
+export const API_BASE = computedApiBase;
 
 export const resolveImageUrl = (path) => {
     if (!path) return null;

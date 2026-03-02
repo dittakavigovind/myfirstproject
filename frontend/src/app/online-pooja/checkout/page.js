@@ -167,7 +167,7 @@ const CheckoutContent = () => {
             couponCode
         }));
         toast.error('Please login to continue');
-        router.push(`/login?redirect=/online-pooja/checkout?temple=${templeSlug}&seva=${sevaId}`);
+        router.push(`/login?redirect=/online-pooja/checkout/?temple=${templeSlug}&seva=${sevaId}`);
     };
 
     const handleChange = (e) => {
@@ -435,7 +435,7 @@ const CheckoutContent = () => {
     return (
         <div className="bg-astro-light min-h-screen pb-12">
             {/* Header */}
-            <div className="bg-white border-b border-gray-100 py-4 px-4 sticky top-0 z-40 shadow-sm">
+            <div className="bg-white border-b border-gray-100 py-4 px-4 sticky top-[calc(65px+env(safe-area-inset-top,0px))] md:top-[calc(81px+env(safe-area-inset-top,0px))] lg:top-[calc(125px+env(safe-area-inset-top,0px))] z-40 shadow-sm">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <button
                         onClick={() => router.push(`/online-pooja/details?slug=${templeSlug}`)}
@@ -454,7 +454,7 @@ const CheckoutContent = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                     {/* Left Column: Summary */}
-                    <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+                    <div className="lg:col-span-4 lg:sticky lg:top-[calc(200px+env(safe-area-inset-top,0px))] space-y-6">
                         <div className="bg-astro-navy text-white rounded-[2rem] shadow-xl p-6 relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                                 <span className="text-6xl font-black">ॐ</span>

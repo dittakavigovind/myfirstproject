@@ -312,7 +312,7 @@ export default function HomeClient() {
                         </div>
 
                         {/* Services Section */}
-                        <div className="max-w-7xl mx-auto px-4 relative z-20 -mt-16 md:-mt-24 mb-10">
+                        <div className="max-w-7xl mx-auto px-4 relative z-20 -mt-6 md:-mt-24 mb-10">
                             <motion.div
                                 initial={{ y: 40, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}

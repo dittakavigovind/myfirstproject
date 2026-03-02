@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import axios from 'axios';
@@ -15,6 +15,30 @@ const TempleDetailContent = () => {
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState(0);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
+    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
+    const sevasRef = useRef(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (sevasRef.current) {
+                const rect = sevasRef.current.getBoundingClientRect();
+                const navbarHeight = window.innerWidth < 768 ? 64 : (window.innerWidth < 1024 ? 80 : 124);
+                // Show floating button when the bottom of the sevas block scrolls past the sticky navbar
+                if (rect.bottom < navbarHeight) {
+                    setShowFloatingBtn(true);
+                } else {
+                    setShowFloatingBtn(false);
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll(); // Check initial state
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchTemple = async () => {
@@ -41,13 +65,13 @@ const TempleDetailContent = () => {
         if (temple && temple.sevas && typeof window !== 'undefined') {
             const sevaWithSavedProgress = temple.sevas.find(s => localStorage.getItem(`poojaBooking_${s._id}`));
             if (sevaWithSavedProgress) {
-                router.push(`/online-pooja/checkout?temple=${temple.slug}&seva=${sevaWithSavedProgress._id}`);
+                router.push(`/online-pooja/checkout/?temple=${temple.slug}&seva=${sevaWithSavedProgress._id}`);
             }
         }
     }, [temple, router]);
 
     const handleBookNow = (seva) => {
-        router.push(`/online-pooja/checkout?temple=${temple.slug}&seva=${seva._id}`);
+        router.push(`/online-pooja/checkout/?temple=${temple.slug}&seva=${seva._id}`);
     };
 
     if (loading) {
@@ -75,9 +99,9 @@ const TempleDetailContent = () => {
     }
 
     return (
-        <div className="bg-astro-light min-h-screen pb-12">
+        <div className="bg-astro-light min-h-screen pb-28 lg:pb-12">
             {/* Header / Navigation */}
-            <div className="bg-white border-b border-gray-100 py-4 px-4 sticky top-0 z-40">
+            <div className="bg-white border-b border-gray-100 py-4 px-4 sticky top-[calc(65px+env(safe-area-inset-top,0px))] md:top-[calc(81px+env(safe-area-inset-top,0px))] lg:top-[calc(125px+env(safe-area-inset-top,0px))] z-40 shadow-sm">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <button
                         onClick={() => router.push('/online-pooja')}
@@ -97,7 +121,7 @@ const TempleDetailContent = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
                     {/* Left Column: Gallery & Description */}
-                    <div className="lg:col-span-7 min-w-0">
+                    <div className="lg:col-span-7 min-w-0 order-2 lg:order-1">
                         <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm p-4 mb-8">
                             {/* Main Image */}
                             <div className="relative aspect-video rounded-[2rem] overflow-hidden mb-4">
@@ -130,12 +154,12 @@ const TempleDetailContent = () => {
                             )}
                         </div>
 
-                        <div className="bg-white rounded-[2.5rem] shadow-sm p-8 overflow-hidden break-words">
-                            <h1 className="text-2xl md:text-4xl font-black text-astro-navy mb-6 leading-tight break-words">
+                        <div className="bg-white rounded-[2.5rem] shadow-sm p-8 overflow-hidden break-words text-justify lg:text-left">
+                            <h1 className="text-2xl md:text-4xl font-black text-astro-navy mb-6 leading-tight break-words text-left">
                                 {temple.name}
                             </h1>
                             <div
-                                className="prose-astro max-w-full break-words whitespace-pre-wrap text-gray-600 mb-4 leading-relaxed [&_p]:break-words [&_p]:whitespace-normal [&_p]:overflow-hidden [&_img]:max-w-full [&_img]:h-auto"
+                                className="prose-astro max-w-full break-words whitespace-pre-wrap text-gray-600 mb-4 leading-relaxed [&_p]:break-words [&_p]:text-justify [&_p]:whitespace-normal [&_p]:overflow-hidden [&_img]:max-w-full [&_img]:h-auto [&_*]:text-justify lg:[&_*]:text-left"
                                 dangerouslySetInnerHTML={{ __html: temple.description }}
                             />
                         </div>
@@ -174,8 +198,8 @@ const TempleDetailContent = () => {
                     </div>
 
                     {/* Right Column: Sevas Sticky */}
-                    <div className="lg:col-span-5">
-                        <div className="sticky top-24">
+                    <div className="lg:col-span-5 order-1 lg:order-2" ref={sevasRef}>
+                        <div className="sticky lg:top-[calc(200px+env(safe-area-inset-top,0px))]">
                             <div className="bg-astro-navy text-white rounded-[2.5rem] shadow-xl p-8 mb-6 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <span className="text-6xl font-black">ॐ</span>
@@ -259,7 +283,25 @@ const TempleDetailContent = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
+            {/* Mobile Floating Book Now Button */}
+            <div
+                className={`fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.1)] lg:hidden z-50 transition-transform duration-300 ${showFloatingBtn ? 'translate-y-0' : 'translate-y-full'}`}
+            >
+                <div className="max-w-7xl mx-auto flex gap-3">
+                    <button
+                        onClick={() => {
+                            if (sevasRef.current) {
+                                const y = sevasRef.current.getBoundingClientRect().top + window.scrollY - 100;
+                                window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                        }}
+                        className="w-full bg-astro-navy text-white py-3.5 px-6 rounded-xl font-black text-lg hover:bg-astro-yellow transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
+                    >
+                        <Calendar className="w-5 h-5" /> Select Seva
+                    </button>
                 </div>
             </div>
         </div>
