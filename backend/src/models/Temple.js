@@ -63,6 +63,29 @@ const templeSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    metaTitle: {
+        type: String
+    },
+    metaDescription: {
+        type: String
+    },
+    metaKeywords: {
+        type: String
+    },
+    ogTitle: {
+        type: String
+    },
+    ogDescription: {
+        type: String
+    },
+    faqs: [{
+        question: {
+            type: String
+        },
+        answer: {
+            type: String
+        }
+    }],
     createdBy: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',

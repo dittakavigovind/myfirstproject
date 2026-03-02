@@ -1,19 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import axios from 'axios';
-import { API_BASE } from '../../lib/urlHelper';
-import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, MapPin, Tag, Smartphone } from 'lucide-react';
+import { resolveImageUrl, API_BASE } from '../../../lib/urlHelper';
+import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, MapPin, Tag, Smartphone, ChevronLeft, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
-import { useRouter } from 'next/navigation';
-import LocationSearch from '../LocationSearch';
+import { useAuth } from '../../../context/AuthContext';
+import { useRouter, useSearchParams } from 'next/navigation';
+import LocationSearch from '../../../components/LocationSearch';
+import Image from 'next/image';
 
-const BookingModal = ({ isOpen, onClose, temple, seva }) => {
+const CheckoutContent = () => {
     const { user, token } = useAuth();
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+    const searchParams = useSearchParams();
+
+    const templeSlug = searchParams.get('temple');
+    const sevaId = searchParams.get('seva');
+
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
+    const [temple, setTemple] = useState(null);
+    const [seva, setSeva] = useState(null);
 
     // Country Codes matching login page
     const countryCodes = [
@@ -35,8 +44,47 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         state: '',
         pincode: '',
         country: 'India',
-        performDate: seva?.dateSelectionType === 'Fixed' ? new Date(seva.fixedDate).toISOString().split('T')[0] : ''
+        performDate: ''
     });
+
+    // Fetch Temple & Seva Details
+    useEffect(() => {
+        const fetchDetails = async () => {
+            if (!templeSlug || !sevaId) {
+                toast.error("Invalid booking parameters");
+                router.push('/online-pooja');
+                return;
+            }
+            try {
+                const response = await axios.get(`${API_BASE}/pooja/temples/${templeSlug}`);
+                if (response.data.success) {
+                    const fetchedTemple = response.data.data;
+                    setTemple(fetchedTemple);
+
+                    const targetSeva = fetchedTemple.sevas?.find(s => s._id === sevaId);
+                    if (targetSeva) {
+                        setSeva(targetSeva);
+                        if (targetSeva.dateSelectionType === 'Fixed') {
+                            setFormData(prev => ({
+                                ...prev,
+                                performDate: new Date(targetSeva.fixedDate).toISOString().split('T')[0]
+                            }));
+                        }
+                    } else {
+                        toast.error("Seva not found");
+                        router.push(`/online-pooja/details?slug=${templeSlug}`);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching details:', err);
+                toast.error("Failed to load booking details");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDetails();
+    }, [templeSlug, sevaId, router]);
 
     // Reset phone number when country code changes
     useEffect(() => {
@@ -45,7 +93,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
     // Initialize phone number and country code from user data
     useEffect(() => {
-        if (user?.phone) {
+        if (user?.phone && formData.phoneNumber === '') {
             const matchedCode = countryCodes.find(c => user.phone.startsWith(c.code));
             if (matchedCode) {
                 setCountryCode(matchedCode.code);
@@ -68,7 +116,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
     // Fetch Available Coupons on mount
     useEffect(() => {
-        if (isOpen && temple?._id) {
+        if (temple?._id) {
             const fetchCoupons = async () => {
                 try {
                     const res = await axios.get(`${API_BASE}/pooja/coupons/active?templeId=${temple._id}`);
@@ -81,12 +129,12 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             };
             fetchCoupons();
         }
-    }, [isOpen, temple]);
+    }, [temple]);
 
     // Restore saved progress on mount
     useEffect(() => {
-        if (isOpen && typeof window !== 'undefined') {
-            const savedProgress = localStorage.getItem(`poojaBooking_${seva?._id}`);
+        if (seva?._id && typeof window !== 'undefined') {
+            const savedProgress = localStorage.getItem(`poojaBooking_${seva._id}`);
             if (savedProgress) {
                 try {
                     const parsed = JSON.parse(savedProgress);
@@ -96,31 +144,30 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                     }
                     if (parsed.couponCode) {
                         setCouponCode(parsed.couponCode);
-                        // If token exists now, we should attempt to auto-apply it
                         if (token) {
                             setTimeout(() => {
                                 handleApplyCoupon(parsed.couponCode);
-                            }, 500); // Small delay to let states settle
+                            }, 500);
                         }
                     }
-                    localStorage.removeItem(`poojaBooking_${seva?._id}`); // Clear after restore
+                    localStorage.removeItem(`poojaBooking_${seva._id}`);
                     toast.success('Your previously entered details were restored!');
                 } catch (e) {
                     console.error("Failed to parse saved booking progress");
                 }
             }
         }
-    }, [isOpen, seva?._id, token]);
+    }, [seva?._id, token]);
 
     const saveProgressAndLogin = () => {
-        localStorage.setItem(`poojaBooking_${seva?._id}`, JSON.stringify({
+        if (!seva?._id) return;
+        localStorage.setItem(`poojaBooking_${seva._id}`, JSON.stringify({
             formData,
             countryCode,
             couponCode
         }));
         toast.error('Please login to continue');
-        // Redirect to login, then back to the current temple page
-        router.push(`/login?redirect=/online-pooja/details?slug=${temple.slug}`);
+        router.push(`/login?redirect=/online-pooja/checkout?temple=${templeSlug}&seva=${sevaId}`);
     };
 
     const handleChange = (e) => {
@@ -136,7 +183,6 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             value = value.replace(/\D/g, '').slice(0, 10);
         }
 
-        // Text-only validation for city, state, country
         if (['city', 'state', 'country'].includes(name)) {
             value = value.replace(/[^a-zA-Z\s]/g, '');
         }
@@ -145,17 +191,14 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
     };
 
     const handleLocationSelect = (locationData) => {
-        console.log('[BOOKING MODAL] Location Data Received:', locationData);
         const { city, state, country, pincode } = locationData;
-
         setFormData(prev => ({
             ...prev,
             city: city || '',
             state: state || '',
-            country: 'India', // Lock to India
+            country: 'India',
             pincode: pincode || ''
         }));
-
         if (city) {
             toast.success(`Location set-up complete`);
         }
@@ -284,10 +327,9 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             return;
         }
 
-        setLoading(true);
+        setSubmitting(true);
 
         try {
-            // 1. Create Order on Backend
             const orderRes = await axios.post(`${API_BASE}/pooja/booking/create-order`, {
                 templeId: temple._id,
                 sevaName: seva.name,
@@ -317,7 +359,13 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
             const { order_id, amount, currency, key_id, bookingId } = orderRes.data;
 
-            // 2. Initialize Razorpay Checkout
+            const res = await loadRazorpay();
+            if (!res) {
+                toast.error('Razorpay SDK failed to load. Are you online?');
+                setSubmitting(false);
+                return;
+            }
+
             const options = {
                 key: key_id,
                 amount: amount * 100,
@@ -327,7 +375,6 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                 order_id: order_id,
                 handler: async (response) => {
                     try {
-                        // 3. Verify Payment on Backend
                         const verifyRes = await axios.post(`${API_BASE}/pooja/booking/verify-payment`, {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
@@ -340,7 +387,6 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                         if (verifyRes.data.success) {
                             toast.success('Pooja Booked Successfully!');
                             router.push(`/online-pooja/payment-status?status=success&bookingId=${bookingId}`);
-                            onClose();
                         } else {
                             router.push(`/online-pooja/payment-status?status=failed&bookingId=${bookingId}`);
                         }
@@ -371,93 +417,130 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
             console.error('Booking Error:', error);
             toast.error(error.response?.data?.message || 'Something went wrong');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
-    if (!isOpen) return null;
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[80vh] bg-astro-light">
+                <Loader2 className="w-12 h-12 text-astro-navy animate-spin mb-4" />
+                <p className="text-astro-navy font-medium">Preparing Booking Details...</p>
+            </div>
+        );
+    }
+
+    if (!temple || !seva) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl relative animate-in fade-in zoom-in duration-300">
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-6 right-6 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-10"
-                >
-                    <X className="w-6 h-6 text-gray-600" />
-                </button>
+        <div className="bg-astro-light min-h-screen pb-12">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-100 py-4 px-4 sticky top-0 z-40 shadow-sm">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <button
+                        onClick={() => router.push(`/online-pooja/details?slug=${templeSlug}`)}
+                        className="flex items-center text-astro-navy hover:text-astro-yellow font-bold transition-colors"
+                    >
+                        <ChevronLeft className="w-5 h-5 mr-1" />
+                        Back to Temple
+                    </button>
+                    <span className="font-bold text-astro-navy text-sm md:text-base hidden sm:block">
+                        Secure Checkout
+                    </span>
+                </div>
+            </div>
 
-                <div className="flex flex-col md:flex-row h-full">
-                    {/* Sidebar / Info */}
-                    <div className="w-full md:w-80 bg-astro-navy p-8 text-white hidden md:block">
-                        <div className="mb-8">
-                            <span className="bg-astro-yellow text-astro-navy text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+            <div className="max-w-6xl mx-auto px-4 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                    {/* Left Column: Summary */}
+                    <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
+                        <div className="bg-astro-navy text-white rounded-[2rem] shadow-xl p-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                                <span className="text-6xl font-black">ॐ</span>
+                            </div>
+
+                            <span className="bg-astro-yellow text-astro-navy text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
                                 Booking Seva
                             </span>
-                            <h2 className="text-2xl font-bold mt-4 mb-2">{seva.name}</h2>
-                            <p className="text-white/60 text-sm">{temple.name}</p>
+
+                            <h2 className="text-xl md:text-2xl font-bold mt-4 mb-2 leading-tight">
+                                {seva.name}
+                            </h2>
+                            <p className="text-white/70 text-sm mb-6 flex items-start gap-2">
+                                <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                {temple.name}
+                            </p>
+
+                            <div className="mb-6 bg-white/5 rounded-2xl p-4 border border-white/10">
+                                {appliedCoupon ? (
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between items-center text-sm text-white/60">
+                                            <span>Original Price</span>
+                                            <span className="line-through">₹{seva.price}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm text-astro-yellow">
+                                            <span>Discount ({appliedCoupon.code})</span>
+                                            <span>- ₹{appliedCoupon.discountAmount}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-2xl font-black text-white pt-2 border-t border-white/10 mt-2">
+                                            <span>Total</span>
+                                            <span>₹{appliedCoupon.finalAmount}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <div className="text-sm text-white/60 mb-1">Total Amount</div>
+                                        <div className="text-3xl font-black text-astro-yellow">
+                                            ₹{seva.price}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-start">
+                                    <Info className="w-5 h-5 mr-3 text-white/40 flex-shrink-0" />
+                                    <div className="text-xs text-white/70 leading-relaxed">
+                                        Please provide accurate details for a successful Sankalpa.
+                                    </div>
+                                </div>
+                                <div className="flex items-start">
+                                    <BookOpen className="w-5 h-5 mr-3 text-white/40 flex-shrink-0" />
+                                    <div className="text-xs text-white/70 leading-relaxed">
+                                        Prasadam will be shipped to the address provided.
+                                    </div>
+                                </div>
+                                <div className="flex items-start">
+                                    <BookOpen className="w-5 h-5 mr-3 text-white/40 flex-shrink-0" />
+                                    <div className="text-xs text-white/70 leading-relaxed">
+                                        Change of address will be allowed 36hrs before seva date.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="mb-8">
-                            {appliedCoupon ? (
-                                <div className="space-y-1 mt-2 p-4 bg-white/5 rounded-2xl border border-white/10">
-                                    <div className="flex justify-between items-center text-sm text-white/60">
-                                        <span>Original Price</span>
-                                        <span className="line-through">₹{seva.price}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm text-astro-yellow">
-                                        <span>Discount ({appliedCoupon.code})</span>
-                                        <span>- ₹{appliedCoupon.discountAmount}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-2xl font-black text-white pt-2 border-t border-white/10 mt-2">
-                                        <span>Total</span>
-                                        <span>₹{appliedCoupon.finalAmount}</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div>
-                                    <div className="text-3xl font-black">
-                                        ₹{seva.price}
-                                    </div>
-                                    <div className="mt-2 inline-flex items-center gap-1.5 bg-green-500/20 text-green-300 text-xs font-bold px-2.5 py-1 rounded-md border border-green-500/30">
-                                        <Tag className="w-3.5 h-3.5" /> Offers Available
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="flex items-start">
-                                <Info className="w-5 h-5 mr-3 text-astro-yellow flex-shrink-0" />
-                                <div className="text-xs text-white/70 leading-relaxed">
-                                    Please provide accurate details for a successful Sankalpa.
-                                </div>
-                            </div>
-                            <div className="flex items-start">
-                                <BookOpen className="w-5 h-5 mr-3 text-astro-yellow flex-shrink-0" />
-                                <div className="text-xs text-white/70 leading-relaxed">
-                                    Prasadam will be shipped to the address provided below.
-                                </div>
-                            </div>
-                            <div className="flex items-start">
-                                <BookOpen className="w-5 h-5 mr-3 text-white/40 flex-shrink-0" />
-                                <div className="text-xs text-white/70 leading-relaxed">
-                                    Change of address will be allowed 36hrs before seva date.
-                                </div>
-                            </div>
+                        {/* Image Preview */}
+                        <div className="bg-white rounded-[2rem] shadow-sm p-3 relative h-48 hidden lg:block overflow-hidden">
+                            <Image
+                                src={temple.images?.[0] ? resolveImageUrl(temple.images[0]) : '/placeholder-temple.jpg'}
+                                alt="Temple"
+                                fill
+                                className="object-cover rounded-[1.5rem]"
+                            />
+                            <div className="absolute inset-0 bg-black/20 rounded-[1.5rem]" />
                         </div>
                     </div>
 
-                    {/* Form Container */}
-                    <div className="flex-1 p-6 md:p-10 bg-white overflow-y-auto">
-                        <div className="flex items-center justify-between mb-8 pr-12 md:pr-0">
-                            <h3 className="text-2xl font-black text-astro-navy tracking-tight">Devotee Details</h3>
-                            <div className="h-1 w-8 md:w-12 bg-astro-yellow rounded-full"></div>
+                    {/* Right Column: Form */}
+                    <div className="lg:col-span-8 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm">
+                        <div className="flex items-center gap-3 mb-8">
+                            <h1 className="text-2xl font-black text-astro-navy tracking-tight">Devotee Details</h1>
+                            <div className="h-1 flex-1 bg-gray-100 rounded-full"></div>
                         </div>
 
                         <form onSubmit={handlePayment} className="space-y-10">
-                            {/* Devotee Info Section */}
+                            {/* Devotees mapping array */}
                             <div className="space-y-5">
                                 <div className="flex items-center justify-between px-1">
                                     <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Family Members (Max 4)</label>
@@ -465,7 +548,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                         <button
                                             type="button"
                                             onClick={addDevotee}
-                                            className="text-astro-navy hover:bg-astro-navy hover:text-white font-bold text-[10px] uppercase tracking-wider flex items-center bg-gray-100 px-4 py-2 rounded-full transition-all duration-300 border border-transparent shadow-sm hover:shadow-md"
+                                            className="text-astro-navy hover:bg-astro-navy hover:text-white font-bold text-[10px] uppercase tracking-wider flex items-center bg-gray-100 px-4 py-2 rounded-full transition-all duration-300 shadow-sm"
                                         >
                                             <Plus className="w-3 h-3 mr-1.5" /> Add Person
                                         </button>
@@ -474,14 +557,14 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
 
                                 <div className="space-y-6">
                                     {formData.devotees.map((devotee, idx) => (
-                                        <div key={idx} className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100 relative group transition-all duration-300 hover:border-astro-yellow/30 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
+                                        <div key={idx} className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100 relative group transition-all duration-300 focus-within:border-astro-navy/30 focus-within:bg-white focus-within:shadow-lg">
                                             {formData.devotees.length > 1 && (
                                                 <button
                                                     type="button"
                                                     onClick={() => removeDevotee(idx)}
-                                                    className="absolute -top-2 -right-2 bg-white text-red-400 hover:text-red-600 p-1.5 rounded-full shadow-md border border-slate-100 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-90"
+                                                    className="absolute -top-3 -right-3 bg-white text-red-400 hover:text-red-600 p-2 rounded-full shadow-md border border-slate-100 transition-all hover:scale-110 active:scale-90"
                                                 >
-                                                    <X className="w-3.5 h-3.5" />
+                                                    <X className="w-4 h-4" />
                                                 </button>
                                             )}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -493,7 +576,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                             required
                                                             value={devotee.name}
                                                             onChange={(e) => handleDevoteeChange(idx, 'name', e.target.value)}
-                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-2.5 pl-11 pr-4 focus:border-astro-navy focus:ring-4 focus:ring-astro-navy/5 outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
+                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-3 pl-11 pr-4 focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
                                                             placeholder="Enter name"
                                                         />
                                                     </div>
@@ -504,7 +587,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                         <select
                                                             value={devotee.nakshatra}
                                                             onChange={(e) => handleDevoteeChange(idx, 'nakshatra', e.target.value)}
-                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-2.5 px-4 focus:border-astro-navy focus:ring-4 focus:ring-astro-navy/5 outline-none transition-all text-slate-700 font-medium cursor-pointer appearance-none text-sm"
+                                                            className="w-full bg-white border-slate-200 border rounded-2xl py-3 px-4 focus:border-astro-navy outline-none transition-all text-slate-700 font-medium cursor-pointer appearance-none text-sm"
                                                         >
                                                             <option value="" className="text-slate-400">Unknown / Don't Know</option>
                                                             <option value="Ashwini">Ashwini</option>
@@ -535,8 +618,6 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                             <option value="Uttara Bhadrapada">Uttara Bhadrapada</option>
                                                             <option value="Revati">Revati</option>
                                                         </select>
-
-                                                        {/* Custom dropdown arrow to replace native appearance-none */}
                                                         <div className="absolute inset-y-0 right-4 items-center flex pointer-events-none">
                                                             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                                         </div>
@@ -547,7 +628,6 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                     ))}
                                 </div>
 
-                                {/* Common Fields Section */}
                                 <div className="space-y-5 pt-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                         <div className="space-y-2">
@@ -570,7 +650,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 <select
                                                     value={countryCode}
                                                     onChange={(e) => setCountryCode(e.target.value)}
-                                                    className="pl-9 pr-2 border border-r-0 border-slate-100 bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-astro-navy rounded-l-2xl h-[48px] transition-all cursor-pointer hover:bg-slate-100"
+                                                    className="pl-9 pr-2 border border-r-0 border-slate-100 bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-astro-navy rounded-l-2xl h-[52px] transition-all cursor-pointer hover:bg-slate-100"
                                                 >
                                                     {countryCodes.map(c => (
                                                         <option key={c.code} value={c.code}>{c.code}</option>
@@ -590,14 +670,14 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email *</label>
                                         <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300" />
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                                             <input
                                                 required
                                                 type="email"
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 pl-10 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-2xl py-3 pl-11 pr-4 focus:bg-white focus:border-astro-navy outline-none transition-all placeholder:text-slate-300 font-medium text-sm"
                                                 placeholder="Email address"
                                             />
                                         </div>
@@ -605,26 +685,26 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                 </div>
 
                                 {/* Pooja Perform Date Selection */}
-                                <div className="pt-4 border-t border-slate-100/50">
-                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <CreditCard className="w-4 h-4 text-astro-navy" />
-                                            <h4 className="text-[11px] font-black text-astro-navy uppercase tracking-wider">Pooja Performance Date</h4>
+                                <div className="pt-6 mt-6 border-t border-slate-100">
+                                    <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <CreditCard className="w-5 h-5 text-astro-navy" />
+                                            <h4 className="text-[12px] font-black text-astro-navy uppercase tracking-widest">Pooja Performance Date</h4>
                                         </div>
 
                                         {seva?.dateSelectionType === 'Fixed' ? (
-                                            <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                                <div className="flex items-center justify-between mb-0.5">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Date (Fixed)</label>
-                                                    <div className="bg-astro-navy text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">Fixed</div>
+                                            <div className="space-y-2 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Date (Fixed)</label>
+                                                    <div className="bg-astro-navy text-white text-[9px] font-black px-2 py-1 rounded-full uppercase">Fixed</div>
                                                 </div>
                                                 <input
                                                     type="date"
                                                     disabled
                                                     value={new Date(seva.fixedDate).toISOString().split('T')[0]}
-                                                    className="w-full bg-slate-50 border-slate-200 border rounded-xl py-2.5 px-4 font-black text-astro-navy opacity-70 cursor-not-allowed text-sm"
+                                                    className="w-full bg-slate-50 border-slate-200 border rounded-xl py-3 px-4 font-black text-astro-navy opacity-70 cursor-not-allowed text-sm"
                                                 />
-                                                <p className="text-[10px] text-slate-400 font-bold mt-1 ml-1">
+                                                <p className="text-xs text-slate-500 font-medium pt-1">
                                                     {new Date(seva.fixedDate).toLocaleDateString('en-IN', {
                                                         weekday: 'long',
                                                         year: 'numeric',
@@ -648,19 +728,37 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                             onChange={handleChange}
                                                             min={seva?.dateSelectionType === 'Range' ? new Date(seva.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
                                                             max={seva?.dateSelectionType === 'Range' ? new Date(seva.endDate).toISOString().split('T')[0] : undefined}
-                                                            className="w-full bg-white border-slate-200 border rounded-xl py-2.5 px-4 focus:border-astro-navy outline-none transition-all font-black text-astro-navy text-sm"
+                                                            className="w-full bg-white border-slate-200 border-2 rounded-2xl py-3 px-4 focus:border-astro-navy outline-none transition-all font-black text-astro-navy text-sm"
                                                         />
                                                     </div>
                                                     {seva?.dateSelectionType === 'Range' && (
-                                                        <div className="md:w-48 p-4 bg-white rounded-2xl border border-slate-100 flex flex-col justify-center">
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Available range</p>
-                                                            <p className="text-xs font-bold text-astro-navy">
-                                                                {new Date(seva.startDate).toLocaleDateString('en-GB')} - {new Date(seva.endDate).toLocaleDateString('en-GB')}
-                                                            </p>
+                                                        <div className="md:w-64 p-4 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm relative overflow-hidden flex flex-col justify-center mt-4 md:mt-0">
+                                                            <div className="absolute -right-4 -top-4 text-orange-500/10 pointer-events-none">
+                                                                <Calendar className="w-24 h-24" />
+                                                            </div>
+                                                            <div className="relative z-10">
+                                                                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                                                    <Calendar className="w-3.5 h-3.5" />
+                                                                    Availability Area
+                                                                </p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="bg-white px-2.5 py-1.5 rounded-xl border border-orange-100 shadow-sm">
+                                                                        <p className="text-xs font-black text-astro-navy">
+                                                                            {new Date(seva.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                                        </p>
+                                                                    </div>
+                                                                    <span className="text-orange-400 font-bold text-xs">to</span>
+                                                                    <div className="bg-white px-2.5 py-1.5 rounded-xl border border-orange-100 shadow-sm">
+                                                                        <p className="text-xs font-black text-astro-navy">
+                                                                            {new Date(seva.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <p className="text-[10px] text-slate-400 italic">
+                                                <p className="text-xs text-slate-500 italic font-medium ml-1">
                                                     * Please select a date within the allowed availability window for this seva.
                                                 </p>
                                             </div>
@@ -670,12 +768,12 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                             </div>
 
                             {/* Address Section */}
-                            <div className="pt-6 border-t border-slate-100">
+                            <div className="pt-8 border-t border-slate-100">
                                 <div className="flex items-center gap-3 mb-6">
                                     <h3 className="text-xl font-black text-astro-navy tracking-tight">Prasadam Delivery Address</h3>
                                     <div className="h-px flex-1 bg-slate-100"></div>
                                 </div>
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Complete House Address *</label>
                                         <div className="relative">
@@ -708,7 +806,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="state"
                                                 value={formData.state}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="State *"
                                             />
                                         </div>
@@ -718,7 +816,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 name="pincode"
                                                 value={formData.pincode}
                                                 onChange={handleChange}
-                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-2.5 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="Pincode *"
                                             />
                                         </div>
@@ -727,7 +825,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                 readOnly
                                                 name="country"
                                                 value={formData.country}
-                                                className="w-full bg-slate-100 border-slate-100 border-2 rounded-xl py-2.5 px-4 outline-none font-bold text-slate-500 text-sm cursor-not-allowed"
+                                                className="w-full bg-slate-100 border-slate-200 border-2 rounded-xl py-3 px-4 outline-none font-bold text-slate-500 text-sm cursor-not-allowed"
                                                 placeholder="Country *"
                                             />
                                         </div>
@@ -736,38 +834,38 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                             </div>
 
                             {/* Coupon Section */}
-                            <div className="pt-6 border-t border-slate-100">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="text-lg font-black text-astro-navy tracking-tight">Have a Coupon Code?</h3>
+                            <div className="pt-8 border-t border-slate-100">
+                                <div className="flex items-center gap-3 mb-5">
+                                    <h3 className="text-xl font-black text-astro-navy tracking-tight">Have a Coupon Code?</h3>
                                 </div>
-                                <div className="bg-slate-50 border border-slate-100 p-5 rounded-3xl">
+                                <div className="bg-slate-50 border border-slate-100 p-6 rounded-[2rem]">
                                     {appliedCoupon ? (
-                                        <div className="flex items-center justify-between bg-green-50 border border-green-200 p-4 rounded-2xl">
-                                            <div className="flex items-center gap-3">
-                                                <div className="bg-green-100 text-green-600 p-2 rounded-xl">
-                                                    <Tag className="w-5 h-5" />
+                                        <div className="flex items-center justify-between bg-green-50 border border-green-200 p-5 rounded-2xl">
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-green-100 text-green-600 p-3 rounded-xl">
+                                                    <Tag className="w-6 h-6" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-green-800">{appliedCoupon.code} Applied</p>
-                                                    <p className="text-xs text-green-600 font-medium">You saved ₹{appliedCoupon.discountAmount}</p>
+                                                    <p className="text-base font-bold text-green-800">{appliedCoupon.code} Applied</p>
+                                                    <p className="text-sm text-green-600 font-medium tracking-wide">You saved ₹{appliedCoupon.discountAmount}</p>
                                                 </div>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={removeCoupon}
-                                                className="text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                                                className="text-sm font-bold text-red-500 hover:text-red-600 bg-red-100/50 hover:bg-red-100 px-4 py-2.5 rounded-xl transition-colors"
                                             >
                                                 Remove
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col gap-4">
                                             {availableCoupons.length > 0 && (
                                                 <div className="relative">
                                                     <select
                                                         value={couponCode}
                                                         onChange={(e) => setCouponCode(e.target.value)}
-                                                        className="w-full bg-white border-2 border-astro-yellow/50 rounded-2xl py-3.5 pl-4 pr-10 focus:border-astro-yellow outline-none font-bold text-sm h-14 cursor-pointer appearance-none shadow-sm"
+                                                        className="w-full bg-white border-2 border-astro-yellow/50 rounded-2xl py-4 pl-5 pr-12 focus:border-astro-yellow outline-none font-bold text-base h-16 cursor-pointer appearance-none shadow-sm transition-colors"
                                                     >
                                                         <option value="">Select an available offer...</option>
                                                         {availableCoupons.map((c) => (
@@ -776,37 +874,37 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                                                             </option>
                                                         ))}
                                                     </select>
-                                                    <div className="absolute inset-y-0 right-4 items-center flex pointer-events-none">
-                                                        <Tag className="w-5 h-5 text-astro-yellow" />
+                                                    <div className="absolute inset-y-0 right-5 items-center flex pointer-events-none">
+                                                        <Tag className="w-6 h-6 text-astro-yellow" />
                                                     </div>
                                                 </div>
                                             )}
-                                            <div className="flex flex-col sm:flex-row gap-3 relative">
+                                            <div className="flex flex-col sm:flex-row gap-4 relative">
                                                 <div className="relative flex-1">
-                                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <Tag className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                                     <input
                                                         type="text"
                                                         placeholder="Or enter a discount code"
                                                         value={couponCode}
                                                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                        className="w-full bg-white border-2 border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 focus:border-astro-navy outline-none uppercase font-mono tracking-wider font-bold text-sm h-14"
+                                                        className="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:border-astro-navy outline-none uppercase font-mono tracking-wider font-bold text-base h-16 transition-colors"
                                                     />
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={handleApplyCoupon}
                                                     disabled={couponLoading || !couponCode.trim()}
-                                                    className="bg-astro-navy text-white px-6 py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs hover:bg-astro-yellow hover:text-astro-navy transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-14"
+                                                    className="bg-astro-navy text-white px-8 py-4 rounded-2xl font-black uppercase tracking-wider text-sm hover:bg-astro-yellow hover:text-astro-navy transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-16 shadow-lg shadow-astro-navy/20"
                                                 >
-                                                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Apply'}
+                                                    {couponLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Apply'}
                                                 </button>
                                             </div>
                                         </div>
                                     )}
 
                                     {couponMessage.text && !appliedCoupon && (
-                                        <p className={`text-xs font-bold mt-3 ml-2 flex items-center gap-1.5 ${couponMessage.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                                            {couponMessage.type === 'error' ? <X className="w-3.5 h-3.5" /> : null}
+                                        <p className={`text-sm font-bold mt-4 ml-2 flex items-center gap-2 ${couponMessage.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                                            {couponMessage.type === 'error' ? <X className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
                                             {couponMessage.text}
                                         </p>
                                     )}
@@ -814,54 +912,71 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
                             </div>
 
                             {/* Terms and Conditions Checkbox */}
-                            <div className="pt-4 px-1">
+                            <div className="pt-6 border-t border-slate-100">
                                 <label className="flex items-start cursor-pointer group select-none">
-                                    <div className="relative flex items-center mt-0.5">
+                                    <div className="relative flex items-center mt-1">
                                         <input
                                             type="checkbox"
                                             className="peer sr-only"
                                             checked={termsAccepted}
                                             onChange={(e) => setTermsAccepted(e.target.checked)}
                                         />
-                                        <div className="w-5 h-5 border-2 border-slate-200 rounded-lg flex items-center justify-center transition-all duration-300 peer-checked:bg-astro-navy peer-checked:border-astro-navy group-hover:border-astro-navy/50">
-                                            <svg className={`w-3 h-3 text-white transition-transform duration-300 ${termsAccepted ? 'scale-100' : 'scale-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                        <div className="w-6 h-6 border-2 border-slate-300 rounded-lg flex items-center justify-center transition-all duration-300 peer-checked:bg-astro-navy peer-checked:border-astro-navy group-hover:border-astro-navy/50">
+                                            <svg className={`w-3.5 h-3.5 text-white transition-transform duration-300 ${termsAccepted ? 'scale-100' : 'scale-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </div>
                                     </div>
-                                    <span className="ml-3 text-xs font-bold text-gray-500 leading-relaxed group-hover:text-astro-navy transition-colors">
+                                    <span className="ml-4 text-sm font-bold text-slate-500 leading-relaxed group-hover:text-astro-navy transition-colors">
                                         I agree to the <span className="text-astro-navy underline decoration-astro-yellow decoration-2 underline-offset-4">Terms and Conditions</span> and acknowledge that I have read the service <span className="text-astro-navy underline decoration-astro-yellow decoration-2 underline-offset-4">Disclaimer</span>.
                                     </span>
                                 </label>
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-2">
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className="group w-full bg-astro-navy text-white h-16 rounded-2xl font-black text-lg hover:bg-astro-yellow hover:text-astro-navy border-2 border-astro-navy hover:border-astro-yellow transition-all duration-500 shadow-xl shadow-astro-navy/20 hover:shadow-astro-yellow/30 flex items-center justify-center overflow-hidden relative"
+                                    disabled={submitting}
+                                    className="group w-full bg-astro-navy text-white h-20 rounded-[2rem] font-black text-xl hover:bg-astro-yellow hover:text-astro-navy border-2 border-astro-navy hover:border-astro-yellow transition-all duration-500 shadow-2xl shadow-astro-navy/20 hover:shadow-astro-yellow/30 flex items-center justify-center overflow-hidden relative"
                                 >
                                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-                                    {loading ? (
+                                    {submitting ? (
                                         <>
-                                            <Loader2 className="w-6 h-6 animate-spin mr-3" />
-                                            <span>Processing Your Request...</span>
+                                            <Loader2 className="w-7 h-7 animate-spin mr-3" />
+                                            <span>Processing Secure Payment...</span>
                                         </>
                                     ) : (
                                         <div className="relative flex items-center">
-                                            <span>Pay ₹{appliedCoupon ? appliedCoupon.finalAmount : seva.price}</span>
-                                            <CreditCard className="w-5 h-5 ml-3 group-hover:rotate-12 transition-transform" />
+                                            <span>Pay ₹{appliedCoupon ? appliedCoupon.finalAmount : seva.price} Securely</span>
+                                            <CreditCard className="w-6 h-6 ml-4 group-hover:rotate-12 transition-transform" />
                                         </div>
                                     )}
                                 </button>
-                                <p className="text-center text-[10px] text-slate-400 mt-4 font-bold uppercase tracking-widest">Secure 256-bit SSL encrypted payment</p>
+                                <div className="flex items-center justify-center gap-2 mt-5">
+                                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path></svg>
+                                    <p className="text-center text-xs text-slate-500 font-bold uppercase tracking-widest">Secure 256-bit SSL encrypted payment</p>
+                                </div>
                             </div>
                         </form>
                     </div>
+
                 </div>
             </div>
         </div>
     );
 };
 
-export default BookingModal;
+const CheckoutPage = () => {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[80vh] bg-astro-light">
+                <Loader2 className="w-12 h-12 text-astro-navy animate-spin mb-4" />
+                <p className="text-astro-navy font-medium">Securing Checkout Details...</p>
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
+    );
+};
+
+export default CheckoutPage;

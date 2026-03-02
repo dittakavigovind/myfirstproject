@@ -120,8 +120,8 @@ exports.createBookingOrder = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Please provide all required details' });
     }
 
-    if (!devoteeDetails.phoneNumber || devoteeDetails.phoneNumber.length !== 10 || !/^\d+$/.test(devoteeDetails.phoneNumber)) {
-        return res.status(400).json({ success: false, message: 'Please provide a valid 10-digit phone number' });
+    if (!devoteeDetails.phoneNumber || devoteeDetails.phoneNumber.length < 10 || !/^\+?\d+$/.test(devoteeDetails.phoneNumber)) {
+        return res.status(400).json({ success: false, message: 'Please provide a valid phone number with country code' });
     }
 
     try {

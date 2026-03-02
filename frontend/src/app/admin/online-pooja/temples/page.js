@@ -6,6 +6,10 @@ import { API_BASE } from '../../../../lib/urlHelper';
 import { useAuth } from '../../../../context/AuthContext';
 import { Plus, Edit, Trash2, Check, X, Loader2, Image as ImageIcon, MapPin, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import dynamic from 'next/dynamic';
+import 'react-quill-new/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 const AdminTemples = () => {
     const { token } = useAuth();
@@ -19,7 +23,13 @@ const AdminTemples = () => {
         name: '',
         location: '',
         description: '',
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
         images: [],
+        faqs: [{ question: '', answer: '' }],
         sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
         isActive: true
     });
@@ -48,7 +58,13 @@ const AdminTemples = () => {
                 name: temple.name,
                 location: temple.location,
                 description: temple.description,
+                metaTitle: temple.metaTitle || '',
+                metaDescription: temple.metaDescription || '',
+                metaKeywords: temple.metaKeywords || '',
+                ogTitle: temple.ogTitle || '',
+                ogDescription: temple.ogDescription || '',
                 images: temple.images || [],
+                faqs: temple.faqs?.length > 0 ? temple.faqs : [{ question: '', answer: '' }],
                 sevas: temple.sevas.length > 0 ? temple.sevas.map(s => ({
                     ...s,
                     originalPrice: s.originalPrice || '',
@@ -66,7 +82,13 @@ const AdminTemples = () => {
                 name: '',
                 location: '',
                 description: '',
+                metaTitle: '',
+                metaDescription: '',
+                metaKeywords: '',
+                ogTitle: '',
+                ogDescription: '',
                 images: [],
+                faqs: [{ question: '', answer: '' }],
                 sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
                 isActive: true
             });
@@ -90,6 +112,24 @@ const AdminTemples = () => {
         const newSevas = [...formData.sevas];
         newSevas[index][field] = value;
         setFormData({ ...formData, sevas: newSevas });
+    };
+
+    const handleAddFaq = () => {
+        setFormData({
+            ...formData,
+            faqs: [...formData.faqs, { question: '', answer: '' }]
+        });
+    };
+
+    const handleRemoveFaq = (index) => {
+        const newFaqs = formData.faqs.filter((_, i) => i !== index);
+        setFormData({ ...formData, faqs: newFaqs });
+    };
+
+    const handleFaqChange = (index, field, value) => {
+        const newFaqs = [...formData.faqs];
+        newFaqs[index][field] = value;
+        setFormData({ ...formData, faqs: newFaqs });
     };
 
     const handleImageUpload = async (e) => {
@@ -289,14 +329,82 @@ const AdminTemples = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-400">Description</label>
-                                <textarea
-                                    required
-                                    rows="4"
-                                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl py-3 px-4 outline-none focus:border-astro-navy resize-none"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                />
+                                <label className="text-sm font-bold text-gray-400">Description (Supports HTML & Formatting)</label>
+                                <div className="bg-white rounded-xl border-2 border-gray-100 focus-within:border-astro-navy transition-colors">
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={formData.description}
+                                        onChange={(content) => setFormData({ ...formData, description: content })}
+                                        className="h-48 mb-12"
+                                        modules={{
+                                            toolbar: [
+                                                [{ 'header': [1, 2, 3, false] }],
+                                                ['bold', 'italic', 'underline', 'strike'],
+                                                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                                ['link'],
+                                                ['clean']
+                                            ]
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-4">
+                                <h3 className="text-lg font-bold text-astro-navy border-b border-gray-200 pb-2">SEO & Metadata</h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-400">Meta Title</label>
+                                        <input
+                                            className="w-full bg-white border-2 border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                                            value={formData.metaTitle}
+                                            onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                                            placeholder="Page title for search engines"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-400">Meta Keywords</label>
+                                        <input
+                                            className="w-full bg-white border-2 border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                                            value={formData.metaKeywords}
+                                            onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })}
+                                            placeholder="Comma separated keywords"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-400">Meta Description</label>
+                                    <textarea
+                                        rows="2"
+                                        className="w-full bg-white border-2 border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy resize-none"
+                                        value={formData.metaDescription}
+                                        onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                                        placeholder="Brief description for search results"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-400">OG Title</label>
+                                        <input
+                                            className="w-full bg-white border-2 border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
+                                            value={formData.ogTitle}
+                                            onChange={(e) => setFormData({ ...formData, ogTitle: e.target.value })}
+                                            placeholder="Title for social media sharing"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-400">OG Description</label>
+                                        <textarea
+                                            rows="2"
+                                            className="w-full bg-white border-2 border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy resize-none"
+                                            value={formData.ogDescription}
+                                            onChange={(e) => setFormData({ ...formData, ogDescription: e.target.value })}
+                                            placeholder="Description for social media sharing"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-4">
@@ -449,6 +557,48 @@ const AdminTemples = () => {
                                             value={seva.description}
                                             onChange={(e) => handleSevaChange(idx, 'description', e.target.value)}
                                         />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* FAQs Management */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-bold text-gray-400">FAQs</label>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddFaq}
+                                        className="text-astro-navy hover:text-astro-yellow font-bold text-sm flex items-center"
+                                    >
+                                        <Plus className="w-4 h-4 mr-1" /> Add FAQ
+                                    </button>
+                                </div>
+
+                                {formData.faqs.map((faq, idx) => (
+                                    <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 relative">
+                                        {formData.faqs.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveFaq(idx)}
+                                                className="absolute top-4 right-4 text-red-400 hover:text-red-600"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        <div className="grid grid-cols-1 gap-4 mb-2 pr-8">
+                                            <input
+                                                placeholder="Question"
+                                                className="bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none w-full"
+                                                value={faq.question}
+                                                onChange={(e) => handleFaqChange(idx, 'question', e.target.value)}
+                                            />
+                                            <textarea
+                                                placeholder="Answer"
+                                                className="bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none w-full h-20 resize-none"
+                                                value={faq.answer}
+                                                onChange={(e) => handleFaqChange(idx, 'answer', e.target.value)}
+                                            />
+                                        </div>
                                     </div>
                                 ))}
                             </div>

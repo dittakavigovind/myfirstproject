@@ -662,8 +662,12 @@ export default function Dashboard() {
                                         const isPaid = order.payment?.status === 'Paid';
                                         const isFailed = order.payment?.status === 'Failed';
 
+                                        const now = new Date();
+                                        const performDate = new Date(order.performDate);
+                                        const isPast = performDate < now;
+
                                         return (
-                                            <div key={order._id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-orange-200 transition-colors">
+                                            <div key={order._id} className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-2xl border transition-colors ${isPast ? 'bg-slate-50 opacity-60 grayscale border-slate-200' : 'bg-slate-50 border-slate-100 hover:border-orange-200'}`}>
                                                 <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-slate-200 shadow-inner">
                                                     {order.temple?.profileImage || order.temple?.coverImage ? (
                                                         <img src={order.temple.profileImage || order.temple.coverImage} className="w-full h-full object-cover" alt="Temple" />
@@ -721,8 +725,22 @@ export default function Dashboard() {
                                                             </span>
                                                             <span className="text-slate-400">ID: {order.bookingId}</span>
                                                         </div>
-                                                        <div className="text-[11px] text-slate-400">
+                                                        <div className="text-[11px] text-slate-400 mt-1 pb-2 border-b border-slate-100">
                                                             Booked on: {new Date(order.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(/\//g, '-')}
+                                                        </div>
+                                                        <div className="pt-2 space-y-1.5">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-slate-400 font-bold shrink-0">Devotees:</span>
+                                                                <span className="text-slate-600">
+                                                                    {order.devoteeDetails?.devotees?.map(d => d.name).join(', ') || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-slate-400 font-bold shrink-0">Address:</span>
+                                                                <span className="text-slate-600 line-clamp-2" title={`${order.deliveryAddress?.address || ''}, ${order.deliveryAddress?.city || ''}`}>
+                                                                    {order.deliveryAddress?.address || 'N/A'}, {order.deliveryAddress?.city || ''}, {order.deliveryAddress?.state || ''} {order.deliveryAddress?.pincode || ''}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

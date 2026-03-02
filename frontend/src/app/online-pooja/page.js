@@ -177,7 +177,7 @@ const OnlinePoojaListing = () => {
                                         {temple.name}
                                     </h2>
                                     <p className="text-gray-500 text-xs line-clamp-2 mb-6 leading-relaxed font-medium">
-                                        {temple.description}
+                                        {temple.description ? temple.description.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ') : ''}
                                     </p>
 
                                     <Link
