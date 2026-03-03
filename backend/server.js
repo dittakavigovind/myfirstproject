@@ -6,7 +6,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
-
+const fs = require('fs');
+const { isbot } = require('isbot');
 
 // Import Route Modules
 const authRoutes = require('./src/routes/authRoutes');
@@ -149,6 +150,180 @@ app.use('/api/activity', require('./src/routes/activityRoutes'));
 app.use('/api/page-content', require('./src/routes/pageContentRoutes'));
 app.use('/api/popups', require('./src/routes/popupRoutes'));
 app.use('/api/pooja', poojaRoutes);
+
+// --- SEO PROXY SERVER LOGIC ---
+// In-memory cache for SEO optimized HTML strings to ensure lightning-fast responses
+const seoCache = {};
+
+app.use(async (req, res, next) => {
+    // Support for both query parameters (?slug=...) and clean URLs (/blog/slug)
+    const isPoojaDetails = req.path.startsWith('/online-pooja/details');
+    // We treat /blog/category/article as the old query param style, and /blog/ as the new clean style
+    const isBlogArticleQuery = req.path.startsWith('/blog/category/article');
+    const isBlogArticleClean = req.path.startsWith('/blog/') && !req.path.startsWith('/blog/category');
+
+    if (!isPoojaDetails && !isBlogArticleQuery && !isBlogArticleClean) {
+        return next(); // Let normal static serving handle it
+    }
+
+    // Extract Slug based on URL Strategy
+    let slug = null;
+    let htmlPath = '';
+
+    if (isPoojaDetails) {
+        slug = req.query.slug;
+        htmlPath = path.join(__dirname, '../frontend/out/online-pooja/details/index.html');
+    } else if (isBlogArticleQuery) {
+        slug = req.query.slug;
+        htmlPath = path.join(__dirname, '../frontend/out/blog/category/article/index.html');
+    } else if (isBlogArticleClean) {
+        // Extract slug from /blog/the-slug-name
+        const parts = req.path.split('/');
+        slug = parts[parts.length - 1] || parts[parts.length - 2]; // Handle trailing slash
+        // The actual React app still lives at the query-parameter location in output: 'export'
+        htmlPath = path.join(__dirname, '../frontend/out/blog/category/article/index.html');
+    }
+
+    if (!slug) {
+        return next();
+    }
+
+    // --- HUMANS (RE-ROUTING) ---
+    // Check if the requester is a bot (Google, WhatsApp, Facebook, etc.)
+    const userAgent = req.headers['user-agent'] || '';
+    if (!isbot(userAgent)) {
+        // If a real human visits the clean SEO URL (/blog/slug), we must send them the static HTML 
+        // that belongs to the /blog/category/article/index.html file so React can load.
+        // We will rewrite the URL so React sees the query parameters it expects.
+        if (isBlogArticleClean && fs.existsSync(htmlPath)) {
+            req.url = `/blog/category/article/?slug=${slug}`; // Internal Express rewrite
+            return res.sendFile(htmlPath);
+        }
+        return next(); // Real humans on standard links get normal static serving
+    }
+
+    // Check Cache First
+    const cacheKey = req.path + '?slug=' + slug;
+    if (seoCache[cacheKey]) {
+        console.log(`[SEO Proxy] Serving cached HTML for (BOT): ${cacheKey}`);
+        return res.send(seoCache[cacheKey]);
+    }
+
+    console.log(`[SEO Proxy] Generating dynamic HTML for (BOT): ${cacheKey}`);
+    try {
+        if (!fs.existsSync(htmlPath)) {
+            return next(); // Pass if file doesn't exist
+        }
+
+        let html = fs.readFileSync(htmlPath, 'utf8');
+
+        // Fetch dynamic data based on the route
+        let ogTitle = 'Way2Astro';
+        let ogDescription = '';
+        let ogImage = '';
+        let ogUrl = `https://way2astro.com${req.originalUrl}`; // Production URL assumption
+        let metaKeywords = '';
+        let canonicalUrl = ogUrl;
+
+        if (isPoojaDetails) {
+            const Temple = require('./src/models/Temple');
+            const temple = await Temple.findOne({ slug });
+            if (temple) {
+                // Front-end UI uses metaTitle and metaDescription
+                ogTitle = temple.metaTitle || temple.name || ogTitle;
+                ogDescription = temple.metaDescription || (temple.description ? temple.description.substring(0, 160).replace(/(<([^>]+)>)/gi, "") : '');
+                ogImage = temple.ogImage || (temple.images && temple.images.length > 0 ? temple.images[0] : '');
+                metaKeywords = temple.metaKeywords || '';
+                canonicalUrl = temple.canonicalUrl || ogUrl;
+            }
+        } else if (isBlogArticleQuery || isBlogArticleClean) {
+            const BlogPost = require('./src/models/BlogPost');
+            const post = await BlogPost.findOne({ slug });
+            if (post) {
+                const seo = post.seo || {};
+
+                console.log('\n[DEBUG SEO]');
+                console.log('Post Title:', post.title);
+                console.log('Post SEO Object:', seo);
+
+                // Prioritize OG -> Meta -> Main Post Data
+                ogTitle = seo.ogTitle || seo.metaTitle || post.title || ogTitle;
+                console.log('Final Evaluated ogTitle:', ogTitle);
+                ogDescription = seo.ogDescription || seo.metaDescription || (post.excerpt ? post.excerpt : '');
+                ogImage = seo.ogImage || post.featuredImage || '';
+                metaKeywords = seo.metaKeywords || '';
+                canonicalUrl = seo.canonicalUrl || ogUrl;
+            }
+        }
+
+        // Format Image URL if it's a relative path starting with /uploads
+        if (ogImage && ogImage.startsWith('/uploads')) {
+            // Note: Use full URL if we have it, else construct based on current host
+            const host = req.get('host') || 'api.way2astro.com';
+            const protocol = req.protocol || 'https';
+            ogImage = `${protocol}://${host}${ogImage}`;
+        } else if (ogImage && !ogImage.startsWith('http')) {
+            const host = req.get('host') || 'api.way2astro.com';
+            const protocol = req.protocol || 'https';
+            ogImage = `${protocol}://${host}/uploads/${ogImage}`;
+        }
+
+        // Clean up the text replacing newlines/quotes that break HTML tags
+        if (ogTitle) ogTitle = ogTitle.replace(/[\n\r]+/g, ' ').trim();
+        if (ogDescription) ogDescription = ogDescription.replace(/[\n\r]+/g, ' ').trim();
+
+        // Remove existing standard SEO tags from the React export to prevent conflicts
+        html = html.replace(/<title>.*?<\/title>/gi, '');
+        html = html.replace(/<link[^>]*rel=["']canonical["'][^>]*>/gi, '');
+        html = html.replace(/<meta[^>]*(name|property)=["'](og:|twitter:|description|keywords)[^>]*>/gi, '');
+
+        // Inject the generated meta tags into the <head>
+        const metaTags = `
+            <title>${ogTitle}</title>
+            <meta name="description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+            ${metaKeywords ? `<meta name="keywords" content="${metaKeywords.replace(/"/g, '&quot;')}" />` : ''}
+            <link rel="canonical" href="${canonicalUrl}" />
+            <meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+            <meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+            <meta property="og:image" content="${ogImage}" />
+            <meta property="og:url" content="${ogUrl}" />
+            <meta property="og:type" content="website" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
+            <meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
+            <meta name="twitter:image" content="${ogImage}" />
+        `;
+
+        // Insert before closing head tag
+        html = html.replace('</head>', `${metaTags}</head>`);
+
+        // Save to cache
+        seoCache[cacheKey] = html;
+
+        // Send to Bot
+        return res.send(html);
+    } catch (err) {
+        console.error('[SEO Proxy] Error:', err);
+        return next(); // Fallback to normal serving on error
+    }
+});
+
+// Serve the fully exported Next.js app 
+// This should come LAST after api routes and SEO proxy
+app.use(express.static(path.join(__dirname, '../frontend/out')));
+
+// Handle client-side routing fallback for the static export
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    const indexHtmlPath = path.join(__dirname, '../frontend/out/index.html');
+    if (fs.existsSync(indexHtmlPath)) {
+        res.sendFile(indexHtmlPath);
+    } else {
+        next();
+    }
+});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

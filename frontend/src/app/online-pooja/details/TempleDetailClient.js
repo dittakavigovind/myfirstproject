@@ -6,6 +6,7 @@ import Image from 'next/image';
 import axios from 'axios';
 import { resolveImageUrl, API_BASE } from '../../../lib/urlHelper';
 import { Loader2, MapPin, ChevronLeft, Calendar, User, Phone, Mail, Home, Info, CheckCircle2, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const TempleDetailContent = () => {
     const searchParams = useSearchParams();
@@ -70,6 +71,34 @@ const TempleDetailContent = () => {
         }
     }, [temple, router]);
 
+    useEffect(() => {
+        if (temple && typeof window !== 'undefined') {
+            // Dynamically update meta tags for social sharing
+            const updateMetaTag = (property, content) => {
+                if (!content) return;
+                let tag = document.querySelector(`meta[property="${property}"]`);
+                if (!tag) {
+                    tag = document.createElement('meta');
+                    tag.setAttribute('property', property);
+                    document.head.appendChild(tag);
+                }
+                tag.setAttribute('content', content);
+            };
+
+            updateMetaTag('og:title', temple.ogTitle || temple.name);
+            updateMetaTag('og:description', temple.ogDescription || temple.description?.substring(0, 160).replace(/(<([^>]+)>)/gi, ""));
+
+            if (temple.ogImage) {
+                updateMetaTag('og:image', resolveImageUrl(temple.ogImage));
+            } else if (temple.images && temple.images.length > 0) {
+                updateMetaTag('og:image', resolveImageUrl(temple.images[0]));
+            }
+
+            updateMetaTag('og:url', window.location.href);
+            updateMetaTag('og:type', 'website');
+        }
+    }, [temple]);
+
     const handleBookNow = (seva) => {
         router.push(`/online-pooja/checkout/?temple=${temple.slug}&seva=${seva._id}`);
     };
@@ -110,9 +139,27 @@ const TempleDetailContent = () => {
                         <ChevronLeft className="w-5 h-5 mr-1" />
                         Back to Listing
                     </button>
-                    <div className="flex items-center text-sm font-medium text-gray-500">
-                        <MapPin className="w-4 h-4 mr-1 text-astro-navy" />
-                        {temple.location}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => {
+                                const url = window.location.href;
+                                let text = `Check out this Online Pooja: ${temple.name} at Way2Astro\n\n${url}`;
+                                const imgUrl = temple.images && temple.images[0] ? resolveImageUrl(temple.images[0]) : null;
+                                if (imgUrl) {
+                                    text += `\n\nImage: ${imgUrl}`;
+                                }
+                                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 rounded-full font-bold text-sm transition-colors border border-[#25D366]/20"
+                            title="Share on WhatsApp"
+                        >
+                            <FaWhatsapp className="w-4 h-4" />
+                            <span className="hidden sm:inline">Share</span>
+                        </button>
+                        <div className="flex items-center text-sm font-medium text-gray-500">
+                            <MapPin className="w-4 h-4 mr-1 text-astro-navy" />
+                            {temple.location}
+                        </div>
                     </div>
                 </div>
             </div>

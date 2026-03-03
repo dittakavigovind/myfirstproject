@@ -36,7 +36,7 @@ export default function BlogPostClient({ post }) {
                         <Breadcrumbs
                             items={[
                                 { label: 'Blog', href: '/blog' },
-                                { label: post.categories?.[0]?.name || 'Uncategorized', href: `/blog/${post.categories?.[0]?.slug || ''}` },
+                                { label: post.categories?.[0]?.name || 'Uncategorized', href: `/blog/category/?category=${post.categories?.[0]?.slug || ''}` },
                                 { label: post.title }
                             ]}
                         />

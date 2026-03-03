@@ -78,6 +78,9 @@ const templeSchema = new mongoose.Schema({
     ogDescription: {
         type: String
     },
+    ogImage: {
+        type: String
+    },
     faqs: [{
         question: {
             type: String

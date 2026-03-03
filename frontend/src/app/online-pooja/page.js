@@ -6,11 +6,23 @@ import Image from 'next/image';
 import axios from 'axios';
 import { resolveImageUrl, API_BASE } from '../../lib/urlHelper';
 import { MapPin, ArrowRight, Loader2 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const OnlinePoojaListing = () => {
     const [temples, setTemples] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const handleShare = (e, slug, name, imageUrl) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = `${window.location.origin}/online-pooja/details?slug=${slug}`;
+        let text = `Check out this Online Pooja: ${name} at Way2Astro\n\n${url}`;
+        if (imageUrl) {
+            text += `\n\nImage: ${imageUrl}`;
+        }
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    };
 
     useEffect(() => {
         const fetchTemples = async () => {
@@ -112,46 +124,60 @@ const OnlinePoojaListing = () => {
                                 className="group bg-white rounded-[2rem] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100"
                             >
                                 {/* Image Container */}
-                                <Link
-                                    href={`/online-pooja/details?slug=${temple.slug}`}
-                                    className="relative block aspect-video overflow-hidden"
-                                >
-                                    <Image
-                                        src={temple.images && temple.images[0] ? resolveImageUrl(temple.images[0]) : '/placeholder-temple.jpg'}
-                                        alt={temple.name}
-                                        fill
-                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white text-xs font-medium">
-                                        <div className="flex items-center">
-                                            <MapPin className="w-4 h-4 mr-1 text-astro-yellow" />
-                                            {temple.location}
-                                        </div>
-                                        {temple.sevas && temple.sevas.length > 0 && (
-                                            <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm">
-                                                <div className="w-1.5 h-1.5 bg-astro-yellow rounded-full animate-pulse"></div>
-                                                {(() => {
-                                                    const fixedSeva = temple.sevas.find(s => s.dateSelectionType === 'Fixed');
-                                                    if (fixedSeva && fixedSeva.fixedDate) {
-                                                        return new Date(fixedSeva.fixedDate).toLocaleDateString('en-GB');
-                                                    }
-                                                    const rangeSeva = temple.sevas.find(s => s.dateSelectionType === 'Range');
-                                                    if (rangeSeva && rangeSeva.startDate && rangeSeva.endDate) {
-                                                        return `${new Date(rangeSeva.startDate).toLocaleDateString('en-GB')} - ${new Date(rangeSeva.endDate).toLocaleDateString('en-GB')}`;
-                                                    }
-                                                    return "Available Daily";
-                                                })()}
+                                <div className="relative block aspect-video overflow-hidden">
+                                    <Link
+                                        href={`/online-pooja/details?slug=${temple.slug}`}
+                                        className="block w-full h-full"
+                                    >
+                                        <Image
+                                            src={temple.images && temple.images[0] ? resolveImageUrl(temple.images[0]) : '/placeholder-temple.jpg'}
+                                            alt={temple.name}
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white text-xs font-medium">
+                                            <div className="flex items-center">
+                                                <MapPin className="w-4 h-4 mr-1 text-astro-yellow" />
+                                                {temple.location}
                                             </div>
-                                        )}
-                                    </div>
+                                            {temple.sevas && temple.sevas.length > 0 && (
+                                                <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm">
+                                                    <div className="w-1.5 h-1.5 bg-astro-yellow rounded-full animate-pulse"></div>
+                                                    {(() => {
+                                                        const fixedSeva = temple.sevas.find(s => s.dateSelectionType === 'Fixed');
+                                                        if (fixedSeva && fixedSeva.fixedDate) {
+                                                            return new Date(fixedSeva.fixedDate).toLocaleDateString('en-GB');
+                                                        }
+                                                        const rangeSeva = temple.sevas.find(s => s.dateSelectionType === 'Range');
+                                                        if (rangeSeva && rangeSeva.startDate && rangeSeva.endDate) {
+                                                            return `${new Date(rangeSeva.startDate).toLocaleDateString('en-GB')} - ${new Date(rangeSeva.endDate).toLocaleDateString('en-GB')}`;
+                                                        }
+                                                        return "Available Daily";
+                                                    })()}
+                                                </div>
+                                            )}
+                                        </div>
 
-                                    {/* Discount Badge */}
-                                    <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center gap-1.5 z-10 transform origin-right hover:scale-105 transition-transform cursor-default">
-                                        <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></div>
-                                        Offers Available
-                                    </div>
-                                </Link>
+                                        {/* Discount Badge */}
+                                        <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center gap-1.5 z-10 transform origin-right hover:scale-105 transition-transform cursor-default">
+                                            <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></div>
+                                            Offers Available
+                                        </div>
+                                    </Link>
+
+                                    {/* Share Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            const imgUrl = temple.images && temple.images[0] ? resolveImageUrl(temple.images[0]) : null;
+                                            handleShare(e, temple.slug, temple.name, imgUrl);
+                                        }}
+                                        className="absolute top-4 left-4 bg-[#25D366] text-white p-2 rounded-full shadow-lg border border-white/20 z-20 flex items-center justify-center hover:scale-110 hover:bg-[#1DA851] transition-all duration-300"
+                                        title="Share on WhatsApp"
+                                    >
+                                        <FaWhatsapp className="w-5 h-5" />
+                                    </button>
+                                </div>
 
                                 {/* Content */}
                                 <div className="p-6">

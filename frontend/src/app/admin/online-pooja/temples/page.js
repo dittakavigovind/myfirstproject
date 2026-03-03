@@ -28,6 +28,7 @@ const AdminTemples = () => {
         metaKeywords: '',
         ogTitle: '',
         ogDescription: '',
+        ogImage: '',
         images: [],
         faqs: [{ question: '', answer: '' }],
         sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
@@ -63,6 +64,7 @@ const AdminTemples = () => {
                 metaKeywords: temple.metaKeywords || '',
                 ogTitle: temple.ogTitle || '',
                 ogDescription: temple.ogDescription || '',
+                ogImage: temple.ogImage || '',
                 images: temple.images || [],
                 faqs: temple.faqs?.length > 0 ? temple.faqs : [{ question: '', answer: '' }],
                 sevas: temple.sevas.length > 0 ? temple.sevas.map(s => ({
@@ -87,6 +89,7 @@ const AdminTemples = () => {
                 metaKeywords: '',
                 ogTitle: '',
                 ogDescription: '',
+                ogImage: '',
                 images: [],
                 faqs: [{ question: '', answer: '' }],
                 sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
@@ -155,6 +158,29 @@ const AdminTemples = () => {
             toast.success('Images uploaded successfully');
         } catch (err) {
             toast.error('Image upload failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOgImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await axios.post(`${API_BASE}/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData(prev => ({
+                ...prev,
+                ogImage: res.data.filePath
+            }));
+            toast.success('OG Image uploaded successfully');
+        } catch (err) {
+            toast.error('OG Image upload failed');
         } finally {
             setLoading(false);
         }
@@ -403,6 +429,41 @@ const AdminTemples = () => {
                                             onChange={(e) => setFormData({ ...formData, ogDescription: e.target.value })}
                                             placeholder="Description for social media sharing"
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t border-gray-200">
+                                    <label className="text-[12px] font-bold text-gray-400 uppercase tracking-widest pl-1">OG Image (Preview)</label>
+                                    <div className="flex gap-4 items-start">
+                                        <div className="relative aspect-[1200/630] w-64 rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
+                                            {formData.ogImage ? (
+                                                <>
+                                                    <img src={formData.ogImage} alt="OG Preview" className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, ogImage: '' })}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-lg hover:bg-red-600 transition-colors"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <ImageIcon className="w-8 h-8 text-gray-300" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors text-sm font-bold">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleOgImageUpload}
+                                                />
+                                                <ImageIcon className="w-4 h-4" />
+                                                {formData.ogImage ? 'Change Image' : 'Upload OG Image'}
+                                            </label>
+                                            <p className="text-xs text-gray-400 mt-2">Recommended: 1200 x 630 px</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
