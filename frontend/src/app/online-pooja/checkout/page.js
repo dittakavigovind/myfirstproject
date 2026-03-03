@@ -167,7 +167,8 @@ const CheckoutContent = () => {
             couponCode
         }));
         toast.error('Please login to continue');
-        router.push(`/login?redirect=/online-pooja/checkout/?temple=${templeSlug}&seva=${sevaId}`);
+        const redirectUrl = encodeURIComponent(`/online-pooja/checkout/?temple=${templeSlug}&seva=${sevaId}`);
+        router.push(`/login?redirect=${redirectUrl}`);
     };
 
     const handleChange = (e) => {

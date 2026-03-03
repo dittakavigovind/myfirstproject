@@ -142,12 +142,9 @@ const TempleDetailContent = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => {
-                                const url = window.location.href;
-                                let text = `Check out this Online Pooja: ${temple.name} at Way2Astro\n\n${url}`;
-                                const imgUrl = temple.images && temple.images[0] ? resolveImageUrl(temple.images[0]) : null;
-                                if (imgUrl) {
-                                    text += `\n\nImage: ${imgUrl}`;
-                                }
+                                const shareDomain = 'https://way2astro.com';
+                                const url = `${shareDomain}/online-pooja/details?slug=${temple.slug}`;
+                                const text = `Check out this Online Pooja: ${temple.name} at Way2Astro\n\n${url}`;
                                 window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 rounded-full font-bold text-sm transition-colors border border-[#25D366]/20"

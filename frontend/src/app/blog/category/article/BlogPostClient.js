@@ -60,10 +60,47 @@ export default function BlogPostClient({ post }) {
 
                             {/* Social Share Buttons */}
                             <div className="flex gap-3 mb-10">
-                                <button className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"><FaWhatsapp size={18} /></button>
-                                <button className="w-10 h-10 rounded-full bg-[#1DA1F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"><FaTwitter size={18} /></button>
-                                <button className="w-10 h-10 rounded-full bg-[#0077B5] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"><FaLinkedinIn size={18} /></button>
-                                <button className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"><FaFacebookF size={18} /></button>
+                                <button
+                                    onClick={() => {
+                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        const text = `Check out this article: ${post.title}\n\n${url}`;
+                                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                    }}
+                                    className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
+                                    title="Share on WhatsApp"
+                                >
+                                    <FaWhatsapp size={18} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`, '_blank');
+                                    }}
+                                    className="w-10 h-10 rounded-full bg-[#1DA1F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
+                                    title="Share on Twitter"
+                                >
+                                    <FaTwitter size={18} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+                                    }}
+                                    className="w-10 h-10 rounded-full bg-[#0077B5] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
+                                    title="Share on LinkedIn"
+                                >
+                                    <FaLinkedinIn size={18} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                                    }}
+                                    className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
+                                    title="Share on Facebook"
+                                >
+                                    <FaFacebookF size={18} />
+                                </button>
                             </div>
 
                             {/* Article Text */}

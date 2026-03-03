@@ -30,7 +30,7 @@ const StatusContent = () => {
 
                 <p className="text-gray-600 mb-8 leading-relaxed">
                     {isSuccess
-                        ? `Your seva has been successfully scheduled. You will receive a confirmation email shortly with the details.`
+                        ? `Your seva has been successfully scheduled. You will receive a confirmation email & WhatsApp message shortly with the details.`
                         : 'Something went wrong while processing your payment. Please try again or contact support if the issue persists.'}
                 </p>
 
