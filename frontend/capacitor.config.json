@@ -1,0 +1,9 @@
+{
+    "appId": "org.way2astro.app",
+    "appName": "way2astro",
+    "webDir": "out",
+    "server": {
+        "androidScheme": "http",
+        "cleartext": true
+    }
+}
