@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import { Download, Search, Filter } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../../components/common/CustomDateInput';
 
 export default function ActivityReport() {
     const [reports, setReports] = useState([]);
@@ -64,22 +66,23 @@ export default function ActivityReport() {
             <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-wrap gap-4 items-end">
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">From Date</label>
-                    <input
-                        type="date"
-                        name="from"
-                        value={filters.from}
-                        onChange={handleFilterChange}
-                        className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    <DatePicker
+                        selected={filters.from ? new Date(filters.from) : null}
+                        onChange={(date) => setFilters(prev => ({ ...prev, from: date }))}
+                        customInput={<CustomDateInput className="px-3 py-2 border border-slate-300 rounded-lg" />}
+                        dateFormat="dd-MM-yyyy"
+                        placeholderText="Select From Date"
                     />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">To Date</label>
-                    <input
-                        type="date"
-                        name="to"
-                        value={filters.to}
-                        onChange={handleFilterChange}
-                        className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    <DatePicker
+                        selected={filters.to ? new Date(filters.to) : null}
+                        onChange={(date) => setFilters(prev => ({ ...prev, to: date }))}
+                        minDate={filters.from ? new Date(filters.from) : null}
+                        customInput={<CustomDateInput className="px-3 py-2 border border-slate-300 rounded-lg" />}
+                        dateFormat="dd-MM-yyyy"
+                        placeholderText="Select To Date"
                     />
                 </div>
                 <div>

@@ -1,29 +1,37 @@
-import axios from 'axios';
-import { API_BASE } from '../lib/urlHelper';
-
-const API_URL = API_BASE;
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    return { headers: { Authorization: `Bearer ${token}` } };
-};
+import API from '../lib/api';
 
 export const getWalletBalance = async () => {
-    const response = await axios.get(`${API_URL}/wallet/balance`, getAuthHeader());
-    return response.data;
+    try {
+        const response = await API.get('/wallet/balance');
+        return response.data;
+    } catch (error) {
+        return { success: false, message: 'Failed to fetch balance' };
+    }
 };
 
 export const addMoney = async (amount) => {
-    const response = await axios.post(`${API_URL}/wallet/recharge`, { amount }, getAuthHeader());
-    return response.data;
+    try {
+        const response = await API.post('/wallet/recharge', { amount });
+        return response.data;
+    } catch (error) {
+        return { success: false, message: 'Failed to initiate recharge' };
+    }
 };
 
 export const getTransactions = async (page = 1, limit = 10) => {
-    const response = await axios.get(`${API_URL}/wallet/transactions?page=${page}&limit=${limit}`, getAuthHeader());
-    return response.data;
+    try {
+        const response = await API.get(`/wallet/transactions?page=${page}&limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        return { success: false, message: 'Failed to fetch transactions' };
+    }
 };
 
 export const verifyPayment = async (data) => {
-    const response = await axios.post(`${API_URL}/wallet/verify-payment`, data, getAuthHeader());
-    return response.data;
+    try {
+        const response = await API.post('/wallet/verify-payment', data);
+        return response.data;
+    } catch (error) {
+        return { success: false, message: 'Payment verification failed' };
+    }
 };

@@ -96,6 +96,10 @@ exports.saveBirthDetails = async (req, res) => {
             return res.status(401).json({ message: 'User ID is required' });
         }
 
+        // Fetch user first to merge birth details for Rasi calculation
+        let user = await User.findById(targetId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
         // 1. Construct the update object dynamically
         const updateOps = {};
 
@@ -118,9 +122,12 @@ exports.saveBirthDetails = async (req, res) => {
         // Gender (Root level field, not inside birthDetails)
         if (req.body.gender) updateOps.gender = req.body.gender;
 
+        // 1.5 Auto-calculate Rasi/Lagna 
+        // Note: Rasi (moonSign) and Lagna (ascendant) calculation is now handled 
+        // centrally by the User model's pre-update hooks.
 
         // 2. Perform Atomic Update
-        const user = await User.findByIdAndUpdate(
+        user = await User.findByIdAndUpdate(
             targetId,
             { $set: updateOps },
             { new: true, runValidators: true }
@@ -264,17 +271,28 @@ exports.updateCurrentAstrologer = async (req, res) => {
             await User.findByIdAndUpdate(req.user.id, { name });
         }
 
-        // 2. Find and Update Astrologer Record
+        // 2. Find or Create Astrologer Record
         let astrologer = await Astrologer.findOne({ userId: req.user.id });
 
         if (!astrologer) {
-            return res.status(404).json({ message: 'Astrologer profile not found' });
+            console.log("[UPDATE_PROFILE] Creating new profile for User:", req.user.id);
+            astrologer = new Astrologer({
+                userId: req.user.id,
+                displayName: name || "Astrologer",
+                slug: (name || "astrologer").toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now().toString().slice(-4)
+            });
         }
 
         // Map Frontend fields to Backend Model fields
         if (name) astrologer.displayName = name; // Sync display name
-        if (expertise) astrologer.skills = expertise.split(',').map(s => s.trim());
-        if (languages) astrologer.languages = languages.split(',').map(s => s.trim());
+
+        if (expertise !== undefined) {
+            astrologer.skills = typeof expertise === 'string' ? expertise.split(',').map(s => s.trim()) : (Array.isArray(expertise) ? expertise : []);
+        }
+
+        if (languages !== undefined) {
+            astrologer.languages = typeof languages === 'string' ? languages.split(',').map(s => s.trim()) : (Array.isArray(languages) ? languages : []);
+        }
         if (experience !== undefined) astrologer.experienceYears = experience;
         if (about) astrologer.bio = about;
 
@@ -300,6 +318,7 @@ exports.updateCurrentAstrologer = async (req, res) => {
         // For now, let's just save the prices.
 
         await astrologer.save();
+        console.log("[UPDATE_PROFILE] Success for Astrologer:", astrologer._id);
         res.json({ success: true, message: 'Profile updated successfully', data: astrologer });
 
     } catch (error) {
@@ -459,13 +478,13 @@ exports.getGeocode = async (req, res) => {
         const locationData = await geocodePlace(place, country, place_id);
         res.json({ success: true, data: locationData });
     } catch (error) {
-    console.error('Geocode Error:', error);
-    res.status(500).json({
-        success: false,
-        message: error.message === "Delivery only to India" ? "Delivery only to India" : "Location not found",
-        error: error.message
-    });
-}
+        console.error('Geocode Error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message === "Delivery only to India" ? "Delivery only to India" : "Location not found",
+            error: error.message
+        });
+    }
 };
 
 /**

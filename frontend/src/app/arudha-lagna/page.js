@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API from '@/lib/api';
+import { useBirthDetails } from '../../context/BirthDetailsContext';
 import DatePicker from 'react-datepicker';
 import CustomDateInput from '../../components/common/CustomDateInput';
 
@@ -13,8 +14,8 @@ import { arudhaInterpretations } from '../../lib/arudhaInterpretations';
 import LocationSearch from '../../components/LocationSearch';
 import TimeInput from '../../components/TimeInput';
 import PageContentSection from '../../components/common/PageContentSection';
-
 export default function ArudhaLagnaPage() {
+    const { birthDetails, setBirthDetails, isInitialized } = useBirthDetails();
     const [formData, setFormData] = useState({
         name: '',
         gender: 'male',
@@ -25,6 +26,31 @@ export default function ArudhaLagnaPage() {
         lng: 77.2090,
         timezone: 5.5
     });
+
+    useEffect(() => {
+        if (isInitialized && birthDetails) {
+            setFormData(prev => ({
+                ...prev,
+                name: birthDetails.name || prev.name,
+                gender: birthDetails.gender || prev.gender,
+                date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
+                time: birthDetails.time ? (() => {
+                    const d = new Date();
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
+                    return d;
+                })() : prev.time,
+                place: birthDetails.place || prev.place,
+                lat: birthDetails.lat || prev.lat,
+                lng: birthDetails.lng || prev.lng,
+                timezone: birthDetails.timezone || prev.timezone
+            }));
+        }
+    }, [isInitialized, birthDetails]);
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -65,6 +91,10 @@ export default function ArudhaLagnaPage() {
             });
 
             if (data.success) {
+                // Update session context
+                setBirthDetails({
+                    ...formData
+                });
                 setResult(data.data.arudhaLagna);
             }
         } catch (error) {

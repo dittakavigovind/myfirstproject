@@ -43,6 +43,19 @@ exports.getTempleBySlug = async (req, res) => {
     }
 };
 
+// @desc    Get all temples for admin (active & inactive)
+// @route   GET /api/pooja/admin/temples
+// @access  Private/Admin
+exports.getAllTemplesAdmin = async (req, res) => {
+    try {
+        const temples = await Temple.find().sort({ createdAt: -1 });
+        res.status(200).json({ success: true, count: temples.length, data: temples });
+    } catch (error) {
+        console.error('Get All Temples Admin Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 // @desc    Validate a coupon code
 // @route   POST /api/pooja/coupons/validate
 // @access  Private

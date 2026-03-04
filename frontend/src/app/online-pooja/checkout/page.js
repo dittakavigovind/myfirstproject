@@ -8,6 +8,9 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LocationSearch from '../../../components/LocationSearch';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from '../../../components/common/CustomDateInput';
 import Image from 'next/image';
 
 const CheckoutContent = () => {
@@ -44,7 +47,7 @@ const CheckoutContent = () => {
         state: '',
         pincode: '',
         country: 'India',
-        performDate: ''
+        performDate: null
     });
 
     // Fetch Temple & Seva Details
@@ -67,7 +70,7 @@ const CheckoutContent = () => {
                         if (targetSeva.dateSelectionType === 'Fixed') {
                             setFormData(prev => ({
                                 ...prev,
-                                performDate: new Date(targetSeva.fixedDate).toISOString().split('T')[0]
+                                performDate: targetSeva.fixedDate ? new Date(targetSeva.fixedDate) : null
                             }));
                         }
                     } else {
@@ -699,10 +702,11 @@ const CheckoutContent = () => {
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Date (Fixed)</label>
                                                     <div className="bg-astro-navy text-white text-[9px] font-black px-2 py-1 rounded-full uppercase">Fixed</div>
                                                 </div>
-                                                <input
-                                                    type="date"
+                                                <DatePicker
+                                                    customInput={<CustomDateInput placeholder='Seva Date' Icon={Calendar} />}
+                                                    selected={formData.performDate}
                                                     disabled
-                                                    value={new Date(seva.fixedDate).toISOString().split('T')[0]}
+                                                    dateFormat="dd/MM/yyyy"
                                                     className="w-full bg-slate-50 border-slate-200 border rounded-xl py-3 px-4 font-black text-astro-navy opacity-70 cursor-not-allowed text-sm"
                                                 />
                                                 <p className="text-xs text-slate-500 font-medium pt-1">
@@ -721,16 +725,19 @@ const CheckoutContent = () => {
                                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                                                             Select Your Preferred Date *
                                                         </label>
-                                                        <input
-                                                            required
-                                                            type="date"
-                                                            name="performDate"
-                                                            value={formData.performDate}
-                                                            onChange={handleChange}
-                                                            min={seva?.dateSelectionType === 'Range' ? new Date(seva.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
-                                                            max={seva?.dateSelectionType === 'Range' ? new Date(seva.endDate).toISOString().split('T')[0] : undefined}
-                                                            className="w-full bg-white border-slate-200 border-2 rounded-2xl py-3 px-4 focus:border-astro-navy outline-none transition-all font-black text-astro-navy text-sm"
-                                                        />
+                                                        <div className="custom-datepicker-dark">
+                                                            <DatePicker
+                                                                customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />}
+                                                                required
+                                                                selected={formData.performDate}
+                                                                onChange={(date) => setFormData({ ...formData, performDate: date })}
+                                                                dateFormat="dd/MM/yyyy"
+                                                                minDate={seva?.dateSelectionType === 'Range' ? new Date(seva.startDate) : new Date()}
+                                                                maxDate={seva?.dateSelectionType === 'Range' ? new Date(seva.endDate) : undefined}
+                                                                className="w-full bg-white border-slate-200 border-2 rounded-2xl py-3 px-4 focus:border-astro-navy outline-none transition-all font-black text-astro-navy text-sm"
+                                                                calendarClassName="custom-datepicker-dark-cal"
+                                                            />
+                                                        </div>
                                                     </div>
                                                     {seva?.dateSelectionType === 'Range' && (
                                                         <div className="md:w-64 p-4 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm relative overflow-hidden flex flex-col justify-center mt-4 md:mt-0">

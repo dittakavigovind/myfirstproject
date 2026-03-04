@@ -9,6 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import AstrologerGallery from '@/components/AstrologerGallery';
 import CosmicLoader from '@/components/CosmicLoader';
+import { startPaidChat } from '@/services/chatService';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { resolveImageUrl } from '@/lib/urlHelper';
 import { Suspense } from 'react';
@@ -71,11 +73,34 @@ function AstrologerProfile() {
 
     const isOwner = user && (user._id === astro?.userId || user.role === 'admin');
 
-    const handleAuthAction = (actionUrl) => {
+    const handleChatAction = async () => {
         if (!user) {
-            router.push(`/login?redirect=${encodeURIComponent(actionUrl)}`);
-        } else {
-            router.push(actionUrl);
+            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            return;
+        }
+
+        if (user.role === 'astrologer') {
+            toast.error('Astrologers cannot chat with other astrologers');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await startPaidChat(astro._id);
+            if (res.success) {
+                toast.success('Initiating session...');
+                router.push(`/astrology-session/${res.roomId}`);
+            } else {
+                toast.error(res.message || 'Failed to start chat');
+                if (res.message?.includes('balance')) {
+                    router.push('/wallet');
+                }
+            }
+        } catch (error) {
+            console.error('Chat Error:', error);
+            toast.error('Something went wrong');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -83,8 +108,7 @@ function AstrologerProfile() {
         if (!user) {
             router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
         } else {
-            // Redirect to Chat page where call can be initiated (In-App)
-            router.push(`/chat-with-astrologer/session?id=${astro.slug || astro._id}`);
+            toast.info('Voice/Video calls coming soon!');
         }
     };
 
@@ -178,7 +202,7 @@ function AstrologerProfile() {
                                     <div className="grid grid-cols-2 gap-4 mb-8">
                                         {featureFlags?.enableChat && (
                                             <button
-                                                onClick={() => handleAuthAction(`/chat-with-astrologer/session?id=${astro.slug || astro._id}`)}
+                                                onClick={handleChatAction}
                                                 className="py-3 px-4 rounded-xl border-2 border-green-500 text-green-600 font-bold hover:bg-green-50 transition-colors flex items-center justify-center gap-2 text-sm md:text-base whitespace-nowrap active:scale-95 shadow-sm"
                                             >
                                                 <MessageCircle size={18} />

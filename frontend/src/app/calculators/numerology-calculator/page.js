@@ -132,7 +132,20 @@ export default function NumerologyCalculator() {
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
                                         <div className="relative custom-datepicker-dark">
 
-                                            <DatePicker customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Calendar} />} selected={formData.dob} onChange={(date) => setFormData({ ...formData, dob: date })} dateFormat="dd/MM/yyyy" required className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-emerald-400 rounded-2xl py-5 px-6 text-slate-800 font-bold text-lg focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all cursor-pointer" wrapperClassName="w-full" showYearDropdown scrollableYearDropdown yearDropdownItemNumber={100} maxDate={new Date()} calendarClassName="custom-datepicker-dark-cal" />
+                                            <DatePicker
+                                                customInput={<CustomDateInput placeholder='DD/MM/YYYY' Icon={Calendar} />}
+                                                selected={formData.dob}
+                                                onChange={(date) => setFormData({ ...formData, dob: date })}
+                                                dateFormat="dd/MM/yyyy"
+                                                required
+                                                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-emerald-400 rounded-2xl py-5 px-6 text-slate-800 font-bold text-lg focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all cursor-pointer"
+                                                wrapperClassName="w-full"
+                                                showMonthDropdown
+                                                showYearDropdown
+                                                scrollableYearDropdown
+                                                yearDropdownItemNumber={100}
+                                                maxDate={new Date()}
+                                            />
                                         </div>
                                     </div>
                                 </div>

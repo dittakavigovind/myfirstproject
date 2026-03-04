@@ -112,7 +112,8 @@ export default function AstrologerProfile() {
             setMsg('Profile updated successfully!');
         } catch (error) {
             console.error(error);
-            setMsg('Failed to update profile.');
+            const errorMsg = error.response?.data?.message || 'Failed to update profile.';
+            setMsg(`Error: ${errorMsg}`);
         } finally {
             setSaving(false);
         }

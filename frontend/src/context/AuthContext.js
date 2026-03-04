@@ -15,10 +15,16 @@ export const AuthProvider = ({ children }) => {
         const storedUser = localStorage.getItem('user');
         if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
             try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error("Failed to parse user data:", e);
+                const parsed = JSON.parse(storedUser);
+                setUser(parsed);
+                // Migration: Ensure 'token' is also set separately if not already
+                if (parsed.token && !localStorage.getItem('token')) {
+                    localStorage.setItem('token', parsed.token);
+                }
+            } catch (error) {
+                console.error("Failed to parse user data:", error);
                 localStorage.removeItem('user');
+                localStorage.removeItem('token');
             }
         }
         setLoading(false);
@@ -28,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await API.post('/auth/login', { email, password });
             localStorage.setItem('user', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
             setUser(data);
             router.push(redirectPath || '/dashboard');
             return { success: true };
@@ -44,6 +51,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await API.post('/auth/register', { name, email, password });
             localStorage.setItem('user', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
             setUser(data);
             router.push(redirectPath || '/dashboard');
             return { success: true };
@@ -68,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const { data } = await API.post('/auth/verify-whatsapp-otp', { mobile_number: phone, otp });
             localStorage.setItem('user', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
             setUser(data);
 
             // Redirect based on if new user (maybe to profile setup?)

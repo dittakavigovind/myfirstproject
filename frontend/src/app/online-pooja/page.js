@@ -16,10 +16,15 @@ const OnlinePoojaListing = () => {
     const handleShare = (e, slug, name, imageUrl) => {
         e.preventDefault();
         e.stopPropagation();
-        const url = `${window.location.origin}/online-pooja/details?slug=${slug}`;
+        const shareDomain = 'https://way2astro.com';
+        const url = `${shareDomain}/online-pooja/details?slug=${slug}`;
         let text = `Check out this Online Pooja: ${name} at Way2Astro\n\n${url}`;
         if (imageUrl) {
-            text += `\n\nImage: ${imageUrl}`;
+            let finalImageUrl = imageUrl;
+            if (finalImageUrl.includes('192.168.29.133:5000') || finalImageUrl.includes('localhost:5000')) {
+                finalImageUrl = finalImageUrl.replace(/http:\/\/(192\.168\.29\.133|localhost):5000/, 'https://api.way2astro.com');
+            }
+            text += `\n\nImage: ${finalImageUrl}`;
         }
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     };

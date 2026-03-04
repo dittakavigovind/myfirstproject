@@ -7,6 +7,10 @@ import LocationSearch from './LocationSearch';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, User, MapPin, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from './common/CustomDateInput';
+import TimeInput from './TimeInput';
 
 export default function SmartInputForm({
     title = "Start Your Session",
@@ -24,8 +28,17 @@ export default function SmartInputForm({
     const [formData, setFormData] = useState({
         name: birthDetails.name || '',
         gender: birthDetails.gender || 'male',
-        date: birthDetails.date ? new Date(birthDetails.date).toISOString().split('T')[0] : '', // YYYY-MM-DD
-        time: birthDetails.time ? (typeof birthDetails.time === 'string' ? birthDetails.time : birthDetails.time.toTimeString().slice(0, 5)) : '',
+        date: birthDetails.date ? new Date(birthDetails.date) : null,
+        time: birthDetails.time ? (() => {
+            const d = new Date();
+            if (typeof birthDetails.time === 'string') {
+                const [h, m] = birthDetails.time.split(':');
+                d.setHours(h || 0, m || 0, 0, 0);
+            } else if (birthDetails.time instanceof Date) {
+                d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+            }
+            return d;
+        })() : new Date(new Date().setHours(0, 0, 0, 0)),
         lat: birthDetails.lat || null,
         lng: birthDetails.lng || null,
         place: birthDetails.place || '',
@@ -38,8 +51,17 @@ export default function SmartInputForm({
             ...prev,
             name: birthDetails.name || prev.name,
             gender: birthDetails.gender || prev.gender,
-            date: birthDetails.date ? new Date(birthDetails.date).toISOString().split('T')[0] : prev.date,
-            time: birthDetails.time ? (typeof birthDetails.time === 'string' ? birthDetails.time : birthDetails.time.toTimeString().slice(0, 5)) : prev.time,
+            date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
+            time: birthDetails.time ? (() => {
+                const d = new Date();
+                if (typeof birthDetails.time === 'string') {
+                    const [h, m] = birthDetails.time.split(':');
+                    d.setHours(h || 0, m || 0, 0, 0);
+                } else if (birthDetails.time instanceof Date) {
+                    d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                }
+                return d;
+            })() : prev.time,
             lat: birthDetails.lat || prev.lat,
             lng: birthDetails.lng || prev.lng,
             place: birthDetails.place || prev.place,
@@ -79,7 +101,7 @@ export default function SmartInputForm({
                     // Optionally update context even if custom submit
                     await setBirthDetails({
                         ...formData,
-                        date: new Date(formData.date),
+                        date: formData.date,
                     });
                     setActiveTab('kundli');
                 }
@@ -87,7 +109,7 @@ export default function SmartInputForm({
                 // Default Global Context Mode
                 await setBirthDetails({
                     ...formData,
-                    date: new Date(formData.date),
+                    date: formData.date,
                 });
 
                 toast.success("Session Updated!");
@@ -151,29 +173,33 @@ export default function SmartInputForm({
 
                 {/* Date & Time */}
                 <div className={`grid ${gridClass} gap-6`}>
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date of Birth</label>
+                    <div className="group space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Date of Birth</label>
                         <div className="relative">
-                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                type="date"
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-800"
+                            <DatePicker
+                                customInput={<CustomDateInput placeholder='DD/MM/YYYY' Icon={Calendar} />}
+                                selected={formData.date}
+                                onChange={(date) => setFormData({ ...formData, date })}
+                                dateFormat="dd/MM/yyyy"
+                                className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-400 rounded-xl py-3 px-4 text-slate-800 font-bold outline-none transition-all"
+                                wrapperClassName="w-full"
+                                showMonthDropdown
+                                showYearDropdown
+                                scrollableYearDropdown
+                                yearDropdownItemNumber={100}
                             />
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Time of Birth</label>
-                        <div className="relative">
-                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                type="time"
-                                step="1" // Allow seconds
-                                value={formData.time}
-                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-800"
-                            />
+                    <div className="group space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Time of Birth</label>
+                        <div className="flex items-center">
+                            <div className="mr-3 text-slate-400"><Clock size={18} /></div>
+                            <div className="flex-1">
+                                <TimeInput
+                                    value={formData.time}
+                                    onChange={(newTime) => setFormData({ ...formData, time: newTime })}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

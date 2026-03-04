@@ -10,7 +10,7 @@ import Link from 'next/link';
 export default function SignClient() {
     const searchParams = useSearchParams();
     const sign = searchParams.get('sign');
-    const [activeTab, setActiveTab] = useState('daily');
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'daily');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [featuredAstrologer, setFeaturedAstrologer] = useState(null);

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, Star, Sun } from 'lucide-react';
+import { Compass, Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, ArrowRight, Star, Sun } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import DatePicker from "react-datepicker";
 import CustomDateInput from '../../../components/common/CustomDateInput';
 
@@ -21,6 +22,7 @@ import PageContentSection from '../../../components/common/PageContentSection';
 export default function AscendantCalculator() {
     // Use BirthDetailsContext
     const { birthDetails, setBirthDetails, isInitialized } = useBirthDetails();
+    const searchParams = useSearchParams();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -34,12 +36,36 @@ export default function AscendantCalculator() {
     });
 
     useEffect(() => {
-        if (isInitialized && birthDetails) {
+        if (!isInitialized) return;
+
+        // Check if we have source=profile in URL
+        const isFromProfile = searchParams.get('source') === 'profile';
+
+        if (isFromProfile) {
+            // Priority 1: URL Parameters (Profile state at time of click)
+            setFormData(prev => ({
+                ...prev,
+                name: searchParams.get('name') || prev.name,
+                gender: searchParams.get('gender') || prev.gender,
+                date: searchParams.get('date') ? new Date(searchParams.get('date')) : prev.date,
+                time: searchParams.get('time') ? (() => {
+                    const d = new Date();
+                    const [h, m] = searchParams.get('time').split(':');
+                    d.setHours(h, m, 0, 0);
+                    return d;
+                })() : prev.time,
+                place: searchParams.get('place') || prev.place,
+                lat: searchParams.get('lat') ? parseFloat(searchParams.get('lat')) : prev.lat,
+                lng: searchParams.get('lng') ? parseFloat(searchParams.get('lng')) : prev.lng,
+                timezone: searchParams.get('tz') ? parseFloat(searchParams.get('tz')) : prev.timezone
+            }));
+        } else if (birthDetails) {
+            // Priority 2: Session Context (Temporary user inputs)
             setFormData(prev => ({
                 ...prev,
                 name: birthDetails.name || prev.name,
                 gender: birthDetails.gender || prev.gender,
-                date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
+                date: birthDetails.date || prev.date,
                 time: (birthDetails.time && typeof birthDetails.time === 'string') ? (() => {
                     const d = new Date();
                     const [h, m] = birthDetails.time.split(':');
@@ -52,10 +78,17 @@ export default function AscendantCalculator() {
                 timezone: birthDetails.timezone || prev.timezone
             }));
         }
-    }, [isInitialized, birthDetails]);
+    }, [isInitialized, birthDetails, searchParams]);
 
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // Auto-calculate if requested via query param
+    useEffect(() => {
+        if (isInitialized && searchParams.get('action') === 'calculate' && formData.date && formData.lat && !result && !loading) {
+            calculateAscendant({ preventDefault: () => { } });
+        }
+    }, [isInitialized, formData.date, formData.lat, searchParams, result, loading]);
 
     const handleLocationSelect = (location) => {
         setFormData({
@@ -237,7 +270,19 @@ export default function AscendantCalculator() {
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
                                         <div className="relative custom-datepicker-dark">
 
-                                            <DatePicker customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Calendar} />} selected={formData.date} onChange={(date) => setFormData({ ...formData, date })} dateFormat="dd/MM/yyyy" className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-indigo-400 rounded-2xl py-4 px-6 text-slate-800 font-bold text-lg focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all" wrapperClassName="w-full" showMonthDropdown showYearDropdown dropdownMode="select" calendarClassName="custom-datepicker-dark-cal" />
+                                            <DatePicker
+                                                customInput={<CustomDateInput placeholder='dd/mm/yyyy' Icon={Calendar} />}
+                                                selected={formData.date}
+                                                onChange={(date) => setFormData({ ...formData, date })}
+                                                dateFormat="dd/MM/yyyy"
+                                                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-indigo-400 rounded-2xl py-4 px-6 text-slate-800 font-bold text-lg focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                                                wrapperClassName="w-full"
+                                                showMonthDropdown
+                                                showYearDropdown
+                                                scrollableYearDropdown
+                                                yearDropdownItemNumber={100}
+                                                calendarClassName="custom-datepicker-dark-cal"
+                                            />
                                         </div>
                                     </div>
                                     <div className="group space-y-2">

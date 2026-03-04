@@ -90,7 +90,6 @@ exports.getSiteSettings = async (req, res) => {
             logoReport: rawSettings.logoReport || settings.logoReport || '/logo.svg'
         };
 
-        console.log("DEBUG: Final settingsResponse logoReport:", settingsResponse.logoReport);
         res.json({ success: true, settings: settingsResponse });
     } catch (error) {
         console.error("getSiteSettings Error:", error);

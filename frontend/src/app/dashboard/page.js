@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import API from '../../lib/api';
 import { SERVER_BASE } from '../../lib/urlHelper';
+import { addMoney, verifyPayment } from '../../services/walletService';
 import LocationSearch from '../../components/LocationSearch';
 import DatePicker from "react-datepicker";
 import CustomDateInput from '../../components/common/CustomDateInput';
@@ -67,6 +68,11 @@ export default function Dashboard() {
         country: 'India'
     });
     const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+    // Add Funds State
+    const [showAddFunds, setShowAddFunds] = useState(false);
+    const [rechargeAmount, setRechargeAmount] = useState('');
+    const [rechargeLoading, setRechargeLoading] = useState(false);
 
     // Effect to pre-fill data when modal opens or user changes
     useEffect(() => {
@@ -379,6 +385,75 @@ export default function Dashboard() {
         }
     };
 
+    const handleRecharge = async (e) => {
+        if (e) e.preventDefault();
+        const amt = parseFloat(rechargeAmount);
+        if (!amt || isNaN(amt) || amt <= 0) {
+            toast.error('Please enter a valid amount');
+            return;
+        }
+
+        setRechargeLoading(true);
+        try {
+            const orderData = await addMoney(amt);
+            if (!orderData.success) {
+                toast.error(orderData.message || 'Failed to create order');
+                setRechargeLoading(false);
+                return;
+            }
+
+            const options = {
+                key: orderData.key_id,
+                amount: orderData.amount * 100,
+                currency: orderData.currency,
+                name: "Way2Astro",
+                description: "Wallet Recharge",
+                image: "/logo.png",
+                order_id: orderData.order_id,
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await verifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            amount: orderData.amount
+                        });
+
+                        if (verifyRes.success) {
+                            toast.success('Payment Successful!');
+                            updateUser({ ...user, walletBalance: verifyRes.balance });
+                            setShowAddFunds(false);
+                            setRechargeAmount('');
+                        } else {
+                            toast.error(verifyRes.message || 'Verification failed');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        toast.error('Payment verification failed');
+                    } finally {
+                        setRechargeLoading(false);
+                    }
+                },
+                prefill: {
+                    name: user?.name,
+                    email: user?.email,
+                    contact: user?.phone
+                },
+                theme: { color: "#6366f1" },
+                modal: {
+                    ondismiss: () => setRechargeLoading(false)
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } catch (error) {
+            console.error(error);
+            toast.error('Payment initialization failed');
+            setRechargeLoading(false);
+        }
+    };
+
 
 
     useEffect(() => {
@@ -423,16 +498,18 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                <button className="flex items-center gap-3 bg-white text-orange-600 text-sm font-bold px-5 py-3 rounded-xl shadow-lg hover:bg-orange-50 hover:scale-105 active:scale-95 transition-all w-max mt-6">
+                                <button
+                                    onClick={() => setShowAddFunds(true)}
+                                    className="flex items-center gap-3 bg-white text-orange-600 text-sm font-bold px-5 py-3 rounded-xl shadow-lg hover:bg-orange-50 hover:scale-105 active:scale-95 transition-all w-max mt-6"
+                                >
                                     <Plus size={18} strokeWidth={3} />
                                     <span>Add Funds</span>
                                 </button>
                             </div>
-
                             {/* Decorative Circles */}
                             <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-400/20 rounded-full blur-2xl"></div>
-                            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay"></div>
+                            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay pointer-events-none"></div>
                         </div>
 
                         {/* Profile Card */}
@@ -468,8 +545,8 @@ export default function Dashboard() {
                                 <ProfileItem
                                     icon={<Calendar size={18} />}
                                     label="Date of Birth"
-                                    value={user.birthDetails?.date ? (() => {
-                                        const d = new Date(user.birthDetails.date);
+                                    value={(user.birthDetails?.date || user.birthDetails?.dob) ? (() => {
+                                        const d = new Date(user.birthDetails.date || user.birthDetails.dob);
                                         return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
                                     })() : 'Not Set'}
                                     color="blue"
@@ -477,13 +554,13 @@ export default function Dashboard() {
                                 <ProfileItem
                                     icon={<Clock size={18} />}
                                     label="Time of Birth"
-                                    value={user.birthDetails?.time || 'Not Set'}
+                                    value={user.birthDetails?.time || user.birthDetails?.tob || 'Not Set'}
                                     color="purple"
                                 />
                                 <ProfileItem
                                     icon={<MapPin size={18} />}
                                     label="Place of Birth"
-                                    value={user.birthDetails?.place || 'Not Set'}
+                                    value={user.birthDetails?.place || user.birthDetails?.pob || 'Not Set'}
                                     color="green"
                                 />
                                 <ProfileItem
@@ -493,6 +570,91 @@ export default function Dashboard() {
                                     color="orange"
                                 />
                             </div>
+
+                            {((user.birthDetails?.date || user.birthDetails?.dob) &&
+                                (user.birthDetails?.time || user.birthDetails?.tob) &&
+                                (user.birthDetails?.lat || user.birthDetails?.latitude)) && (
+                                    <>
+                                        <div className="mt-8 pt-8 border-t border-slate-50">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                <div className="w-1 h-1 rounded-full bg-indigo-400"></div>
+                                                Cosmic Identity
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                <Link
+                                                    href={`/calculators/moon-sign-calculator?action=calculate&source=profile&name=${encodeURIComponent(user.name)}&date=${user.birthDetails?.date || user.birthDetails?.dob}&time=${user.birthDetails?.time || user.birthDetails?.tob}&place=${encodeURIComponent(user.birthDetails?.place || user.birthDetails?.pob)}&lat=${user.birthDetails?.lat || user.birthDetails?.latitude}&lng=${user.birthDetails?.lng || user.birthDetails?.longitude}&tz=${user.birthDetails?.timezone || user.birthDetails?.tz || 5.5}`}
+                                                    className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rashi (Moon)</span>
+                                                        <ArrowUpRight size={12} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                                                    </div>
+                                                    <span className="text-sm font-black text-slate-700 group-hover:text-indigo-600 transition-colors">{user.birthDetails?.moonSign || 'Pending...'}</span>
+                                                </Link>
+                                                <Link
+                                                    href={`/calculators/ascendant-calculator?action=calculate&source=profile&name=${encodeURIComponent(user.name)}&date=${user.birthDetails?.date || user.birthDetails?.dob}&time=${user.birthDetails?.time || user.birthDetails?.tob}&place=${encodeURIComponent(user.birthDetails?.place || user.birthDetails?.pob)}&lat=${user.birthDetails?.lat || user.birthDetails?.latitude}&lng=${user.birthDetails?.lng || user.birthDetails?.longitude}&tz=${user.birthDetails?.timezone || user.birthDetails?.tz || 5.5}`}
+                                                    className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lagna (Asc)</span>
+                                                        <ArrowUpRight size={12} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+                                                    </div>
+                                                    <span className="text-sm font-black text-slate-700 group-hover:text-blue-600 transition-colors">{user.birthDetails?.ascendant || 'Pending...'}</span>
+                                                </Link>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-indigo-100 transition-colors">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Tithi</span>
+                                                    <span className="text-xs font-black text-slate-700">{user.birthDetails?.tithi || '-'}</span>
+                                                </div>
+                                                <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-indigo-100 transition-colors">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Varam</span>
+                                                    <span className="text-xs font-black text-slate-700">{user.birthDetails?.vara || '-'}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-3 mb-3">
+                                                <Link
+                                                    href={`/calculators/nakshatra-calculator?action=calculate&source=profile&name=${encodeURIComponent(user.name)}&date=${user.birthDetails?.date || user.birthDetails?.dob}&time=${user.birthDetails?.time || user.birthDetails?.tob}&place=${encodeURIComponent(user.birthDetails?.place || user.birthDetails?.pob)}&lat=${user.birthDetails?.lat || user.birthDetails?.latitude}&lng=${user.birthDetails?.lng || user.birthDetails?.longitude}&tz=${user.birthDetails?.timezone || user.birthDetails?.tz || 5.5}`}
+                                                    className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-orange-400 hover:bg-orange-50/30 transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nakshatram</span>
+                                                        <ArrowUpRight size={12} className="text-slate-300 group-hover:text-orange-500 transition-colors" />
+                                                    </div>
+                                                    <span className="text-xs font-black text-slate-700 group-hover:text-orange-600 transition-colors">{user.birthDetails?.nakshatra ? `${user.birthDetails.nakshatra} (Pada ${user.birthDetails.pada || 1})` : '-'}</span>
+                                                </Link>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-indigo-100 transition-colors">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Yoga</span>
+                                                    <span className="text-xs font-black text-slate-700">{user.birthDetails?.yoga || '-'}</span>
+                                                </div>
+                                                <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-50 hover:border-indigo-100 transition-colors">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Karanam</span>
+                                                    <span className="text-xs font-black text-slate-700">{user.birthDetails?.karana || '-'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mt-8"
+                                        >
+                                            <Link
+                                                href={`/kundli?action=view_my_kundli&source=profile&name=${encodeURIComponent(user.name)}&gender=${user.gender}&date=${user.birthDetails?.date || user.birthDetails?.dob}&time=${user.birthDetails?.time || user.birthDetails?.tob}&place=${encodeURIComponent(user.birthDetails?.place || user.birthDetails?.pob)}&lat=${user.birthDetails?.lat || user.birthDetails?.latitude}&lng=${user.birthDetails?.lng || user.birthDetails?.longitude}&tz=${user.birthDetails?.timezone || user.birthDetails?.tz || 5.5}`}
+                                                className="flex items-center justify-center gap-2 w-full py-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-2xl font-bold text-sm transition-all shadow-sm border border-indigo-100 group/btn"
+                                            >
+                                                <Sparkles size={18} className="group-hover/btn:rotate-12 transition-transform" />
+                                                <span>View My Kundli</span>
+                                                <ChevronRight size={16} />
+                                            </Link>
+                                        </motion.div>
+                                    </>
+                                )}
                         </div>
                     </div>
 
@@ -509,7 +671,7 @@ export default function Dashboard() {
                                     desc="Detailed Life Report & Charts"
                                     icon={<ScrollText size={24} />}
                                     color="purple"
-                                    link="/kundli"
+                                    link={((user.birthDetails?.date || user.birthDetails?.dob) && (user.birthDetails?.time || user.birthDetails?.tob) && (user.birthDetails?.lat || user.birthDetails?.latitude)) ? `/kundli?action=view_my_kundli&source=profile&name=${encodeURIComponent(user.name)}&gender=${user.gender}&date=${user.birthDetails?.date || user.birthDetails?.dob}&time=${user.birthDetails?.time || user.birthDetails?.tob}&place=${encodeURIComponent(user.birthDetails?.place || user.birthDetails?.pob)}&lat=${user.birthDetails?.lat || user.birthDetails?.latitude}&lng=${user.birthDetails?.lng || user.birthDetails?.longitude}&tz=${user.birthDetails?.timezone || user.birthDetails?.tz || 5.5}` : "/kundli"}
                                 />
                                 <ActionCard
                                     title="Daily Panchang"
@@ -530,7 +692,9 @@ export default function Dashboard() {
                                     desc="Your Personal Predictions"
                                     icon={<Sparkles size={24} />}
                                     color="indigo"
-                                    link="/horoscope"
+                                    link={user.birthDetails?.moonSign
+                                        ? `/horoscope/details?sign=${user.birthDetails.moonSign.toLowerCase()}&tab=daily`
+                                        : "/horoscope"}
                                 />
                             </div>
                         </div>
@@ -767,7 +931,6 @@ export default function Dashboard() {
                             )}
                         </div>
                     </div>
-
                 </div>
 
                 {/* Edit Modal */}
@@ -777,7 +940,6 @@ export default function Dashboard() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
                             onClick={(e) => e.target === e.currentTarget && setShowEdit(false)}
                         >
@@ -843,11 +1005,12 @@ export default function Dashboard() {
                                                         className="peer sr-only"
                                                     />
                                                     <div className={`
-                                            p-3 rounded-xl border-2 flex items-center justify-center gap-2 transition-all duration-300
-                                            ${editForm.gender === g
+                                                        p-3 rounded-xl border-2 flex items-center justify-center gap-2 transition-all duration-300
+                                                        ${editForm.gender === g
                                                             ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-inner'
                                                             : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-300 hover:bg-white'}
-                                        `}>
+                                                    `}>
+
                                                         <span className="font-bold capitalize text-sm tracking-wide">{g}</span>
                                                     </div>
                                                 </label>
@@ -859,7 +1022,6 @@ export default function Dashboard() {
                                         <InputGroup label="Date of Birth" className="relative z-30">
                                             <div className="relative">
                                                 <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={editForm.date} onChange={(date) => setEditForm({ ...editForm, date })} dateFormat="dd/MM/yyyy" className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300 px-4" showMonthDropdown showYearDropdown dropdownMode="select" wrapperClassName="w-full" popperClassName="!z-[9999]" portalId="root-portal" autoComplete="off" />
-
                                             </div>
                                         </InputGroup>
 
@@ -904,6 +1066,7 @@ export default function Dashboard() {
                                             type="submit"
                                             className="flex-1 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all font-bold text-sm uppercase tracking-wide"
                                         >
+
                                             Save Changes
                                         </button>
                                     </div>
@@ -959,7 +1122,6 @@ export default function Dashboard() {
                                         <InputGroup label="Date of Birth" required className="relative z-30">
                                             <div className="relative">
                                                 <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={chartForm.date} onChange={(date) => setChartForm({ ...chartForm, date })} dateFormat="dd/MM/yyyy" className="w-full border-none bg-slate-50 p-4 rounded-xl text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all font-bold placeholder:text-slate-300 px-4" showMonthDropdown showYearDropdown dropdownMode="select" wrapperClassName="w-full" popperClassName="!z-[9999]" portalId="root-portal" autoComplete="off" />
-
                                             </div>
                                         </InputGroup>
 
@@ -1130,6 +1292,91 @@ export default function Dashboard() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Add Funds Modal */}
+                <AnimatePresence>
+                    {showAddFunds && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4"
+                            onClick={(e) => e.target === e.currentTarget && !rechargeLoading && setShowAddFunds(false)}
+                        >
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="bg-white w-full max-w-md rounded-[2.5rem] p-8 sm:p-10 relative shadow-2xl"
+                            >
+                                <div className="flex justify-between items-center mb-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl">
+                                            <Wallet size={24} />
+                                        </div>
+                                        <h2 className="text-2xl font-black text-slate-800">Add Funds</h2>
+                                    </div>
+                                    {!rechargeLoading && (
+                                        <button onClick={() => setShowAddFunds(false)} className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-all">
+                                            <X size={24} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-3">Amount to recharge</label>
+                                        <div className="relative">
+                                            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">₹</span>
+                                            <input
+                                                type="number"
+                                                value={rechargeAmount}
+                                                onChange={(e) => setRechargeAmount(e.target.value)}
+                                                placeholder="0.00"
+                                                className="w-full pl-12 pr-6 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-2xl font-black text-slate-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                                                disabled={rechargeLoading}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[100, 200, 500, 1000].map((amt) => (
+                                            <button
+                                                key={amt}
+                                                type="button"
+                                                onClick={() => setRechargeAmount(amt.toString())}
+                                                className={`py-3 rounded-xl font-bold transition-all border-2 ${rechargeAmount === amt.toString() ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-white border-slate-100 text-slate-600 hover:border-indigo-200'}`}
+                                                disabled={rechargeLoading}
+                                            >
+                                                ₹{amt}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={handleRecharge}
+                                        disabled={rechargeLoading || !rechargeAmount}
+                                        className="w-full py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-600/20 hover:shadow-indigo-600/30 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-3 transition-all"
+                                    >
+                                        {rechargeLoading ? (
+                                            <>
+                                                <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                <span>Processing...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus size={20} strokeWidth={3} />
+                                                <span>Proceed to Pay</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <p className="text-center text-xs text-slate-400 font-medium">Secured by Razorpay • Instant settlement</p>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );
@@ -1150,10 +1397,11 @@ function ProfileItem({ icon, label, value, color }) {
         blue: 'text-blue-500 bg-blue-50 group-hover:bg-blue-100',
         purple: 'text-purple-500 bg-purple-50 group-hover:bg-purple-100',
         green: 'text-green-500 bg-emerald-50 group-hover:bg-emerald-100',
+        orange: 'text-orange-500 bg-orange-50 group-hover:bg-orange-100',
     };
 
     return (
-        <div className="flex items-center gap-4 p-3 rounded-2xl transition-colors hover:bg-slate-50">
+        <div className="flex items-center gap-4 p-3 rounded-2xl transition-colors hover:bg-slate-50 group">
             <div className={`p-3 rounded-xl ${colors[color]} transition-colors`}>
                 {icon}
             </div>
@@ -1176,7 +1424,7 @@ function ActionCard({ title, desc, icon, color, link }) {
     const style = styles[color];
 
     return (
-        <Link href={link} className="no-underline group">
+        <Link href={link} className="no-underline group h-full">
             <div className="bg-white p-6 rounded-[2rem] shadow-lg shadow-slate-200/50 border border-slate-100 hover:shadow-xl hover:border-blue-100 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col justify-between">
                 <div className="flex justify-between items-start mb-4">
                     <div className={`w-14 h-14 rounded-2xl ${style.bg} flex items-center justify-center ${style.text} group-hover:scale-110 transition-transform duration-300`}>

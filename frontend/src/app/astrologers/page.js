@@ -9,6 +9,8 @@ import { motion } from 'framer-motion';
 import { Star, CheckCircle, Phone, MessageCircle, Search } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import HeroSection from '@/components/common/HeroSection';
+import { startPaidChat } from '@/services/chatService';
+import toast from 'react-hot-toast';
 
 export default function AstrologersPage() {
     const [astrologers, setAstrologers] = useState([]);
@@ -47,17 +49,35 @@ export default function AstrologersPage() {
         router.push(`/astrologers/details?id=${astro.slug || astro._id}`);
     };
 
-    const handleAuthAction = (e, actionUrl) => {
+    const handleChatAction = async (e, astro) => {
         e.stopPropagation();
         if (!user) {
-            // Redirect to login with return path
-            // For list page, we might want to return to list, or better, to the action initiated.
-            // But since action is lost on reload, returning to list is safer.
-            // Actually, if we want to deep link to chat, we can set redirect to the actionUrl!
-            // BUT: actionUrl is internal (e.g. /chat/id). Yes, that works.
-            router.push(`/login?redirect=${encodeURIComponent(actionUrl)}`);
-        } else {
-            router.push(actionUrl);
+            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            return;
+        }
+
+        if (user.role === 'astrologer') {
+            toast.error('Astrologers cannot chat with other astrologers');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await startPaidChat(astro._id);
+            if (res.success) {
+                toast.success('Initiating session...');
+                router.push(`/astrology-session/${res.roomId}`);
+            } else {
+                toast.error(res.message || 'Failed to start chat');
+                if (res.message?.includes('balance')) {
+                    router.push('/wallet');
+                }
+            }
+        } catch (error) {
+            console.error('Chat Error:', error);
+            toast.error('Something went wrong');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -189,7 +209,7 @@ export default function AstrologersPage() {
                                         {featureFlags?.enableChat && (
                                             <button
                                                 className="border border-indigo-500 text-indigo-600 hover:bg-indigo-50 font-bold py-1.5 px-4 rounded-lg text-xs transition-all bg-white flex items-center justify-center gap-2 hover:scale-105 min-w-[90px]"
-                                                onClick={(e) => handleAuthAction(e, `/chat-with-astrologer/session?id=${astro.slug || astro._id}`)}
+                                                onClick={(e) => handleChatAction(e, astro)}
                                             >
                                                 <MessageCircle size={14} /> Chat
                                             </button>

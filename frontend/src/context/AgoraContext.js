@@ -2,16 +2,11 @@
 
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import axios from 'axios';
-import { API_BASE } from '../lib/urlHelper';
+import API from '../lib/api';
 
 const AgoraContext = createContext();
 
 export const useAgora = () => useContext(AgoraContext);
-
-const API_URL = API_BASE;
-// const AGORA_APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID; 
-// We will access process.env.NEXT_PUBLIC_AGORA_APP_ID directly.
 
 export const AgoraProvider = ({ children }) => {
     const { user } = useAuth();
@@ -21,27 +16,23 @@ export const AgoraProvider = ({ children }) => {
     const [localAudioTrack, setLocalAudioTrack] = useState(null);
     const [localVideoTrack, setLocalVideoTrack] = useState(null);
     const [remoteUsers, setRemoteUsers] = useState([]);
-    const [incomingCall, setIncomingCall] = useState(null); // { callerId, channelName, type }
+    const [incomingCall, setIncomingCall] = useState(null);
 
-    // Store SDKs in refs to access them in functions without re-importing
     const AgoraRTC = useRef(null);
     const AgoraRTM = useRef(null);
 
     useEffect(() => {
-        // Initialize Clients
         const initAgora = async () => {
             if (!user) return;
-            if (typeof window === 'undefined') return; // Ensure client-side
+            if (typeof window === 'undefined') return;
 
             try {
-                // Dynamic Import to avoid SSR "window is not defined" error
                 const AgoraRTCModule = (await import('agora-rtc-sdk-ng')).default;
                 const AgoraRTMModule = (await import('agora-rtm-sdk')).default;
 
                 AgoraRTC.current = AgoraRTCModule;
                 AgoraRTM.current = AgoraRTMModule;
 
-                // Initialize RTC
                 const rtc = AgoraRTC.current.createClient({ mode: 'rtc', codec: 'vp8' });
                 setRtcClient(rtc);
 
@@ -55,18 +46,14 @@ export const AgoraProvider = ({ children }) => {
         initAgora();
     }, [user]);
 
-    // RTM Login Effect
     useEffect(() => {
         const loginRTM = async () => {
             if (!rtmClient || !user || !AgoraRTM.current) return;
 
             try {
-                // Get Token
-                const { data } = await axios.post(`${API_URL}/agora/token`, {
+                const { data } = await API.post('/agora/token', {
                     channelName: 'lobby',
                     uid: user._id
-                }, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
 
                 if (data.success && data.rtmToken) {
@@ -112,24 +99,17 @@ export const AgoraProvider = ({ children }) => {
         }
     };
 
-    // Function to start a call (Get tokens -> Join)
     const startCall = async (channelName, type = 'video') => {
         if (!rtcClient || !AgoraRTC.current) return;
 
         try {
-            // 1. Get Token from Backend
-            const { data } = await axios.post(`${API_URL}/agora/token`, {
+            const { data } = await API.post('/agora/token', {
                 channelName,
-                uid: 0 // Allow Agora to assign or use numeric mapping if needed. But best if we use Int UID.
-                // If user.id is string, we might need mapped Int or account mode.
-                // Let's assume Backend handles Account Mode.
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                uid: 0
             });
 
             if (data.success) {
-                // 2. Join RTC Channel
-                await rtcClient.join(data.appID, channelName, data.rtcToken, user._id); // Join with String ID (User Account)
+                await rtcClient.join(data.appID, channelName, data.rtcToken, user._id);
 
                 // 3. Create & Publish Tracks
                 // Use the ref

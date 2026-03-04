@@ -10,7 +10,10 @@ import {
 } from 'lucide-react';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import toast from 'react-hot-toast';
-import { SERVER_BASE } from '../../lib/urlHelper';
+import { SERVER_BASE, resolveImageUrl } from '../../lib/urlHelper';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from '../../components/common/CustomDateInput';
 import { useAdmin } from '../../context/AdminContext';
 import BlogManager from '../../components/admin/BlogManager';
 import LogoSettings from '../../components/admin/LogoSettings';
@@ -1072,21 +1075,23 @@ const InteractionDetailModal = ({ isOpen, onClose, data, loading, title, filters
                 <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap gap-4 items-end">
                     <div className="flex-1 min-w-[150px]">
                         <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Start Date</label>
-                        <input
-                            type="date"
-                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20"
-                            value={filters.startDate}
-                            onChange={(e) => onFilterChange({ ...filters, startDate: e.target.value })}
+                        <DatePicker
+                            selected={filters.startDate ? new Date(filters.startDate) : null}
+                            onChange={(date) => onFilterChange({ ...filters, startDate: date })}
+                            customInput={<CustomDateInput className="py-2 text-sm" />}
+                            dateFormat="dd-MM-yyyy"
+                            placeholderText="Start Date"
                         />
                     </div>
                     <div className="flex-1 min-w-[150px]">
                         <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">End Date</label>
-                        <input
-                            type="date"
-                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20"
-                            value={filters.endDate}
-                            min={filters.startDate}
-                            onChange={(e) => onFilterChange({ ...filters, endDate: e.target.value })}
+                        <DatePicker
+                            selected={filters.endDate ? new Date(filters.endDate) : null}
+                            onChange={(date) => onFilterChange({ ...filters, endDate: date })}
+                            minDate={filters.startDate ? new Date(filters.startDate) : null}
+                            customInput={<CustomDateInput className="py-2 text-sm" />}
+                            dateFormat="dd-MM-yyyy"
+                            placeholderText="End Date"
                         />
                     </div>
                     <div className="flex-1 min-w-[150px]">

@@ -64,3 +64,84 @@ exports.createChat = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+
+const ChatSession = require('../models/ChatSession');
+const Astrologer = require('../models/Astrologer');
+const crypto = require('crypto');
+
+// @desc Start a paid chat session
+// @route POST /api/chat/start-paid
+exports.startPaidChat = async (req, res) => {
+    try {
+        const { astrologerId } = req.body;
+        const userId = req.user.id;
+
+        const astrologer = await Astrologer.findById(astrologerId);
+        if (!astrologer) return res.status(404).json({ success: false, message: 'Astrologer not found' });
+
+        // Ensure astrologer is active and online
+        if (!astrologer.isChatOnline) {
+            return res.status(400).json({ success: false, message: 'Astrologer is currently offline for chat' });
+        }
+
+        const pricePerMinute = astrologer.charges?.chatPerMinute || 10;
+
+        const user = await User.findById(userId);
+        if (user.walletBalance < (pricePerMinute * 5)) {
+            return res.status(400).json({ success: false, message: `Insufficient balance. Minimum 5 minutes required (₹${pricePerMinute * 5}).` });
+        }
+
+        // Create a unique Room ID
+        const roomId = crypto.randomBytes(16).toString('hex');
+
+        const session = await ChatSession.create({
+            roomId,
+            user: userId,
+            astrologer: astrologerId,
+            pricePerMinute,
+            status: 'initiated',
+            startTime: new Date()
+        });
+
+        res.status(200).json({ success: true, roomId, session });
+    } catch (err) {
+        console.error('Start Paid Chat Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+// @desc Get messages for a specific session
+// @route GET /api/chat/session/:roomId/messages
+exports.getSessionMessages = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const session = await ChatSession.findOne({ roomId });
+        if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+        const messages = await Message.find({ sessionId: session._id })
+            .sort({ createdAt: 1 });
+
+        res.status(200).json({ success: true, messages });
+    } catch (err) {
+        console.error('Get Session Messages Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc Get active sessions for the logged-in astrologer
+// @route GET /api/chat/astrologer/sessions
+exports.getAstrologerSessions = async (req, res) => {
+    try {
+        const astrologer = await Astrologer.findOne({ userId: req.user.id });
+        if (!astrologer) return res.status(404).json({ success: false, message: 'Astrologer profile not found' });
+
+        const sessions = await ChatSession.find({
+            astrologer: astrologer._id,
+            status: { $in: ['initiated', 'active'] }
+        }).populate('user', 'name displayName');
+
+        res.status(200).json({ success: true, sessions });
+    } catch (err) {
+        console.error('Get Astrologer Sessions Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

@@ -4,9 +4,9 @@ export default function ActivityStats({ stats }) {
     const cards = [
         {
             label: 'Online Time',
-            value: stats.totalOnlineSeconds ?
-                `${Math.floor(stats.totalOnlineSeconds / 3600)}h ${Math.floor((stats.totalOnlineSeconds % 3600) / 60)}m ${stats.totalOnlineSeconds % 60}s` :
-                `${Math.floor(stats.totalOnlineMinutes / 60)}h ${stats.totalOnlineMinutes % 60}m`,
+            value: typeof stats.totalOnlineSeconds === 'number' ?
+                `${Math.floor(stats.totalOnlineSeconds / 3600)}h ${Math.floor((stats.totalOnlineSeconds % 3600) / 60)}m` :
+                `${Math.floor((stats.totalOnlineMinutes || 0) / 60)}h ${(stats.totalOnlineMinutes || 0) % 60}m`,
             icon: Clock,
             color: 'text-blue-600',
             bg: 'bg-blue-50',

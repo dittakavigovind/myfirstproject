@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import API from '../../lib/api';
 import LocationSearch from '../../components/LocationSearch';
 import { Calendar, MapPin, Sparkles, Sun, Moon, Clock, Star, ArrowDown, Search, Info, CheckCircle, XCircle, MinusCircle, ArrowLeft, Share2 } from 'lucide-react';
@@ -14,8 +14,8 @@ import PanchangShareCard from '../../components/PanchangShareCard';
 import PanchangShareModal from '../../components/PanchangShareModal';
 import CustomDateInput from '../../components/common/CustomDateInput';
 import analytics from '../../lib/analytics';
+import { useBirthDetails } from '../../context/BirthDetailsContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
 import HeroSection from '../../components/common/HeroSection';
 
 export default function PanchangPageWrapper() {
@@ -33,14 +33,14 @@ export default function PanchangPageWrapper() {
 function PanchangPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [pageContent, setPageContent] = useState({ faqs: [], description: "" });
 
     // Default State
     const [date, setDate] = useState(new Date());
     const [place, setPlace] = useState('Hyderabad');
     const [coords, setCoords] = useState({ lat: 17.3641, lng: 78.4710, timezone: "Asia/Kolkata" });
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [pageContent, setPageContent] = useState({ faqs: [], description: "" });
     const [showShareModal, setShowShareModal] = useState(false);
 
     // Share Card Ref

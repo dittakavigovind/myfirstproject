@@ -7,8 +7,10 @@ import { useTheme } from '@/context/ThemeContext';
 import API from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, MessageCircle, Search } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import HeroSection from '@/components/common/HeroSection';
+import { startPaidChat } from '@/services/chatService';
+import toast from 'react-hot-toast';
 
 export default function ChatAstrologersPage() {
     const [astrologers, setAstrologers] = useState([]);
@@ -47,12 +49,41 @@ export default function ChatAstrologersPage() {
         fetchAstrologers();
     }, []);
 
+    const pathname = usePathname();
+
     const handleProfileClick = (astro) => {
         router.push(`/astrologers/details?id=${astro.slug || astro._id}`);
     };
 
-    const handleChatClick = (astroId) => {
-        router.push(`/chat-with-astrologer/session?id=${astroId}`);
+    const handleChatClick = async (astroId) => {
+        if (!user) {
+            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            return;
+        }
+
+        if (user.role === 'astrologer') {
+            toast.error('Astrologers cannot chat with other astrologers');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await startPaidChat(astroId);
+            if (res.success) {
+                toast.success('Initiating session...');
+                router.push(`/astrology-session/${res.roomId}`);
+            } else {
+                toast.error(res.message || 'Failed to start chat');
+                if (res.message?.includes('balance')) {
+                    router.push('/wallet');
+                }
+            }
+        } catch (error) {
+            console.error('Chat Error:', error);
+            toast.error('Something went wrong');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const filteredAstrologers = astrologers.filter(astro =>

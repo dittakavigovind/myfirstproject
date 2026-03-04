@@ -43,10 +43,14 @@ export default function DashaPeriodsCalculator() {
                 name: birthDetails.name || prev.name,
                 gender: birthDetails.gender || prev.gender,
                 date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
-                time: (birthDetails.time && typeof birthDetails.time === 'string') ? (() => {
+                time: birthDetails.time ? (() => {
                     const d = new Date();
-                    const [h, m] = birthDetails.time.split(':');
-                    d.setHours(h, m, 0, 0);
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
                     return d;
                 })() : prev.time,
                 place: birthDetails.place || prev.place,
@@ -159,14 +163,9 @@ export default function DashaPeriodsCalculator() {
 
             // Persist for session
             setBirthDetails({
-                name: formData.name,
-                gender: formData.gender,
-                date: formData.date,
-                time: timeStr,
-                place: formData.place,
-                lat: formData.lat,
-                lng: formData.lng,
-                timezone: formData.timezone
+                ...formData,
+                time: timeStr, // Ensure time is stored as a string for consistency with API payload
+                date: formData.date.toISOString().split('T')[0] // Store date as ISO string for consistency
             });
 
             // Using existing kundli endpoint which now includes dashas
@@ -297,16 +296,16 @@ export default function DashaPeriodsCalculator() {
                                         </label>
                                         <div className="relative custom-datepicker-light">
                                             <DatePicker
-                                                customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} darkMode={false} />}
+                                                customInput={<CustomDateInput placeholder='DD/MM/YYYY' Icon={Calendar} darkMode={false} />}
                                                 selected={formData.date}
                                                 onChange={(date) => setFormData({ ...formData, date })}
                                                 dateFormat="dd/MM/yyyy"
                                                 className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-yellow-500 rounded-2xl py-5 px-6 text-[#0E1A2B] font-bold text-lg outline-none transition-all cursor-pointer"
+                                                showMonthDropdown
                                                 showYearDropdown
                                                 scrollableYearDropdown
                                                 yearDropdownItemNumber={100}
                                                 maxDate={new Date()}
-                                                calendarClassName="custom-datepicker-report"
                                             />
                                         </div>
                                     </div>
@@ -640,43 +639,6 @@ export default function DashaPeriodsCalculator() {
                     )}
                 </AnimatePresence>
             </div>
-            <style jsx global>{`
-                .custom-datepicker-light .react-datepicker-wrapper { width: 100%; }
-                
-                .custom-datepicker-report .react-datepicker {
-                    background-color: white !important;
-                    border: 1px solid #f1f5f9 !important;
-                    border-radius: 1.5rem !important;
-                    padding: 1.5rem !important;
-                    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15) !important;
-                    font-family: inherit !important;
-                }
-                .custom-datepicker-report .react-datepicker__header {
-                    background-color: white !important;
-                    border-bottom: 2px solid #f8fafc !important;
-                    padding-bottom: 1rem !important;
-                }
-                .custom-datepicker-report .react-datepicker__current-month {
-                    color: #0E1A2B !important;
-                    font-weight: 900 !important;
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                }
-                .custom-datepicker-report .react-datepicker__day {
-                    color: #475569 !important;
-                    font-weight: 600 !important;
-                }
-                .custom-datepicker-report .react-datepicker__day:hover {
-                    background-color: #fefce8 !important;
-                    color: #eab308 !important;
-                    border-radius: 50% !important;
-                }
-                .custom-datepicker-report .react-datepicker__day--selected {
-                    background-color: #fbbf24 !important;
-                    color: #0E1A2B !important;
-                    border-radius: 50% !important;
-                }
-            `}</style>
             <PageContentSection slug="calculators/dasha-periods" />
         </main>
     );

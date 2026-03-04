@@ -211,8 +211,8 @@ export default function AshtakavargaCalculator() {
     const [formData, setFormData] = useState({
         name: '',
         gender: 'male',
-        date: '',
-        time: '',
+        date: null,
+        time: new Date(new Date().setHours(12, 0, 0, 0)),
         place: '',
         lat: '',
         lng: '',
@@ -220,28 +220,27 @@ export default function AshtakavargaCalculator() {
     });
 
     useEffect(() => {
-        if (birthDetails && !formData.date) {
-            // Helper to parse "HH:mm" string to Date object for TimeInput
-            const parseTime = (timeStr) => {
-                if (!timeStr) return new Date();
-                const [h, m] = timeStr.split(':').map(Number);
-                const d = new Date();
-                d.setHours(h);
-                d.setMinutes(m);
-                d.setSeconds(0);
-                return d;
-            };
-
-            setFormData({
-                name: birthDetails.name || '',
-                gender: birthDetails.gender || 'male',
-                date: birthDetails.date || '',
-                time: parseTime(birthDetails.time),
-                place: birthDetails.place || '',
-                lat: birthDetails.lat || '',
-                lng: birthDetails.lng || '',
-                timezone: birthDetails.timezone || ''
-            });
+        if (birthDetails) {
+            setFormData(prev => ({
+                ...prev,
+                name: birthDetails.name || prev.name,
+                gender: birthDetails.gender || prev.gender,
+                date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
+                time: birthDetails.time ? (() => {
+                    const d = new Date();
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
+                    return d;
+                })() : prev.time,
+                place: birthDetails.place || prev.place,
+                lat: birthDetails.lat || prev.lat,
+                lng: birthDetails.lng || prev.lng,
+                timezone: birthDetails.timezone || prev.timezone
+            }));
         }
     }, [birthDetails]);
 
@@ -259,18 +258,19 @@ export default function AshtakavargaCalculator() {
         e.preventDefault();
         setLoading(true);
         try {
-            // Format time to HH:mm for backend
-            let formattedTime = formData.time;
-            if (formData.time instanceof Date) {
-                const h = formData.time.getHours().toString().padStart(2, '0');
-                const m = formData.time.getMinutes().toString().padStart(2, '0');
-                formattedTime = `${h}:${m}`;
-            }
+            const localDate = formData.date.getFullYear() + '-' +
+                String(formData.date.getMonth() + 1).padStart(2, '0') + '-' +
+                String(formData.date.getDate()).padStart(2, '0');
+            const timeStr = formData.time.toTimeString().slice(0, 5);
 
-            const payload = { ...formData, time: formattedTime };
+            const payload = { ...formData, date: localDate, time: timeStr };
 
             const res = await API.post('/astro/ashtakavarga', payload);
             if (res.data.success) {
+                // Update session context
+                setBirthDetails({
+                    ...formData
+                });
                 setResult(res.data.data);
             } else {
                 toast.error(res.data.message || "Calculation failed");

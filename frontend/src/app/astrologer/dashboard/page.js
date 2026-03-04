@@ -34,13 +34,15 @@ export default function AstrologerDashboard() {
 
     // --- Stats State ---
     const [todayStats, setTodayStats] = useState({
-        historyOnlineMinutes: 0,
+        earnings: 0,
+        totalOnlineSeconds: 0,
         totalOnlineMinutes: 0,
-        voiceMinutes: 0,
-        videoMinutes: 0,
         chatMinutes: 0,
-        earnings: 0
+        voiceMinutes: 0,
+        videoMinutes: 0
     });
+
+    const [activeSessions, setActiveSessions] = useState([]);
 
     // 1. Sync User Context
     useEffect(() => {
@@ -75,8 +77,14 @@ export default function AstrologerDashboard() {
                     }));
                 }
             }
+
+            // Fetch Active Chat Sessions
+            const sessionRes = await API.get('/chat/astrologer/sessions');
+            if (sessionRes.data.success) {
+                setActiveSessions(sessionRes.data.sessions);
+            }
         } catch (error) {
-            console.error("Failed to fetch stats", error);
+            console.error("Failed to fetch dashboard data", error);
         }
     };
 
@@ -259,6 +267,30 @@ export default function AstrologerDashboard() {
                             </div>
                         </div>
 
+                        {/* Active Sessions Card */}
+                        {activeSessions.length > 0 && (
+                            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-2xl shadow-lg text-white">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <MessageSquare className="animate-pulse" /> Active Chat Sessions
+                                </h2>
+                                <div className="space-y-4">
+                                    {activeSessions.map((session) => (
+                                        <div key={session._id} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 flex justify-between items-center">
+                                            <div>
+                                                <p className="font-bold">{session.user?.displayName || 'Client'}</p>
+                                                <p className="text-xs text-indigo-100">Started: {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => router.push(`/astrology-session/${session.roomId}`)}
+                                                className="px-4 py-2 bg-white text-indigo-600 rounded-lg font-bold text-sm hover:bg-indigo-50 transition-colors"
+                                            >
+                                                Join Chat
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

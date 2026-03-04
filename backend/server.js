@@ -68,6 +68,9 @@ connectDB().then(async () => {
     } catch (err) {
         console.error('Seeding Error:', err.message);
     }
+}).catch(err => {
+    console.error('FAILED TO CONNECT TO DATABASE:', err.message);
+    process.exit(1);
 });
 
 // Socket.io Setup
@@ -78,48 +81,13 @@ const io = new Server(server, {
     }
 });
 
-const Message = require('./src/models/Message');
-const Chat = require('./src/models/Chat');
+// Attach io to app for use in controllers
+app.set('io', io);
 
-io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id);
+// Import and initialize specialized socket handlers
+require('./src/sockets/chatSocket')(io);
 
-    socket.on('join_chat', (roomId) => {
-        socket.join(roomId);
-        console.log(`User joined room: ${roomId}`);
-    });
 
-    socket.on('send_message', async (data) => {
-        try {
-            const { roomId, senderId, content } = data;
-
-            // Save to Database
-            const newMessage = new Message({
-                chatId: roomId,
-                sender: senderId,
-                content: content
-            });
-            await newMessage.save();
-
-            // Update Chat's last message
-            await Chat.findByIdAndUpdate(roomId, {
-                lastMessage: newMessage._id,
-                updatedAt: Date.now()
-            });
-
-            // Populate sender info before emitting (optional but helpful)
-            await newMessage.populate('sender', 'name');
-
-            io.to(roomId).emit('receive_message', newMessage);
-        } catch (err) {
-            console.error("Socket Error:", err);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected');
-    });
-});
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -139,6 +107,7 @@ app.use('/api/blog', blogRoutes);
 app.use('/api/astro/earnings', earningsRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin/chats', require('./src/routes/adminChatRoutes'));
 app.use('/api/admin', adminRoutes);
 app.use('/api/panchang', panchangRoutes);
 app.use('/api/horoscope', horoscopeRoutes);
@@ -161,8 +130,9 @@ app.use(async (req, res, next) => {
     // We treat /blog/category/article as the old query param style, and /blog/ as the new clean style
     const isBlogArticleQuery = req.path.startsWith('/blog/category/article');
     const isBlogArticleClean = req.path.startsWith('/blog/') && !req.path.startsWith('/blog/category');
+    const isAstroSession = req.path.startsWith('/astrology-session/');
 
-    if (!isPoojaDetails && !isBlogArticleQuery && !isBlogArticleClean) {
+    if (!isPoojaDetails && !isBlogArticleQuery && !isBlogArticleClean && !isAstroSession) {
         return next(); // Let normal static serving handle it
     }
 
@@ -182,6 +152,12 @@ app.use(async (req, res, next) => {
         slug = parts[parts.length - 1] || parts[parts.length - 2]; // Handle trailing slash
         // The actual React app still lives at the query-parameter location in output: 'export'
         htmlPath = path.join(__dirname, '../frontend/out/blog/category/article/index.html');
+    } else if (isAstroSession) {
+        // Extract roomId from /astrology-session/ROOM_ID/
+        const parts = req.path.split('/');
+        slug = parts[parts.length - 1] || parts[parts.length - 2];
+        // We use the 'chat-session' static page
+        htmlPath = path.join(__dirname, '../frontend/out/astrology-session/chat-session/index.html');
     }
 
     if (!slug) {
@@ -197,6 +173,10 @@ app.use(async (req, res, next) => {
         // We will rewrite the URL so React sees the query parameters it expects.
         if (isBlogArticleClean && fs.existsSync(htmlPath)) {
             req.url = `/blog/category/article/?slug=${slug}`; // Internal Express rewrite
+            return res.sendFile(htmlPath);
+        }
+        if (isAstroSession && fs.existsSync(htmlPath)) {
+            // Internal redirect to the dynamic session handler page
             return res.sendFile(htmlPath);
         }
         return next(); // Real humans on standard links get normal static serving

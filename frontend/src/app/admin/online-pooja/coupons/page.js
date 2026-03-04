@@ -5,6 +5,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Plus, Edit, Trash2, Tag } from 'lucide-react';
 import { API_BASE } from '../../../../lib/urlHelper';
+import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../../../components/common/CustomDateInput';
 
 export default function CouponsManager() {
     const [coupons, setCoupons] = useState([]);
@@ -283,11 +285,24 @@ export default function CouponsManager() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Valid From</label>
-                                    <input type="date" name="validFrom" value={formData.validFrom} onChange={handleInputChange} required className="w-full border border-slate-200 p-2.5 rounded-xl" />
+                                    <DatePicker
+                                        selected={formData.validFrom ? new Date(formData.validFrom) : null}
+                                        onChange={(date) => setFormData(prev => ({ ...prev, validFrom: date }))}
+                                        customInput={<CustomDateInput className="p-2.5" />}
+                                        dateFormat="dd-MM-yyyy"
+                                        required
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Valid Until</label>
-                                    <input type="date" name="validUntil" value={formData.validUntil} onChange={handleInputChange} required className="w-full border border-slate-200 p-2.5 rounded-xl" />
+                                    <DatePicker
+                                        selected={formData.validUntil ? new Date(formData.validUntil) : null}
+                                        onChange={(date) => setFormData(prev => ({ ...prev, validUntil: date }))}
+                                        minDate={formData.validFrom ? new Date(formData.validFrom) : new Date()}
+                                        customInput={<CustomDateInput className="p-2.5" />}
+                                        dateFormat="dd-MM-yyyy"
+                                        required
+                                    />
                                 </div>
                             </div>
 

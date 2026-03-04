@@ -50,12 +50,15 @@ export default function MatchMakingPage() {
     useEffect(() => {
         if (isInitialized && birthDetails && birthDetails.gender) {
             const details = {
-                date: birthDetails.date || null,
-                date: birthDetails.date || null,
-                time: (birthDetails.time && typeof birthDetails.time === 'string') ? (() => {
+                date: birthDetails.date ? new Date(birthDetails.date) : null,
+                time: birthDetails.time ? (() => {
                     const d = new Date();
-                    const [h, m] = birthDetails.time.split(':');
-                    d.setHours(h, m, 0, 0);
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
                     return d;
                 })() : new Date(new Date().setHours(0, 0, 0, 0)),
                 location: birthDetails.place || '',
@@ -187,13 +190,13 @@ export default function MatchMakingPage() {
             // Format dates/times to strings (YYYY-MM-DD, HH:MM)
             const boyPayload = {
                 ...boy,
-                date: boy.date.toISOString().split('T')[0],
-                time: boy.time.toTimeString().slice(0, 5)
+                date: boy.date.toLocaleDateString('en-CA'),
+                time: boy.time instanceof Date ? boy.time.toTimeString().slice(0, 5) : boy.time
             };
             const girlPayload = {
                 ...girl,
-                date: girl.date.toISOString().split('T')[0],
-                time: girl.time.toTimeString().slice(0, 5)
+                date: girl.date.toLocaleDateString('en-CA'),
+                time: girl.time instanceof Date ? girl.time.toTimeString().slice(0, 5) : girl.time
             };
 
             const res = await API.post('/astro/match', { boy: boyPayload, girl: girlPayload });

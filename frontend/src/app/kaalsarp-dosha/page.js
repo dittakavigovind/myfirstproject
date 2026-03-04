@@ -21,7 +21,7 @@ export default function KaalsarpDoshaPage() {
         name: '',
         gender: 'male',
         date: new Date(),
-        time: "12:00",
+        time: new Date(new Date().setHours(12, 0, 0, 0)),
         place: 'New Delhi, India',
         lat: 28.6139,
         lng: 77.2090,
@@ -35,10 +35,14 @@ export default function KaalsarpDoshaPage() {
                 name: birthDetails.name || prev.name,
                 gender: birthDetails.gender || prev.gender,
                 date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
-                time: (birthDetails.time && typeof birthDetails.time === 'string') ? (() => {
+                time: birthDetails.time ? (() => {
                     const d = new Date();
-                    const [h, m] = birthDetails.time.split(':');
-                    d.setHours(h, m, 0, 0);
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
                     return d;
                 })() : prev.time,
                 place: birthDetails.place || prev.place,
@@ -73,8 +77,8 @@ export default function KaalsarpDoshaPage() {
         setLoading(true);
         try {
             const { data } = await API.post('/astro/dosha', {
-                date: formData.date.toISOString(),
-                time: formData.time,
+                date: formData.date.toLocaleDateString('en-CA'),
+                time: formData.time instanceof Date ? formData.time.toTimeString().slice(0, 5) : formData.time,
                 lat: formData.lat,
                 lng: formData.lng,
                 timezone: formData.timezone,

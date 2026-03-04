@@ -8,6 +8,8 @@ import { Plus, Edit, Trash2, Check, X, Loader2, Image as ImageIcon, MapPin, Sear
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
+import DatePicker from 'react-datepicker';
+import CustomDateInput from '../../../../components/common/CustomDateInput';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
@@ -41,7 +43,9 @@ const AdminTemples = () => {
 
     const fetchTemples = async () => {
         try {
-            const response = await axios.get(`${API_BASE}/pooja/temples`);
+            const response = await axios.get(`${API_BASE}/pooja/admin/temples`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (response.data.success) {
                 setTemples(response.data.data);
             }
@@ -573,12 +577,13 @@ const AdminTemples = () => {
                                             {seva.dateSelectionType === 'Fixed' && (
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Fixed Date</label>
-                                                    <input
-                                                        type="date"
-                                                        className="w-full bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none"
-                                                        value={seva.fixedDate ? new Date(seva.fixedDate).toISOString().split('T')[0] : ''}
-                                                        onChange={(e) => handleSevaChange(idx, 'fixedDate', e.target.value)}
-                                                        min={new Date().toISOString().split('T')[0]}
+                                                    <DatePicker
+                                                        selected={seva.fixedDate ? new Date(seva.fixedDate) : null}
+                                                        onChange={(date) => handleSevaChange(idx, 'fixedDate', date)}
+                                                        minDate={new Date()}
+                                                        customInput={<CustomDateInput className="py-2 text-sm" />}
+                                                        dateFormat="dd-MM-yyyy"
+                                                        placeholderText="Select Fixed Date"
                                                         required
                                                     />
                                                 </div>
@@ -588,23 +593,25 @@ const AdminTemples = () => {
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div className="space-y-1">
                                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Start Date</label>
-                                                        <input
-                                                            type="date"
-                                                            className="w-full bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none text-xs"
-                                                            value={seva.startDate ? new Date(seva.startDate).toISOString().split('T')[0] : ''}
-                                                            onChange={(e) => handleSevaChange(idx, 'startDate', e.target.value)}
-                                                            min={new Date().toISOString().split('T')[0]}
+                                                        <DatePicker
+                                                            selected={seva.startDate ? new Date(seva.startDate) : null}
+                                                            onChange={(date) => handleSevaChange(idx, 'startDate', date)}
+                                                            minDate={new Date()}
+                                                            customInput={<CustomDateInput className="py-2 text-sm" />}
+                                                            dateFormat="dd-MM-yyyy"
+                                                            placeholderText="Start Date"
                                                             required
                                                         />
                                                     </div>
                                                     <div className="space-y-1">
                                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">End Date</label>
-                                                        <input
-                                                            type="date"
-                                                            className="w-full bg-white rounded-lg py-2 px-3 border border-gray-200 outline-none text-xs"
-                                                            value={seva.endDate ? new Date(seva.endDate).toISOString().split('T')[0] : ''}
-                                                            onChange={(e) => handleSevaChange(idx, 'endDate', e.target.value)}
-                                                            min={seva.startDate ? new Date(seva.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                                                        <DatePicker
+                                                            selected={seva.endDate ? new Date(seva.endDate) : null}
+                                                            onChange={(date) => handleSevaChange(idx, 'endDate', date)}
+                                                            minDate={seva.startDate ? new Date(seva.startDate) : new Date()}
+                                                            customInput={<CustomDateInput className="py-2 text-sm" />}
+                                                            dateFormat="dd-MM-yyyy"
+                                                            placeholderText="End Date"
                                                             required
                                                         />
                                                     </div>

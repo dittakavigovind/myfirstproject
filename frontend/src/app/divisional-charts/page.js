@@ -128,7 +128,7 @@ export default function DivisionalChartsForm() {
                 name: formData.name,
                 gender: formData.gender,
                 date: formData.date,
-                time: timeStr,
+                time: formData.time,
                 place: formData.place,
                 lat: formData.lat,
                 lng: formData.lng,

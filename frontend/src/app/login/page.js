@@ -43,9 +43,16 @@ export default function LoginPage() {
     const searchParams = useSearchParams();
     const redirectPath = searchParams.get('redirect');
 
-    const [loginMethod, setLoginMethod] = useState('mobile');
+    const [loginMethod, setLoginMethod] = useState('mobile'); // 'mobile' or 'email'
+    const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
     const [step, setStep] = useState(1); // 1 = Phone Input, 2 = OTP Input
-    const [formData, setFormData] = useState({ phone: '', otp: '' });
+    const [formData, setFormData] = useState({
+        phone: '',
+        otp: '',
+        name: '',
+        email: '',
+        password: ''
+    });
     const [countryCode, setCountryCode] = useState('+91');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -111,6 +118,29 @@ export default function LoginPage() {
         if (!res.success) setError(res.message);
     };
 
+    const handleEmailAuth = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        let res;
+        if (authMode === 'login') {
+            res = await login(formData.email, formData.password, redirectPath);
+        } else {
+            if (!formData.name) {
+                setError('Please enter your name');
+                setLoading(false);
+                return;
+            }
+            res = await register(formData.name, formData.email, formData.password, redirectPath);
+        }
+
+        setLoading(false);
+        if (!res.success) {
+            setError(res.message);
+        }
+    };
+
     return (
         // FIXED VIEWPORT CONTAINER: h-[calc(100vh-NavbarHeight)]
         // Using strict overflow-hidden to prevent ANY scrolling
@@ -159,125 +189,259 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key="mobile-form"
-                            initial={{ opacity: 0, x: 0 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 0 }}
-                            transition={{ duration: 0.2 }}
+                    {/* Login Method Tabs */}
+                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
+                        <button
+                            onClick={() => { setLoginMethod('mobile'); setError(''); }}
+                            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${loginMethod === 'mobile' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
-                            {step === 1 ? (
-                                <form onSubmit={handleSendOtp} className="space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">WhatsApp Number</label>
-                                        <div className="flex group relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10 group-focus-within:text-green-600 transition-colors">
-                                                <Smartphone className="w-4 h-4" />
+                            <Smartphone size={14} /> WhatsApp
+                        </button>
+                        <button
+                            onClick={() => { setLoginMethod('email'); setError(''); }}
+                            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${loginMethod === 'email' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <Mail size={14} /> Email
+                        </button>
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        {loginMethod === 'mobile' ? (
+                            <motion.div
+                                key="mobile-form"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {step === 1 ? (
+                                    <form onSubmit={handleSendOtp} className="space-y-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">WhatsApp Number</label>
+                                            <div className="flex group relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10 group-focus-within:text-green-600 transition-colors">
+                                                    <Smartphone className="w-4 h-4" />
+                                                </div>
+                                                <select
+                                                    value={countryCode}
+                                                    onChange={(e) => setCountryCode(e.target.value)}
+                                                    className="pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 h-[44px] transition-all cursor-pointer hover:bg-slate-100"
+                                                >
+                                                    {countryCodes.map(c => (
+                                                        <option key={c.code} value={c.code}>{c.code}</option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    type="tel"
+                                                    required
+                                                    placeholder="Enter mobile number"
+                                                    value={formData.phone}
+                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2.5 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                    onChange={(e) => {
+                                                        const currentCountry = countryCodes.find(c => c.code === countryCode);
+                                                        const digits = currentCountry?.digits || 10;
+                                                        setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, digits) });
+                                                    }}
+                                                />
                                             </div>
-                                            <select
-                                                value={countryCode}
-                                                onChange={(e) => setCountryCode(e.target.value)}
-                                                className="pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 h-[44px] transition-all cursor-pointer hover:bg-slate-100"
-                                            >
-                                                {countryCodes.map(c => (
-                                                    <option key={c.code} value={c.code}>{c.code}</option>
-                                                ))}
-                                            </select>
+                                        </div>
+                                        <div className="flex items-start gap-3 py-2 px-1">
+                                            <div className="flex items-center h-5">
+                                                <input
+                                                    id="terms-step1"
+                                                    type="checkbox"
+                                                    checked={acceptedTerms}
+                                                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                                    className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer"
+                                                />
+                                            </div>
+                                            <label htmlFor="terms-step1" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
+                                                I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link> of Way2Astro. I also agree to receiving updates on WhatsApp/email.
+                                            </label>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10) || !acceptedTerms}
+                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? (
+                                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                            ) : (
+                                                <>Get OTP <ArrowRight className="w-4 h-4" /></>
+                                            )}
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <form onSubmit={handleVerifyOtp} className="space-y-4">
+                                        <div className="text-center bg-blue-50/50 rounded-xl p-3 border border-blue-100">
+                                            <p className="text-xs text-slate-600 font-medium">OTP sent to</p>
+                                            <p className="text-sm font-black text-slate-900 mb-1">{countryCode} {formData.phone}</p>
+                                            <button type="button" onClick={() => setStep(1)} className="text-[10px] text-indigo-600 font-bold hover:text-indigo-800 transition-colors bg-white px-2 py-0.5 rounded-full border border-indigo-100 shadow-sm">
+                                                Change Number
+                                            </button>
+                                        </div>
+
+                                        <div className="flex justify-center">
                                             <input
-                                                type="tel"
+                                                type="text"
                                                 required
-                                                placeholder="Enter mobile number"
-                                                value={formData.phone}
-                                                className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2.5 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                onChange={(e) => {
-                                                    const currentCountry = countryCodes.find(c => c.code === countryCode);
-                                                    const digits = currentCountry?.digits || 10;
-                                                    setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, digits) });
-                                                }}
+                                                maxLength="6"
+                                                placeholder="000000"
+                                                value={formData.otp}
+                                                autoFocus
+                                                className="w-full text-center text-3xl font-black tracking-[0.5em] px-4 py-3 border-b-2 border-slate-200 focus:border-astro-navy focus:outline-none bg-transparent transition-all placeholder:text-slate-200"
+                                                onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-start gap-3 py-2 px-1">
+                                            <div className="flex items-center h-5">
+                                                <input
+                                                    id="terms-step2"
+                                                    type="checkbox"
+                                                    checked={acceptedTerms}
+                                                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                                    className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500 cursor-pointer"
+                                                />
+                                            </div>
+                                            <label htmlFor="terms-step2" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
+                                                I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link> of Way2Astro. I also agree to receiving updates on WhatsApp/email.
+                                            </label>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={loading || formData.otp.length < 6 || !acceptedTerms}
+                                            className="w-full bg-gradient-to-r from-astro-yellow to-orange-500 hover:from-orange-400 hover:to-orange-600 text-slate-900 text-sm font-black py-3 rounded-xl shadow-lg shadow-orange-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? (
+                                                <span className="w-4 h-4 border-2 border-slate-800/30 border-t-slate-800 rounded-full animate-spin"></span>
+                                            ) : (
+                                                <>Verify & Login <ArrowRight className="w-4 h-4" /></>
+                                            )}
+                                        </button>
+
+                                        {/* OTP Timer & Resend */}
+                                        <OtpTimer onResend={handleSendOtp} />
+                                    </form>
+                                )}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="email-form"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-4"
+                            >
+                                <div className="text-center mb-4">
+                                    <h2 className="text-lg font-black text-slate-900">
+                                        {authMode === 'login' ? 'Sign In' : 'Create Account'}
+                                    </h2>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        {authMode === 'login' ? 'Welcome back to your cosmic journey' : 'Start your celestial path with us'}
+                                    </p>
+                                </div>
+
+                                <form onSubmit={handleEmailAuth} className="space-y-3">
+                                    {authMode === 'signup' && (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+                                            <div className="relative group">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                    <User size={16} />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="Enter your name"
+                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                    value={formData.name}
+                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+                                        <div className="relative group">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                <Mail size={16} />
+                                            </div>
+                                            <input
+                                                type="email"
+                                                required
+                                                placeholder="you@example.com"
+                                                className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             />
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-3 py-2 px-1">
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                                        <div className="relative group">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                <Lock size={16} />
+                                            </div>
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                placeholder="Enter password"
+                                                className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                            >
+                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 py-1 px-1">
                                         <div className="flex items-center h-5">
                                             <input
-                                                id="terms-step1"
+                                                id="terms-email"
                                                 type="checkbox"
                                                 checked={acceptedTerms}
                                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                                className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer"
+                                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
                                             />
                                         </div>
-                                        <label htmlFor="terms-step1" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
-                                            I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link> of Way2Astro. I also agree to receiving updates on WhatsApp/email.
+                                        <label htmlFor="terms-email" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
+                                            I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
                                         </label>
                                     </div>
+
                                     <button
                                         type="submit"
-                                        disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10) || !acceptedTerms}
-                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                        disabled={loading || !acceptedTerms || !formData.email || !formData.password}
+                                        className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                     >
                                         {loading ? (
                                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                                         ) : (
-                                            <>Get OTP <ArrowRight className="w-4 h-4" /></>
+                                            <>{authMode === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight className="w-4 h-4" /></>
                                         )}
                                     </button>
                                 </form>
-                            ) : (
-                                <form onSubmit={handleVerifyOtp} className="space-y-4">
-                                    <div className="text-center bg-blue-50/50 rounded-xl p-3 border border-blue-100">
-                                        <p className="text-xs text-slate-600 font-medium">OTP sent to</p>
-                                        <p className="text-sm font-black text-slate-900 mb-1">{countryCode} {formData.phone}</p>
-                                        <button type="button" onClick={() => setStep(1)} className="text-[10px] text-indigo-600 font-bold hover:text-indigo-800 transition-colors bg-white px-2 py-0.5 rounded-full border border-indigo-100 shadow-sm">
-                                            Change Number
-                                        </button>
-                                    </div>
 
-                                    <div className="flex justify-center">
-                                        <input
-                                            type="text"
-                                            required
-                                            maxLength="6"
-                                            placeholder="000000"
-                                            value={formData.otp}
-                                            autoFocus
-                                            className="w-full text-center text-3xl font-black tracking-[0.5em] px-4 py-3 border-b-2 border-slate-200 focus:border-astro-navy focus:outline-none bg-transparent transition-all placeholder:text-slate-200"
-                                            onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
-                                        />
-                                    </div>
-
-                                    <div className="flex items-start gap-3 py-2 px-1">
-                                        <div className="flex items-center h-5">
-                                            <input
-                                                id="terms-step2"
-                                                type="checkbox"
-                                                checked={acceptedTerms}
-                                                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                                className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500 cursor-pointer"
-                                            />
-                                        </div>
-                                        <label htmlFor="terms-step2" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
-                                            I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link> of Way2Astro. I also agree to receiving updates on WhatsApp/email.
-                                        </label>
-                                    </div>
+                                <div className="text-center pt-2">
                                     <button
-                                        type="submit"
-                                        disabled={loading || formData.otp.length < 6 || !acceptedTerms}
-                                        className="w-full bg-gradient-to-r from-astro-yellow to-orange-500 hover:from-orange-400 hover:to-orange-600 text-slate-900 text-sm font-black py-3 rounded-xl shadow-lg shadow-orange-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                        onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setError(''); }}
+                                        className="text-xs font-bold text-indigo-600 hover:underline"
                                     >
-                                        {loading ? (
-                                            <span className="w-4 h-4 border-2 border-slate-800/30 border-t-slate-800 rounded-full animate-spin"></span>
-                                        ) : (
-                                            <>Verify & Login <ArrowRight className="w-4 h-4" /></>
-                                        )}
+                                        {authMode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
                                     </button>
-
-                                    {/* OTP Timer & Resend */}
-                                    <OtpTimer onResend={handleSendOtp} />
-                                </form>
-                            )}
-                        </motion.div>
+                                </div>
+                            </motion.div>
+                        )}
                     </AnimatePresence>
 
                 </motion.div>

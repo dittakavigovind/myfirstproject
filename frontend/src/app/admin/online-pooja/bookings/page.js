@@ -5,6 +5,9 @@ import axios from 'axios';
 import { API_BASE } from '../../../../lib/urlHelper';
 import { useAuth } from '../../../../context/AuthContext';
 import { Download, Filter, Search, Loader2, Eye, Calendar, FileText } from 'lucide-react';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from '../../../../components/common/CustomDateInput';
 import toast from 'react-hot-toast';
 
 const AdminBookings = () => {
@@ -210,38 +213,42 @@ const AdminBookings = () => {
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Booking Date (From)</label>
-                        <input
-                            type="date"
+                        <DatePicker
+                            customInput={<CustomDateInput placeholder='From' Icon={Calendar} />}
+                            selected={filters.startDate ? new Date(filters.startDate) : null}
+                            onChange={(date) => setFilters({ ...filters, startDate: date ? date.toISOString().split('T')[0] : '' })}
+                            dateFormat="dd/MM/yyyy"
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
-                            value={filters.startDate}
-                            onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                         />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Booking Date (To)</label>
-                        <input
-                            type="date"
+                        <DatePicker
+                            customInput={<CustomDateInput placeholder='To' Icon={Calendar} />}
+                            selected={filters.endDate ? new Date(filters.endDate) : null}
+                            onChange={(date) => setFilters({ ...filters, endDate: date ? date.toISOString().split('T')[0] : '' })}
+                            dateFormat="dd/MM/yyyy"
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
-                            value={filters.endDate}
-                            onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                         />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Perform Date (From)</label>
-                        <input
-                            type="date"
+                        <DatePicker
+                            customInput={<CustomDateInput placeholder='From' Icon={Calendar} />}
+                            selected={filters.performStartDate ? new Date(filters.performStartDate) : null}
+                            onChange={(date) => setFilters({ ...filters, performStartDate: date ? date.toISOString().split('T')[0] : '' })}
+                            dateFormat="dd/MM/yyyy"
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
-                            value={filters.performStartDate}
-                            onChange={(e) => setFilters({ ...filters, performStartDate: e.target.value })}
                         />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-400 pl-1 uppercase tracking-widest">Perform Date (To)</label>
-                        <input
-                            type="date"
+                        <DatePicker
+                            customInput={<CustomDateInput placeholder='To' Icon={Calendar} />}
+                            selected={filters.performEndDate ? new Date(filters.performEndDate) : null}
+                            onChange={(date) => setFilters({ ...filters, performEndDate: date ? date.toISOString().split('T')[0] : '' })}
+                            dateFormat="dd/MM/yyyy"
                             className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 outline-none focus:border-astro-navy"
-                            value={filters.performEndDate}
-                            onChange={(e) => setFilters({ ...filters, performEndDate: e.target.value })}
                         />
                     </div>
                     <div className="flex items-end">

@@ -6,6 +6,10 @@ import API from '../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Calendar, Clock, MapPin, Sparkles, LogOut, ChevronRight, Loader2 } from 'lucide-react';
 import LocationSearch from './LocationSearch';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import CustomDateInput from './common/CustomDateInput';
+import TimeInput from './TimeInput';
 
 export default function ProfileSetupModal() {
     const { user, updateUser, logout } = useAuth();
@@ -16,8 +20,8 @@ export default function ProfileSetupModal() {
     const [formData, setFormData] = useState({
         name: '',
         gender: '',
-        dob: '',
-        tob: '',
+        dob: null,
+        tob: new Date(new Date().setHours(0, 0, 0, 0)),
         pob: '',
         lat: '',
         lng: '',
@@ -169,26 +173,31 @@ export default function ProfileSetupModal() {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Birth Date</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400"><Calendar className="w-4 h-4" /></div>
-                                    <input
-                                        type="date"
-                                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-2xl py-3 pl-11 pr-4 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all"
-                                        value={formData.dob}
-                                        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                                <div className="relative">
+                                    <DatePicker
+                                        customInput={<CustomDateInput placeholder='DD/MM/YYYY' Icon={Calendar} />}
+                                        selected={formData.dob}
+                                        onChange={(date) => setFormData({ ...formData, dob: date })}
+                                        dateFormat="dd/MM/yyyy"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-slate-900 font-bold outline-none transition-all"
+                                        wrapperClassName="w-full"
+                                        showMonthDropdown
+                                        showYearDropdown
+                                        scrollableYearDropdown
+                                        yearDropdownItemNumber={100}
                                     />
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Birth Time</label>
-                                <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400"><Clock className="w-4 h-4" /></div>
-                                    <input
-                                        type="time"
-                                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-2xl py-3 pl-11 pr-4 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all"
-                                        value={formData.tob}
-                                        onChange={(e) => setFormData({ ...formData, tob: e.target.value })}
-                                    />
+                                <div className="flex items-center">
+                                    <div className="mr-3 text-slate-400"><Clock size={16} /></div>
+                                    <div className="flex-1">
+                                        <TimeInput
+                                            value={formData.tob}
+                                            onChange={(newTime) => setFormData({ ...formData, tob: newTime })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -8,6 +8,7 @@ const {
     createTemple,
     updateTemple,
     deleteTemple,
+    getAllTemplesAdmin,
     getAllBookings,
     exportBookings,
     validateCoupon,
@@ -35,6 +36,7 @@ router.post('/coupons/validate', protect, validateCoupon);
 router.put('/booking/:id/address', protect, updateBookingAddress);
 
 // Admin Routes
+router.get('/admin/temples', protect, admin, getAllTemplesAdmin);
 router.post('/admin/temples', protect, admin, createTemple);
 router.put('/admin/temples/:id', protect, admin, updateTemple);
 router.delete('/admin/temples/:id', protect, admin, deleteTemple);

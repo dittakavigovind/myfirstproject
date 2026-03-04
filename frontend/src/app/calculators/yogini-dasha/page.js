@@ -39,10 +39,14 @@ export default function YoginiDashaCalculator() {
                 name: birthDetails.name || prev.name,
                 gender: birthDetails.gender || prev.gender,
                 date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
-                time: (birthDetails.time && typeof birthDetails.time === 'string') ? (() => {
+                time: birthDetails.time ? (() => {
                     const d = new Date();
-                    const [h, m] = birthDetails.time.split(':');
-                    d.setHours(h, m, 0, 0);
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
                     return d;
                 })() : prev.time,
                 place: birthDetails.place || prev.place,
@@ -103,7 +107,7 @@ export default function YoginiDashaCalculator() {
                 name: formData.name,
                 gender: formData.gender,
                 date: formData.date,
-                time: timeStr,
+                time: formData.time,
                 place: formData.place,
                 lat: formData.lat,
                 lng: formData.lng,
@@ -233,7 +237,18 @@ export default function YoginiDashaCalculator() {
                                             <Calendar size={14} /> Date of Birth
                                         </label>
                                         <div className="relative custom-datepicker-dark">
-                                            <DatePicker customInput={<CustomDateInput placeholder='Select Date' Icon={Calendar} />} selected={formData.date} onChange={(date) => setFormData({ ...formData, date })} dateFormat="dd/MM/yyyy" className="w-full bg-white/[0.05] border border-white/10 focus:bg-white/[0.08] focus:border-indigo-500/50 rounded-2xl py-5 px-6 text-white font-bold text-lg outline-none transition-all cursor-pointer" showYearDropdown scrollableYearDropdown yearDropdownItemNumber={100} maxDate={new Date()} calendarClassName="custom-datepicker-dark-cal" />
+                                            <DatePicker
+                                                customInput={<CustomDateInput placeholder='DD/MM/YYYY' Icon={Calendar} />}
+                                                selected={formData.date}
+                                                onChange={(date) => setFormData({ ...formData, date })}
+                                                dateFormat="dd/MM/yyyy"
+                                                className="w-full bg-white/[0.05] border border-white/10 focus:bg-white/[0.08] focus:border-indigo-500/50 rounded-2xl py-5 px-6 text-white font-bold text-lg outline-none transition-all cursor-pointer"
+                                                showMonthDropdown
+                                                showYearDropdown
+                                                scrollableYearDropdown
+                                                yearDropdownItemNumber={100}
+                                                maxDate={new Date()}
+                                            />
                                         </div>
                                     </div>
 

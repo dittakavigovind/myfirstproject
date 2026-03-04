@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import LocationSearch from '../../components/LocationSearch';
 import FAQDisplay from '../../components/FAQDisplay';
@@ -13,9 +13,11 @@ import { useBirthDetails } from '../../context/BirthDetailsContext';
 import API from '@/lib/api';
 import toast from 'react-hot-toast';
 import HeroSection from '../../components/common/HeroSection';
+import "react-datepicker/dist/react-datepicker.css";
 
-export default function KundliForm() {
+function KundliFormInner() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [pageContent, setPageContent] = useState({ faqs: [], description: "" });
 
     useEffect(() => {
@@ -48,18 +50,49 @@ export default function KundliForm() {
         timezone: 5.5
     });
 
-    // Populate form from context when initialized
+    const [hasSynced, setHasSynced] = useState(false);
+
+    // Populate form from context OR URL context when initialized
     useEffect(() => {
-        if (isInitialized && birthDetails) {
+        if (!isInitialized) return;
+
+        // Check if we have source=profile in URL
+        const isFromProfile = searchParams.get('source') === 'profile';
+
+        if (isFromProfile) {
+            // Priority 1: URL Parameters (Profile state at time of click)
+            setFormData(prev => ({
+                ...prev,
+                name: searchParams.get('name') || prev.name,
+                gender: searchParams.get('gender') || prev.gender,
+                date: searchParams.get('date') ? new Date(searchParams.get('date')) : prev.date,
+                time: searchParams.get('time') ? (() => {
+                    const d = new Date();
+                    const [h, m] = searchParams.get('time').split(':');
+                    d.setHours(h, m, 0, 0);
+                    return d;
+                })() : prev.time,
+                place: searchParams.get('place') || prev.place,
+                lat: searchParams.get('lat') ? parseFloat(searchParams.get('lat')) : prev.lat,
+                lng: searchParams.get('lng') ? parseFloat(searchParams.get('lng')) : prev.lng,
+                timezone: searchParams.get('tz') ? parseFloat(searchParams.get('tz')) : prev.timezone
+            }));
+            setHasSynced(true);
+        } else if (birthDetails) {
+            // Priority 2: Session Context (Temporary user inputs)
             setFormData(prev => ({
                 ...prev,
                 name: birthDetails.name || prev.name,
                 gender: birthDetails.gender || prev.gender,
-                date: birthDetails.date || prev.date,
-                time: (birthDetails.time && typeof birthDetails.time === 'string') ? (() => {
+                date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
+                time: birthDetails.time ? (() => {
                     const d = new Date();
-                    const [h, m] = birthDetails.time.split(':');
-                    d.setHours(h, m, 0, 0);
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
                     return d;
                 })() : prev.time,
                 place: birthDetails.place || prev.place,
@@ -67,8 +100,42 @@ export default function KundliForm() {
                 lng: birthDetails.lng || prev.lng,
                 timezone: birthDetails.timezone || prev.timezone
             }));
+            setHasSynced(true);
+        } else {
+            setHasSynced(true);
         }
-    }, [isInitialized, birthDetails]);
+    }, [isInitialized, birthDetails, searchParams]);
+
+    // Handle automatic submission if action=view_my_kundli is present
+    useEffect(() => {
+        if (isInitialized && hasSynced && searchParams.get('action') === 'view_my_kundli') {
+            // Validate if we have enough data to proceed
+            if (formData.name && formData.date && formData.time && formData.lat && formData.lng) {
+                // Trigger submission automatically
+                const dateStr = formData.date.toLocaleDateString('en-CA');
+                const timeStr = formData.time.toTimeString().slice(0, 5);
+
+                const query = new URLSearchParams({
+                    date: dateStr,
+                    time: timeStr,
+                    lat: formData.lat,
+                    lng: formData.lng,
+                    name: formData.name,
+                    gender: formData.gender,
+                    tz: formData.timezone,
+                    place: formData.place
+                }).toString();
+
+                router.replace(`/kundli/result?${query}`);
+            } else {
+                // If data is missing, just clear the param so user can fill the form
+                const newParams = new URLSearchParams(searchParams.toString());
+                newParams.delete('action');
+                router.replace(`/kundli?${newParams.toString()}`, { scroll: false });
+                toast.error("Please complete your profile to view Kundli directly.");
+            }
+        }
+    }, [isInitialized, hasSynced, searchParams, formData, router]);
 
     const [loading, setLoading] = useState(false);
 
@@ -117,7 +184,9 @@ export default function KundliForm() {
 
         try {
             // Update Context with new details to persist for session
-            setBirthDetails(formData);
+            setBirthDetails({
+                ...formData
+            });
 
             // Format Data for API (YYYY-MM-DD and HH:MM)
             // Use simple local date formatting to avoid UTC time zone shifts
@@ -357,5 +426,13 @@ export default function KundliForm() {
             {/* Bottom Section: FAQ Display handles its own layout */}
             <FAQDisplay faqs={pageContent.faqs} description={pageContent.description} />
         </div>
+    );
+}
+
+export default function KundliForm() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>}>
+            <KundliFormInner />
+        </Suspense>
     );
 }

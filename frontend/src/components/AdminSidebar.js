@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
     TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, HelpCircle,
-    ChevronDown, ChevronRight, Settings, Tag
+    ChevronDown, ChevronRight, Settings, Tag, MessageSquare
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -108,6 +108,14 @@ export default function AdminSidebar({ pendingRequestsCount = 0 }) {
                             {pendingRequestsCount > 0 && (
                                 <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{pendingRequestsCount}</span>
                             )}
+                        </Link>
+
+                        <Link href="/admin/chat-sessions"
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname === '/admin/chat-sessions' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                }`}
+                        >
+                            <MessageSquare size={18} />
+                            Chat Sessions
                         </Link>
 
                         <Link href="/admin/professional-report"
