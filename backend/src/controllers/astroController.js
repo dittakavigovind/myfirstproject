@@ -2,6 +2,7 @@ const AstroService = require('../astrology/AstroService');
 const User = require('../models/User');
 const Astrologer = require('../models/Astrologer');
 const { geocodePlace, searchPlaces } = require('../utils/geocoder');
+const seoController = require('./seoController');
 
 /**
  * Generate Kundli for Request
@@ -173,7 +174,7 @@ exports.getAstrologers = async (req, res) => {
 
         let astrologers = await Astrologer.find(query)
             .populate('userId', 'role') // Populate role from User model
-            .select('userId displayName skills languages charges rating image experienceYears isOnline bio isActive slug');
+            .select('userId displayName skills languages charges rating image experienceYears isOnline bio isActive slug location createdAt');
 
         // Filter out those where userId is null (User deleted) or role is NOT 'astrologer'
         astrologers = astrologers.filter(astro => astro.userId && astro.userId.role === 'astrologer');
@@ -263,7 +264,8 @@ exports.updateCurrentAstrologer = async (req, res) => {
             name, // User model field
             expertise, languages, experience, about, // Frontend form fields
             chatPrice, callPrice, videoPrice,
-            isChatEnabled, isCallEnabled, isVideoEnabled
+            isChatEnabled, isCallEnabled, isVideoEnabled,
+            location
         } = req.body;
 
         // 1. Update User Record (Name)
@@ -294,6 +296,7 @@ exports.updateCurrentAstrologer = async (req, res) => {
             astrologer.languages = typeof languages === 'string' ? languages.split(',').map(s => s.trim()) : (Array.isArray(languages) ? languages : []);
         }
         if (experience !== undefined) astrologer.experienceYears = experience;
+        if (location !== undefined) astrologer.location = location;
         if (about) astrologer.bio = about;
 
         const chatC = parseFloat(chatPrice) || 0;
@@ -319,6 +322,10 @@ exports.updateCurrentAstrologer = async (req, res) => {
 
         await astrologer.save();
         console.log("[UPDATE_PROFILE] Success for Astrologer:", astrologer._id);
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.json({ success: true, message: 'Profile updated successfully', data: astrologer });
 
     } catch (error) {
@@ -340,7 +347,7 @@ exports.createAstrologer = async (req, res) => {
 
         const {
             name, email, password, // User fields
-            displayName, bio, skills, languages, experienceYears, charges, rating, image // Astro fields
+            displayName, bio, skills, languages, experienceYears, charges, rating, image, location // Astro fields
         } = req.body;
 
         // 1. Create User
@@ -401,8 +408,12 @@ exports.createAstrologer = async (req, res) => {
             rating: rating || 0,
             isOnline: true,
             image: image || undefined,
+            location: location,
             slug: slug
         });
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
 
         res.status(201).json({ success: true, data: astrologer });
 
@@ -419,7 +430,7 @@ exports.createAstrologer = async (req, res) => {
 exports.updateAstrologer = async (req, res) => {
     try {
         console.log('[UPDATE ASTRO] Body:', req.body);
-        const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery } = req.body;
+        const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery, location } = req.body;
 
         const astrologer = await Astrologer.findById(req.params.id);
         if (!astrologer) {
@@ -431,6 +442,7 @@ exports.updateAstrologer = async (req, res) => {
         if (bio) astrologer.bio = bio;
         if (skills) astrologer.skills = skills;
         if (languages) astrologer.languages = languages;
+        if (location) astrologer.location = location;
         if (experienceYears) astrologer.experienceYears = experienceYears;
         if (charges) {
             const chatC = parseFloat(charges.chatPerMinute) || 0;
@@ -455,6 +467,9 @@ exports.updateAstrologer = async (req, res) => {
         }
 
         await astrologer.save();
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
 
         res.json({ success: true, data: astrologer });
     } catch (error) {
@@ -580,6 +595,10 @@ exports.deleteAstrologer = async (req, res) => {
         await Astrologer.findByIdAndDelete(req.params.id);
 
         console.log(`[DELETE] Astrologer removed successfully: ${req.params.id}`);
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.json({ success: true, message: 'Astrologer removed' });
     } catch (error) {
         console.error('Delete Astrologer Error:', error);

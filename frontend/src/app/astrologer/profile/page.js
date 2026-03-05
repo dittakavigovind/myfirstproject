@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, User, DollarSign, MessageSquare, Phone, Video } from 'lucide-react';
-import API from '../../../lib/api'; // Assuming generic API handler
+import { Save, User, DollarSign, MessageSquare, Phone, Video, MapPin } from 'lucide-react';
+import API from '../../../lib/api';
+import LocationSearch from '../../../components/LocationSearch';
 
 export default function AstrologerProfile() {
     const { user, updateUser, loading } = useAuth();
@@ -22,7 +23,8 @@ export default function AstrologerProfile() {
         videoPrice: 15,
         isChatEnabled: false,
         isCallEnabled: false,
-        isVideoEnabled: false
+        isVideoEnabled: false,
+        location: ''
     });
 
     const [saving, setSaving] = useState(false);
@@ -58,7 +60,8 @@ export default function AstrologerProfile() {
                             videoPrice: astro.charges?.videoPerMinute || 15,
                             isChatEnabled: true,
                             isCallEnabled: true,
-                            isVideoEnabled: true
+                            isVideoEnabled: true,
+                            location: astro.location || ''
                         });
                     }
                 } catch (error) {
@@ -76,6 +79,10 @@ export default function AstrologerProfile() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+    };
+
+    const handleLocationSelect = (loc) => {
+        setFormData(prev => ({ ...prev, location: loc.formattedAddress }));
     };
 
     const handleSubmit = async (e) => {
@@ -200,6 +207,17 @@ export default function AstrologerProfile() {
                                 />
                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">/min</span>
                             </div>
+                        </div>
+
+                        <div className="mb-2">
+                            <label className="block text-base font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                <MapPin size={20} className="text-red-500" /> Your Location
+                            </label>
+                            <LocationSearch
+                                onLocationSelect={handleLocationSelect}
+                                defaultValue={formData.location}
+                                placeholder="e.g. New Delhi, India"
+                            />
                         </div>
                     </div>
 

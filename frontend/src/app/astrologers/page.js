@@ -94,7 +94,8 @@ export default function AstrologersPage() {
     const filteredAstrologers = astrologers.filter(astro =>
         astro.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         astro.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        astro.languages.some(lang => lang.toLowerCase().includes(searchTerm.toLowerCase()))
+        astro.languages.some(lang => lang.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (astro.location && astro.location.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -197,6 +198,7 @@ export default function AstrologersPage() {
                                         <div className="space-y-1 text-xs text-slate-500">
                                             <p className="truncate">{astro.skills.slice(0, 3).join(', ')}</p>
                                             <p className="truncate">{astro.languages.slice(0, 3).join(', ')}</p>
+                                            {astro.location && <p className="truncate italic text-[10px]">{astro.location}</p>}
                                             <p className="font-medium">Exp: {astro.experienceYears} Years</p>
                                             <p className="font-bold text-slate-900">
                                                 ₹{astro.charges.callPerMinute || astro.charges.chatPerMinute}<span className="text-slate-400 font-normal">/min</span>

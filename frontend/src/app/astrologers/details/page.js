@@ -189,6 +189,12 @@ function AstrologerProfile() {
                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                                             {astro.languages.join(', ')}
                                         </span>
+                                        {astro.location && (
+                                            <span className="flex items-center gap-2 italic text-sm">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                                {astro.location}
+                                            </span>
+                                        )}
                                         <span className="flex items-center gap-2">
                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                                             Exp: {astro.experienceYears} Years

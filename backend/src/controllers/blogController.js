@@ -1,5 +1,6 @@
 const BlogPost = require('../models/BlogPost');
 const BlogCategory = require('../models/BlogCategory');
+const seoController = require('./seoController');
 
 // @desc    Get all categories
 // @route   GET /api/blog/categories
@@ -236,6 +237,10 @@ exports.createPost = async (req, res) => {
         }
 
         const post = await BlogPost.create(req.body);
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.status(201).json({ success: true, data: post });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
@@ -258,6 +263,9 @@ exports.updatePost = async (req, res) => {
             runValidators: true
         });
 
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.json({ success: true, data: post });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
@@ -276,6 +284,9 @@ exports.deletePost = async (req, res) => {
         }
 
         await post.deleteOne();
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
 
         res.json({ success: true, data: {} });
     } catch (error) {

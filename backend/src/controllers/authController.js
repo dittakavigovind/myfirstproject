@@ -81,6 +81,9 @@ exports.loginUser = async (req, res) => {
         console.log(`[LOGIN] Password Match: ${isMatch}`);
 
         if (isMatch) {
+            if (user.isBlocked) {
+                return res.status(403).json({ message: 'Your account has been disabled. Please contact support.' });
+            }
             // Update lastLogin
             user.lastLogin = new Date();
             await user.save();
@@ -160,6 +163,10 @@ exports.verifyOtp = async (req, res) => {
                 phone: normalizedPhone,
                 name: 'User', // Placeholder
             });
+        }
+
+        if (user.isBlocked) {
+            return res.status(403).json({ message: 'Your account has been disabled. Please contact support.' });
         }
 
         res.json({

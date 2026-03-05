@@ -53,4 +53,4 @@ const seoSettingsSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('SEOSettings', seoSettingsSchema);
+module.exports = mongoose.models.SEOSettings || mongoose.model('SEOSettings', seoSettingsSchema);

@@ -94,6 +94,7 @@ const userSchema = new mongoose.Schema({
     isVoiceOnline: { type: Boolean, default: false },
     isVideoOnline: { type: Boolean, default: false },
     lastOnlineAt: { type: Date }, // Timestamp when they went online
+    isBlocked: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Pre-validate hook to lowercase gender

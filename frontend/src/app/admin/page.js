@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import API from '../../lib/api';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
-    TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, Pencil, Trash2, CheckCircle, Sparkles, Phone, Monitor, Settings, Share2, LayoutGrid, X, Loader2
+    TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, Pencil, Trash2, CheckCircle, Sparkles, Phone, Monitor, Settings, Share2, LayoutGrid, X, Loader2,
+    Download, FileDown, Search
 } from 'lucide-react';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import toast from 'react-hot-toast';
@@ -17,6 +18,7 @@ import CustomDateInput from '../../components/common/CustomDateInput';
 import { useAdmin } from '../../context/AdminContext';
 import BlogManager from '../../components/admin/BlogManager';
 import LogoSettings from '../../components/admin/LogoSettings';
+import LocationSearch from '../../components/LocationSearch';
 import NavigationSettings from '../../components/admin/NavigationSettings';
 import PopupManager from '../../components/admin/PopupManager';
 import PageDescriptionManager from '../../components/admin/PageDescriptionManager';
@@ -42,6 +44,7 @@ export default function AdminDashboard() {
     const [showAstroForm, setShowAstroForm] = useState(false);
     const [editingAstro, setEditingAstro] = useState(null);
     const [selectedRequest, setSelectedRequest] = useState(null); // State for detailed view modal
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Confirmation Modal State
     const [confirmModal, setConfirmModal] = useState({
@@ -173,6 +176,19 @@ export default function AdminDashboard() {
         );
     };
 
+    const handleToggleBlock = async (userId, isBlocked) => {
+        try {
+            const res = await API.put(`/admin/users/${userId}/toggle-block`);
+            if (res.data.success) {
+                toast.success(res.data.message);
+                fetchData(); // Refresh data to reflect status changes
+            }
+        } catch (error) {
+            console.error("Block toggle error", error);
+            toast.error(error.response?.data?.message || "Failed to update user status");
+        }
+    };
+
     const handleDeleteAstro = (id) => {
         openConfirm(
             'Delete Astrologer',
@@ -265,6 +281,23 @@ export default function AdminDashboard() {
                 setActivities(res.data.logs);
             }
         } catch (e) { console.error(e); }
+    };
+
+    const handleExportUsers = async () => {
+        try {
+            const res = await API.get('/admin/users/export', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `users_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success('Members exported successfully');
+        } catch (error) {
+            console.error('Export Error:', error);
+            toast.error('Failed to export members');
+        }
     };
 
     // Calculate dynamic stats
@@ -522,9 +555,30 @@ export default function AdminDashboard() {
             {/* All Members Tab */}
             {activeTab === 'all-members' && (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h2 className="font-bold text-slate-700">All Portal Members</h2>
-                        <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Total: {allMembers.length}</span>
+                    <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                        <div className="flex items-center gap-4">
+                            <h2 className="font-bold text-slate-700">All Portal Members</h2>
+                            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Total: {allMembers.length}</span>
+                        </div>
+                        <div className="flex items-center gap-4 flex-1 max-w-md">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, email or phone..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                                />
+                            </div>
+                            <button
+                                onClick={handleExportUsers}
+                                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
+                            >
+                                <FileDown size={18} />
+                                Download CSV
+                            </button>
+                        </div>
                     </div>
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
@@ -538,7 +592,27 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {allMembers.length > 0 ? allMembers.map(u => (
+                            {allMembers.filter(u =>
+                                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.phone?.includes(searchTerm) ||
+                                u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
+                                (u.createdAt && (() => {
+                                    const d = new Date(u.createdAt);
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                })().includes(searchTerm))
+                            ).length > 0 ? allMembers.filter(u =>
+                                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.phone?.includes(searchTerm) ||
+                                u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
+                                (u.createdAt && (() => {
+                                    const d = new Date(u.createdAt);
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                })().includes(searchTerm))
+                            ).map(u => (
                                 <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition group cursor-pointer">
                                     <td className="p-4 font-medium text-slate-700">{u.name}</td>
                                     <td className="p-4 text-slate-500">
@@ -556,6 +630,9 @@ export default function AdminDashboard() {
                                             }`}>
                                             {u.role}
                                         </span>
+                                        {u.isBlocked && (
+                                            <span className="ml-2 px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
+                                        )}
                                     </td>
                                     <td className="p-4 text-slate-400">
                                         {(() => {
@@ -576,7 +653,18 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4">
+                                    <td className="p-4 flex gap-2 items-center">
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={!u.isBlocked}
+                                                    onChange={() => handleToggleBlock(u._id, u.isBlocked)}
+                                                />
+                                                <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                            </label>
+                                        </div>
                                         {user.role === 'admin' && (
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(u._id); }} className="text-red-500 hover:text-red-700 transition" title="Delete User"><Trash2 size={16} /></button>
                                         )}
@@ -584,7 +672,7 @@ export default function AdminDashboard() {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="5" className="p-8 text-center text-slate-400">No members found</td>
+                                    <td colSpan="6" className="p-8 text-center text-slate-400">No members found</td>
                                 </tr>
                             )}
                         </tbody>
@@ -594,6 +682,19 @@ export default function AdminDashboard() {
 
             {activeTab === 'users' && (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                        <h2 className="font-bold text-slate-700">Platform Users</h2>
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search users..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                            />
+                        </div>
+                    </div>
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
                             <tr>
@@ -606,7 +707,15 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {userList.map(u => (
+                            {userList.filter(u =>
+                                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.phone?.includes(searchTerm) ||
+                                (u.createdAt && (() => {
+                                    const d = new Date(u.createdAt);
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                })().includes(searchTerm))
+                            ).map(u => (
                                 <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
                                     <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
@@ -625,8 +734,11 @@ export default function AdminDashboard() {
                                             </span>
                                         )}
                                     </td>
-                                    <td className="p-4">
+                                    <td className="p-4 flex items-center gap-2">
                                         <span className="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">User</span>
+                                        {u.isBlocked && (
+                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
+                                        )}
                                     </td>
                                     <td className="p-4 text-slate-400">
                                         {(() => {
@@ -647,7 +759,18 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4">
+                                    <td className="p-4 flex gap-2 items-center">
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={!u.isBlocked}
+                                                    onChange={() => handleToggleBlock(u._id, u.isBlocked)}
+                                                />
+                                                <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                            </label>
+                                        </div>
                                         {u.role !== 'admin' && (
                                             <button onClick={() => handleDeleteUser(u._id)} className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded transition">
                                                 <LogOut size={16} />
@@ -659,370 +782,472 @@ export default function AdminDashboard() {
                         </tbody>
                     </table>
                 </div>
-            )}
+            )
+            }
 
-            {activeTab === 'content' && (
-                <BlogManager />
-            )}
+            {
+                activeTab === 'content' && (
+                    <BlogManager />
+                )
+            }
 
-            {activeTab === 'managers' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
-                            <tr>
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Email / Phone</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4">Joined</th>
-                                <th className="p-4">Interactions</th>
-                                <th className="p-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {managerList.map(u => (
-                                <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
-                                    <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{u.name}</td>
-                                    <td className="p-4 text-slate-500">
-                                        {u.email || (
-                                            <span className="text-green-600 font-medium flex items-center gap-1">
-                                                <Phone size={12} /> {u.phone}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded text-xs font-bold">Manager</span>
-                                    </td>
-                                    <td className="p-4 text-slate-400">
-                                        {(() => {
-                                            const d = new Date(u.createdAt);
-                                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-                                        })()}
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col gap-1 text-[10px]">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Panchang:</span>
-                                                <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100" title="Views">{userInteractions[u._id]?.PANCHANG?.VIEW || 0}V</span>
-                                                <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100" title="Shares">{userInteractions[u._id]?.PANCHANG?.SHARE || 0}S</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Calendar:</span>
-                                                <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100" title="Clicks">{userInteractions[u._id]?.CALENDAR?.CLICK || 0}C</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <select
-                                            disabled={user.role !== 'admin'}
-                                            value={u.role}
-                                            onChange={(e) => handleRoleUpdate(u._id, e.target.value)}
-                                            className={`px-2 py-1.5 rounded text-xs border border-slate-200 cursor-pointer bg-white text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 ${user.role !== 'admin' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        >
-                                            <option value="user">Demote to User</option>
-                                            <option value="manager">Manager</option>
-                                            <option value="admin">Promote to Admin</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                            ))}
-                            {managerList.length === 0 && (
-                                <tr>
-                                    <td colSpan="5" className="p-8 text-center text-slate-400">No managers found.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {activeTab === 'requests' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    {reqList.length === 0 ? <div className="p-8 text-center text-slate-500">No pending requests</div> : (
+            {
+                activeTab === 'managers' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                            <h2 className="font-bold text-slate-700">Portal Managers</h2>
+                            <div className="relative flex-1 max-w-md">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search managers..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                                />
+                            </div>
+                        </div>
                         <table className="w-full text-left text-sm">
                             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
                                 <tr>
                                     <th className="p-4">Name</th>
-                                    <th className="p-4">Email</th>
-                                    <th className="p-4">Skills</th>
-                                    <th className="p-4">Exp</th>
+                                    <th className="p-4">Email / Phone</th>
+                                    <th className="p-4">Role</th>
+                                    <th className="p-4">Joined</th>
+                                    <th className="p-4">Interactions</th>
                                     <th className="p-4">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {reqList.map(req => (
-                                    <tr key={req._id} onClick={() => setSelectedRequest(req)} className="hover:bg-slate-50/50 transition cursor-pointer group">
-                                        <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{req.name}</td>
-                                        <td className="p-4 text-slate-500">{req.email}</td>
-                                        <td className="p-4 text-slate-500 max-w-xs truncate">{req.skills.join(', ')}</td>
-                                        <td className="p-4 text-slate-600">{req.experience}y</td>
-                                        <td className="p-4 flex gap-2">
-                                            {['admin', 'manager'].includes(user.role) ? (
-                                                <>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleApprove(req._id); }} className="bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-100 transition shadow-sm">Approve</button>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleReject(req._id); }} className="bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100 transition shadow-sm">Reject</button>
-                                                </>
-                                            ) : (
-                                                <span className="text-xs text-slate-400 italic">Read Only</span>
+                                {managerList.filter(u =>
+                                    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    u.phone?.includes(searchTerm) ||
+                                    (u.createdAt && (() => {
+                                        const d = new Date(u.createdAt);
+                                        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                    })().includes(searchTerm))
+                                ).map(u => (
+                                    <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
+                                        <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{u.name}</td>
+                                        <td className="p-4 text-slate-500">
+                                            {u.email || (
+                                                <span className="text-green-600 font-medium flex items-center gap-1">
+                                                    <Phone size={12} /> {u.phone}
+                                                </span>
                                             )}
+                                        </td>
+                                        <td className="p-4 flex items-center gap-2">
+                                            <span className="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded text-xs font-bold">Manager</span>
+                                            {u.isBlocked && (
+                                                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-slate-400">
+                                            {(() => {
+                                                const d = new Date(u.createdAt);
+                                                return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                            })()}
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-1 text-[10px]">
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Panchang:</span>
+                                                    <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100" title="Views">{userInteractions[u._id]?.PANCHANG?.VIEW || 0}V</span>
+                                                    <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100" title="Shares">{userInteractions[u._id]?.PANCHANG?.SHARE || 0}S</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Calendar:</span>
+                                                    <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100" title="Clicks">{userInteractions[u._id]?.CALENDAR?.CLICK || 0}C</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 flex gap-3 items-center">
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={!u.isBlocked}
+                                                        onChange={() => handleToggleBlock(u._id, u.isBlocked)}
+                                                    />
+                                                    <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                                </label>
+                                            </div>
+                                            <select
+                                                disabled={user.role !== 'admin'}
+                                                value={u.role}
+                                                onChange={(e) => handleRoleUpdate(u._id, e.target.value)}
+                                                className={`px-2 py-1.5 rounded text-xs border border-slate-200 cursor-pointer bg-white text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 ${user.role !== 'admin' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                <option value="user">Demote to User</option>
+                                                <option value="manager">Manager</option>
+                                                <option value="admin">Promote to Admin</option>
+                                            </select>
                                         </td>
                                     </tr>
                                 ))}
+                                {managerList.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="p-8 text-center text-slate-400">No managers found.</td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
-                    )}
-
-                    {/* Request Details Modal */}
-                    {selectedRequest && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setSelectedRequest(null)}>
-                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                    <h3 className="text-lg font-bold text-slate-800">Application Details</h3>
-                                    <button onClick={() => setSelectedRequest(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition">
-                                        <LogOut size={18} className="rotate-180" />
-                                    </button>
-                                </div>
-
-                                <div className="p-8 space-y-8">
-                                    {/* Header Info */}
-                                    <div className="flex gap-6 items-start">
-                                        <div className="w-24 h-24 rounded-xl bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
-                                            {selectedRequest.image ? (
-                                                <img src={selectedRequest.image} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-2xl">
-                                                    {selectedRequest.name?.charAt(0)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            <h2 className="text-2xl font-bold text-slate-800 mb-1">{selectedRequest.name}</h2>
-                                            <div className="space-y-1 text-sm text-slate-500">
-                                                <p className="flex items-center gap-2">
-                                                    <span className="font-semibold text-slate-700">Email:</span> {selectedRequest.email}
-                                                </p>
-                                                <p className="flex items-center gap-2">
-                                                    <span className="font-semibold text-slate-700">Phone:</span> {selectedRequest.phone || 'N/A'}
-                                                </p>
-                                                <p className="flex items-center gap-2">
-                                                    <span className="font-semibold text-slate-700">Experience:</span> {selectedRequest.experience} Years
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Skills & Langs */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                                            <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">Skills</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedRequest.skills.map(s => (
-                                                    <span key={s} className="bg-white text-blue-600 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm border border-blue-100">{s}</span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100">
-                                            <h4 className="text-xs font-bold text-purple-800 uppercase tracking-wider mb-3">Languages</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedRequest.languages.map(l => (
-                                                    <span key={l} className="bg-white text-purple-600 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm border border-purple-100">{l}</span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Bio */}
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-700 mb-3 border-b border-slate-100 pb-2">About / Bio</h4>
-                                        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                            {selectedRequest.bio || "No description provided."}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Unique ID for debugging/reference */}
-                                <div className="px-8 pb-2 text-[10px] text-slate-300 font-mono">
-                                    Request ID: {selectedRequest._id}
-                                </div>
-
-                                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 rounded-b-2xl">
-                                    <button
-                                        onClick={() => handleReject(selectedRequest._id)}
-                                        className="px-5 py-2.5 rounded-xl border border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 transition"
-                                    >
-                                        Reject Application
-                                    </button>
-                                    <button
-                                        onClick={() => handleApprove(selectedRequest._id)}
-                                        className="px-5 py-2.5 rounded-xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 shadow-md shadow-green-200 transition"
-                                    >
-                                        Approve & Promote
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {activeTab === 'astrologers' && (
-                <div>
-                    <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <h2 className="font-bold text-xl text-slate-800">Astrologers Directory</h2>
-                            <p className="text-sm text-slate-500">Manage expert profiles</p>
-                        </div>
-                        {user.role === 'admin' && (
-                            <button
-                                onClick={() => {
-                                    if (showAstroForm || editingAstro) {
-                                        setShowAstroForm(false);
-                                        setEditingAstro(null);
-                                    } else {
-                                        setShowAstroForm(true);
-                                    }
-                                }}
-                                className="bg-astro-navy text-white px-5 py-2.5 rounded-xl font-medium shadow-sm hover:shadow-md hover:bg-slate-800 transition flex items-center gap-2"
-                            >
-                                {showAstroForm || editingAstro ? <><LogOut size={16} /> Cancel</> : <><PenTool size={16} /> Add Astrologer</>}
-                            </button>
-                        )}
                     </div>
-
-                    {(showAstroForm || editingAstro) && (
-                        <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 mb-8">
-                            <h3 className="font-bold text-xl text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingAstro ? 'Edit Astrologer Profile' : 'Add New Astrologer'}</h3>
-                            <AddAstrologerForm
-                                initialData={editingAstro}
-                                onSuccess={() => {
-                                    setShowAstroForm(false);
-                                    setEditingAstro(null);
-                                    fetchData();
-                                }}
-                            />
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {astroList.map(a => (
-                            <div
-                                key={a._id}
-                                onClick={() => router.push(`/admin/astrologer/${a.slug || a._id}`)}
-                                className="relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 p-4 flex gap-4 items-start group cursor-pointer"
-                            >
-                                {/* Left: Image & Stats */}
-                                <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                                    <div className="relative">
-                                        <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 to-orange-500">
-                                            <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-white">
-                                                <img
-                                                    src={a.image || `https://ui-avatars.com/api/?name=${a.displayName}`}
-                                                    alt={a.displayName}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                        </div>
-                                        {/* Status Dot */}
-                                        <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full z-10 ${a.isOnline ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
-                                        <div className="flex text-yellow-500">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={10} fill={i < Math.floor(a.rating) ? "currentColor" : "none"} className={i < Math.floor(a.rating) ? "" : "text-slate-200"} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
-                                        {a.reviewCount || 0} orders
-                                    </div>
-                                </div>
-
-                                {/* Middle: Info */}
-                                <div className="flex-1 min-w-0 pt-0.5">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <h3 className="font-bold text-slate-800 text-sm truncate">{a.displayName}</h3>
-                                            <CheckCircle size={14} className="text-green-500 fill-green-50 flex-shrink-0" />
-                                        </div>
-                                        {/* Toggle Active Switch */}
-                                        <div onClick={(e) => e.stopPropagation()}>
-                                            <label className="relative inline-flex items-center cursor-pointer scale-75">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={a.isActive !== false}
-                                                    onChange={() => handleToggleActive(a._id, a.isActive !== false)}
-                                                />
-                                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-0.5 text-xs text-slate-500">
-                                        <p className="truncate block" title={a.skills.join(', ')}>{a.skills.slice(0, 2).join(', ')}{a.skills.length > 2 && '...'}</p>
-                                        <p className="truncate block" title={a.languages.join(', ')}>{a.languages.slice(0, 2).join(', ')}</p>
-                                        <p className="font-medium mt-1">Exp: {a.experienceYears} Years</p>
-                                        <p className="font-bold text-slate-900">
-                                            ₹{a.charges?.chatPerMinute}<span className="text-slate-400 font-normal">/min</span>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Right: Admin Actions */}
-                                {user.role === 'admin' && (
-                                    <div className="absolute bottom-4 right-4 flex gap-2">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setEditingAstro(a); }}
-                                            className="border border-blue-500 text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDeleteAstro(a._id); }}
-                                            className="border border-red-500 text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )
+                )
             }
 
-            {activeTab === 'logo-settings' && user.role === 'admin' && (
-                <LogoSettings />
-            )}
+            {
+                activeTab === 'requests' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        {reqList.length === 0 ? <div className="p-8 text-center text-slate-500">No pending requests</div> : (
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
+                                    <tr>
+                                        <th className="p-4">Name</th>
+                                        <th className="p-4">Email</th>
+                                        <th className="p-4">Skills</th>
+                                        <th className="p-4">Exp</th>
+                                        <th className="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {reqList.map(req => (
+                                        <tr key={req._id} onClick={() => setSelectedRequest(req)} className="hover:bg-slate-50/50 transition cursor-pointer group">
+                                            <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors">{req.name}</td>
+                                            <td className="p-4 text-slate-500">{req.email}</td>
+                                            <td className="p-4 text-slate-500 max-w-xs truncate">{req.skills.join(', ')}</td>
+                                            <td className="p-4 text-slate-600">{req.experience}y</td>
+                                            <td className="p-4 flex gap-2">
+                                                {['admin', 'manager'].includes(user.role) ? (
+                                                    <>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleApprove(req._id); }} className="bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-100 transition shadow-sm">Approve</button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleReject(req._id); }} className="bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-100 transition shadow-sm">Reject</button>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 italic">Read Only</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
 
-            {activeTab === 'nav-badges' && user.role === 'admin' && (
-                <NavigationSettings />
-            )}
+                        {/* Request Details Modal */}
+                        {selectedRequest && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setSelectedRequest(null)}>
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                        <h3 className="text-lg font-bold text-slate-800">Application Details</h3>
+                                        <button onClick={() => setSelectedRequest(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition">
+                                            <LogOut size={18} className="rotate-180" />
+                                        </button>
+                                    </div>
 
-            {activeTab === 'explore-services' && user.role === 'admin' && (
-                <ExploreServicesSettings />
-            )}
+                                    <div className="p-8 space-y-8">
+                                        {/* Header Info */}
+                                        <div className="flex gap-6 items-start">
+                                            <div className="w-24 h-24 rounded-xl bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
+                                                {selectedRequest.image ? (
+                                                    <img src={selectedRequest.image} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-2xl">
+                                                        {selectedRequest.name?.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h2 className="text-2xl font-bold text-slate-800 mb-1">{selectedRequest.name}</h2>
+                                                <div className="space-y-1 text-sm text-slate-500">
+                                                    <p className="flex items-center gap-2">
+                                                        <span className="font-semibold text-slate-700">Email:</span> {selectedRequest.email}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <span className="font-semibold text-slate-700">Phone:</span> {selectedRequest.phone || 'N/A'}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <span className="font-semibold text-slate-700">Experience:</span> {selectedRequest.experience} Years
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-            {activeTab === 'popups' && (
-                <PopupManager />
-            )}
+                                        {/* Skills & Langs */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                                <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">Skills</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedRequest.skills.map(s => (
+                                                        <span key={s} className="bg-white text-blue-600 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm border border-blue-100">{s}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+                                                <h4 className="text-xs font-bold text-purple-800 uppercase tracking-wider mb-3">Languages</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedRequest.languages.map(l => (
+                                                        <span key={l} className="bg-white text-purple-600 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm border border-purple-100">{l}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
 
-            {activeTab === 'faqs' && (
-                <FAQPageManager />
-            )}
+                                        {/* Bio */}
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-700 mb-3 border-b border-slate-100 pb-2">About / Bio</h4>
+                                            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                                {selectedRequest.bio || "No description provided."}
+                                            </p>
+                                        </div>
+                                    </div>
 
-            {activeTab === 'page-descriptions' && (
-                <PageDescriptionManager />
-            )}
+                                    {/* Unique ID for debugging/reference */}
+                                    <div className="px-8 pb-2 text-[10px] text-slate-300 font-mono">
+                                        Request ID: {selectedRequest._id}
+                                    </div>
 
-            {activeTab === 'settings' && user.role === 'admin' && (
-                <div className="space-y-8">
+                                    <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 rounded-b-2xl">
+                                        <button
+                                            onClick={() => handleReject(selectedRequest._id)}
+                                            className="px-5 py-2.5 rounded-xl border border-red-200 text-red-600 font-bold text-sm hover:bg-red-50 transition"
+                                        >
+                                            Reject Application
+                                        </button>
+                                        <button
+                                            onClick={() => handleApprove(selectedRequest._id)}
+                                            className="px-5 py-2.5 rounded-xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 shadow-md shadow-green-200 transition"
+                                        >
+                                            Approve & Promote
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )
+            }
+
+            {
+                activeTab === 'astrologers' && (
+                    <div>
+                        <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+                            <div>
+                                <h2 className="font-bold text-xl text-slate-800">Astrologers Directory</h2>
+                                <p className="text-sm text-slate-500">Manage expert profiles</p>
+                            </div>
+                            <div className="flex items-center gap-4 flex-1 max-w-2xl justify-end">
+                                <div className="relative flex-1 max-w-md">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search astrologers by name, skills or phone..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all font-normal"
+                                    />
+                                </div>
+                                {user.role === 'admin' && (
+                                    <button
+                                        onClick={() => {
+                                            if (showAstroForm || editingAstro) {
+                                                setShowAstroForm(false);
+                                                setEditingAstro(null);
+                                            } else {
+                                                setShowAstroForm(true);
+                                            }
+                                        }}
+                                        className="bg-astro-navy text-white px-5 py-2.5 rounded-xl font-medium shadow-sm hover:shadow-md hover:bg-slate-800 transition flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                        {showAstroForm || editingAstro ? <><LogOut size={16} /> Cancel</> : <><PenTool size={16} /> Add Astrologer</>}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {(showAstroForm || editingAstro) && (
+                            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 mb-8">
+                                <h3 className="font-bold text-xl text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingAstro ? 'Edit Astrologer Profile' : 'Add New Astrologer'}</h3>
+                                <AddAstrologerForm
+                                    initialData={editingAstro}
+                                    onSuccess={() => {
+                                        setShowAstroForm(false);
+                                        setEditingAstro(null);
+                                        fetchData();
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {astroList.filter(a =>
+                                a.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                a.skills?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                a.languages?.some(l => l.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                a.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (a.isActive !== false ? 'active' : 'inactive').includes(searchTerm.toLowerCase()) ||
+                                a.phone?.includes(searchTerm) ||
+                                (a.createdAt && (() => {
+                                    const d = new Date(a.createdAt);
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                })().includes(searchTerm))
+                            ).length > 0 ? astroList.filter(a =>
+                                a.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                a.skills?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                a.languages?.some(l => l.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                a.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (a.isActive !== false ? 'active' : 'inactive').includes(searchTerm.toLowerCase()) ||
+                                a.phone?.includes(searchTerm) ||
+                                (a.createdAt && (() => {
+                                    const d = new Date(a.createdAt);
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                })().includes(searchTerm))
+                            ).map(a => (
+                                <div
+                                    key={a._id}
+                                    onClick={() => router.push(`/admin/astrologer/${a.slug || a._id}`)}
+                                    className="relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 p-4 flex gap-4 items-start group cursor-pointer"
+                                >
+                                    {/* Left: Image & Stats */}
+                                    <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                                        <div className="relative">
+                                            <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 to-orange-500">
+                                                <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-white">
+                                                    <img
+                                                        src={a.image || `https://ui-avatars.com/api/?name=${a.displayName}`}
+                                                        alt={a.displayName}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            </div>
+                                            {/* Status Dot */}
+                                            <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full z-10 ${a.isOnline ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                                            <div className="flex text-yellow-500">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star key={i} size={10} fill={i < Math.floor(a.rating) ? "currentColor" : "none"} className={i < Math.floor(a.rating) ? "" : "text-slate-200"} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 font-medium whitespace-nowrap">
+                                            {a.reviewCount || 0} orders
+                                        </div>
+                                    </div>
+
+                                    {/* Middle: Info */}
+                                    <div className="flex-1 min-w-0 pt-0.5">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <div className="flex items-center gap-1 min-w-0">
+                                                <h3 className="font-bold text-slate-800 text-sm truncate">{a.displayName}</h3>
+                                                <CheckCircle size={14} className="text-green-500 fill-green-50 flex-shrink-0" />
+                                            </div>
+                                            {/* Toggle Active Switch */}
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={a.isActive !== false}
+                                                        onChange={() => handleToggleActive(a._id, a.isActive !== false)}
+                                                    />
+                                                    <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-0.5 text-xs text-slate-500">
+                                            <p className="truncate block" title={a.skills.join(', ')}>{a.skills.slice(0, 2).join(', ')}{a.skills.length > 2 && '...'}</p>
+                                            <p className="truncate block" title={a.languages.join(', ')}>{a.languages.slice(0, 2).join(', ')}</p>
+                                            {a.location && <p className="truncate block italic text-[10px]" title={a.location}>{a.location}</p>}
+                                            <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                                                <span>Exp: {a.experienceYears} Years</span>
+                                                {a.createdAt && <span>Joined: {(() => {
+                                                    const d = new Date(a.createdAt);
+                                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                                })()}</span>}
+                                            </div>
+                                            <p className="font-bold text-slate-900">
+                                                ₹{a.charges?.chatPerMinute}<span className="text-slate-400 font-normal">/min</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Right: Admin Actions */}
+                                    {user.role === 'admin' && (
+                                        <div className="absolute bottom-4 right-4 flex gap-2">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setEditingAstro(a); }}
+                                                className="border border-blue-500 text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteAstro(a._id); }}
+                                                className="border border-red-500 text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )) : (
+                                <div className="col-span-full p-12 text-center text-slate-400">
+                                    No astrologers found matching your search.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
+            }
+
+            {
+                activeTab === 'logo-settings' && user.role === 'admin' && (
                     <LogoSettings />
+                )
+            }
+
+            {
+                activeTab === 'nav-badges' && user.role === 'admin' && (
                     <NavigationSettings />
-                </div>
-            )}
+                )
+            }
+
+            {
+                activeTab === 'explore-services' && user.role === 'admin' && (
+                    <ExploreServicesSettings />
+                )
+            }
+
+            {
+                activeTab === 'popups' && (
+                    <PopupManager />
+                )
+            }
+
+            {
+                activeTab === 'faqs' && (
+                    <FAQPageManager />
+                )
+            }
+
+            {
+                activeTab === 'page-descriptions' && (
+                    <PageDescriptionManager />
+                )
+            }
+
+            {
+                activeTab === 'settings' && user.role === 'admin' && (
+                    <div className="space-y-8">
+                        <LogoSettings />
+                        <NavigationSettings />
+                    </div>
+                )
+            }
 
             <InteractionDetailModal
                 isOpen={drilldownModal.isOpen}
@@ -1199,7 +1424,7 @@ const InteractionDetailModal = ({ isOpen, onClose, data, loading, title, filters
 function AddAstrologerForm({ onSuccess, initialData }) {
     const [formData, setFormData] = useState({
         name: '', email: '', password: '',
-        displayName: '', bio: '', image: '', skills: '', languages: '', rating: '4.5', experienceYears: '5',
+        displayName: '', bio: '', image: '', skills: '', languages: '', location: '', rating: '4.5', experienceYears: '5',
         chatCharge: '15', callCharge: '15', videoCharge: '15'
     });
     const [loading, setLoading] = useState(false);
@@ -1213,6 +1438,7 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                 image: initialData.image || '',
                 skills: initialData.skills ? initialData.skills.join(', ') : '',
                 languages: initialData.languages ? initialData.languages.join(', ') : '',
+                location: initialData.location || '',
                 rating: initialData.rating || '4.5',
                 experienceYears: initialData.experienceYears || '5',
                 chatCharge: initialData.charges?.chatPerMinute || '15',
@@ -1225,6 +1451,10 @@ function AddAstrologerForm({ onSuccess, initialData }) {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleLocationSelect = (loc) => {
+        setFormData(prev => ({ ...prev, location: loc.formattedAddress }));
     };
 
     const handleSubmit = async (e) => {
@@ -1264,6 +1494,7 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                 bio: formData.bio,
                 skills: formData.skills.split(',').map(s => s.trim()),
                 languages: formData.languages.split(',').map(s => s.trim()),
+                location: formData.location,
                 rating: parseFloat(formData.rating),
                 experienceYears: parseInt(formData.experienceYears),
                 charges: {
@@ -1339,6 +1570,14 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                 </div>
                 <div className="md:col-span-2">
                     <InputGroup label="Languages (Comma separate)" name="languages" value={formData.languages} placeholder="Hindi, English, Telugu..." onChange={handleChange} required />
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Location / Google Place</label>
+                    <LocationSearch
+                        onLocationSelect={handleLocationSelect}
+                        defaultValue={formData.location}
+                        placeholder="e.g. New Delhi, India"
+                    />
                 </div>
 
                 <InputGroup label="Rating (0-5)" name="rating" value={formData.rating} type="number" step="0.1" max="5" placeholder="4.5" onChange={handleChange} required />

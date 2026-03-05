@@ -1,5 +1,6 @@
 const Temple = require('../models/Temple');
 const PoojaBooking = require('../models/PoojaBooking');
+const seoController = require('./seoController');
 const Coupon = require('../models/Coupon');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -336,6 +337,10 @@ exports.createTemple = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
         const temple = await Temple.create(req.body);
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.status(201).json({ success: true, data: temple });
     } catch (error) {
         console.error('Create Temple Error:', error);
@@ -352,9 +357,14 @@ exports.updateTemple = async (req, res) => {
             new: true,
             runValidators: true
         });
+
         if (!temple) {
             return res.status(404).json({ success: false, message: 'Temple not found' });
         }
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.status(200).json({ success: true, data: temple });
     } catch (error) {
         console.error('Update Temple Error:', error);
@@ -372,6 +382,10 @@ exports.deleteTemple = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Temple not found' });
         }
         await temple.deleteOne();
+
+        // Ping search engines for sitemap update
+        seoController.pingSearchEngines();
+
         res.status(200).json({ success: true, message: 'Temple removed' });
     } catch (error) {
         console.error('Delete Temple Error:', error);

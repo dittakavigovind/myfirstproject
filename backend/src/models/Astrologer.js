@@ -31,6 +31,7 @@ const astrologerSchema = new mongoose.Schema({
         type: String, // e.g., 'Vedic', 'Tarot', 'Numerology'
     }],
     languages: [String],
+    location: String,
     experienceYears: Number,
     charges: {
         chatPerMinute: Number,

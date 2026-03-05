@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser } = require('../controllers/adminController');
+const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, toggleUserBlock } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // Middleware to ensure admin
@@ -11,10 +11,12 @@ const { protect, admin } = require('../middleware/authMiddleware');
 // For now, I'll use a check inside the route or assume 'admin' function exists in authMiddleware. 
 // I'll check authMiddleware file next. For now I'll define routes.
 
+router.get('/users/export', protect, admin, exportUsersCSV);
 router.get('/stats', protect, admin, getDashboardStats);
 router.get('/users', protect, admin, getAllUsers);
 router.get('/users/:id', protect, admin, getUserById);
 router.put('/users/:id/role', protect, admin, updateUserRole);
+router.put('/users/:id/toggle-block', protect, admin, toggleUserBlock);
 router.delete('/users/:id', protect, admin, deleteUser);
 router.get('/activity', protect, admin, getAstrologerActivity);
 
