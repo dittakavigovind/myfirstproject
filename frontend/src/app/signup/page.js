@@ -162,9 +162,15 @@ export default function SignupPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 px-1 py-2">
+                        <div className="flex items-center gap-2 px-1 py-1">
                             <input type="checkbox" id="show-pass" className="w-4 h-4 rounded border-white/10 bg-white/5 text-astro-yellow focus:ring-astro-yellow/30" onChange={() => setShowPassword(!showPassword)} />
                             <label htmlFor="show-pass" className="text-xs text-slate-400 cursor-pointer">Show Password</label>
+                        </div>
+
+                        <div className="py-2 px-1 text-center">
+                            <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
+                                By continuing, you agree to our <Link href="/terms" className="text-astro-yellow font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-astro-yellow font-bold hover:underline">Privacy Policy</Link>.
+                            </p>
                         </div>
 
                         <button

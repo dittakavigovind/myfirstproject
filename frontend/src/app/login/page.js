@@ -57,7 +57,6 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [showResend, setShowResend] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -374,23 +373,14 @@ export default function LoginPage() {
                                                 />
                                             </div>
                                         </div>
-                                        <div className="flex items-start gap-3 py-2 px-1">
-                                            <div className="flex items-center h-5">
-                                                <input
-                                                    id="terms-step1"
-                                                    type="checkbox"
-                                                    checked={acceptedTerms}
-                                                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                                    className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500 cursor-pointer"
-                                                />
-                                            </div>
-                                            <label htmlFor="terms-step1" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
-                                                I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link> of Way2Astro. I also agree to receiving updates on WhatsApp/email.
-                                            </label>
+                                        <div className="py-2 px-1 text-center">
+                                            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                                                By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
+                                            </p>
                                         </div>
                                         <button
                                             type="submit"
-                                            disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10) || !acceptedTerms}
+                                            disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10)}
                                             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                         >
                                             {loading ? (
@@ -423,23 +413,14 @@ export default function LoginPage() {
                                             />
                                         </div>
 
-                                        <div className="flex items-start gap-3 py-2 px-1">
-                                            <div className="flex items-center h-5">
-                                                <input
-                                                    id="terms-step2"
-                                                    type="checkbox"
-                                                    checked={acceptedTerms}
-                                                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                                    className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500 cursor-pointer"
-                                                />
-                                            </div>
-                                            <label htmlFor="terms-step2" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
-                                                I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms and Conditions</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link> of Way2Astro. I also agree to receiving updates on WhatsApp/email.
-                                            </label>
+                                        <div className="py-2 px-1 text-center">
+                                            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                                                By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
+                                            </p>
                                         </div>
                                         <button
                                             type="submit"
-                                            disabled={loading || formData.otp.length < 6 || !acceptedTerms}
+                                            disabled={loading || formData.otp.length < 6}
                                             className="w-full bg-gradient-to-r from-astro-yellow to-orange-500 hover:from-orange-400 hover:to-orange-600 text-slate-900 text-sm font-black py-3 rounded-xl shadow-lg shadow-orange-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                         >
                                             {loading ? (
@@ -533,24 +514,15 @@ export default function LoginPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-start gap-3 py-1 px-1">
-                                        <div className="flex items-center h-5">
-                                            <input
-                                                id="terms-email"
-                                                type="checkbox"
-                                                checked={acceptedTerms}
-                                                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer"
-                                            />
-                                        </div>
-                                        <label htmlFor="terms-email" className="text-[10px] text-slate-500 font-medium leading-relaxed cursor-pointer">
-                                            I accept the <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
-                                        </label>
+                                    <div className="py-2 px-1 text-center">
+                                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                                            By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
+                                        </p>
                                     </div>
 
                                     <button
                                         type="submit"
-                                        disabled={loading || !acceptedTerms || !formData.email || !formData.password}
+                                        disabled={loading || !formData.email || !formData.password}
                                         className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                     >
                                         {loading ? (
