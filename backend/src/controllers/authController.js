@@ -21,8 +21,13 @@ exports.registerUser = async (req, res) => {
     try {
         const { name, email, password, mobileNumber } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Please add all fields' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Please provide email and password' });
+        }
+
+        let finalName = name;
+        if (!finalName || finalName.trim() === '') {
+            finalName = email.split('@')[0];
         }
 
         // Check if user exists
@@ -41,7 +46,7 @@ exports.registerUser = async (req, res) => {
 
         // Create user
         const user = await User.create({
-            name,
+            name: finalName,
             email,
             password: hashedPassword,
             mobileNumber,

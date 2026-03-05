@@ -51,12 +51,15 @@ export default function LoginPage() {
         otp: '',
         name: '',
         email: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
     });
     const [countryCode, setCountryCode] = useState('+91');
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showResend, setShowResend] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -166,6 +169,7 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setSuccessMsg('');
 
         if (authMode === 'login') {
             const res = await login(formData.email, formData.password, redirectPath);
@@ -179,7 +183,20 @@ export default function LoginPage() {
                 }
             }
         } else {
-            router.push('/signup');
+            if (formData.password !== formData.confirmPassword) {
+                setLoading(false);
+                setError('Passwords do not match');
+                return;
+            }
+            const res = await register('', formData.email, formData.password, '');
+            setLoading(false);
+            if (res.success) {
+                setSuccessMsg(res.message);
+                setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+                setAuthMode('login'); // Switch back to login view after successful signup
+            } else {
+                setError(res.message);
+            }
         }
     };
 
@@ -299,6 +316,14 @@ export default function LoginPage() {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="bg-white rounded-[2rem] shadow-2xl shadow-indigo-900/15 border border-white/50 p-6 w-full max-w-[380px] backdrop-blur-sm"
                 >
+
+                    {successMsg && (
+                        <div className="bg-green-50 border-l-4 border-green-500 text-green-700 px-3 py-2 rounded-r-lg text-xs font-bold flex flex-col gap-2 shadow-sm mb-4">
+                            <div className="flex items-center">
+                                <span className="mr-2">✔️</span> {successMsg}
+                            </div>
+                        </div>
+                    )}
 
                     {error && (
                         <div className="bg-red-50 border-l-4 border-red-500 text-red-600 px-3 py-2 rounded-r-lg text-xs font-bold flex flex-col gap-2 shadow-sm mb-4">
@@ -480,24 +505,7 @@ export default function LoginPage() {
                                 </div>
 
                                 <form onSubmit={handleEmailAuth} className="space-y-3">
-                                    {authMode === 'signup' && (
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
-                                            <div className="relative group">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                    <User size={16} />
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    placeholder="Enter your name"
-                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                    value={formData.name}
-                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+
 
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
@@ -540,6 +548,32 @@ export default function LoginPage() {
                                         </div>
                                     </div>
 
+                                    {authMode === 'signup' && (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Password</label>
+                                            <div className="relative group">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                    <Lock size={16} />
+                                                </div>
+                                                <input
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    required
+                                                    placeholder="Confirm password"
+                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                    value={formData.confirmPassword}
+                                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                >
+                                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="py-2 px-1 text-center">
                                         <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
                                             By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
@@ -548,7 +582,7 @@ export default function LoginPage() {
 
                                     <button
                                         type="submit"
-                                        disabled={loading || !formData.email || !formData.password}
+                                        disabled={loading || !formData.email || !formData.password || (authMode === 'signup' && formData.password !== formData.confirmPassword)}
                                         className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                     >
                                         {loading ? (
