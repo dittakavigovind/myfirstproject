@@ -38,7 +38,7 @@ const OtpTimer = ({ onResend }) => {
 };
 
 export default function LoginPage() {
-    const { user, login, sendOtp, verifyOtp, resendVerification, logout, setAuth, loading: authLoading } = useAuth();
+    const { user, login, register, sendOtp, verifyOtp, resendVerification, logout, setAuth, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectPath = searchParams.get('redirect');
