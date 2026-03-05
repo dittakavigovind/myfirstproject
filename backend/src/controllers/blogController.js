@@ -153,10 +153,8 @@ exports.getPosts = async (req, res) => {
 // @access  Private/Admin
 exports.getAdminPosts = async (req, res) => {
     try {
-        console.log('Admin fetching posts...');
         const posts = await BlogPost.find({})
             .sort({ createdAt: -1 });
-        console.log(`Found ${posts.length} posts for admin.`);
 
         res.json({
             success: true,
@@ -173,7 +171,6 @@ exports.getAdminPosts = async (req, res) => {
 // @access  Public
 exports.getPostById = async (req, res) => {
     try {
-        console.log(`[DEBUG] getPostById called with ID: ${req.params.id}`);
         const post = await BlogPost.findById(req.params.id);
 
         if (!post) {

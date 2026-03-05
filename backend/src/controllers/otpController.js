@@ -50,7 +50,6 @@ exports.sendWhatsappOtp = async (req, res) => {
         const testNumbers = ['919948505111', '919491537320', '919849097924'];
 
         if (testNumbers.includes(purePhone)) {
-            console.log(`Test number ${purePhone} detected. Skipping MSG91 API. Use OTP: 123456`);
             return res.status(200).json({ success: true, message: 'Test OTP generated (123456)' });
         }
 
@@ -99,7 +98,6 @@ exports.sendWhatsappOtp = async (req, res) => {
             }
         };
 
-        console.log('MSG91 Payload:', JSON.stringify(whatsappPayload, null, 2));
 
         const response = await axios.post(
             'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/',
@@ -107,7 +105,6 @@ exports.sendWhatsappOtp = async (req, res) => {
             { headers: { authkey: msg91AuthKey, 'Content-Type': 'application/json' } }
         );
 
-        console.log('MSG91 Response:', response.data);
 
         res.status(200).json({ success: true, message: 'OTP sent via WhatsApp' });
 

@@ -38,7 +38,7 @@ const OtpTimer = ({ onResend }) => {
 };
 
 export default function LoginPage() {
-    const { user, login, sendOtp, verifyOtp } = useAuth();
+    const { user, login, sendOtp, verifyOtp, resendVerification, logout, setAuth, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectPath = searchParams.get('redirect');
@@ -58,20 +58,65 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [showResend, setShowResend] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [isProcessingGoogleAuth, setIsProcessingGoogleAuth] = useState(false);
 
+    // 0. Hydration Guard
     useEffect(() => {
-        if (user) {
-            if (redirectPath) {
-                router.push(redirectPath);
-            } else if (user.role === 'astrologer') {
-                router.push('/astrologer/dashboard');
-            } else if (user.role === 'admin') {
-                router.push('/admin');
-            } else {
-                router.push('/dashboard');
-            }
+        setIsMounted(true);
+        // If we have Google params, set processing immediately
+        if (searchParams.get('googleAuth') === 'success') {
+            setIsProcessingGoogleAuth(true);
         }
-    }, [user, router, redirectPath]);
+    }, [searchParams]);
+
+
+    // 1. Process Google Auth Callback
+    useEffect(() => {
+        const googleAuthStatus = searchParams.get('googleAuth');
+        const userDataStr = searchParams.get('userData');
+
+        if (googleAuthStatus === 'success' && userDataStr) {
+            try {
+                const userData = JSON.parse(decodeURIComponent(userDataStr));
+                setAuth(userData);
+
+                // CRITICAL: We do NOT clear the URL yet. Wait for 'user' state to catch up.
+            } catch (err) {
+                console.error('Error parsing Google Auth data:', err);
+                setError('Google authentication failed. Please try again.');
+                setIsProcessingGoogleAuth(false);
+            }
+        } else if (googleAuthStatus === 'failed') {
+            setError(searchParams.get('message') || 'Google authentication failed.');
+            setIsProcessingGoogleAuth(false);
+            // Cleanup failed params
+            router.replace('/login/');
+        }
+    }, [searchParams, setAuth, router]);
+
+    // 2. Separate Effect for URL Cleanup & Automatic Redirection
+    useEffect(() => {
+        if (!authLoading && user) {
+
+            // Cleanup URL if needed using router.replace (not history.replaceState)
+            // This ensures useSearchParams is updated
+            if (searchParams.get('googleAuth') || searchParams.get('userData')) {
+                router.replace('/login/');
+                // We keep isProcessingGoogleAuth true until we actually leave the page
+            }
+
+            const dest = redirectPath || (user.role === 'astrologer' ? '/astrologer/dashboard' : user.role === 'admin' ? '/admin' : '/dashboard');
+
+            const timer = setTimeout(() => {
+                router.push(dest);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [user, authLoading, router, redirectPath, searchParams]);
+
 
     const countryCodes = [
         { code: '+91', country: 'India', digits: 10 },
@@ -123,23 +168,96 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
 
-        let res;
         if (authMode === 'login') {
-            res = await login(formData.email, formData.password, redirectPath);
-        } else {
-            if (!formData.name) {
-                setError('Please enter your name');
-                setLoading(false);
-                return;
+            const res = await login(formData.email, formData.password, redirectPath);
+            setLoading(false);
+            if (!res.success) {
+                if (res.emailNotVerified) {
+                    setError('Email not verified. Please verify your email to login.');
+                    setShowResend(true);
+                } else {
+                    setError(res.message);
+                }
             }
-            res = await register(formData.name, formData.email, formData.password, redirectPath);
+        } else {
+            router.push('/signup');
         }
+    };
 
-        setLoading(false);
-        if (!res.success) {
+
+    const handleGoogleLogin = () => {
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        window.location.href = `${backendUrl}/auth/google`;
+    };
+
+    const handleResend = async () => {
+        setResendLoading(true);
+        const res = await resendVerification(formData.email);
+        setResendLoading(false);
+        if (res.success) {
+            setError('Verification email resent! Please check your inbox.');
+            setShowResend(false);
+        } else {
             setError(res.message);
         }
     };
+
+    // 4. Render Guards
+
+    // If not mounted, don't render to avoid hydration mismatch
+    if (!isMounted) return null;
+
+    // Highest priority: If processing Google auth params, show a clean loader
+    if (isProcessingGoogleAuth) {
+        return <CosmicLoader message="Synchronizing Celestial Data..." />;
+    }
+
+    // If auth state is still loading from localStorage, show loader to prevent flicker
+    if (authLoading) {
+        return <CosmicLoader message="Connecting..." />;
+    }
+
+    // If user is already logged in, show a friendly redirection screen or a "Logout Instead" option
+    if (user && !searchParams.get('userData')) {
+        return (
+            <div className="min-h-screen bg-[#0b1c3d] flex flex-col items-center justify-center p-6 text-center">
+                <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                    {/* Background glow */}
+                    <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+                    <div className="relative z-10 space-y-6">
+                        <div className="w-20 h-20 bg-astro-yellow rounded-full mx-auto flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                            <span className="text-3xl font-black text-astro-navy">{user.name?.charAt(0)}</span>
+                        </div>
+
+                        <div>
+                            <h2 className="text-2xl font-black text-white mb-2">Welcome Back, {user.name?.split(' ')[0]}!</h2>
+                            <p className="text-slate-400 text-sm">You are currently logged in to Way2Astro.</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    const dest = redirectPath || (user.role === 'astrologer' ? '/astrologer/dashboard' : user.role === 'admin' ? '/admin' : '/dashboard');
+                                    router.push(dest);
+                                }}
+                                className="w-full bg-astro-yellow hover:bg-yellow-400 text-astro-navy font-black py-4 rounded-2xl shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                Go to Dashboard <ArrowRight className="w-4 h-4" />
+                            </button>
+
+                            <button
+                                onClick={logout}
+                                className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-2xl border border-white/10 transition-all text-sm"
+                            >
+                                Logout and use another account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         // FIXED VIEWPORT CONTAINER: h-[calc(100vh-NavbarHeight)]
@@ -184,8 +302,19 @@ export default function LoginPage() {
                 >
 
                     {error && (
-                        <div className="bg-red-50 border-l-4 border-red-500 text-red-600 px-3 py-2 rounded-r-lg text-xs font-bold flex items-center shadow-sm mb-4">
-                            <span className="mr-2">⚠️</span> {error}
+                        <div className="bg-red-50 border-l-4 border-red-500 text-red-600 px-3 py-2 rounded-r-lg text-xs font-bold flex flex-col gap-2 shadow-sm mb-4">
+                            <div className="flex items-center">
+                                <span className="mr-2">⚠️</span> {error}
+                            </div>
+                            {showResend && (
+                                <button
+                                    onClick={handleResend}
+                                    disabled={resendLoading}
+                                    className="text-indigo-600 hover:underline text-left text-[10px] font-black uppercase mt-1"
+                                >
+                                    {resendLoading ? 'Sending...' : 'Resend Verification Email'}
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -440,6 +569,29 @@ export default function LoginPage() {
                                         {authMode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
                                     </button>
                                 </div>
+
+                                <div className="relative my-6">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-slate-200"></div>
+                                    </div>
+                                    <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                                        <span className="bg-white px-2 text-slate-400">Or continue with</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleGoogleLogin}
+                                    type="button"
+                                    className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98]"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24">
+                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                    </svg>
+                                    Continue with Google
+                                </button>
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -6,7 +6,6 @@ const PageContent = require('../models/PageContent');
 exports.getPageContent = async (req, res) => {
     try {
         const { slug } = req.params;
-        console.log(`Fetching content for slug: ${slug}`);
 
         let content = await PageContent.findOne({ pageSlug: slug });
 

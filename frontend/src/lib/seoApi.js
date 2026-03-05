@@ -34,18 +34,12 @@ export async function generateSeoMetadata(slug, defaultMeta = {}) {
     // Env var for backend URL is needed.
     const baseUrl = API_BASE;
 
-    console.log(`[SEO Debug] Fetching for slug: ${slug} from ${baseUrl}/seo/${slug}`);
-
     try {
         const res = await fetch(`${baseUrl}/seo/${slug}`);
-
-        console.log(`[SEO Debug] Response status: ${res.status}`);
 
         if (!res.ok) throw new Error("Failed to fetch");
 
         const json = await res.json();
-
-        console.log(`[SEO Debug] Data received:`, json.success);
 
         if (json.success && json.data) {
             const seo = json.data;

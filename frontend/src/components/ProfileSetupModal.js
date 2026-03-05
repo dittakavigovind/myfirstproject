@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import API from '../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,6 +14,7 @@ import TimeInput from './TimeInput';
 
 export default function ProfileSetupModal() {
     const { user, updateUser, logout } = useAuth();
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -72,7 +74,7 @@ export default function ProfileSetupModal() {
                 gender: formData.gender,
                 birthDetails: {
                     date: formData.dob,
-                    time: formData.tob,
+                    time: formData.tob instanceof Date ? formData.tob.toTimeString().slice(0, 5) : formData.tob,
                     place: formData.pob,
                     lat: formData.lat,
                     lng: formData.lng,
@@ -84,6 +86,7 @@ export default function ProfileSetupModal() {
             if (res.data.success) {
                 updateUser(res.data);
                 setIsOpen(false);
+                router.push('/dashboard');
             } else {
                 setError(res.data.message || 'Failed to update profile');
             }
@@ -179,12 +182,14 @@ export default function ProfileSetupModal() {
                                         selected={formData.dob}
                                         onChange={(date) => setFormData({ ...formData, dob: date })}
                                         dateFormat="dd/MM/yyyy"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-slate-900 font-bold outline-none transition-all"
+                                        className="w-full"
                                         wrapperClassName="w-full"
                                         showMonthDropdown
                                         showYearDropdown
                                         scrollableYearDropdown
                                         yearDropdownItemNumber={100}
+                                        peekNextMonth
+                                        dropdownMode="select"
                                     />
                                 </div>
                             </div>

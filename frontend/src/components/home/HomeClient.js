@@ -46,17 +46,25 @@ export default function HomeClient() {
             } catch (error) {
                 console.error("Failed to fetch astrologers", error);
             } finally {
-                // Reduced delay for better UX
-                setTimeout(() => setLoading(false), 300);
+                setLoading(false);
             }
         };
+
+        // Safety timeout: If site settings or astrologers hang, clear the loader after 5s
+        const safetyTimer = setTimeout(() => {
+            setLoading(false);
+        }, 5000);
+
         fetchData();
+        return () => clearTimeout(safetyTimer);
     }, []);
 
     // -------------------------------------------------------------------------
     // HYDRATION & AUTH LOADING
     // -------------------------------------------------------------------------
-    if (!mounted || authLoading) {
+    // If not mounted, show loader. If mounted, only show loader if auth is still loading
+    // and component data is still loading.
+    if (!mounted || (authLoading && loading)) {
         return <CosmicLoader size="lg" message="Aligning the Stars..." fullscreen={true} />;
     }
 

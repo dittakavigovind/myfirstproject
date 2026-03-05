@@ -107,7 +107,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                     return;
                 }
 
-                setQuery(placeName); // Success! Now set the input text
+                setQuery(formattedAddress || placeName); // Success! Use formatted address if available
                 onLocationSelect({
                     formattedAddress,
                     lat,
@@ -119,13 +119,11 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                     pincode
                 });
             } else {
-                setError(restrictCountry ? "Please select within India" : (res.data.message || 'Location not found'));
+                setError(res.data.message || 'Location not found');
             }
         } catch (error) {
             console.error("Geocode error details:", error.response ? error.response.data : error.message);
-            // Only set "Delivery only to India" if it's a catch-all for a failed request
-            // If the request succeeded but something else failed, use a generic error
-            setError(restrictCountry ? "Delivery only to India" : "Location not found");
+            setError("Location not found - please select from suggestions");
         } finally {
             setSearching(false);
         }

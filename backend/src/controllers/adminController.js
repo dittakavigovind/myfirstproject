@@ -48,7 +48,6 @@ exports.getAllUsers = async (req, res) => {
 // @access  Private/Admin
 exports.getUserById = async (req, res) => {
     try {
-        console.log("getUserById called with params:", req.params);
         let user;
         const { id } = req.params;
 
@@ -68,7 +67,6 @@ exports.getUserById = async (req, res) => {
         }
 
         if (!user) {
-            console.log("User not found for ID/Email/Username:", id);
             return res.status(404).json({ message: 'User not found' });
         }
         res.json(user);
@@ -136,7 +134,6 @@ exports.getAstrologerActivity = async (req, res) => {
 // @access  Private/Admin
 exports.exportUsersCSV = async (req, res) => {
     try {
-        console.log("exportUsersCSV controller called");
         const users = await User.find().select('-password').sort({ createdAt: -1 });
 
         const fields = [

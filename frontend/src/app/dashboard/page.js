@@ -87,12 +87,23 @@ export default function Dashboard() {
                 parsedDate = new Date(user.birthDetails.dob);
             }
 
-            // Parse Time (HH:mm string)
+            // Parse Time (Can be HH:mm or ISO string)
             const timeStr = user.birthDetails?.time || user.birthDetails?.tob;
             if (timeStr) {
                 parsedTime = new Date();
-                const [h, m] = timeStr.split(':');
-                parsedTime.setHours(parseInt(h), parseInt(m), 0, 0);
+                if (typeof timeStr === 'string' && timeStr.includes('T')) {
+                    // Handle ISO string from legacy or mis-formatted saves
+                    const t = new Date(timeStr);
+                    if (!isNaN(t)) {
+                        parsedTime.setHours(t.getHours(), t.getMinutes(), 0, 0);
+                    }
+                } else if (typeof timeStr === 'string' && timeStr.includes(':')) {
+                    // Handle standard HH:mm format
+                    const [h, m] = timeStr.split(':');
+                    parsedTime.setHours(parseInt(h), parseInt(m), 0, 0);
+                } else {
+                    parsedTime.setHours(0, 0, 0, 0);
+                }
             } else {
                 // Default to 12:00 AM if not set
                 parsedTime = new Date();
@@ -554,7 +565,29 @@ export default function Dashboard() {
                                 <ProfileItem
                                     icon={<Clock size={18} />}
                                     label="Time of Birth"
-                                    value={user.birthDetails?.time || user.birthDetails?.tob || 'Not Set'}
+                                    value={(() => {
+                                        const tob = user.birthDetails?.time || user.birthDetails?.tob;
+                                        if (!tob) return 'Not Set';
+
+                                        // Handle ISO String
+                                        if (tob.includes('T')) {
+                                            const d = new Date(tob);
+                                            if (!isNaN(d)) {
+                                                return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                                            }
+                                        }
+
+                                        // Handle HH:mm format
+                                        if (tob.includes(':')) {
+                                            const [h, m] = tob.split(':');
+                                            const hours = parseInt(h);
+                                            const ampm = hours >= 12 ? 'PM' : 'AM';
+                                            const h12 = hours % 12 || 12;
+                                            return `${String(h12).padStart(2, '0')}:${m} ${ampm}`;
+                                        }
+
+                                        return tob;
+                                    })()}
                                     color="purple"
                                 />
                                 <ProfileItem

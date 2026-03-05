@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const AstroService = require('../astrology/AstroService');
+const tzUtils = require('../utils/timezoneUtils');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -10,7 +11,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         unique: true,
         sparse: true,
-        // required: [true, 'Please add an email'], // Make optional if phone login is primary
+        lowercase: true,
+        trim: true,
+    },
+    mobileNumber: {
+        type: String,
+        sparse: true,
     },
     phone: {
         type: String,
@@ -24,9 +30,24 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        // required: [true, 'Please add a password'],
-        select: false, // Don't return by default
+        select: false,
     },
+    authProvider: {
+        type: String,
+        enum: ['email', 'google', 'whatsapp'],
+        default: 'whatsapp',
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationToken: String,
+    verificationTokenExpire: Date,
     role: {
         type: String,
         enum: ['user', 'astrologer', 'admin', 'manager'],
@@ -117,9 +138,9 @@ const calculateCosmicIdentity = async (birthDetails) => {
 
     if (date && time && calcLat !== undefined && calcLng !== undefined) {
         try {
-            const dateStr = date instanceof Date ? date.toISOString().split('T')[0] : String(date).split('T')[0];
+            const dateStr = tzUtils.formatInTimezone(date, timezone || 'Asia/Kolkata', "YYYY-MM-DD");
             const calcTz = timezone || 5.5;
-            const kundli = await AstroService.generateKundli(dateStr, time, calcLat, calcLng, parseFloat(calcTz));
+            const kundli = await AstroService.generateKundli(dateStr, time, calcLat, calcLng, calcTz);
             const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
             const updates = {};

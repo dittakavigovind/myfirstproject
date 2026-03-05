@@ -14,7 +14,6 @@ exports.handleAgoraWebhook = async (req, res) => {
         // const isValid = verifyAgoraSignature(signature, body);
         // if (!isValid) return res.status(401).send('Invalid Signature');
 
-        console.log('[Agora Webhook]', JSON.stringify(body));
 
         const { noticeId, productId, eventType, payload } = body;
         const { channelName, uid } = payload;
@@ -26,12 +25,10 @@ exports.handleAgoraWebhook = async (req, res) => {
         switch (eventType) {
             case 103: // Broadcaster Joined Channel
                 // In 1-on-1, Astrologer is usually a Broadcaster
-                console.log(`[Agora] Broadcaster ${uid} joined channel ${channelName}`);
                 await BillingService.startBilling(channelName);
                 break;
 
             case 104: // Broadcaster Left Channel
-                console.log(`[Agora] Broadcaster ${uid} left channel ${channelName}`);
                 // If it was the Astrologer, end session
                 // We treat any broadcaster leaving as a potential end trigger in 1-on-1
                 await BillingService.endSession(channelName, 'astro_left');
@@ -39,7 +36,6 @@ exports.handleAgoraWebhook = async (req, res) => {
 
             case 106: // Audience Left Channel (User)
                 // If the user was audience
-                console.log(`[Agora] User (Audience) ${uid} left channel ${channelName}`);
                 await BillingService.endSession(channelName, 'user_left');
                 break;
 

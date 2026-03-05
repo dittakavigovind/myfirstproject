@@ -37,7 +37,6 @@ exports.getSiteSettings = async (req, res) => {
                 logoMobile: '/logo.svg',
                 exploreServices: defaultServices
             });
-            console.log("Created initial SiteSettings with default services.");
         } else {
             // Robust check for missing default services
             let updated = false;
@@ -45,7 +44,6 @@ exports.getSiteSettings = async (req, res) => {
             if (!settings.exploreServices || settings.exploreServices.length === 0) {
                 settings.exploreServices = defaultServices;
                 updated = true;
-                console.log("Restored all default services to empty SiteSettings.");
             } else {
                 // Normalize paths for comparison (remove trailing slashes)
                 const normalizePath = (p) => p?.replace(/\/+$/, '') || '';
@@ -59,7 +57,6 @@ exports.getSiteSettings = async (req, res) => {
                 });
 
                 if (missingServices.length > 0) {
-                    console.log(`Found ${missingServices.length} missing default services:`, missingServices.map(s => s.title));
 
                     // Add missing services at the end
                     const maxOrder = settings.exploreServices.reduce((max, s) => Math.max(max, s.order || 0), 0);
@@ -79,7 +76,6 @@ exports.getSiteSettings = async (req, res) => {
                 // Ensure Mongoose detects the change in the array
                 settings.markModified('exploreServices');
                 await settings.save();
-                console.log("SiteSettings updated with missing default services.");
             }
         }
 
@@ -145,7 +141,6 @@ exports.updateSiteSettings = async (req, res) => {
         }
 
         if (req.body.exploreServices) {
-            console.log(`Updating exploreServices with ${req.body.exploreServices.length} items`);
             settings.exploreServices = req.body.exploreServices;
         }
 

@@ -43,7 +43,6 @@ const geocodePlace = async (placeName, targetCountry = null, place_id = null) =>
             }
         }
 
-        console.log(`[GEOCODE DEBUG] URL: ${geoUrl}`);
         const geoRes = await axios.get(geoUrl, { httpsAgent: agent });
 
         if (geoRes.data.status !== 'OK') {
@@ -56,7 +55,6 @@ const geocodePlace = async (placeName, targetCountry = null, place_id = null) =>
         const { lat, lng } = location;
 
         // DEBUG: Log address components to see why pincode might be missing
-        console.log(`[GEOCODE DEBUG] ${placeName} components:`, JSON.stringify(addressComponents, null, 2));
 
         // Parse address components
         let city = '', state = '', resCountry = '', pincode = '';
@@ -78,7 +76,6 @@ const geocodePlace = async (placeName, targetCountry = null, place_id = null) =>
             const pinMatch = formattedAddress.match(/\b\d{6}\b/);
             if (pinMatch) {
                 pincode = pinMatch[0];
-                console.log(`[GEOCODE DEBUG] Extracted pincode from formattedAddress: ${pincode}`);
             }
         }
 
@@ -91,9 +88,7 @@ const geocodePlace = async (placeName, targetCountry = null, place_id = null) =>
         // 1.5 Strict Country Validation (Second layer of defense)
         if (targetCountry && targetCountry.toUpperCase() === 'IN') {
             const isIndia = resCountry.toLowerCase() === 'india' || addressComponents.some(c => c.short_name === 'IN');
-            console.log(`[GEOCODE DEBUG] ${placeName} Country Check:`, { resCountry, isIndia, targetCountry });
             if (!isIndia) {
-                console.warn(`[GEOCODE DEBUG] Rejected ${placeName} - Not in India`);
                 throw new Error("Delivery only to India");
             }
         }
@@ -156,7 +151,6 @@ const searchPlaces = async (query, targetCountry = null) => {
         if (targetCountry) {
             url += `&components=country:${targetCountry}`;
         }
-        console.log(`[SEARCH DEBUG] URL: ${url}`);
 
         // Simple retry logic
         let retries = 3;

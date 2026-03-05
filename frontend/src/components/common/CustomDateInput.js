@@ -4,8 +4,7 @@ const CustomDateInput = forwardRef(({ value, onClick, className, placeholder, Ic
     <div
         ref={ref}
         onClick={onClick}
-        className={`${className} flex items-center cursor-pointer select-none touch-none touch-callout-none`}
-        style={{ WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
+        className={`${className} flex items-center cursor-pointer`}
     >
         {Icon && (
             <div className={`mr-3 ${iconColor || 'opacity-50'}`}>

@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const otpService = require('../services/otpService');
+const emailService = require('../services/emailService');
+const crypto = require('crypto');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -17,7 +19,7 @@ const generateToken = (id) => {
  */
 exports.registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, mobileNumber } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Please add all fields' });
@@ -33,20 +35,30 @@ exports.registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
         // Create user
         const user = await User.create({
             name,
             email,
             password: hashedPassword,
+            mobileNumber,
+            authProvider: 'email',
+            emailVerified: false,
+            verificationToken,
+            verificationTokenExpire,
         });
 
         if (user) {
+            // Send verification email
+            await emailService.sendVerificationEmail(user, verificationToken);
+
             res.status(201).json({
+                message: 'Registration successful. Please check your email to verify your account.',
                 id: user.id,
-                name: user.name,
                 email: user.email,
-                profileImage: user.profileImage,
-                token: generateToken(user._id),
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -65,24 +77,29 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log(`[LOGIN ATTEMPT] Email: ${email}, Password Provided: ${password ? 'Yes' : 'No'}`);
 
         // Check for user email
         const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
-            console.log(`[LOGIN FAILED] User not found: ${email}`);
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        console.log(`[LOGIN] User found: ${user.email}, Role: ${user.role}`);
 
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log(`[LOGIN] Password Match: ${isMatch}`);
 
         if (isMatch) {
             if (user.isBlocked) {
                 return res.status(403).json({ message: 'Your account has been disabled. Please contact support.' });
+            }
+
+            // Check if email is verified for email auth
+            if (user.authProvider === 'email' && !user.emailVerified) {
+                return res.status(401).json({
+                    message: 'Email not verified. Please verify your email to login.',
+                    emailNotVerified: true,
+                    email: user.email
+                });
             }
             // Update lastLogin
             user.lastLogin = new Date();
@@ -104,7 +121,6 @@ exports.loginUser = async (req, res) => {
                 token: generateToken(user._id),
             });
         } else {
-            console.log(`[LOGIN FAILED] Password mismatch for ${email}`);
             res.status(400).json({ message: 'Invalid credentials' });
         }
     } catch (error) {
@@ -186,5 +202,70 @@ exports.verifyOtp = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Login failed', error: error.message });
+    }
+};
+/**
+ * @desc    Verify email address
+ * @route   GET /api/auth/verify-email/:token
+ * @access  Public
+ */
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const user = await User.findOne({
+            verificationToken: token,
+            verificationTokenExpire: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired verification token' });
+        }
+
+        user.emailVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpire = undefined;
+        await user.save();
+
+        res.json({ message: 'Email verified successfully. You can now login.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+/**
+ * @desc    Resend verification email
+ * @route   POST /api/auth/resend-verification
+ * @access  Public
+ */
+exports.resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.emailVerified) {
+            return res.status(400).json({ message: 'Email already verified' });
+        }
+
+        // Generate new token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
+
+        user.verificationToken = verificationToken;
+        user.verificationTokenExpire = verificationTokenExpire;
+        await user.save();
+
+        await emailService.sendVerificationEmail(user, verificationToken);
+
+        res.json({ message: 'Verification email resent successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };

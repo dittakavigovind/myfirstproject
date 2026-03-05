@@ -7,7 +7,7 @@
 const envApiUrl = process.env.NEXT_PUBLIC_API_URL; // e.g., 'http://192.168.29.133:5000/api'
 
 // Fallback logic for local development if not set in .env
-const fallbackServer = "http://192.168.29.133:5000";
+const fallbackServer = "http://localhost:5000";
 
 let computedApiBase = envApiUrl || `${fallbackServer}/api`;
 let computedServerBase = computedApiBase.replace(/\/api$/, '');

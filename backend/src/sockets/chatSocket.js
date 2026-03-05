@@ -31,7 +31,6 @@ module.exports = function (io) {
     });
 
     io.on('connection', (socket) => {
-        console.log(`Socket connected: ${socket.id} (User: ${socket.user.id}, Role: ${socket.user.role})`);
 
         socket.on('join_chat_session', async ({ roomId }) => {
             try {
@@ -56,7 +55,6 @@ module.exports = function (io) {
                     socket.emit('session_ended', { reason: 'Session already completed' });
                 }
 
-                console.log(`${socket.user.role} joined session room: ${roomId}`);
             } catch (err) {
                 console.error('Join Chat Error:', err);
                 socket.emit('error', 'Internal server error');
@@ -100,7 +98,6 @@ module.exports = function (io) {
         });
 
         socket.on('disconnect', () => {
-            console.log(`Socket disconnected: ${socket.id}`);
             // Could add reconnect-timeout logic here if a user disconnects, rather than ending immediately.
         });
     });

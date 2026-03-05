@@ -38,7 +38,6 @@ exports.getKundli = async (req, res) => {
                     description: 'Generated detailed Kundli report',
                     metadata: { date, time, place: req.body.place || 'Unknown' }
                 });
-                console.log("[KUNDLI] Activity Logged Success");
             } catch (logErr) {
                 console.error("[KUNDLI] Log Error:", logErr);
             }
@@ -277,7 +276,6 @@ exports.updateCurrentAstrologer = async (req, res) => {
         let astrologer = await Astrologer.findOne({ userId: req.user.id });
 
         if (!astrologer) {
-            console.log("[UPDATE_PROFILE] Creating new profile for User:", req.user.id);
             astrologer = new Astrologer({
                 userId: req.user.id,
                 displayName: name || "Astrologer",
@@ -321,7 +319,6 @@ exports.updateCurrentAstrologer = async (req, res) => {
         // For now, let's just save the prices.
 
         await astrologer.save();
-        console.log("[UPDATE_PROFILE] Success for Astrologer:", astrologer._id);
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
@@ -429,7 +426,6 @@ exports.createAstrologer = async (req, res) => {
  */
 exports.updateAstrologer = async (req, res) => {
     try {
-        console.log('[UPDATE ASTRO] Body:', req.body);
         const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery, location } = req.body;
 
         const astrologer = await Astrologer.findById(req.params.id);
@@ -577,24 +573,20 @@ exports.getMatchMaking = async (req, res) => {
  */
 exports.deleteAstrologer = async (req, res) => {
     try {
-        console.log(`[DELETE] Request to delete astrologer: ${req.params.id}`);
         const astrologer = await Astrologer.findById(req.params.id);
 
         if (!astrologer) {
-            console.log(`[DELETE] Astrologer not found: ${req.params.id}`);
             return res.status(404).json({ message: 'Astrologer not found' });
         }
 
         // Delete associated User account as well if linked
         if (astrologer.userId) {
-            console.log(`[DELETE] Removing associated user account: ${astrologer.userId}`);
             await User.findByIdAndDelete(astrologer.userId);
         }
 
         // Use findByIdAndDelete to ensure removal
         await Astrologer.findByIdAndDelete(req.params.id);
 
-        console.log(`[DELETE] Astrologer removed successfully: ${req.params.id}`);
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
@@ -680,13 +672,11 @@ exports.toggleStatus = async (req, res) => {
 
         // 1. Update requested status
         const updates = req.body;
-        console.log(`[TOGGLE DEBUG] User: ${req.user.id}, Updates:`, updates);
 
         if (updates.isChatOnline !== undefined) astrologer.isChatOnline = updates.isChatOnline;
         if (updates.isVoiceOnline !== undefined) astrologer.isVoiceOnline = updates.isVoiceOnline;
         if (updates.isVideoOnline !== undefined) astrologer.isVideoOnline = updates.isVideoOnline;
 
-        console.log(`[TOGGLE DEBUG] New Flag State -> Chat: ${astrologer.isChatOnline}, Voice: ${astrologer.isVoiceOnline}, Video: ${astrologer.isVideoOnline}`);
 
         // 2. Determine Overall Status
         const wasOnline = astrologer.isOnline;
@@ -708,7 +698,6 @@ exports.toggleStatus = async (req, res) => {
             // USER WANTS TO BE ONLINE
             if (!openSession) {
                 // No session? Create one! (Handles "New Session" AND "Orphaned Online State")
-                console.log(`[SESSION] New Session for ${astrologer.displayName}`);
                 astrologer.lastOnlineAt = now;
 
                 // Determine initial services based on CURRENT state (including the update)
@@ -769,7 +758,6 @@ exports.toggleStatus = async (req, res) => {
         } else {
             // USER IS OFFLINE
             if (openSession) {
-                console.log(`[SESSION] Closing Session for ${astrologer.displayName}`);
                 openSession.endTime = now;
                 openSession.duration = Math.floor((now - openSession.startTime) / 1000); // Seconds
                 await openSession.save();
@@ -1188,10 +1176,10 @@ exports.searchLocations = async (req, res) => {
  */
 exports.getGeocode = async (req, res) => {
     try {
-        const { place } = req.body;
+        const { place, place_id, country } = req.body;
         if (!place) return res.status(400).json({ message: 'Place is required' });
 
-        const data = await geocodePlace(place);
+        const data = await geocodePlace(place, country, place_id);
         res.json({ success: true, data });
     } catch (error) {
         console.error('Geocode Error:', error);

@@ -3,6 +3,7 @@ import { API_BASE } from './urlHelper';
 
 const API = axios.create({
     baseURL: API_BASE, // Centralized URL
+    timeout: 10000,     // 10 second timeout
     headers: {
         'Content-Type': 'application/json',
     },

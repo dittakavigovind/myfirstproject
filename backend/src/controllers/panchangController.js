@@ -109,7 +109,6 @@ exports.getMonthlyPanchang = async (req, res) => {
         const cacheKey = `${year}-${month}-${lat}-${lng}-${timezone}`;
 
         if (monthlyCache.has(cacheKey)) {
-            console.log("Serving from cache:", cacheKey);
             return res.json(monthlyCache.get(cacheKey));
         }
 

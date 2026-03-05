@@ -21,7 +21,6 @@ exports.toggleOnlineStatus = async (req, res) => {
         const astrologer = await Astrologer.findOne({ userId: req.user.id });
         const astrologerId = req.user.astrologerId || astrologer?._id;
 
-        console.log(`[TOGGLE] User: ${req.user.id}, AstrologerId: ${astrologerId}, Action: ${isOnline ? 'Online' : 'Offline'}`);
 
         if (!astrologerId) {
             return res.status(404).json({ message: 'Astrologer profile not found' });
@@ -216,9 +215,6 @@ exports.getDashboardStats = async (req, res) => {
             return Math.floor(totalEarnings * 100) / 100; // Round to 2 decimals
         };
 
-        console.log(`[STATS DEBUG] Fetching stats for Astro ID: ${astrologerId}`);
-        console.log(`[STATS DEBUG] Flags from DB -> Chat: ${astrologer.isChatOnline}, Voice: ${astrologer.isVoiceOnline}, Video: ${astrologer.isVideoOnline}`);
-        console.log(`[STATS DEBUG] Active Session Found: ${!!activeSession}`);
 
         res.json({
             success: true,

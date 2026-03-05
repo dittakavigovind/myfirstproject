@@ -11,43 +11,33 @@ const protect = async (req, res, next) => {
         try {
             // Get token from header
             token = req.headers.authorization.split(' ')[1];
-            console.log("[AUTH DEBUG] Token received:", token ? "YES" : "NO");
 
             // Verify token
             try {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                console.log("[AUTH DEBUG] Decoded ID:", decoded.id);
 
                 // Get user from the token
                 req.user = await User.findById(decoded.id).select('-password');
 
                 if (!req.user) {
-                    console.log("[AUTH DEBUG] User not found in DB for ID:", decoded.id);
                     return res.status(401).json({ message: 'User not found' });
                 }
 
-                console.log("[AUTH DEBUG] User Role:", req.user.role);
                 next();
             } catch (error) {
-                console.error("[AUTH DEBUG] Verification Failed:", error.message);
-                console.error("[AUTH DEBUG] Raw Header:", req.headers.authorization);
-                console.error("[AUTH DEBUG] Token String:", token);
                 res.status(401).json({ message: `Not authorized: ${error.message}` });
             }
         } catch (err) {
-            console.error("[AUTH DEBUG] General Error:", err.message);
             res.status(500).json({ message: 'Server Error during auth' });
         }
     }
 
     if (!token) {
-        console.log("[AUTH DEBUG] No token provided in headers");
         res.status(401).json({ message: 'Not authorized, no token' });
     }
 };
 
 const admin = (req, res, next) => {
-    console.log("[AUTH DEBUG] Admin check - User Role:", req.user ? req.user.role : 'NO USER');
     if (req.user && (req.user.role === 'admin' || req.user.role === 'manager')) {
         next();
     } else {
