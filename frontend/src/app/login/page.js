@@ -38,7 +38,7 @@ const OtpTimer = ({ onResend }) => {
 };
 
 export default function LoginPage() {
-    const { user, login, register, sendOtp, verifyOtp, resendVerification, logout, setAuth, loading: authLoading } = useAuth();
+    const { user, login, register, sendOtp, verifyOtp, resendVerification, logout, setAuth, loading: authLoading, verifyEmailOtp } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectPath = searchParams.get('redirect');
@@ -62,6 +62,8 @@ export default function LoginPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showResend, setShowResend] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
+    const [showEmailOtpStep, setShowEmailOtpStep] = useState(false);
+    const [emailOtp, setEmailOtp] = useState('');
     const [isMounted, setIsMounted] = useState(false);
     const [isProcessingGoogleAuth, setIsProcessingGoogleAuth] = useState(false);
 
@@ -191,13 +193,21 @@ export default function LoginPage() {
             const res = await register('', formData.email, formData.password, '');
             setLoading(false);
             if (res.success) {
-                setSuccessMsg(res.message);
-                setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
-                setAuthMode('login'); // Switch back to login view after successful signup
+                setSuccessMsg('Account created! Please enter the 6-digit code sent to your email.');
+                setShowEmailOtpStep(true);
             } else {
                 setError(res.message);
             }
         }
+    };
+
+    const handleEmailOtpVerify = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        const res = await verifyEmailOtp(formData.email, emailOtp, redirectPath);
+        setLoading(false);
+        if (!res.success) setError(res.message);
     };
 
 
@@ -281,8 +291,8 @@ export default function LoginPage() {
         // Navbar is approx 76px-80px, adjusting to 80px safe area
         <div className="h-[calc(100vh-88px)] bg-slate-50 font-sans overflow-hidden flex flex-col relative">
 
-            {/* 1. COMPACT HERO SECTION (Top ~35%) */}
-            <div className="relative shrink-0 h-[35%] min-h-[180px] bg-[#1e1b4b]">
+            {/* 1. COMPACT HERO SECTION (Top ~25%) */}
+            <div className="relative shrink-0 h-[25%] min-h-[140px] bg-[#1e1b4b]">
                 {/* Background Gradient & Effects */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black rounded-b-[2.5rem] md:rounded-b-[3rem] overflow-hidden z-0 shadow-xl">
                     <div className="absolute top-[-50%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-600/20 blur-[100px] pointer-events-none animate-pulse"></div>
@@ -308,13 +318,13 @@ export default function LoginPage() {
             </div>
 
             {/* 2. FLOATING FORM CARD (Overlaps Hero) */}
-            {/* -mt-16 pulls it up. flex-1 takes remaining height. justify-start ensures it starts near top of this section. */}
-            <div className="flex-1 relative -mt-14 z-20 px-4 pb-2 flex items-start justify-center">
+            {/* -mt-10 pulls it up. flex-1 takes remaining height. justify-start ensures it starts near top of this section. */}
+            <div className="flex-1 relative -mt-10 z-20 px-4 pb-2 flex items-start justify-center">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="bg-white rounded-[2rem] shadow-2xl shadow-indigo-900/15 border border-white/50 p-6 w-full max-w-[380px] backdrop-blur-sm"
+                    className="bg-white rounded-[2rem] shadow-2xl shadow-indigo-900/15 border border-white/50 p-5 w-full max-w-[380px] backdrop-blur-sm"
                 >
 
                     {successMsg && (
@@ -343,11 +353,11 @@ export default function LoginPage() {
                     )}
 
                     {/* TOP PRIORITY: Google Login */}
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-3 mb-4">
                         <button
                             onClick={handleGoogleLogin}
                             type="button"
-                            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-100 py-3.5 rounded-2xl text-sm font-black text-slate-700 hover:bg-slate-50 hover:border-indigo-100 transition-all shadow-sm active:scale-[0.98]"
+                            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-100 py-3 rounded-2xl text-sm font-black text-slate-700 hover:bg-slate-50 hover:border-indigo-100 transition-all shadow-sm active:scale-[0.98]"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -369,7 +379,7 @@ export default function LoginPage() {
                     </div>
 
                     {/* Login Method Tabs */}
-                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
+                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-4">
                         <button
                             onClick={() => { setLoginMethod('mobile'); setError(''); }}
                             className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${loginMethod === 'mobile' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -404,7 +414,7 @@ export default function LoginPage() {
                                                 <select
                                                     value={countryCode}
                                                     onChange={(e) => setCountryCode(e.target.value)}
-                                                    className="pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 h-[44px] transition-all cursor-pointer hover:bg-slate-100"
+                                                    className="pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 h-[40px] transition-all cursor-pointer hover:bg-slate-100"
                                                 >
                                                     {countryCodes.map(c => (
                                                         <option key={c.code} value={c.code}>{c.code}</option>
@@ -415,7 +425,7 @@ export default function LoginPage() {
                                                     required
                                                     placeholder="Enter mobile number"
                                                     value={formData.phone}
-                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2.5 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
                                                     onChange={(e) => {
                                                         const currentCountry = countryCodes.find(c => c.code === countryCode);
                                                         const digits = currentCountry?.digits || 10;
@@ -432,7 +442,7 @@ export default function LoginPage() {
                                         <button
                                             type="submit"
                                             disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10)}
-                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-3 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-2.5 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                         >
                                             {loading ? (
                                                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
@@ -504,103 +514,159 @@ export default function LoginPage() {
                                     </p>
                                 </div>
 
-                                <form onSubmit={handleEmailAuth} className="space-y-3">
-
-
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                <Mail size={16} />
-                                            </div>
-                                            <input
-                                                type="email"
-                                                required
-                                                placeholder="you@example.com"
-                                                className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                <Lock size={16} />
-                                            </div>
-                                            <input
-                                                type={showPassword ? "text" : "password"}
-                                                required
-                                                placeholder="Enter password"
-                                                className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                value={formData.password}
-                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                                            >
-                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                {showEmailOtpStep ? (
+                                    <form onSubmit={handleEmailOtpVerify} className="space-y-4 pt-2">
+                                        <div className="text-center bg-indigo-50/50 rounded-xl p-3 border border-indigo-100 mb-4">
+                                            <p className="text-xs text-slate-600 font-medium">Verification Code sent to</p>
+                                            <p className="text-sm font-black text-slate-900 mb-1">{formData.email}</p>
+                                            <button type="button" onClick={() => setShowEmailOtpStep(false)} className="text-[10px] text-indigo-600 font-bold hover:text-indigo-800 transition-colors bg-white px-2 py-0.5 rounded-full border border-indigo-100 shadow-sm">
+                                                Change Email
                                             </button>
                                         </div>
-                                    </div>
 
-                                    {authMode === 'signup' && (
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Password</label>
-                                            <div className="relative group">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                    <Lock size={16} />
-                                                </div>
-                                                <input
-                                                    type={showConfirmPassword ? "text" : "password"}
-                                                    required
-                                                    placeholder="Confirm password"
-                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2.5 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                    value={formData.confirmPassword}
-                                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                                                >
-                                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                </button>
-                                            </div>
+                                        <div className="flex justify-center mb-4">
+                                            <input
+                                                type="text"
+                                                required
+                                                maxLength="6"
+                                                placeholder="000000"
+                                                value={emailOtp}
+                                                autoFocus
+                                                className="w-full text-center text-3xl font-black tracking-[0.5em] px-4 py-3 border-b-2 border-slate-200 focus:border-indigo-600 focus:outline-none bg-transparent transition-all placeholder:text-slate-200"
+                                                onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
+                                            />
                                         </div>
-                                    )}
 
-                                    <div className="py-2 px-1 text-center">
-                                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-                                            By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
-                                        </p>
-                                    </div>
+                                        <button
+                                            type="submit"
+                                            disabled={loading || emailOtp.length < 6}
+                                            className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-black py-3 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? (
+                                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                            ) : (
+                                                <>Verify & Login <ArrowRight className="w-4 h-4" /></>
+                                            )}
+                                        </button>
 
-                                    <button
-                                        type="submit"
-                                        disabled={loading || !formData.email || !formData.password || (authMode === 'signup' && formData.password !== formData.confirmPassword)}
-                                        className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
-                                    >
-                                        {loading ? (
-                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                        ) : (
-                                            <>{authMode === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight className="w-4 h-4" /></>
-                                        )}
-                                    </button>
-                                </form>
+                                        <div className="text-center pt-2">
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    setResendLoading(true);
+                                                    const res = await resendVerification(formData.email);
+                                                    setResendLoading(false);
+                                                    if (res.success) {
+                                                        setSuccessMsg('A new verification code has been sent!');
+                                                    } else {
+                                                        setError(res.message);
+                                                    }
+                                                }}
+                                                disabled={resendLoading}
+                                                className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-wider"
+                                            >
+                                                {resendLoading ? 'Sending...' : 'Resend Code'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <>
+                                        <form onSubmit={handleEmailAuth} className="space-y-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+                                                <div className="relative group">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                        <Mail size={16} />
+                                                    </div>
+                                                    <input
+                                                        type="email"
+                                                        required
+                                                        placeholder="you@example.com"
+                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                        value={formData.email}
+                                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
 
-                                <div className="text-center pt-2">
-                                    <button
-                                        onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setError(''); }}
-                                        className="text-xs font-bold text-indigo-600 hover:underline"
-                                    >
-                                        {authMode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-                                    </button>
-                                </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                                                <div className="relative group">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                        <Lock size={16} />
+                                                    </div>
+                                                    <input
+                                                        type={showPassword ? "text" : "password"}
+                                                        required
+                                                        placeholder="Enter password"
+                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                        value={formData.password}
+                                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                    >
+                                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {authMode === 'signup' && (
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Password</label>
+                                                    <div className="relative group">
+                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                                            <Lock size={16} />
+                                                        </div>
+                                                        <input
+                                                            type={showConfirmPassword ? "text" : "password"}
+                                                            required
+                                                            placeholder="Confirm password"
+                                                            className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
+                                                            value={formData.confirmPassword}
+                                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                                        >
+                                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="py-2 px-1 text-center">
+                                                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                                                    By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
+                                                </p>
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={loading || !formData.email || !formData.password || (authMode === 'signup' && formData.password !== formData.confirmPassword)}
+                                                className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold py-2.5 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
+                                            >
+                                                {loading ? (
+                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                                ) : (
+                                                    <>{authMode === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight className="w-4 h-4" /></>
+                                                )}
+                                            </button>
+                                        </form>
+                                        <div className="text-center pt-1 pb-1">
+                                            <button
+                                                onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setError(''); setSuccessMsg(''); setShowEmailOtpStep(false); }}
+                                                className="text-xs font-bold text-indigo-600 hover:underline"
+                                            >
+                                                {authMode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
                             </motion.div>
                         )}

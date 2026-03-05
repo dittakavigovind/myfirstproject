@@ -85,6 +85,22 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const verifyEmailOtp = async (email, otp, redirectPath = null) => {
+        try {
+            const { data } = await API.post('/auth/verify-email-otp', { email, otp });
+            localStorage.setItem('user', JSON.stringify(data));
+            localStorage.setItem('token', data.token);
+            setUser(data);
+            router.push(redirectPath || '/dashboard');
+            return { success: true, message: data.message };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Invalid or expired OTP'
+            };
+        }
+    };
+
     const sendOtp = async (phone) => {
         try {
             await API.post('/auth/send-whatsapp-otp', { mobile_number: phone });
@@ -161,6 +177,7 @@ export const AuthProvider = ({ children }) => {
             setAuth,
             resendVerification,
             verifyEmail,
+            verifyEmailOtp,
             loading
         }}>
             {children}

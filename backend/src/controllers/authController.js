@@ -40,9 +40,9 @@ exports.registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Generate verification token
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+        // Generate verification OTP (6 digits)
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationTokenExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
         // Create user
         const user = await User.create({
@@ -210,7 +210,62 @@ exports.verifyOtp = async (req, res) => {
     }
 };
 /**
- * @desc    Verify email address
+ * @desc    Verify email OTP
+ * @route   POST /api/auth/verify-email-otp
+ * @access  Public
+ */
+exports.verifyEmailOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Email and OTP are required' });
+        }
+
+        const user = await User.findOne({
+            email,
+            verificationToken: otp,
+            verificationTokenExpire: { $gt: Date.now() },
+        }).select('+password');
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        if (user.isBlocked) {
+            return res.status(403).json({ message: 'Your account has been disabled. Please contact support.' });
+        }
+
+        user.emailVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpire = undefined;
+        user.lastLogin = new Date();
+        await user.save();
+
+        res.json({
+            _id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            gender: user.gender,
+            role: user.role,
+            walletBalance: user.walletBalance,
+            birthDetails: user.birthDetails,
+            profileImage: user.profileImage,
+            isOnline: user.isOnline,
+            lastLogin: user.lastLogin,
+            totalOrders: user.totalOrders || 0,
+            token: generateToken(user._id),
+            message: 'Email verified successfully'
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+/**
+ * @desc    Verify email address (Legacy Link Route)
  * @route   GET /api/auth/verify-email/:token
  * @access  Public
  */
@@ -258,9 +313,9 @@ exports.resendVerification = async (req, res) => {
             return res.status(400).json({ message: 'Email already verified' });
         }
 
-        // Generate new token
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
+        // Generate new 6-digit OTP
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationTokenExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
         user.verificationToken = verificationToken;
         user.verificationTokenExpire = verificationTokenExpire;

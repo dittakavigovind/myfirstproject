@@ -8,6 +8,7 @@ const {
     sendOtp,
     verifyOtp,
     verifyEmail,
+    verifyEmailOtp,
     resendVerification
 } = require('../controllers/authController');
 const passport = require('../config/passport');
@@ -17,7 +18,8 @@ const { protect } = require('../middleware/authMiddleware');
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.get('/me', protect, getMe);
-router.get('/verify-email/:token', verifyEmail);
+router.post('/verify-email-otp', verifyEmailOtp); // New OTP route
+router.get('/verify-email/:token', verifyEmail); // Legacy Link route
 router.post('/resend-verification', resendVerification);
 
 // Google OAuth
