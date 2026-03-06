@@ -442,7 +442,7 @@ const AdminTemples = () => {
                                         <div className="relative aspect-[1200/630] w-64 rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
                                             {formData.ogImage ? (
                                                 <>
-                                                    <img src={resolveImageUrl(formData.ogImage)} alt="OG Preview" className="w-full h-full object-cover" />
+                                                    <img src={`${resolveImageUrl(formData.ogImage)}?t=${Date.now()}`} alt="OG Preview" className="w-full h-full object-cover" />
                                                     <button
                                                         type="button"
                                                         onClick={() => setFormData({ ...formData, ogImage: '' })}
@@ -477,7 +477,7 @@ const AdminTemples = () => {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {formData.images.map((img, idx) => (
                                         <div key={idx} className="relative group aspect-video rounded-2xl overflow-hidden border-2 border-gray-100">
-                                            <img src={resolveImageUrl(img)} alt="Preview" className="w-full h-full object-cover" />
+                                            <img src={`${resolveImageUrl(img)}?t=${Date.now()}`} alt="Preview" className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
                                                 onClick={() => removeImage(idx)}

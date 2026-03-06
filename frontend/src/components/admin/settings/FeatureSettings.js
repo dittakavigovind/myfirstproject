@@ -232,7 +232,7 @@ export default function FeatureSettings() {
                                             </div>
                                         ) : promotionImage ? (
                                             <>
-                                                <img src={resolveImageUrl(promotionImage)} alt="Promotion" className="max-h-40 w-auto object-contain z-10 relative rounded-lg shadow-sm" />
+                                                <img src={`${resolveImageUrl(promotionImage)}?t=${Date.now()}`} alt="Promotion" className="max-h-40 w-auto object-contain z-10 relative rounded-lg shadow-sm" />
                                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                                                     <div className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 shadow-sm transform translate-y-2 group-hover:translate-y-0 transition-all">
                                                         Change Image

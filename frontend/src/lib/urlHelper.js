@@ -20,23 +20,26 @@ export const resolveImageUrl = (path) => {
 
     // Handle absolute URLs
     if (path.startsWith('http') || path.startsWith('data:')) {
-        // Fix localhost leftovers
-        if (path.includes('localhost:5000')) {
-            return path.replace('http://localhost:5000', SERVER_BASE);
+        let transformed = path;
+
+        // 1. Fix localhost leftovers and convert to current SERVER_BASE
+        if (transformed.includes('localhost:5000')) {
+            transformed = transformed.replace('http://localhost:5000', SERVER_BASE);
         }
-        // Fix Mixed Content (HTTP on HTTPS site) and missing /api prefix for the live API
-        if (path.includes('api.way2astro.com')) {
-            let fixedPath = path;
-            if (path.startsWith('http:')) {
-                fixedPath = fixedPath.replace('http:', 'https:');
+
+        // 2. Fix Mixed Content and ensure /api/uploads prefix for the live API
+        if (transformed.includes('api.way2astro.com')) {
+            // Force HTTPS
+            transformed = transformed.replace('http://api.way2astro.com', 'https://api.way2astro.com');
+
+            // Ensure /api/uploads/ instead of /uploads/ for reliable proxying
+            if (transformed.includes('/uploads/') && !transformed.includes('/api/uploads/')) {
+                transformed = transformed.replace('/uploads/', '/api/uploads/');
             }
-            // Ensure /api prefix is present for reliable proxying on Hostinger
-            if (!fixedPath.includes('/api/uploads/')) {
-                fixedPath = fixedPath.replace('/uploads/', '/api/uploads/');
-            }
-            return fixedPath;
+            return transformed;
         }
-        return path;
+
+        return transformed;
     }
 
     // Ensure path starts with a slash if it's relative
