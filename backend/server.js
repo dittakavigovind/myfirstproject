@@ -135,7 +135,27 @@ connectDB().then(async () => {
     process.exit(1);
 });
 
-// Socket.io Setup
+// Diagnostic route (Remove in production)
+app.get('/api/debug/uploads', (req, res) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    const testFile = 'file-1772830115957.png';
+    const testPath = path.join(uploadDir, testFile);
+
+    const files = fs.existsSync(uploadDir) ? fs.readdirSync(uploadDir) : [];
+
+    res.json({
+        __dirname,
+        uploadDir,
+        exists: fs.existsSync(uploadDir),
+        count: files.length,
+        testFile: {
+            name: testFile,
+            path: testPath,
+            exists: fs.existsSync(testPath)
+        },
+        files: files.slice(-10) // show last 10
+    });
+});
 const io = new Server(server, {
     cors: {
         origin: "*", // allow all for dev
