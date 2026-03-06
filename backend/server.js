@@ -1,19 +1,38 @@
 const path = require('path');
 const fs = require('fs');
+
+// Global Error Handlers for Diagnostics
+process.on('uncaughtException', (err) => {
+    console.error('FATAL UNCAUGHT EXCEPTION:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('FATAL UNHANDLED REJECTION:', reason);
+});
+
+console.log('Server starting initialization...');
+
 const dotenvPath = path.join(__dirname, '.env');
 if (fs.existsSync(dotenvPath)) {
+    console.log('Loading local .env file...');
     require('dotenv').config({ override: true, path: dotenvPath });
 } else {
     console.log('No .env file found; assuming environment variables are provided by host.');
 }
+
+console.log('Env variables loaded. Port:', process.env.PORT);
+
 const express = require('express');
+console.log('Express loaded');
 const http = require('http');
 const { Server } = require('socket.io');
+console.log('Socket.io loaded');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
+console.log('ConnectDB module loaded');
 const { isbot } = require('isbot');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
+console.log('Core dependencies loaded');
 
 // Import Route Modules
 const authRoutes = require('./src/routes/authRoutes');
