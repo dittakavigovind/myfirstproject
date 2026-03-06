@@ -1,6 +1,10 @@
 const path = require('path');
-require('dotenv').config({ override: true, path: path.join(__dirname, '.env') });
-// Force Restart 2
+const dotenvPath = path.join(__dirname, '.env');
+if (fs.existsSync(dotenvPath)) {
+    require('dotenv').config({ override: true, path: dotenvPath });
+} else {
+    console.log('No .env file found; assuming environment variables are provided by host.');
+}
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -44,7 +48,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Rate Limiting
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // Limit each IP to 20 requests per windowMs
+    max: 100, // Increased for development ease (prev: 20)
     message: 'Too many requests from this IP, please try again after 15 minutes',
     standardHeaders: true,
     legacyHeaders: false,
