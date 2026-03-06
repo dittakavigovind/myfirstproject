@@ -1,7 +1,7 @@
 const BlogPost = require('../models/BlogPost');
 const Temple = require('../models/Temple');
 const Astrologer = require('../models/Astrologer');
-const SEOSettings = require('../models/SeoSettings');
+const SEOSettings = require('../models/SEOSettings');
 const PageContent = require('../models/PageContent');
 const axios = require('axios');
 
@@ -185,10 +185,10 @@ exports.pingSearchEngines = async () => {
     try {
         const sitemapUrl = `${process.env.BASE_URL || 'https://way2astro.com'}/sitemap.xml`;
 
-        // Google (Note: Google deprecated the explicit ping endpoint but it often still works or redirected)
-        // Alternative is to use Google Search Console API, but for simplicity we'll try the common endpoints
+        // Google retired their sitemap ping service in late 2023. 
+        // The recommended way now is robots.txt (already done) or Search Console API.
+        // Bing still supports it.
         const pingUrls = [
-            `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`,
             `https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
         ];
 
@@ -200,7 +200,13 @@ exports.pingSearchEngines = async () => {
             if (res.status === 'fulfilled') {
                 console.log(`[SEO] Successfully pinged: ${pingUrls[idx].split('?')[0]}`);
             } else {
-                console.warn(`[SEO] Failed to ping: ${pingUrls[idx].split('?')[0]} - ${res.reason.message}`);
+                // If it's a 404/410, it's likely just deprecated
+                const status = res.reason.response?.status;
+                if (status === 404 || status === 410) {
+                    console.log(`[SEO] Ping endpoint retired (expected): ${pingUrls[idx].split('?')[0]}`);
+                } else {
+                    console.warn(`[SEO] Failed to ping: ${pingUrls[idx].split('?')[0]} - ${res.reason.message}`);
+                }
             }
         });
 
