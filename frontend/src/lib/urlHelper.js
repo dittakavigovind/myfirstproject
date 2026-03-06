@@ -18,10 +18,15 @@ export const API_BASE = computedApiBase;
 export const resolveImageUrl = (path) => {
     if (!path) return null;
 
-    // If it's already a full URL (starts with http or data:), return as is
+    // Handle absolute URLs
     if (path.startsWith('http') || path.startsWith('data:')) {
+        // Fix localhost leftovers
         if (path.includes('localhost:5000')) {
             return path.replace('http://localhost:5000', SERVER_BASE);
+        }
+        // Fix Mixed Content (HTTP on HTTPS site) for the live API
+        if (path.includes('api.way2astro.com') && path.startsWith('http:')) {
+            return path.replace('http:', 'https:');
         }
         return path;
     }

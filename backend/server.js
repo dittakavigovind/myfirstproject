@@ -58,6 +58,9 @@ const poojaRoutes = require('./src/routes/poojaRoutes');
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for Cloudflare/Reverse proxy (ensures req.protocol is correctly https)
+app.set('trust proxy', true);
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
