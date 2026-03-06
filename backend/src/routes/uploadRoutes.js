@@ -5,8 +5,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure uploads directory exists in project root
-const uploadDir = path.join(__dirname, '../../uploads');
+// Persistent Uploads Path (Hostinger specific absolute path vs Local relative path)
+const uploadDir = process.env.NODE_ENV === 'production'
+    ? '/home/u189460089/domains/api.way2astro.com/uploads'
+    : path.join(__dirname, '../../uploads');
+
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }

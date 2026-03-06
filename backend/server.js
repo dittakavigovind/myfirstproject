@@ -61,13 +61,23 @@ const server = http.createServer(app);
 // Trust proxy for Cloudflare/Reverse proxy (ensures req.protocol is correctly https)
 app.set('trust proxy', true);
 
+// Persistent Uploads Path (Hostinger specific absolute path vs Local relative path)
+const UPLOAD_ROOT = process.env.NODE_ENV === 'production'
+    ? '/home/u189460089/domains/api.way2astro.com/uploads'
+    : path.join(__dirname, 'uploads');
+
+if (!fs.existsSync(UPLOAD_ROOT)) {
+    fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
+}
+app.set('UPLOAD_ROOT', UPLOAD_ROOT);
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Static Files - Serving via /api prefix for Hostinger proxy reliability
 app.get('/api/uploads/:name', (req, res) => {
-    const filePath = path.join(__dirname, 'uploads', req.params.name);
+    const filePath = path.join(app.get('UPLOAD_ROOT'), req.params.name);
     if (fs.existsSync(filePath)) {
         return res.sendFile(filePath);
     }
@@ -77,7 +87,7 @@ app.get('/api/uploads/:name', (req, res) => {
 // Explicit route for standard /uploads (backup)
 app.get('/uploads/:name', (req, res, next) => {
     const fileName = req.params.name;
-    const filePath = path.join(__dirname, 'uploads', fileName);
+    const filePath = path.join(app.get('UPLOAD_ROOT'), fileName);
 
     if (fs.existsSync(filePath)) {
         return res.sendFile(filePath);
@@ -86,8 +96,8 @@ app.get('/uploads/:name', (req, res, next) => {
 });
 
 // Original static for other files (if any)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(app.get('UPLOAD_ROOT')));
+app.use('/api/uploads', express.static(app.get('UPLOAD_ROOT')));
 
 // Rate Limiting
 const authLimiter = rateLimit({
