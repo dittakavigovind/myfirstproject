@@ -62,7 +62,8 @@ const server = http.createServer(app);
 app.set('trust proxy', true);
 
 // Persistent Uploads Path (Hostinger specific absolute path vs Local relative path)
-const UPLOAD_ROOT = process.env.NODE_ENV === 'production'
+const isHostinger = __dirname.includes('u189460089');
+const UPLOAD_ROOT = isHostinger
     ? '/home/u189460089/domains/api.way2astro.com/uploads'
     : path.join(__dirname, 'uploads');
 
@@ -147,7 +148,7 @@ connectDB().then(async () => {
 
 // Diagnostic route (Remove in production)
 app.get('/api/debug/uploads', (req, res) => {
-    const uploadDir = path.join(__dirname, 'uploads');
+    const uploadDir = app.get('UPLOAD_ROOT');
     const testFile = 'file-1772830115957.png';
     const testPath = path.join(uploadDir, testFile);
 

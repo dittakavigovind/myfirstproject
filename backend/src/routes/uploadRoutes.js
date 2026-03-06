@@ -6,7 +6,8 @@ const path = require('path');
 const fs = require('fs');
 
 // Persistent Uploads Path (Hostinger specific absolute path vs Local relative path)
-const uploadDir = process.env.NODE_ENV === 'production'
+const isHostinger = __dirname.includes('u189460089');
+const uploadDir = isHostinger
     ? '/home/u189460089/domains/api.way2astro.com/uploads'
     : path.join(__dirname, '../../uploads');
 
