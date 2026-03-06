@@ -11,6 +11,7 @@ export default function AdsSettings() {
     const [saving, setSaving] = useState(false);
     const [googleAdsId, setGoogleAdsId] = useState('');
     const [googleAnalyticsId, setGoogleAnalyticsId] = useState('');
+    const [cloudflareToken, setCloudflareToken] = useState('');
 
     useEffect(() => {
         fetchSettings();
@@ -22,6 +23,7 @@ export default function AdsSettings() {
             if (res.data.success) {
                 setGoogleAdsId(res.data.settings?.googleAdsId || '');
                 setGoogleAnalyticsId(res.data.settings?.googleAnalyticsId || '');
+                setCloudflareToken(res.data.settings?.cloudflareToken || '');
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -34,7 +36,7 @@ export default function AdsSettings() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await API.put('/site-settings', { googleAdsId, googleAnalyticsId });
+            const res = await API.put('/site-settings', { googleAdsId, googleAnalyticsId, cloudflareToken });
             if (res.data.success) {
                 toast.success('Ad settings updated successfully');
             } else {
@@ -54,8 +56,8 @@ export default function AdsSettings() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Monetization & Ads</h2>
-                    <p className="text-slate-500 text-sm mt-1">Configure external ad networks</p>
+                    <h2 className="text-xl font-bold text-slate-800">Monetization & Analytics</h2>
+                    <p className="text-slate-500 text-sm mt-1">Configure external ad networks and analytics</p>
                 </div>
                 <button
                     onClick={handleSave}
@@ -138,11 +140,51 @@ export default function AdsSettings() {
                     </div>
                 </div>
 
+                {/* Cloudflare Web Analytics */}
+                <div className="flex items-start gap-6 p-6 rounded-xl border border-slate-100 hover:border-orange-100 transition bg-slate-50/30">
+                    <div className="p-3 bg-orange-100 text-orange-600 rounded-lg">
+                        <div className="w-6 h-6 flex items-center justify-center">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                                <path d="M17.5 19c.6 0 1.1-.4 1.3-.9l1.6-4.1c.3-.9.1-1.8-.4-2.5-.5-.7-1.3-1.1-2.2-1.1h-1.3c-.6 0-1.1-.4-1.3-.9l-1.6-4.1c-.3-.9-.1-1.8.4-2.5.5-.7 1.3-1.1 2.2-1.1" />
+                                <path d="M6.5 5c-.6 0-1.1.4-1.3.9L3.6 10c-.3.9-.1 1.8.4 2.5s1.3 1.1 2.2 1.1h1.3c.6 0 1.1.4 1.3.9l1.6 4.1c.3.9.1 1.8-.4 2.5s-1.3 1.1-2.2 1.1" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-bold text-slate-800 text-lg">Cloudflare Web Analytics</h3>
+                            <a
+                                href="https://dash.cloudflare.com/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                            >
+                                Get Token <ExternalLink size={12} />
+                            </a>
+                        </div>
+                        <p className="text-slate-500 text-sm leading-relaxed mb-4">
+                            Enter your Cloudflare Web Analytics Token.
+                            Found in your Cloudflare dashboard under <strong>Web Analytics</strong>.
+                        </p>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">Analytics Token</label>
+                            <input
+                                type="text"
+                                value={cloudflareToken}
+                                onChange={(e) => setCloudflareToken(e.target.value)}
+                                placeholder="d8fec9f96df74e7ea6..."
+                                className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium text-slate-700 font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="flex items-center gap-3 p-4 bg-amber-50 text-amber-800 rounded-xl text-sm border border-amber-100">
                     <AlertCircle size={18} className="flex-shrink-0" />
                     <p>
-                        Ensure your domain (`way2astro.com`) is added to your AdSense account's <strong>Sites</strong> list.
-                        Ads may take up to 24-48 hours to appear after configuration.
+                        Ensure your domain (<code>way2astro.com</code>) is correctly configured in your analytics and ad accounts.
+                        Changes may take some time to reflect across all edges.
                     </p>
                 </div>
             </div>

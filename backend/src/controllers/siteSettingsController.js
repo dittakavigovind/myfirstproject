@@ -116,6 +116,7 @@ exports.updateSiteSettings = async (req, res) => {
         if (req.body.promotionVideoUrl !== undefined) settings.promotionVideoUrl = req.body.promotionVideoUrl;
         if (req.body.googleAdsId !== undefined) settings.googleAdsId = req.body.googleAdsId;
         if (req.body.googleAnalyticsId !== undefined) settings.googleAnalyticsId = req.body.googleAnalyticsId;
+        if (req.body.cloudflareToken !== undefined) settings.cloudflareToken = req.body.cloudflareToken;
 
         // Feature Flags
         if (req.body.featureFlags) {

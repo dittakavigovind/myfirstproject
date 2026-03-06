@@ -89,6 +89,7 @@ export default async function RootLayout({ children }) {
 
     let googleAdsId = '';
     let googleAnalyticsId = '';
+    let cloudflareToken = '';
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
         const res = await fetch(`${apiUrl}/site-settings`);
@@ -96,6 +97,7 @@ export default async function RootLayout({ children }) {
         if (data.success && data.settings) {
             googleAdsId = data.settings.googleAdsId;
             googleAnalyticsId = data.settings.googleAnalyticsId;
+            cloudflareToken = data.settings.cloudflareToken;
         }
     } catch (e) {
         console.error("Error fetching settings for layout:", e);
@@ -120,6 +122,14 @@ export default async function RootLayout({ children }) {
                             `}
                         </Script>
                     </>
+                )}
+                {cloudflareToken && (
+                    <Script
+                        id="cloudflare-beacon"
+                        src="https://static.cloudflareinsights.com/beacon.min.js"
+                        data-cf-beacon={`{"token": "${cloudflareToken}"}`}
+                        strategy="afterInteractive"
+                    />
                 )}
                 <GoogleAdSense publisherId={googleAdsId} />
                 <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
