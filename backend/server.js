@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const dotenvPath = path.join(__dirname, '.env');
 if (fs.existsSync(dotenvPath)) {
     require('dotenv').config({ override: true, path: dotenvPath });
@@ -10,7 +11,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
-const fs = require('fs');
 const { isbot } = require('isbot');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
