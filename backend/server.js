@@ -68,7 +68,31 @@ const UPLOAD_ROOT = isHostinger
     : path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(UPLOAD_ROOT)) {
-    fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
+    try {
+        fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
+    } catch (e) {
+        console.error("Failed to create UPLOAD_ROOT:", e.message);
+    }
+}
+
+// AUTO-MIGRATION: Move files from internal 'uploads' to persistent UPLOAD_ROOT
+const localUploads = path.join(__dirname, 'uploads');
+if (isHostinger && fs.existsSync(localUploads) && localUploads !== UPLOAD_ROOT) {
+    try {
+        const localFiles = fs.readdirSync(localUploads);
+        localFiles.forEach(file => {
+            const src = path.join(localUploads, file);
+            const dest = path.join(UPLOAD_ROOT, file);
+            if (!fs.existsSync(dest)) {
+                fs.copyFileSync(src, dest);
+            }
+        });
+        if (localFiles.length > 0) {
+            console.log(`--> Migrated ${localFiles.length} files to persistent storage`);
+        }
+    } catch (e) {
+        console.error("Migration failed:", e.message);
+    }
 }
 app.set('UPLOAD_ROOT', UPLOAD_ROOT);
 
