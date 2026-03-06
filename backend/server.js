@@ -134,6 +134,16 @@ app.get('/', (req, res) => {
     res.send('Way2Astro Backend is Running');
 });
 
+// Diagnostic Route to check uploads
+app.get('/api/debug/uploads', (req, res) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+        return res.json({ exists: false, path: uploadDir });
+    }
+    const files = fs.readdirSync(uploadDir);
+    res.json({ exists: true, path: uploadDir, count: files.length, files: files });
+});
+
 // Import Routes
 app.use('/api/seo', require('./src/routes/seoSettingsRoutes'));
 app.use('/api/horoscope-manager', require('./src/routes/horoscopeManagerRoutes'));
