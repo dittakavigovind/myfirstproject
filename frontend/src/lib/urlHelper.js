@@ -24,9 +24,17 @@ export const resolveImageUrl = (path) => {
         if (path.includes('localhost:5000')) {
             return path.replace('http://localhost:5000', SERVER_BASE);
         }
-        // Fix Mixed Content (HTTP on HTTPS site) for the live API
-        if (path.includes('api.way2astro.com') && path.startsWith('http:')) {
-            return path.replace('http:', 'https:');
+        // Fix Mixed Content (HTTP on HTTPS site) and missing /api prefix for the live API
+        if (path.includes('api.way2astro.com')) {
+            let fixedPath = path;
+            if (path.startsWith('http:')) {
+                fixedPath = fixedPath.replace('http:', 'https:');
+            }
+            // Ensure /api prefix is present for reliable proxying on Hostinger
+            if (!fixedPath.includes('/api/uploads/')) {
+                fixedPath = fixedPath.replace('/uploads/', '/api/uploads/');
+            }
+            return fixedPath;
         }
         return path;
     }
@@ -34,9 +42,9 @@ export const resolveImageUrl = (path) => {
     // Ensure path starts with a slash if it's relative
     const relativePath = path.startsWith('/') ? path : `/${path}`;
 
-    // If it's an upload from the backend, prepend SERVER_BASE
+    // If it's an upload from the backend, prepend SERVER_BASE and ensure /api prefix
     if (relativePath.startsWith('/uploads/')) {
-        return `${SERVER_BASE}${relativePath}`;
+        return `${SERVER_BASE}/api${relativePath}`;
     }
 
     // Otherwise, assume it's a frontend asset (relative to public folder)

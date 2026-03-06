@@ -65,7 +65,29 @@ app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Static Files - Serving via /api prefix for Hostinger proxy reliability
+app.get('/api/uploads/:name', (req, res) => {
+    const filePath = path.join(__dirname, 'uploads', req.params.name);
+    if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+    }
+    res.status(404).send('File not found');
+});
+
+// Explicit route for standard /uploads (backup)
+app.get('/uploads/:name', (req, res, next) => {
+    const fileName = req.params.name;
+    const filePath = path.join(__dirname, 'uploads', fileName);
+
+    if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+    }
+    next();
+});
+
+// Original static for other files (if any)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rate Limiting
 const authLimiter = rateLimit({

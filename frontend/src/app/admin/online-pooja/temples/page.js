@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE } from '../../../../lib/urlHelper';
+import { API_BASE, resolveImageUrl } from '../../../../lib/urlHelper';
 import { useAuth } from '../../../../context/AuthContext';
 import { Plus, Edit, Trash2, Check, X, Loader2, Image as ImageIcon, MapPin, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -284,7 +284,7 @@ const AdminTemples = () => {
                         <div key={temple._id} className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
                             <div className="aspect-video bg-gray-100 relative">
                                 {temple.images?.[0] ? (
-                                    <img src={temple.images[0]} alt={temple.name} className="w-full h-full object-cover" />
+                                    <img src={resolveImageUrl(temple.images[0])} alt={temple.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="flex items-center justify-center h-full text-gray-400">
                                         <ImageIcon className="w-12 h-12" />
@@ -442,7 +442,7 @@ const AdminTemples = () => {
                                         <div className="relative aspect-[1200/630] w-64 rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
                                             {formData.ogImage ? (
                                                 <>
-                                                    <img src={formData.ogImage} alt="OG Preview" className="w-full h-full object-cover" />
+                                                    <img src={resolveImageUrl(formData.ogImage)} alt="OG Preview" className="w-full h-full object-cover" />
                                                     <button
                                                         type="button"
                                                         onClick={() => setFormData({ ...formData, ogImage: '' })}
@@ -477,7 +477,7 @@ const AdminTemples = () => {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {formData.images.map((img, idx) => (
                                         <div key={idx} className="relative group aspect-video rounded-2xl overflow-hidden border-2 border-gray-100">
-                                            <img src={img} alt="Preview" className="w-full h-full object-cover" />
+                                            <img src={resolveImageUrl(img)} alt="Preview" className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
                                                 onClick={() => removeImage(idx)}

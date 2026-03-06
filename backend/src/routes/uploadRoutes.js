@@ -59,7 +59,7 @@ router.post('/', uploadMiddleware, (req, res) => {
 
     // Construct accessible URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const filePath = `${baseUrl}/uploads/${req.file.filename}`;
+    const filePath = `${baseUrl}/api/uploads/${req.file.filename}`;
 
     res.json({
         success: true,
