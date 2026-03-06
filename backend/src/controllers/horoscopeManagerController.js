@@ -41,7 +41,8 @@ exports.getDailyHoroscope = async (req, res) => {
         });
 
         if (!horoscope) {
-            return res.status(404).json({ success: false, message: 'Horoscope not found for this date' });
+            // Return 200 with data: null so the frontend doesn't throw a noisy 404 AxiosError in the console
+            return res.status(200).json({ success: true, data: null, message: 'Horoscope not found for this date' });
         }
 
         res.json({ success: true, data: horoscope });

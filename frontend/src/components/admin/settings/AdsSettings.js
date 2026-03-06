@@ -12,6 +12,7 @@ export default function AdsSettings() {
     const [googleAdsId, setGoogleAdsId] = useState('');
     const [googleAnalyticsId, setGoogleAnalyticsId] = useState('');
     const [cloudflareToken, setCloudflareToken] = useState('');
+    const [customHeadScripts, setCustomHeadScripts] = useState('');
 
     useEffect(() => {
         fetchSettings();
@@ -24,6 +25,7 @@ export default function AdsSettings() {
                 setGoogleAdsId(res.data.settings?.googleAdsId || '');
                 setGoogleAnalyticsId(res.data.settings?.googleAnalyticsId || '');
                 setCloudflareToken(res.data.settings?.cloudflareToken || '');
+                setCustomHeadScripts(res.data.settings?.customHeadScripts || '');
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -36,7 +38,7 @@ export default function AdsSettings() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await API.put('/site-settings', { googleAdsId, googleAnalyticsId, cloudflareToken });
+            const res = await API.put('/site-settings', { googleAdsId, googleAnalyticsId, cloudflareToken, customHeadScripts });
             if (res.data.success) {
                 toast.success('Ad settings updated successfully');
             } else {
@@ -175,6 +177,34 @@ export default function AdsSettings() {
                                 onChange={(e) => setCloudflareToken(e.target.value)}
                                 placeholder="d8fec9f96df74e7ea6..."
                                 className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium text-slate-700 font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Custom Scripts */}
+                <div className="flex items-start gap-6 p-6 rounded-xl border border-slate-100 hover:border-slate-300 transition bg-slate-50/30">
+                    <div className="p-3 bg-slate-200 text-slate-700 rounded-lg">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                            <polyline points="16 18 22 12 16 6" />
+                            <polyline points="8 6 2 12 8 18" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-bold text-slate-800 text-lg">Custom Scripts (Advanced)</h3>
+                        </div>
+                        <p className="text-slate-500 text-sm leading-relaxed mb-4">
+                            Paste raw HTML <code>&lt;script&gt;</code> tags here. These will be automatically injected into the <code>&lt;head&gt;</code> of the website. Useful for Cloudflare Beacons, Meta Pixels, or custom verifications.
+                        </p>
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">Raw HTML Tags</label>
+                            <textarea
+                                value={customHeadScripts}
+                                onChange={(e) => setCustomHeadScripts(e.target.value)}
+                                placeholder="<script defer src='...'></script>"
+                                className="w-full h-32 px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 transition-all font-medium text-slate-700 font-mono text-sm resize-y"
                             />
                         </div>
                     </div>

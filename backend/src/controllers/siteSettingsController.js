@@ -117,6 +117,7 @@ exports.updateSiteSettings = async (req, res) => {
         if (req.body.googleAdsId !== undefined) settings.googleAdsId = req.body.googleAdsId;
         if (req.body.googleAnalyticsId !== undefined) settings.googleAnalyticsId = req.body.googleAnalyticsId;
         if (req.body.cloudflareToken !== undefined) settings.cloudflareToken = req.body.cloudflareToken;
+        if (req.body.customHeadScripts !== undefined) settings.customHeadScripts = req.body.customHeadScripts;
 
         // Feature Flags
         if (req.body.featureFlags) {

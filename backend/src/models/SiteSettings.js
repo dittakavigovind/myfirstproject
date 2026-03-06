@@ -56,6 +56,11 @@ const siteSettingsSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    customHeadScripts: {
+        type: String, // Multiline string for storing raw HTML <script> tags
+        trim: false,
+        default: ''
+    },
     featureFlags: {
         enableChat: {
             type: Boolean,

@@ -90,6 +90,7 @@ export default async function RootLayout({ children }) {
     let googleAdsId = '';
     let googleAnalyticsId = '';
     let cloudflareToken = '';
+    let customHeadScripts = '';
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
         const res = await fetch(`${apiUrl}/site-settings`);
@@ -98,6 +99,7 @@ export default async function RootLayout({ children }) {
             googleAdsId = data.settings.googleAdsId;
             googleAnalyticsId = data.settings.googleAnalyticsId;
             cloudflareToken = data.settings.cloudflareToken;
+            customHeadScripts = data.settings.customHeadScripts;
         }
     } catch (e) {
         console.error("Error fetching settings for layout:", e);
@@ -174,7 +176,12 @@ export default async function RootLayout({ children }) {
                     </ThemeProvider>
                 </AuthProvider>
                 <div id="root-portal" />
+
+                {/* --- CUSTOM RAW SCRIPTS (Cloudflare, Meta Pixel, etc) --- */}
+                {customHeadScripts && (
+                    <div dangerouslySetInnerHTML={{ __html: customHeadScripts }} suppressHydrationWarning />
+                )}
             </body>
-        </html>
+        </html >
     )
 }

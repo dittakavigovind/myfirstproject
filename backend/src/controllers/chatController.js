@@ -114,13 +114,16 @@ exports.startPaidChat = async (req, res) => {
 exports.getSessionMessages = async (req, res) => {
     try {
         const { roomId } = req.params;
-        const session = await ChatSession.findOne({ roomId });
+        const session = await ChatSession.findOne({ roomId }).populate({
+            path: 'astrologer',
+            select: 'displayName image charges'
+        });
         if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
 
         const messages = await Message.find({ sessionId: session._id })
             .sort({ createdAt: 1 });
 
-        res.status(200).json({ success: true, messages });
+        res.status(200).json({ success: true, messages, session });
     } catch (err) {
         console.error('Get Session Messages Error:', err);
         res.status(500).json({ success: false, message: 'Server Error' });
@@ -142,6 +145,26 @@ exports.getAstrologerSessions = async (req, res) => {
         res.status(200).json({ success: true, sessions });
     } catch (err) {
         console.error('Get Astrologer Sessions Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+// @desc Get active session for the logged-in user
+// @route GET /api/chat/active-session
+exports.getActiveSession = async (req, res) => {
+    try {
+        const session = await ChatSession.findOne({
+            user: req.user.id,
+            status: { $in: ['initiated', 'active'] }
+        }).populate({
+            path: 'astrologer',
+            select: 'displayName image charges'
+        });
+
+        if (!session) return res.status(200).json({ success: true, session: null });
+
+        res.status(200).json({ success: true, session });
+    } catch (err) {
+        console.error('Get Active Session Error:', err);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

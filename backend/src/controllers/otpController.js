@@ -20,14 +20,14 @@ exports.sendWhatsappOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Mobile number is required' });
         }
 
-        // 1. Rate Limiting Check (Simple 5 req/hour per number)
+        // 1. Rate Limiting Check (Simple 20 req/hour per number)
         const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
         const count = await OtpVerification.countDocuments({
             mobileNumber: mobile_number,
             createdAt: { $gte: hourAgo }
         });
 
-        if (count >= 5) {
+        if (count >= 20) {
             return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
         }
 
