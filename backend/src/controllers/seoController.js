@@ -144,6 +144,8 @@ exports.generateRobotsTxt = async (req, res) => {
             robots += 'User-agent: *\n';
 
             // Allow all public sections
+            robots += 'Allow: /sitemap.xml\n';
+            robots += 'Allow: /robots.txt\n';
             robots += 'Allow: /\n';
             robots += 'Allow: /blog/\n';
             robots += 'Allow: /online-pooja/\n';
