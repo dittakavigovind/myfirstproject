@@ -58,8 +58,8 @@ const poojaRoutes = require('./src/routes/poojaRoutes');
 const app = express();
 const server = http.createServer(app);
 
-// Trust proxy for Cloudflare/Reverse proxy (ensures req.protocol is correctly https)
-app.set('trust proxy', true);
+// Trust proxy for Cloudflare/Reverse proxy (1 node hop)
+app.set('trust proxy', 1);
 
 // Persistent Uploads Path (Hostinger specific absolute path vs Local relative path)
 const isHostinger = __dirname.includes('u189460089');
