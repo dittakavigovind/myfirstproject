@@ -118,6 +118,9 @@ exports.generateSitemap = async (req, res) => {
         xml += '</urlset>';
 
         res.header('Content-Type', 'application/xml');
+        res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.header('Pragma', 'no-cache');
+        res.header('Expires', '0');
         res.status(200).send(xml);
     } catch (error) {
         console.error('Sitemap Generation Error:', error);
@@ -174,9 +177,13 @@ exports.generateRobotsTxt = async (req, res) => {
         robots += `\nSitemap: ${baseUrl}/sitemap.xml\n`;
 
         res.header('Content-Type', 'text/plain');
+        res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.header('Pragma', 'no-cache');
+        res.header('Expires', '0');
         res.status(200).send(robots);
     } catch (error) {
         console.error('Robots.txt Generation Error:', error);
+        res.header('Cache-Control', 'no-cache');
         res.status(500).send('User-agent: *\nDisallow: /');
     }
 };
