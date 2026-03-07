@@ -182,7 +182,7 @@ function UserDetails() {
                                 <div className="flex flex-wrap justify-center md:justify-start gap-3">
                                     <div className="bg-blue-50 text-blue-700 px-5 py-2.5 rounded-2xl text-sm font-bold flex items-center gap-2 border border-blue-100 shadow-sm">
                                         <Calendar size={18} className="text-blue-500" />
-                                        Joined {new Date(userData.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                                        Joined {new Date(userData.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date(userData.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                     </div>
 
                                     <button

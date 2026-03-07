@@ -637,7 +637,11 @@ export default function AdminDashboard() {
                                     <td className="p-4 text-slate-400">
                                         {(() => {
                                             const d = new Date(u.createdAt);
-                                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                            const day = String(d.getDate()).padStart(2, '0');
+                                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                                            const year = d.getFullYear();
+                                            const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                            return `${day}-${month}-${year}, ${time}`;
                                         })()}
                                     </td>
                                     <td className="p-4">
@@ -846,7 +850,11 @@ export default function AdminDashboard() {
                                         <td className="p-4 text-slate-400">
                                             {(() => {
                                                 const d = new Date(u.createdAt);
-                                                return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                                const day = String(d.getDate()).padStart(2, '0');
+                                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                const year = d.getFullYear();
+                                                const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                                return `${day}-${month}-${year}, ${time}`;
                                             })()}
                                         </td>
                                         <td className="p-4">
@@ -1165,7 +1173,11 @@ export default function AdminDashboard() {
                                                 <span>Exp: {a.experienceYears} Years</span>
                                                 {a.createdAt && <span>Joined: {(() => {
                                                     const d = new Date(a.createdAt);
-                                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                                    const day = String(d.getDate()).padStart(2, '0');
+                                                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                    const year = d.getFullYear();
+                                                    const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                                    return `${day}-${month}-${year}, ${time}`;
                                                 })()}</span>}
                                             </div>
                                             <p className="font-bold text-slate-900">
