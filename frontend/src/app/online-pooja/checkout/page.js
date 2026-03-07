@@ -777,9 +777,12 @@ const CheckoutContent = () => {
 
                             {/* Address Section */}
                             <div className="pt-8 border-t border-slate-100">
-                                <div className="flex items-center gap-3 mb-6">
+                                <div className="flex items-center gap-3 mb-6 flex-wrap">
                                     <h3 className="text-xl font-black text-astro-navy tracking-tight">Prasadam Delivery Address</h3>
-                                    <div className="h-px flex-1 bg-slate-100"></div>
+                                    <span className="bg-orange-100 text-orange-600 border border-orange-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                        Delivery only to India
+                                    </span>
+                                    <div className="h-px flex-1 bg-slate-100 hidden sm:block"></div>
                                 </div>
                                 <div className="space-y-5">
                                     <div className="space-y-2">

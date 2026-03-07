@@ -123,7 +123,12 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
             }
         } catch (error) {
             console.error("Geocode error details:", error.response ? error.response.data : error.message);
-            setError("Location not found - please select from suggestions");
+            const backendMsg = error.response?.data?.message || "";
+            if (backendMsg.includes("Delivery only to India") || backendMsg.includes("India")) {
+                setError("Delivery only to India");
+            } else {
+                setError("Location not found - please select from suggestions");
+            }
         } finally {
             setSearching(false);
         }
@@ -131,7 +136,11 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
 
     const handleManualSearch = (e) => {
         if (e) e.preventDefault();
-        handleSelectLocation(query);
+        if (suggestions && suggestions.length > 0) {
+            handleSelectLocation(suggestions[0].description, suggestions[0].place_id);
+        } else {
+            handleSelectLocation(query);
+        }
     };
 
     const inputBaseHeader = darkMode

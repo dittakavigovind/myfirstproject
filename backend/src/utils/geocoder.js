@@ -32,15 +32,12 @@ const geocodePlace = async (placeName, targetCountry = null, place_id = null) =>
         let geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?key=${apiKey}`;
         if (place_id) {
             geoUrl += `&place_id=${place_id}`;
-            // Always try to restrict even with place_id if targetCountry is provided
-            if (targetCountry) {
-                geoUrl += `&components=country:${targetCountry}`;
-            }
+            // Component restriction is not supported with place_id per Google Docs
         } else {
             geoUrl += `&address=${encodeURIComponent(placeName)}`;
-            if (targetCountry) {
-                geoUrl += `&components=country:${targetCountry}`;
-            }
+            // Note: We deliberately do NOT apply component restriction here
+            // so that our strict country validation below can smoothly
+            // throw the expected "Delivery only to India" error instead of ZERO_RESULTS.
         }
 
         const geoRes = await axios.get(geoUrl, { httpsAgent: agent });

@@ -1152,37 +1152,3 @@ exports.getAshtakavarga = async (req, res) => {
     }
 };
 
-/**
- * Search Locations
- * GET /api/astro/search-locations?query=...
- */
-exports.searchLocations = async (req, res) => {
-    try {
-        const { query } = req.query;
-        if (!query) return res.json({ success: true, data: [] });
-
-        const predictions = await searchPlaces(query);
-        res.json({ success: true, data: predictions });
-    } catch (error) {
-        console.error('Location Search Error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-
-/**
- * Get Geocode for Place
- * POST /api/astro/geocode
- * Body: { place }
- */
-exports.getGeocode = async (req, res) => {
-    try {
-        const { place, place_id, country } = req.body;
-        if (!place) return res.status(400).json({ message: 'Place is required' });
-
-        const data = await geocodePlace(place, country, place_id);
-        res.json({ success: true, data });
-    } catch (error) {
-        console.error('Geocode Error:', error);
-        res.status(500).json({ message: 'Geocode Error', error: error.message });
-    }
-};
