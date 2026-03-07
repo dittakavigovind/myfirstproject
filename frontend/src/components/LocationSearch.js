@@ -162,7 +162,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
         : "absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-yellow-600 transition-all active:scale-90";
 
     return (
-        <div className="relative h-full w-full flex items-center" ref={wrapperRef}>
+        <div className="relative h-full w-full flex items-center z-50" ref={wrapperRef}>
             <div className="relative w-full h-full group">
                 {showLeftIcon && (
                     <>

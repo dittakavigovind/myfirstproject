@@ -13,12 +13,12 @@ const HeroSection = ({
     extraPaddingBottom = false
 }) => {
     return (
-        <div className={`bg-astro-navy text-white py-8 md:py-12 px-4 relative overflow-hidden ${extraPaddingBottom ? 'pb-24 md:pb-32' : ''}`}>
+        <div className={`bg-astro-navy text-white py-8 md:py-12 px-4 relative ${extraPaddingBottom ? 'pb-24 md:pb-32' : ''}`}>
             <div className={`absolute top-0 ${iconPosition === 'left' ? 'left-0' : 'right-0'} p-10 opacity-5 pointer-events-none`}>
                 <span className="text-[12rem] font-black leading-none">{icon}</span>
             </div>
 
-            <div className="max-w-7xl mx-auto relative z-10">
+            <div className="max-w-7xl mx-auto relative z-[50]">
                 <div className={`grid grid-cols-1 ${rightContent ? 'lg:grid-cols-2 gap-8' : 'gap-4'} items-center`}>
 
                     {/* Left/Main Content */}

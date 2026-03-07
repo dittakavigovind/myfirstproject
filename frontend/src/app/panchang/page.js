@@ -247,9 +247,9 @@ function PanchangPage() {
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
-                        className="w-full md:w-auto pointer-events-auto flex-shrink-0"
+                        className="w-full md:w-auto pointer-events-auto flex-shrink-0 relative z-50"
                     >
-                        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-5 rounded-[1.5rem] shadow-2xl relative group min-w-[320px] md:min-w-[500px]">
+                        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-5 rounded-[1.5rem] shadow-2xl relative z-50 group min-w-[320px] md:min-w-[500px]">
                             {/* Glow Effect - Clipped */}
                             <div className="absolute inset-0 rounded-[1.5rem] overflow-hidden pointer-events-none">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/30 rounded-full blur-[50px] -mt-10 -mr-10"></div>
@@ -261,9 +261,9 @@ function PanchangPage() {
 
                             <div className="flex flex-col md:flex-row items-center gap-3 relative z-10">
                                 {/* Location Search */}
-                                <div className="w-full md:flex-[1.5] space-y-1">
+                                <div className="w-full md:flex-[1.5] space-y-1 relative z-50">
                                     <label className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider ml-1">Location</label>
-                                    <div className="relative group bg-white/90 hover:bg-white rounded-xl flex items-center h-12 transition-all shadow-lg shadow-black/5">
+                                    <div className="relative z-50 group bg-white/90 hover:bg-white rounded-xl flex items-center h-12 transition-all shadow-lg shadow-black/5">
                                         <div className="absolute left-3 text-indigo-600 pointer-events-none z-10">
                                             <MapPin className="w-4 h-4" />
                                         </div>
@@ -291,7 +291,7 @@ function PanchangPage() {
                 </div>
             </HeroSection>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-[5] -mt-10 md:-mt-24 pb-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-10 md:-mt-24 pb-10">
                 <AnimatePresence mode="wait">
                     {loading ? (
                         <motion.div
