@@ -121,6 +121,7 @@ exports.generateSitemap = async (req, res) => {
         res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.header('Pragma', 'no-cache');
         res.header('Expires', '0');
+        res.header('X-Robots-Tag', 'index, follow');
         res.status(200).send(xml);
     } catch (error) {
         console.error('Sitemap Generation Error:', error);
@@ -180,10 +181,12 @@ exports.generateRobotsTxt = async (req, res) => {
         res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.header('Pragma', 'no-cache');
         res.header('Expires', '0');
+        res.header('X-Robots-Tag', 'index, follow');
         res.status(200).send(robots);
     } catch (error) {
         console.error('Robots.txt Generation Error:', error);
         res.header('Cache-Control', 'no-cache');
+        res.header('X-Robots-Tag', 'noindex, nofollow');
         res.status(500).send('User-agent: *\nDisallow: /');
     }
 };
