@@ -10,7 +10,8 @@ const axios = require('axios');
  */
 exports.generateSitemap = async (req, res) => {
     try {
-        const baseUrl = process.env.BASE_URL || 'https://way2astro.com';
+        // Prioritize FRONTEND_URL for sitemap links to point to the main site
+        const baseUrl = process.env.FRONTEND_URL || process.env.BASE_URL || 'https://way2astro.com';
         let urls = [];
 
         // 1. Static & Core Routes
@@ -30,7 +31,7 @@ exports.generateSitemap = async (req, res) => {
         blogs.forEach(post => {
             urls.push({
                 url: `/blog/${post.slug}/`,
-                lastmod: post.updatedAt.toISOString().split('T')[0],
+                lastmod: post.updatedAt ? post.updatedAt.toISOString().split('T')[0] : null,
                 priority: 0.7,
                 changefreq: 'weekly'
             });
@@ -41,7 +42,7 @@ exports.generateSitemap = async (req, res) => {
         temples.forEach(temple => {
             urls.push({
                 url: `/online-pooja/details?slug=${temple.slug}`,
-                lastmod: temple.updatedAt.toISOString().split('T')[0],
+                lastmod: temple.updatedAt ? temple.updatedAt.toISOString().split('T')[0] : null,
                 priority: 0.7,
                 changefreq: 'weekly'
             });
@@ -65,7 +66,7 @@ exports.generateSitemap = async (req, res) => {
             if (!coreRoutes.some(r => r.url === `/${page.pageSlug}/`)) {
                 urls.push({
                     url: `/${page.pageSlug}/`,
-                    lastmod: page.updatedAt.toISOString().split('T')[0],
+                    lastmod: page.updatedAt ? page.updatedAt.toISOString().split('T')[0] : null,
                     priority: 0.5,
                     changefreq: 'monthly'
                 });
@@ -129,7 +130,7 @@ exports.generateSitemap = async (req, res) => {
  */
 exports.generateRobotsTxt = async (req, res) => {
     try {
-        const baseUrl = process.env.BASE_URL || 'https://way2astro.com';
+        const baseUrl = process.env.FRONTEND_URL || process.env.BASE_URL || 'https://way2astro.com';
         const enableIndexing = process.env.ENABLE_INDEXING === 'true';
 
         let robots = '';

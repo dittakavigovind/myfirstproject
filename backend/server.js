@@ -133,6 +133,10 @@ const authLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+// Import SEO Routes
+const seoRoutes = require('./src/routes/seoRoutes');
+app.use(seoRoutes);
+
 // Passport Initialization
 app.use(passport.initialize());
 
@@ -246,9 +250,6 @@ app.use('/api/activity', require('./src/routes/activityRoutes'));
 app.use('/api/page-content', require('./src/routes/pageContentRoutes'));
 app.use('/api/popups', require('./src/routes/popupRoutes'));
 app.use('/api/pooja', poojaRoutes);
-const seoRoutes = require('./src/routes/seoRoutes');
-app.use(seoRoutes);
-
 // --- SEO PROXY SERVER LOGIC ---
 // In-memory cache for SEO optimized HTML strings to ensure lightning-fast responses
 const seoCache = {};
