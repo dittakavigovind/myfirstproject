@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, CheckCircle2, Star, Zap, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
@@ -204,6 +205,15 @@ export default function DashaPeriodsCalculator() {
         return `${day}-${month}-${d.getFullYear()}`;
     };
 
+    const getOrdinal = (n) => {
+        if (!n) return '';
+        const num = parseInt(n);
+        if (num === 1) return '1st';
+        if (num === 2) return '2nd';
+        if (num === 3) return '3rd';
+        return `${num}th`;
+    };
+
     return (
         <main className="min-h-screen bg-[#f8fafe] font-sans selection:bg-yellow-500/30 selection:text-[#0E1A2B] pb-24 overflow-x-hidden text-[#0E1A2B]">
             {/* Hero Section / Standardized Result Header */}
@@ -363,52 +373,52 @@ export default function DashaPeriodsCalculator() {
                             className="space-y-10"
                         >
                             {/* Analysis Modal */}
-                            <AnimatePresence>
-                                {selectedDashaForAnalysis && (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-8 bg-black/70 backdrop-blur-md"
-                                        onClick={() => setSelectedDashaForAnalysis(null)}
-                                    >
+                            {typeof document !== 'undefined' && createPortal(
+                                <AnimatePresence>
+                                    {selectedDashaForAnalysis && (
                                         <motion.div
-                                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="bg-white border border-slate-100 rounded-[2.5rem] max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8 bg-black/70 backdrop-blur-md"
+                                            onClick={() => setSelectedDashaForAnalysis(null)}
                                         >
-                                            {/* Sticky Header */}
-                                            <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-50 px-8 py-6 flex justify-between items-center">
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl md:text-3xl font-black text-[#0E1A2B] flex items-center gap-3 mb-2">
-                                                        {selectedDashaForAnalysis.lord} <span className="text-yellow-500">{viewStack.length === 0 ? 'Mahadasha' :
-                                                            viewStack.length === 1 ? 'Antardasha' :
-                                                                viewStack.length === 2 ? 'Pratyantar' :
-                                                                    viewStack.length === 3 ? 'Sookshma' : 'Prana'}</span>
-                                                    </h3>
-                                                    <div className="flex items-center gap-2 text-yellow-700 font-bold text-xs uppercase tracking-widest bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-100 w-fit">
-                                                        <Calendar size={14} className="shrink-0 text-yellow-600" />
-                                                        {formatDate(selectedDashaForAnalysis.start)} — {formatDate(selectedDashaForAnalysis.end)}
+                                            <motion.div
+                                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="bg-white border border-slate-100 rounded-[2.5rem] max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                                            >
+                                                {/* Sticky Header */}
+                                                <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-50 px-8 py-6 flex justify-between items-center">
+                                                    <div className="flex-1">
+                                                        <h3 className="text-2xl md:text-3xl font-black text-[#0E1A2B] flex items-center gap-3 mb-2">
+                                                            {selectedDashaForAnalysis.lord} <span className="text-yellow-500">{viewStack.length === 0 ? 'Mahadasha' :
+                                                                viewStack.length === 1 ? 'Antardasha' :
+                                                                    viewStack.length === 2 ? 'Pratyantar' :
+                                                                        viewStack.length === 3 ? 'Sookshma' : 'Prana'}</span>
+                                                        </h3>
+                                                        <div className="flex items-center gap-2 text-yellow-700 font-bold text-xs uppercase tracking-widest bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-100 w-fit">
+                                                            <Calendar size={14} className="shrink-0 text-yellow-600" />
+                                                            {formatDate(selectedDashaForAnalysis.start)} — {formatDate(selectedDashaForAnalysis.end)}
+                                                        </div>
                                                     </div>
+                                                    <button
+                                                        onClick={() => setSelectedDashaForAnalysis(null)}
+                                                        className="p-3 hover:bg-slate-100 rounded-full transition-all group active:scale-95"
+                                                    >
+                                                        <X size={24} className="text-slate-400 group-hover:text-[#0E1A2B] transition-colors" />
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    onClick={() => setSelectedDashaForAnalysis(null)}
-                                                    className="p-3 hover:bg-slate-100 rounded-full transition-all group active:scale-95"
-                                                >
-                                                    <X size={24} className="text-slate-400 group-hover:text-[#0E1A2B] transition-colors" />
-                                                </button>
-                                            </div>
 
-                                            <div className="overflow-y-auto p-8 pt-6 space-y-8 scroll-smooth">
-                                                {(selectedDashaForAnalysis.analysis || (selectedDashaForAnalysis.remedies && selectedDashaForAnalysis.remedies.length > 0)) ? (
-                                                    <div className="space-y-8">
-                                                        {selectedDashaForAnalysis.analysis && (
+                                                <div className="overflow-y-auto p-8 pt-6 space-y-8 scroll-smooth flex-1 min-h-[300px]">
+                                                    {selectedDashaForAnalysis.analysis ? (
+                                                        <div className="space-y-8">
                                                             <div className="space-y-6">
                                                                 <div className="pl-5 border-l-4 border-yellow-500 bg-yellow-50/50 p-6 rounded-r-2xl border-solid shadow-sm">
                                                                     <p className="text-base font-bold text-[#0E1A2B] leading-relaxed">
-                                                                        Your <span className="uppercase text-yellow-600 font-black tracking-tight">{selectedDashaForAnalysis.lord}</span> is sitting in <span className="text-indigo-600 font-black underline decoration-indigo-200 underline-offset-4">{selectedDashaForAnalysis.analysis.sign}</span> sign and <span className="text-indigo-600 font-black underline decoration-indigo-200 underline-offset-4">{selectedDashaForAnalysis.analysis.house}th</span> house.
+                                                                        Your <span className="uppercase text-yellow-600 font-black tracking-tight">{selectedDashaForAnalysis.lord}</span> is sitting in <span className="text-indigo-600 font-black underline decoration-indigo-200 underline-offset-4">{selectedDashaForAnalysis.analysis.sign}</span> sign and <span className="text-indigo-600 font-black underline decoration-indigo-200 underline-offset-4">{getOrdinal(selectedDashaForAnalysis.analysis.house)}</span> house.
                                                                     </p>
                                                                 </div>
                                                                 <div className="prose prose-slate max-w-none">
@@ -417,52 +427,53 @@ export default function DashaPeriodsCalculator() {
                                                                     </p>
                                                                 </div>
                                                             </div>
-                                                        )}
 
-                                                        {selectedDashaForAnalysis.remedies && selectedDashaForAnalysis.remedies.length > 0 && (
-                                                            <div className="space-y-4 pt-4">
-                                                                <div className="flex items-center gap-3 mb-2">
-                                                                    <div className="w-8 h-8 rounded-lg bg-[#fbbf24] flex items-center justify-center shadow-lg shadow-yellow-500/20">
-                                                                        <Sparkles size={18} className="text-[#0E1A2B]" />
+                                                            {selectedDashaForAnalysis.remedies && selectedDashaForAnalysis.remedies.length > 0 && (
+                                                                <div className="space-y-4 pt-4">
+                                                                    <div className="flex items-center gap-3 mb-2">
+                                                                        <div className="w-8 h-8 rounded-lg bg-[#fbbf24] flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                                                                            <Sparkles size={18} className="text-[#0E1A2B]" />
+                                                                        </div>
+                                                                        <h4 className="text-[#0E1A2B] font-black text-sm uppercase tracking-[0.2em]">Suggested Remedies</h4>
                                                                     </div>
-                                                                    <h4 className="text-[#0E1A2B] font-black text-sm uppercase tracking-[0.2em]">Suggested Remedies</h4>
-                                                                </div>
 
-                                                                <div className="grid grid-cols-1 gap-3">
-                                                                    {selectedDashaForAnalysis.remedies.map((remedy, i) => (
-                                                                        <motion.div
-                                                                            key={i}
-                                                                            initial={{ opacity: 0, x: -10 }}
-                                                                            animate={{ opacity: 1, x: 0 }}
-                                                                            transition={{ delay: i * 0.1 }}
-                                                                            className="flex gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-yellow-200 hover:bg-yellow-50/30 transition-all group"
-                                                                        >
-                                                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 mt-0.5 border border-slate-100 group-hover:bg-yellow-100 transition-colors shadow-sm">
-                                                                                <CheckCircle2 size={16} className="text-yellow-600" />
-                                                                            </div>
-                                                                            <p className="text-[15px] text-slate-600 font-bold leading-relaxed group-hover:text-[#0E1A2B] transition-colors">{remedy}</p>
-                                                                        </motion.div>
-                                                                    ))}
+                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                        {selectedDashaForAnalysis.remedies.map((remedy, i) => (
+                                                                            <motion.div
+                                                                                key={i}
+                                                                                initial={{ opacity: 0, x: -10 }}
+                                                                                animate={{ opacity: 1, x: 0 }}
+                                                                                transition={{ delay: i * 0.1 }}
+                                                                                className="flex gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:border-yellow-200 hover:bg-yellow-50/30 transition-all group"
+                                                                            >
+                                                                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 mt-0.5 border border-slate-100 group-hover:bg-yellow-100 transition-colors shadow-sm">
+                                                                                    <CheckCircle2 size={16} className="text-yellow-600" />
+                                                                                </div>
+                                                                                <p className="text-[15px] text-slate-600 font-bold leading-relaxed group-hover:text-[#0E1A2B] transition-colors">{remedy}</p>
+                                                                            </motion.div>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center py-20 px-10 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
-                                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100">
-                                                            <Zap size={32} className="text-yellow-400" />
+                                                            )}
                                                         </div>
-                                                        <h4 className="text-[#0E1A2B] font-black text-xl mb-3">Interpretation Insight</h4>
-                                                        <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-sm mx-auto opacity-80">
-                                                            Detailed interpretations for this granular period are coming soon. Focus on higher-level dasha influences for your main life path analysis.
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                    ) : (
+                                                        <div className="text-center py-20 px-10 bg-slate-50 flex flex-col items-center justify-center h-full rounded-[2rem] border-2 border-dashed border-slate-200">
+                                                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-slate-100">
+                                                                <Zap size={32} className="text-yellow-400" />
+                                                            </div>
+                                                            <h4 className="text-[#0E1A2B] font-black text-xl mb-3">Interpretation Insight</h4>
+                                                            <p className="text-slate-500 font-bold text-sm leading-relaxed max-w-sm opacity-80">
+                                                                Detailed interpretations for this granular sub-period are coming soon. Focus on the main higher-level dasha influences for your life path analysis.
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </motion.div>
                                         </motion.div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                                    )}
+                                </AnimatePresence>,
+                                document.body
+                            )}
 
                             {/* Dasha Hierarchy Navigation */}
                             <div className="flex flex-col gap-6">
@@ -611,7 +622,7 @@ export default function DashaPeriodsCalculator() {
                                                 <div className="mb-4 space-y-4">
                                                     <div className="pl-4 border-l-4 border-[#0E1A2B] bg-slate-50 p-4 rounded-r-xl">
                                                         <p className="text-sm font-bold text-[#0E1A2B] leading-relaxed">
-                                                            Your <span className="uppercase text-yellow-600">{dasha.lord}</span> is sitting in <span className="text-slate-600">{dasha.analysis.sign}</span> sign and <span className="text-slate-600">{dasha.analysis.house}th</span> house.
+                                                            Your <span className="uppercase text-yellow-600">{dasha.lord}</span> is sitting in <span className="text-slate-600">{dasha.analysis.sign}</span> sign and <span className="text-slate-600">{getOrdinal(dasha.analysis.house)}</span> house.
                                                         </p>
                                                     </div>
                                                 </div>
