@@ -100,7 +100,6 @@ const calculatePlanets = (swe, julianDay) => {
             longitude: planetData[0],
             speed: planetData[3],
             retrograde: planetData[3] < 0,
-            house: sign,
             sign: sign,
             nakshatra: NAKSHATRAS[nakIndex % 27] || "Unknown",
             pada: pada,
@@ -115,7 +114,6 @@ const calculatePlanets = (swe, julianDay) => {
             longitude: ketuLong,
             speed: results['Rahu'].speed,
             retrograde: results['Rahu'].retrograde,
-            house: ketuSign,
             sign: ketuSign,
             nakshatra: NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown",
             pada: Math.floor((ketuLong % 13.333333333) / 3.333333333) + 1,
@@ -443,13 +441,22 @@ const calculatePanchang = (sunLong, moonLong, dateString, swe, julianDay) => {
  */
 const generateKundli = async (dateString, timeString, lat, lng, timezone) => {
     const swe = await getGlobalSwe();
+    let planets;
     try {
         const utcDate = tzUtils.getDateFromParts(dateString, timeString, timezone);
         if (!utcDate) throw new Error(`Invalid birth details: ${dateString} ${timeString}`);
         const jd = getJulianDay(swe, utcDate);
         const ayanamsa = swe.get_ayanamsa_ut(jd);
-        const planets = calculatePlanets(swe, jd);
+        planets = calculatePlanets(swe, jd);
         const houseData = calculateHouses(swe, jd, lat, lng, ayanamsa);
+
+        const ascSign = Math.floor(houseData.ascendant / 30) + 1;
+
+        Object.entries(planets).forEach(([name, p]) => {
+            let h = p.sign - ascSign + 1;
+            if (h <= 0) h += 12;
+            p.house = h;
+        });
 
         // Divisional Charts
         const d9Chart = calculateNavamsa(planets);
