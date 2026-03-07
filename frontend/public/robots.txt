@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Disallow private/internal sections
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard/
+Disallow: /astrologer/dashboard/
+Disallow: /astrologer/profile/
+Disallow: /my-profile/
+Disallow: /checkout/
+Disallow: /payment-status/
+Disallow: /astrology-session/
+Disallow: /chat/
+Disallow: /video/
+Disallow: /tmp/
+
+Sitemap: https://way2astro.com/sitemap.xml
