@@ -1115,7 +1115,7 @@ export default function AdminDashboard() {
                             ).map(a => (
                                 <div
                                     key={a._id}
-                                    onClick={() => router.push(`/admin/astrologer/${a.slug || a._id}`)}
+                                    onClick={() => router.push(`/admin/astrologer/details?slug=${a.slug || a._id}`)}
                                     className="relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 p-4 flex gap-4 items-start group cursor-pointer"
                                 >
                                     {/* Left: Image & Stats */}

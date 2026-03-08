@@ -12,14 +12,14 @@ import toast from 'react-hot-toast';
 export default function AdminAstrologerDetailsWrapper() {
     return (
         <Suspense fallback={<div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-10"><div className="w-16 h-16 border-4 border-astro-navy border-t-transparent rounded-full animate-spin"></div></div>}>
-            <AdminAstrologerDetails />
+            <AdminAstrologerDetailsPage />
         </Suspense>
     )
 }
 
-function AdminAstrologerDetails() {
+function AdminAstrologerDetailsPage() {
     const searchParams = useSearchParams();
-    const slug = searchParams.get('slug'); // Using slug from query parameter
+    const slug = searchParams.get('slug');
     const { user } = useAuth();
     const router = useRouter();
     const [astroData, setAstroData] = useState(null);
