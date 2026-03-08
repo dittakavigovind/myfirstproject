@@ -17,7 +17,23 @@ const CORE_PAGES = [
     { slug: 'about-us', path: '/about-us', isDynamic: false, name: 'About Us' },
     { slug: 'contact-us', path: '/contact-us', isDynamic: false, name: 'Contact Us' },
     { slug: 'privacy-policy', path: '/privacy-policy', isDynamic: false, name: 'Privacy Policy' },
-    { slug: 'terms', path: '/terms', isDynamic: false, name: 'Terms' }
+    { slug: 'terms', path: '/terms', isDynamic: false, name: 'Terms' },
+    // Calculators
+    { slug: 'calculators/ascendant-calculator', path: '/calculators/ascendant-calculator', isDynamic: false, name: 'Calculators > Ascendant Calculator' },
+    { slug: 'calculators/ashtakavarga', path: '/calculators/ashtakavarga', isDynamic: false, name: 'Calculators > Ashtakavarga' },
+    { slug: 'calculators/atmakaraka', path: '/calculators/atmakaraka', isDynamic: false, name: 'Calculators > Atmakaraka' },
+    { slug: 'calculators/dasha-periods', path: '/calculators/dasha-periods', isDynamic: false, name: 'Calculators > Dasha Periods' },
+    { slug: 'calculators/friendship-calculator', path: '/calculators/friendship-calculator', isDynamic: false, name: 'Calculators > Friendship Calculator' },
+    { slug: 'calculators/gochar', path: '/calculators/gochar', isDynamic: false, name: 'Calculators > Gochar' },
+    { slug: 'calculators/indian-calendar', path: '/calculators/indian-calendar', isDynamic: false, name: 'Calculators > Indian Calendar' },
+    { slug: 'calculators/love-calculator', path: '/calculators/love-calculator', isDynamic: false, name: 'Calculators > Love Calculator' },
+    { slug: 'calculators/marriage-career', path: '/calculators/marriage-career', isDynamic: false, name: 'Calculators > Marriage Career' },
+    { slug: 'calculators/moon-sign-calculator', path: '/calculators/moon-sign-calculator', isDynamic: false, name: 'Calculators > Moon Sign Calculator' },
+    { slug: 'calculators/nakshatra-calculator', path: '/calculators/nakshatra-calculator', isDynamic: false, name: 'Calculators > Nakshatra Calculator' },
+    { slug: 'calculators/numerology-calculator', path: '/calculators/numerology-calculator', isDynamic: false, name: 'Calculators > Numerology Calculator' },
+    { slug: 'calculators/sade-sati-calculator', path: '/calculators/sade-sati-calculator', isDynamic: false, name: 'Calculators > Sade Sati Calculator' },
+    { slug: 'calculators/sun-sign-calculator', path: '/calculators/sun-sign-calculator', isDynamic: false, name: 'Calculators > Sun Sign Calculator' },
+    { slug: 'calculators/yogini-dasha', path: '/calculators/yogini-dasha', isDynamic: false, name: 'Calculators > Yogini Dasha' }
 ];
 
 function scanRoutes(dir, baseUrl = '') {
