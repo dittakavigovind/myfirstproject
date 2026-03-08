@@ -466,7 +466,7 @@ function PanchangPage() {
                                 {t('coreElements', lang)}
                             </h2>
                             {/* CHANGED: Reverted to Grid Layout for 3-column cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
                                 <PanchangCard
                                     label={t('tithi', lang)}
                                     value={tData('tithi', data?.tithi?.name, lang)}
@@ -666,10 +666,34 @@ function WideTimingCard({ label, value, start, end, type, delay, lang }) {
     // Helper to format full date-time string to time only
     const formatTime = (dtStr) => {
         if (!dtStr) return '--:--';
-        if (/^\d{1, 2}:\d{2}/.test(dtStr)) return dtStr;
-        if (dtStr.includes('T')) {
+
+        // If it's already in the new format with separator "DD-MM-YYYY | hh:mm:ss A"
+        if (dtStr.includes(' | ')) {
+            return dtStr;
+        }
+
+        // Check if it's already just a time string (e.g. "hh:mm:ss A")
+        if (/^\d{1,2}:\d{2}/.test(dtStr) && !dtStr.includes('-')) return dtStr;
+
+        // Handle the new backend format DD-MM-YYYY HH:mm:ss (legacy or intermediary)
+        if (/^\d{2}-\d{2}-\d{4}/.test(dtStr)) {
+            // Add separator if missing but time is present
+            if (dtStr.includes(' ') && !dtStr.includes(' | ')) {
+                return dtStr.replace(' ', ' | ');
+            }
+            return dtStr;
+        }
+
+        // Try to parse as date for any other format
+        if (dtStr.includes('T') || dtStr.includes('-') || dtStr.includes('/')) {
             const d = new Date(dtStr);
-            if (!isNaN(d)) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            if (!isNaN(d.getTime())) {
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                return `${dd}-${mm}-${yyyy} | ${time}`;
+            }
         }
         return dtStr;
     }
@@ -687,8 +711,8 @@ function WideTimingCard({ label, value, start, end, type, delay, lang }) {
 
             </div>
 
-            <div className={`px-4 py-2 rounded-lg ${s.bg} border border-transparent group-hover:border-black/5 transition-colors`}>
-                <span className="text-[10px] md:text-xs font-bold text-slate-700 tabular-nums tracking-wide">
+            <div className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg ${s.bg} border border-transparent group-hover:border-black/5 transition-colors shrink-0`}>
+                <span className="text-[10px] md:text-xs font-bold text-slate-700 tabular-nums tracking-tight whitespace-nowrap">
                     {formatTime(start)} - {formatTime(end)}
                 </span>
             </div>
@@ -712,10 +736,31 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay,
     // Helper to format full date-time string to time only
     const formatTime = (dtStr) => {
         if (!dtStr) return '--:--';
-        if (/^\d{1, 2}:\d{2}/.test(dtStr)) return dtStr;
-        if (dtStr.includes('T')) {
+
+        if (dtStr.includes(' | ')) {
+            return dtStr;
+        }
+
+        // If it's already just a time string
+        if (/^\d{1,2}:\d{2}/.test(dtStr) && !dtStr.includes('-')) return dtStr;
+
+        // Handle DD-MM-YYYY HH:mm:ss
+        if (/^\d{2}-\d{2}-\d{4}/.test(dtStr)) {
+            if (dtStr.includes(' ') && !dtStr.includes(' | ')) {
+                return dtStr.replace(' ', ' | ');
+            }
+            return dtStr;
+        }
+
+        if (dtStr.includes('T') || dtStr.includes('-') || dtStr.includes('/')) {
             const d = new Date(dtStr);
-            if (!isNaN(d)) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            if (!isNaN(d.getTime())) {
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                return `${dd}-${mm}-${yyyy} | ${time}`;
+            }
         }
         return dtStr;
     }
@@ -726,38 +771,46 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay,
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: delay, duration: 0.5 }}
             whileHover={{ y: -5 }}
-            className={`bg-white rounded-[1.5rem] p-5 border ${t.border} shadow-sm hover:shadow-lg transition-all duration-300 group flex flex-col justify-between h-full relative overflow-hidden`}
+            className={`bg-white rounded-[1.5rem] p-5 border ${t.border} shadow-sm hover:shadow-lg transition-all duration-300 group flex flex-col h-full relative overflow-hidden`}
         >
-            {/* Header: Icon + Badge */}
+            {/* Header: Icon + Paksha/Pada Badge (Top Right) */}
             <div className="flex items-start justify-between mb-4">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${t.bg} ${t.icon} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                     <Icon size={22} strokeWidth={2} />
                 </div>
+
                 {sub && (
-                    <span className={`text-[10px] font-bold uppercase tracking-widest ${t.bg} ${t.text} px-2.5 py-1 rounded-lg border border-transparent`}>
+                    <span className={`text-[9px] font-bold uppercase tracking-widest ${t.bg} ${t.text} px-2.5 py-1 rounded-lg border border-transparent`}>
                         {sub}
                     </span>
                 )}
             </div>
 
             {/* Content Middle */}
-            <div className="mb-4">
+            <div className="mb-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">{label}</p>
-                <h3 className="text-2xl font-black text-slate-900 leading-none tracking-tight">
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 leading-tight tracking-tight mb-2">
                     {value || 'N/A'}
                 </h3>
-            </div>
 
-            {/* Footer: Time */}
-            {(start || end) && (
-                <div className="mt-auto pt-1 border-t border-slate-50/80">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 tabular-nums tracking-wide">
-                        <span className="flex items-center gap-1"><Clock size={10} className="text-slate-300" /> {lang === 'hi' ? 'शुरू:' : 'Starts:'} {formatTime(start)}</span>
-                        <div className="h-px bg-slate-100 flex-1 mx-2"></div>
-                        <span>{lang === 'hi' ? 'अंत:' : 'Ends:'} {formatTime(end)}</span>
+                {/* Timings Stacked Below Value */}
+                {(start || end) && (
+                    <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-50">
+                        {start && (
+                            <div className="flex items-center gap-2 text-[10px] tabular-nums whitespace-nowrap">
+                                <span className="text-slate-400 font-bold uppercase tracking-tighter w-12">{lang === 'hi' ? 'शुरू:' : 'Starts:'}</span>
+                                <span className="text-slate-600 font-bold">{formatTime(start)}</span>
+                            </div>
+                        )}
+                        {end && (
+                            <div className="flex items-center gap-2 text-[10px] tabular-nums whitespace-nowrap">
+                                <span className="text-slate-400 font-bold uppercase tracking-tighter w-12">{lang === 'hi' ? 'अंत:' : 'Ends:'}</span>
+                                <span className="text-slate-600 font-bold">{formatTime(end)}</span>
+                            </div>
+                        )}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </motion.div>
     );
 }

@@ -249,7 +249,7 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
 
 
         // --- FORMATTING ---
-        const fmtFull = (d) => tzUtils.formatInTimezone(d, timezone, "YYYY-MM-DD HH:mm:ss");
+        const fmtFull = (d) => tzUtils.formatInTimezone(d, timezone, "DD-MM-YYYY | hh:mm:ss A");
         const fmtTime = (d) => tzUtils.formatInTimezone(d, timezone, "hh:mm:ss A");
 
         // --- Other calculations ---
@@ -394,7 +394,7 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
 
         return {
             timezone,
-            meta: { date: fmtFull(utcDate), latitude: lat, longitude: lng },
+            meta: { date: tzUtils.formatInTimezone(utcDate, timezone, "DD-MM-YYYY | hh:mm:ss A"), latitude: lat, longitude: lng },
             samvat,
             masa: {
                 amanta: amantaMonth,
@@ -560,7 +560,7 @@ const calculateMonthlyPanchangLite = async (year, month, lat, lng, timezone) => 
                 day: i,
                 dayOfWeek: dayStart.format('dddd'),
                 timezone,
-                meta: { date: tzUtils.formatInTimezone(utcDate, timezone, "YYYY-MM-DD HH:mm:ss"), latitude: lat, longitude: lng },
+                meta: { date: tzUtils.formatInTimezone(utcDate, timezone, "DD-MM-YYYY | hh:mm:ss A"), latitude: lat, longitude: lng },
                 samvat,
                 masa: {
                     amanta: amantaMonth,

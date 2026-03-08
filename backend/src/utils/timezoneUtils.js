@@ -44,9 +44,20 @@ const toUTC = (date) => {
  * @param {string} format - Output format
  * @returns {string}
  */
-const formatInTimezone = (date, timezone, format = "YYYY-MM-DD HH:mm:ss") => {
+const formatInTimezone = (date, timezone, format = "DD-MM-YYYY | hh:mm:ss A") => {
     if (!date) return null;
-    return moment(date).tz(timezone).format(format);
+    try {
+        // Use moment.tz(date, zone) for better compatibility
+        const m = moment.tz(date, timezone);
+        if (m && typeof m.format === 'function') {
+            return m.format(format);
+        }
+        console.warn(`[TZ_UTILS] Falling back to standard format for timezone: ${timezone}`);
+        return moment(date).format(format);
+    } catch (err) {
+        console.error(`[TZ_UTILS] Error formatting in timezone ${timezone}:`, err);
+        return moment(date).format(format);
+    }
 };
 
 /**
