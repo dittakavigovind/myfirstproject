@@ -1,4 +1,5 @@
 const SEOSettings = require('../models/SEOSettings');
+const PageContent = require('../models/PageContent');
 
 // Create SEO Settings
 exports.createSeoSettings = async (req, res) => {
@@ -23,11 +24,41 @@ exports.createSeoSettings = async (req, res) => {
 
 const { scanRoutes, FRONTEND_APP_DIR } = require('../utils/pageScanner');
 
-// Get All Available Pages from File System
+// Get All Available Pages from File System + Database
 exports.getAvailablePages = async (req, res) => {
     try {
-        const pages = scanRoutes(FRONTEND_APP_DIR);
-        res.json({ success: true, data: pages });
+        // 1. Scan File System
+        const fsPages = scanRoutes(FRONTEND_APP_DIR);
+
+        // 2. Scan Database
+        const dbSeoPages = await SEOSettings.find().select('pageSlug').lean();
+        const dbContentPages = await PageContent.find().select('pageSlug').lean();
+
+        // Combine all unique slugs
+        const allPages = [...fsPages];
+        const seenSlugs = new Set(fsPages.map(p => p.slug));
+
+        const processDbPages = (pages) => {
+            pages.forEach(p => {
+                const slug = p.pageSlug;
+                if (slug && !seenSlugs.has(slug)) {
+                    // Filter out dynamic segments like blog posts if they follow a pattern
+                    // but usually SEOSettings/PageContent are for managed pages
+                    seenSlugs.add(slug);
+                    allPages.push({
+                        slug: slug,
+                        path: `/${slug}`,
+                        isDynamic: slug.includes('[') || slug.includes(']'),
+                        name: slug.split('/').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' > ')
+                    });
+                }
+            });
+        };
+
+        processDbPages(dbSeoPages);
+        processDbPages(dbContentPages);
+
+        res.json({ success: true, data: allPages.sort((a, b) => a.slug.localeCompare(b.slug)) });
     } catch (error) {
         console.error('Page Scan Error:', error);
         res.status(500).json({ success: false, message: 'Failed to scan pages' });

@@ -3,12 +3,29 @@ const path = require('path');
 
 const FRONTEND_APP_DIR = process.env.FRONTEND_APP_DIR || path.join(__dirname, '../../../frontend/src/app');
 
+const CORE_PAGES = [
+    { slug: 'home', path: '/', isDynamic: false, name: 'Home Page' },
+    { slug: 'talk-to-astrologer', path: '/talk-to-astrologer', isDynamic: false, name: 'Talk to Astrologer' },
+    { slug: 'online-pooja', path: '/online-pooja', isDynamic: false, name: 'Online Pooja' },
+    { slug: 'blog', path: '/blog', isDynamic: false, name: 'Blog' },
+    { slug: 'panchang', path: '/panchang', isDynamic: false, name: 'Panchang' },
+    { slug: 'kundli', path: '/kundli', isDynamic: false, name: 'Kundli' },
+    { slug: 'horoscope', path: '/horoscope', isDynamic: false, name: 'Horoscope' },
+    { slug: 'today-panchang', path: '/today-panchang', isDynamic: false, name: 'Today Panchang' },
+    { slug: 'login', path: '/login', isDynamic: false, name: 'Login' },
+    { slug: 'register', path: '/register', isDynamic: false, name: 'Register' },
+    { slug: 'about-us', path: '/about-us', isDynamic: false, name: 'About Us' },
+    { slug: 'contact-us', path: '/contact-us', isDynamic: false, name: 'Contact Us' },
+    { slug: 'privacy-policy', path: '/privacy-policy', isDynamic: false, name: 'Privacy Policy' },
+    { slug: 'terms', path: '/terms', isDynamic: false, name: 'Terms' }
+];
+
 function scanRoutes(dir, baseUrl = '') {
     let routes = [];
 
     if (!fs.existsSync(dir)) {
         console.warn(`[PageScanner] Directory not found: ${dir}`);
-        return [];
+        return baseUrl === '' ? CORE_PAGES : [];
     }
 
     const items = fs.readdirSync(dir, { withFileTypes: true });
@@ -86,6 +103,11 @@ function scanRoutes(dir, baseUrl = '') {
             map.set(item.slug, true);
             uniqueRoutes.push(item);
         }
+    }
+
+    // If no routes found, return CORE_PAGES as fallback
+    if (uniqueRoutes.length === 0 || uniqueRoutes.length === 1 && uniqueRoutes[0].slug === 'home') {
+        return CORE_PAGES;
     }
 
     return uniqueRoutes.sort((a, b) => a.slug.localeCompare(b.slug));
