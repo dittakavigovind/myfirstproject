@@ -21,6 +21,17 @@ export const BirthDetailsProvider = ({ children }) => {
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
+        // Helper to ensure time is always "HH:MM"
+        const normalizeTime = (t) => {
+            if (!t) return '';
+            if (typeof t === 'string' && /^\d{2}:\d{2}(:\d{2})?$/.test(t)) return t.slice(0, 5);
+            const d = new Date(t);
+            if (!isNaN(d)) {
+                return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+            }
+            return '';
+        };
+
         // 1. Try to get from localStorage
         const storedDetails = localStorage.getItem('way2astro_birth_details');
         let parsed = null;
@@ -29,10 +40,7 @@ export const BirthDetailsProvider = ({ children }) => {
             try {
                 parsed = JSON.parse(storedDetails);
                 if (parsed.date) parsed.date = new Date(parsed.date);
-                // Time should remain string "HH:MM"
-                if (parsed.time && (parsed.time === 'NaN:NaN' || !/^\d{2}:\d{2}(:\d{2})?$/.test(parsed.time))) {
-                    parsed.time = null;
-                }
+                if (parsed.time) parsed.time = normalizeTime(parsed.time);
             } catch (e) {
                 console.error("Failed to parse birth details", e);
                 localStorage.removeItem('way2astro_birth_details');
@@ -49,20 +57,20 @@ export const BirthDetailsProvider = ({ children }) => {
                 return;
             }
 
-            // Scenario A: Active Session for THIS User exists
-            if (parsed && parsed.userId?.toString() === currentUserId) {
+            // Scenario A: Active Session exists AND has real birth details
+            if (parsed && parsed.userId?.toString() === currentUserId && (parsed.date || parsed.place)) {
                 setBirthDetails(parsed);
                 setIsInitialized(true);
                 return;
             }
 
-            // Scenario B: Guest Data (no userId) OR Other User's Data -> Overwrite with Profile
+            // Scenario B: Overwrite with Profile Data (especially after onboarding update)
             const bd = userObj.birthDetails || {};
             const profileDetails = {
                 name: userObj.name || '',
                 gender: userObj.gender || 'male',
                 date: bd.date ? new Date(bd.date) : (bd.dob ? new Date(bd.dob) : null),
-                time: (bd.time || bd.tob || '').toString(),
+                time: normalizeTime(bd.time || bd.tob),
                 place: (bd.place || bd.pob || '').toString(),
                 lat: bd.lat || '',
                 lng: bd.lng || '',
@@ -70,7 +78,7 @@ export const BirthDetailsProvider = ({ children }) => {
                 userId: currentUserId
             };
 
-            // Only update if we actually have some profile data to use
+            // Only update context/localStorage if the profile has at least some data
             if (profileDetails.name || profileDetails.date || profileDetails.place) {
                 setBirthDetails(profileDetails);
                 localStorage.setItem('way2astro_birth_details', JSON.stringify(profileDetails));
@@ -80,14 +88,10 @@ export const BirthDetailsProvider = ({ children }) => {
             return;
         }
 
-        // 3. Logic: Guest (Not Logged In)
+        // 3. Logic: Guest
         if (parsed) {
             setBirthDetails(parsed);
-            setIsInitialized(true);
-            return;
         }
-
-        // 4. Logic: Fresh Guest
         setIsInitialized(true);
 
     }, [user]);
