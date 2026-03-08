@@ -32,11 +32,16 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password, redirectPath = null) => {
         try {
-            const { data } = await API.post('/auth/login', { email, password });
-            localStorage.setItem('user', JSON.stringify(data));
+            const userObj = data.user || data;
+            localStorage.setItem('user', JSON.stringify(userObj));
             localStorage.setItem('token', data.token);
-            setUser(data);
-            router.push(redirectPath || '/dashboard');
+            setUser(userObj);
+
+            if (data.needsProfileSetup) {
+                router.push('/astrology-session');
+            } else {
+                router.push(redirectPath || '/dashboard');
+            }
             return { success: true };
         } catch (error) {
             console.error(error);
@@ -87,11 +92,16 @@ export const AuthProvider = ({ children }) => {
 
     const verifyEmailOtp = async (email, otp, redirectPath = null) => {
         try {
-            const { data } = await API.post('/auth/verify-email-otp', { email, otp });
-            localStorage.setItem('user', JSON.stringify(data));
+            const userObj = data.user || data;
+            localStorage.setItem('user', JSON.stringify(userObj));
             localStorage.setItem('token', data.token);
-            setUser(data);
-            router.push(redirectPath || '/dashboard');
+            setUser(userObj);
+
+            if (data.needsProfileSetup) {
+                router.push('/astrology-session');
+            } else {
+                router.push(redirectPath || '/dashboard');
+            }
             return { success: true, message: data.message };
         } catch (error) {
             return {
@@ -112,14 +122,16 @@ export const AuthProvider = ({ children }) => {
 
     const verifyOtp = async (phone, otp, redirectPath = null) => {
         try {
-            const { data } = await API.post('/auth/verify-whatsapp-otp', { mobile_number: phone, otp });
-            localStorage.setItem('user', JSON.stringify(data));
+            const userObj = data.user || data;
+            localStorage.setItem('user', JSON.stringify(userObj));
             localStorage.setItem('token', data.token);
-            setUser(data);
+            setUser(userObj);
 
-            // Redirect based on if new user (maybe to profile setup?)
-            // For now dashboard or custom path
-            router.push(redirectPath || '/dashboard');
+            if (data.needsProfileSetup) {
+                router.push('/astrology-session');
+            } else {
+                router.push(redirectPath || '/dashboard');
+            }
             return { success: true, needsProfileSetup: data.needsProfileSetup };
         } catch (error) {
             return { success: false, message: error.response?.data?.message || 'Invalid OTP' };

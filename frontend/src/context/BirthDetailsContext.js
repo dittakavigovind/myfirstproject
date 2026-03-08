@@ -41,7 +41,8 @@ export const BirthDetailsProvider = ({ children }) => {
 
         // 2. Logic: User Logged In
         if (user) {
-            const currentUserId = user._id || user.id;
+            const userObj = user.user || user;
+            const currentUserId = userObj._id || userObj.id;
 
             // Scenario A: Active Session for THIS User exists
             if (parsed && parsed.userId === currentUserId) {
@@ -51,11 +52,10 @@ export const BirthDetailsProvider = ({ children }) => {
             }
 
             // Scenario B: Guest Data (no userId) OR Other User's Data -> Overwrite with Profile
-            // This satisfies "If user signs in then the user profile is the default inputs"
-            const bd = user.birthDetails || {};
+            const bd = userObj.birthDetails || {};
             const profileDetails = {
-                name: user.name || '',
-                gender: user.gender || 'male',
+                name: userObj.name || '',
+                gender: userObj.gender || 'male',
                 date: bd.date ? new Date(bd.date) : (bd.dob ? new Date(bd.dob) : null),
                 time: bd.time || bd.tob || null,
                 place: bd.place || bd.pob || '',

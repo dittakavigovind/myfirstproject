@@ -84,7 +84,7 @@ export default function ProfileSetupModal() {
 
             const res = await API.put('/users/profile', updatePayload);
             if (res.data.success) {
-                updateUser(res.data);
+                updateUser(res.data.user || res.data);
                 setIsOpen(false);
                 router.push('/astrology-session');
             } else {

@@ -21,7 +21,7 @@ export default function SmartInputForm({
     preventRedirect = false,
     onSubmit = null
 }) {
-    const { birthDetails, setBirthDetails } = useBirthDetails();
+    const { birthDetails, setBirthDetails, isInitialized } = useBirthDetails();
     const { setActiveTab } = useSession();
 
     // Local state for form to allow editing before submit
@@ -45,29 +45,31 @@ export default function SmartInputForm({
         timezone: birthDetails.timezone || 5.5
     });
 
-    // Sync state when context loads data (e.g. from localStorage on refresh)
+    // Sync state when context loads data (e.g. from profile or localStorage)
     useEffect(() => {
-        setFormData(prev => ({
-            ...prev,
-            name: birthDetails.name || prev.name,
-            gender: birthDetails.gender || prev.gender,
-            date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
-            time: birthDetails.time ? (() => {
-                const d = new Date();
-                if (typeof birthDetails.time === 'string') {
-                    const [h, m] = birthDetails.time.split(':');
-                    d.setHours(h || 0, m || 0, 0, 0);
-                } else if (birthDetails.time instanceof Date) {
-                    d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
-                }
-                return d;
-            })() : prev.time,
-            lat: birthDetails.lat || prev.lat,
-            lng: birthDetails.lng || prev.lng,
-            place: birthDetails.place || prev.place,
-            timezone: birthDetails.timezone || prev.timezone
-        }));
-    }, [birthDetails]);
+        if (isInitialized) {
+            setFormData(prev => ({
+                ...prev,
+                name: birthDetails.name || prev.name,
+                gender: birthDetails.gender || prev.gender,
+                date: birthDetails.date ? new Date(birthDetails.date) : prev.date,
+                time: birthDetails.time ? (() => {
+                    const d = new Date();
+                    if (typeof birthDetails.time === 'string') {
+                        const [h, m] = birthDetails.time.split(':');
+                        d.setHours(h || 0, m || 0, 0, 0);
+                    } else if (birthDetails.time instanceof Date) {
+                        d.setHours(birthDetails.time.getHours(), birthDetails.time.getMinutes(), 0, 0);
+                    }
+                    return d;
+                })() : prev.time,
+                lat: birthDetails.lat || prev.lat,
+                lng: birthDetails.lng || prev.lng,
+                place: birthDetails.place || prev.place,
+                timezone: birthDetails.timezone || prev.timezone
+            }));
+        }
+    }, [birthDetails, isInitialized]);
 
     const [loading, setLoading] = useState(false);
 
