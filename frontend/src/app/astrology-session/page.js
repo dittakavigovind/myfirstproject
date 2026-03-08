@@ -647,7 +647,7 @@ export default function AstrologySessionPage() {
                 </div>
 
                 {/* Navigation Tabs - Also Sticky (Offset by header height) */}
-                <div className="sticky top-[65px] z-30 bg-slate-50/80 backdrop-blur-md border-b border-slate-100 pt-3 px-4 md:px-8 mb-8">
+                <div className="sticky top-[64px] z-30 bg-slate-50/80 backdrop-blur-md border-b border-slate-100 pt-3 px-4 md:px-8 mb-8">
                     <div className="max-w-7xl mx-auto">
                         <SessionTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                     </div>
