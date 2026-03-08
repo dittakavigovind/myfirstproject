@@ -3,7 +3,8 @@ const tzUtils = require('../utils/timezoneUtils');
 const { getDignity } = require('./dignityUtils');
 const dashaInterpretationsEn = require('./data/dashaInterpretations');
 const dashaInterpretationsHi = require('./data/dashaInterpretations_hi');
-const { translateToHi } = require('./data/dictionary');
+const dashaInterpretationsTe = require('./data/dashaInterpretations_te');
+const { translateToHi, translateToTe } = require('./data/dictionary');
 const calculateAshtakavarga = require('./Ashtakavarga');
 
 let SwissEphModule;
@@ -103,9 +104,9 @@ const calculatePlanets = (swe, julianDay, lang = 'en') => {
             speed: planetData[3],
             retrograde: planetData[3] < 0,
             sign: sign,
-            nakshatra: lang === 'hi' ? translateToHi(NAKSHATRAS[nakIndex % 27] || "Unknown") : NAKSHATRAS[nakIndex % 27] || "Unknown",
+            nakshatra: lang === 'te' ? translateToTe(NAKSHATRAS[nakIndex % 27] || "Unknown") : (lang === 'hi' ? translateToHi(NAKSHATRAS[nakIndex % 27] || "Unknown") : NAKSHATRAS[nakIndex % 27] || "Unknown"),
             pada: pada,
-            relation: lang === 'hi' ? translateToHi(getDignity(planetName, sign)) : getDignity(planetName, sign)
+            relation: lang === 'te' ? translateToTe(getDignity(planetName, sign)) : (lang === 'hi' ? translateToHi(getDignity(planetName, sign)) : getDignity(planetName, sign))
         };
     }
 
@@ -117,9 +118,9 @@ const calculatePlanets = (swe, julianDay, lang = 'en') => {
             speed: results['Rahu'].speed,
             retrograde: results['Rahu'].retrograde,
             sign: ketuSign,
-            nakshatra: lang === 'hi' ? translateToHi(NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown") : NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown",
+            nakshatra: lang === 'te' ? translateToTe(NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown") : (lang === 'hi' ? translateToHi(NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown") : NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown"),
             pada: Math.floor((ketuLong % 13.333333333) / 3.333333333) + 1,
-            relation: lang === 'hi' ? translateToHi(getDignity('Ketu', ketuSign)) : getDignity('Ketu', ketuSign)
+            relation: lang === 'te' ? translateToTe(getDignity('Ketu', ketuSign)) : (lang === 'hi' ? translateToHi(getDignity('Ketu', ketuSign)) : getDignity('Ketu', ketuSign))
         };
     }
     return results;
@@ -177,7 +178,7 @@ const calculateNavamsa = (planets, lang = 'en') => {
         d9Chart[planet] = {
             sign: navamsaSign,
             pada: d9Pada, // This replaces the old 'pada' which might have been D1-based
-            nakshatra: lang === 'hi' ? translateToHi(nakName) : nakName, // Added bounds check
+            nakshatra: lang === 'te' ? translateToTe(nakName) : (lang === 'hi' ? translateToHi(nakName) : nakName), // Added bounds check
             longitude: d9Longitude,
             nakshatraPada: correctNakshatraPada
         };
@@ -189,7 +190,7 @@ const calculateNavamsa = (planets, lang = 'en') => {
  * Calculate Vimshottari Dasha
  */
 const calculateVimshottari = (moonLongitude, birthDate, planets, houses, lang = 'en') => {
-    const dashaInterpretations = lang === 'hi' ? dashaInterpretationsHi : dashaInterpretationsEn;
+    const dashaInterpretations = lang === 'te' ? dashaInterpretationsTe : (lang === 'hi' ? dashaInterpretationsHi : dashaInterpretationsEn);
     // Uses global NAKSHATRAS constant
     const dashaLords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
     const dashaYears = [7, 20, 6, 10, 7, 18, 16, 19, 17];
@@ -217,16 +218,22 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses, lang = 
         const houseText = interp.houseEffects[p.house] || interp.houseEffects["1"] || "";
         const signText = interp.signEffects[signName] || "";
 
-        const translatedSignName = lang === 'hi' ? translateToHi(signName) : signName;
+        const translatedSignName = lang === 'te' ? translateToTe(signName) : (lang === 'hi' ? translateToHi(signName) : signName);
+
+        const headers = {
+            hi: { house: '🎯 भाव प्रभाव', sign: '🌟 राशि प्रभाव' },
+            te: { house: '🎯 భావం ప్రభావం', sign: '🌟 రాశి ప్రభావం' },
+            en: { house: '🎯 House Influence', sign: '🌟 Zodiac Influence' }
+        };
+
+        const h = headers[lang] || headers.en;
 
         return {
             sign: signName,
             translatedSign: translatedSignName,
             house: p.house,
             description: interp.description,
-            text: lang === 'hi'
-                ? `🎯 भाव प्रभाव (${p.house}):\n${houseText}\n\n🌟 राशि प्रभाव (${translatedSignName}):\n${signText}`.trim() || interp.description
-                : `🎯 House Influence (${p.house}):\n${houseText}\n\n🌟 Zodiac Influence (${signName}):\n${signText}`.trim() || interp.description
+            text: `${h.house} (${p.house}):\n${houseText}\n\n${h.sign} (${translatedSignName}):\n${signText}`.trim() || interp.description
         };
     };
 
@@ -375,7 +382,7 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses, lang = 
         list: dashaList,
         currentPath: findCurrentPath(dashaList),
         lordInterpretations,
-        birthNakshatra: lang === 'hi' ? translateToHi(NAKSHATRAS[nakshatraIndex]) : NAKSHATRAS[nakshatraIndex]
+        birthNakshatra: lang === 'te' ? translateToTe(NAKSHATRAS[nakshatraIndex]) : (lang === 'hi' ? translateToHi(NAKSHATRAS[nakshatraIndex]) : NAKSHATRAS[nakshatraIndex])
     };
 };
 

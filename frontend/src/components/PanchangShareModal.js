@@ -6,8 +6,9 @@ import { toPng } from 'html-to-image';
 import analytics from '../lib/analytics';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { t, tData } from '../utils/translations';
 
-export default function PanchangShareModal({ isOpen, onClose, data, location, date }) {
+export default function PanchangShareModal({ isOpen, onClose, data, location, date, lang = 'en' }) {
     const cardRef = useRef(null); // Ref for visible modal content
     const printRef = useRef(null); // Ref for high-quality hidden card (Auto Height)
     const instaRef = useRef(null); // Ref for Instagram hidden card (Fixed 1080x1350)
@@ -40,7 +41,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
 
     if (!isOpen || !data) return null;
 
-    const formattedDate = new Date(date).toLocaleDateString('en-IN', {
+    const formattedDate = new Date(date).toLocaleDateString(lang === 'hi' ? 'hi-IN' : lang === 'te' ? 'te-IN' : 'en-IN', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -58,7 +59,11 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
         return dtStr;
     }
 
-    const shareText = `*Daily Panchang - ${formattedDate}*\nLocation: ${location}\n\n*Hindu Year:* ${data.samvat?.name} (${data.samvat?.vikram})\n*Masa:* ${data.masa?.amanta}\n*Ruthu:* ${data.ritu}\n*Vara:* ${data.vara}\n*Paksha:* ${data.tithi?.paksha}\n*Tithi:* ${data.tithi?.name}\n*Nakshatra:* ${data.nakshatra?.name}\n*Yoga:* ${data.yoga?.name}\n*Karana:* ${data.karana?.name}\n*Amrit Kal:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*Rahu Kal:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*Sunrise:* ${data.sun?.sunrise} | *Sunset:* ${data.sun?.sunset}\n*Moon Sign:* ${data.moon?.rashi}\n\nCheck full details on Way2Astro.com!`;
+    const shareText = lang === 'hi'
+        ? `*दैनिक पंचांग - ${formattedDate}*\nस्थान: ${location}\n\n*हिंदू वर्ष:* ${tData('samvatsara', data.samvat?.name, lang)} (${data.samvat?.vikram})\n*मास:* ${tData('masa', data.masa?.amanta, lang)}\n*ऋतु:* ${tData('ritu', data.ritu, lang)}\n*वार:* ${tData('vara', data.vara, lang)}\n*पक्ष:* ${tData('paksha', data.tithi?.paksha, lang)}\n*तिथि:* ${tData('tithi', data.tithi?.name, lang)}\n*नक्षत्र:* ${tData('nakshatra', data.nakshatra?.name, lang)}\n*योग:* ${tData('yoga', data.yoga?.name, lang)}\n*करण:* ${tData('karana', data.karana?.name, lang)}\n*अमृत काल:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*राहु काल:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*सूर्योदय:* ${data.sun?.sunrise} | *सूर्यास्त:* ${data.sun?.sunset}\n*चंद्र राशि:* ${tData('rashi', data.moon?.rashi, lang)}\n\nपूर्ण विवरण Way2Astro.com पर देखें!`
+        : lang === 'te'
+            ? `*దైనందిన పంచాంగం - ${formattedDate}*\nప్రదేశం: ${location}\n\n*హిందూ సంవత్సరం:* ${tData('samvatsara', data.samvat?.name, lang)} (${data.samvat?.vikram})\n*మాసం:* ${tData('masa', data.masa?.amanta, lang)}\n*ఋతువు:* ${tData('ritu', data.ritu, lang)}\n*వారం:* ${tData('vara', data.vara, lang)}\n*పక్షం:* ${tData('paksha', data.tithi?.paksha, lang)}\n*తిథి:* ${tData('tithi', data.tithi?.name, lang)}\n*నక్షత్రం:* ${tData('nakshatra', data.nakshatra?.name, lang)}\n*యోగం:* ${tData('yoga', data.yoga?.name, lang)}\n*కరణం:* ${tData('karana', data.karana?.name, lang)}\n*అమృత కాలం:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*రాహు కాలం:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*సూర్యోదయం:* ${data.sun?.sunrise} | *సూర్యాస్తమయం:* ${data.sun?.sunset}\n*చంద్ర రాశి:* ${tData('rashi', data.moon?.rashi, lang)}\n\nపూర్తి వివరాల కోసం Way2Astro.com ని సందర్శించండి!`
+            : `*Daily Panchang - ${formattedDate}*\nLocation: ${location}\n\n*Hindu Year:* ${data.samvat?.name} (${data.samvat?.vikram})\n*Masa:* ${data.masa?.amanta}\n*Ruthu:* ${data.ritu}\n*Vara:* ${data.vara}\n*Paksha:* ${data.tithi?.paksha}\n*Tithi:* ${data.tithi?.name}\n*Nakshatra:* ${data.nakshatra?.name}\n*Yoga:* ${data.yoga?.name}\n*Karana:* ${data.karana?.name}\n*Amrit Kal:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*Rahu Kal:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*Sunrise:* ${data.sun?.sunrise} | *Sunset:* ${data.sun?.sunset}\n*Moon Sign:* ${data.moon?.rashi}\n\nCheck full details on Way2Astro.com!`;
     const whatsappLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
     const generateImage = async (ref) => {
@@ -184,7 +189,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                         WAY2<span className="text-astro-yellow">ASTRO</span>
                     </h2>
                 </div>
-                <p className={`${isHighRes ? (isInstagram ? 'text-3xl mt-2' : 'text-4xl mt-4') : 'text-xs'} uppercase tracking-widest opacity-80`}>Daily Celestial Guide</p>
+                <p className={`${isHighRes ? (isInstagram ? 'text-3xl mt-2' : 'text-4xl mt-4') : 'text-xs'} uppercase tracking-widest opacity-80`}>{lang === 'hi' ? 'दैनिक खगोलीय गाइड' : lang === 'te' ? 'దైనందిన ఖగోళ మార్గదర్శి' : 'Daily Celestial Guide'}</p>
             </div>
 
             {/* Date & Location */}
@@ -196,17 +201,17 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
             {/* Panchang Grid */}
             <div className={`${isHighRes ? (isInstagram ? 'p-6 gap-2' : 'p-12 gap-5') : 'p-4 gap-2'} grid bg-white content-start`}>
                 {[
-                    { label: '🗓️ Hindu Year', value: `${data.samvat?.name || ''} (${data.samvat?.vikram || ''})` },
-                    { label: '🌒 Masa', value: data.masa?.amanta },
-                    { label: '🌦️ Ruthu', value: data.ritu },
-                    { label: '📅 Vara', value: data.vara },
-                    { label: '🌓 Paksha', value: data.tithi?.paksha },
-                    { label: '✨ Tithi', value: data.tithi?.name },
-                    { label: '🌟 Nakshatra', value: data.nakshatra?.name },
-                    { label: '🧘 Yoga', value: data.yoga?.name },
-                    { label: '🦁 Karana', value: data.karana?.name },
-                    { label: '🍯 Amrit Kal', value: `${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}`, isTime: true },
-                    { label: '⚠️ Rahu Kal', value: `${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}`, isTime: true, isBad: true },
+                    { label: `🗓️ ${t('hinduYear', lang)}`, value: `${tData('samvatsara', data.samvat?.name, lang) || ''} (${data.samvat?.vikram || ''})` },
+                    { label: `🌒 ${t('masa', lang)}`, value: tData('masa', data.masa?.amanta, lang) },
+                    { label: `🌦️ ${t('ritu', lang)}`, value: tData('ritu', data.ritu, lang) },
+                    { label: `📅 ${t('vara', lang)}`, value: tData('vara', data.vara, lang) },
+                    { label: `🌓 ${t('paksha', lang)}`, value: tData('paksha', data.tithi?.paksha, lang) },
+                    { label: `✨ ${t('tithi', lang)}`, value: tData('tithi', data.tithi?.name, lang) },
+                    { label: `🌟 ${t('nakshatra', lang)}`, value: tData('nakshatra', data.nakshatra?.name, lang) },
+                    { label: `🧘 ${t('yoga', lang)}`, value: tData('yoga', data.yoga?.name, lang) },
+                    { label: `🦁 ${t('karana', lang)}`, value: tData('karana', data.karana?.name, lang) },
+                    { label: `🍯 ${t('amritKaal', lang)}`, value: `${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}`, isTime: true },
+                    { label: `⚠️ ${t('rahuKalam', lang)}`, value: `${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}`, isTime: true, isBad: true },
                 ].map((item, idx) => (
                     <div key={idx} className={`flex justify-between items-center border-b border-dashed border-gray-200 ${isHighRes ? (isInstagram ? 'pb-2 last:border-0' : 'pb-3 last:border-0') : 'pb-1 last:border-0'}`}>
                         <span className={`${isHighRes ? (isInstagram ? 'text-4xl' : 'text-5xl') : 'text-xs'} text-gray-500 font-medium`}>{item.label}</span>
@@ -223,16 +228,16 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
             {isInstagram && isHighRes && (
                 <div className="flex-grow flex flex-col justify-end pb-8 px-6 text-center bg-white">
                     <div className="border-t-2 border-dashed border-gray-100 w-1/2 mx-auto mb-4"></div>
-                    <p className="text-astro-navy font-bold text-4xl mb-3 tracking-wide">✨ OUR SERVICES ✨</p>
+                    <p className="text-astro-navy font-bold text-4xl mb-3 tracking-wide">{lang === 'hi' ? '✨ हमारी सेवाएं ✨' : lang === 'te' ? '✨ మా సేవలు ✨' : '✨ OUR SERVICES ✨'}</p>
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-3xl font-semibold text-gray-600">
-                        <span>📜 Kundli</span>
-                        <span>💑 Matching</span>
-                        <span>�️ Dosha Check</span>
-                        <span>🔮 Horoscope</span>
-                        <span>⏳ Dasha Period</span>
-                        <span>🪐 Gochar</span>
-                        <span>💍 Marriage</span>
-                        <span>💼 Career</span>
+                        <span>📜 {lang === 'hi' ? 'कुण्डली' : lang === 'te' ? 'కుండలి' : 'Kundli'}</span>
+                        <span>💑 {lang === 'hi' ? 'मिलान' : lang === 'te' ? 'పొంతన' : 'Matching'}</span>
+                        <span>️ {lang === 'hi' ? 'दोष जांच' : lang === 'te' ? 'దోష తనిఖీ' : 'Dosha Check'}</span>
+                        <span>🔮 {lang === 'hi' ? 'राशिफल' : lang === 'te' ? 'రాశిఫలాలు' : 'Horoscope'}</span>
+                        <span>⏳ {lang === 'hi' ? 'दशा' : lang === 'te' ? 'దశ' : 'Dasha'}</span>
+                        <span>🪐 {lang === 'hi' ? 'गोचर' : lang === 'te' ? 'గోచారం' : 'Gochar'}</span>
+                        <span>💍 {lang === 'hi' ? 'विवाह' : lang === 'te' ? 'వివాహం' : 'Marriage'}</span>
+                        <span>💼 {lang === 'hi' ? 'करियर' : lang === 'te' ? 'కెరీర్' : 'Career'}</span>
                     </div>
                 </div>
             )}
@@ -244,30 +249,34 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
             <div className={`bg-indigo-900 text-white flex justify-around items-center text-center shrink-0 ${isHighRes ? (isInstagram ? 'p-4 text-3xl' : 'p-10 text-4xl') : 'p-3 text-xs'}`}>
                 <div>
                     <span className="block text-astro-yellow mb-2 font-bold flex items-center justify-center gap-1">
-                        <Sun size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> Sunrise
+                        <Sun size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> {t('sunrise', lang)}
                     </span>
                     {data.sun?.sunrise}
                 </div>
                 <div className={`h-full w-px bg-white/20 ${isHighRes ? 'mx-4' : 'mx-1'}`}></div>
                 <div>
                     <span className="block text-astro-yellow mb-2 font-bold flex items-center justify-center gap-1">
-                        <ArrowDown size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> Sunset
+                        <ArrowDown size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> {t('sunset', lang)}
                     </span>
                     {data.sun?.sunset}
                 </div>
                 <div className={`h-full w-px bg-white/20 ${isHighRes ? 'mx-4' : 'mx-1'}`}></div>
                 <div>
                     <span className="block text-astro-yellow mb-2 font-bold flex items-center justify-center gap-1">
-                        <Moon size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> Moon Sign
+                        <Moon size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> {t('moonSign', lang)}
                     </span>
-                    {data.moon?.rashi}
+                    {tData('rashi', data.moon?.rashi, lang)}
                 </div>
             </div>
 
             {/* Footer */}
             <div className={`bg-gray-100 text-center shrink-0 ${isHighRes ? (isInstagram ? 'p-2' : 'p-6') : 'p-2'}`}>
-                <p className={`${isHighRes ? (isInstagram ? 'text-3xl' : 'text-4xl') : 'text-[10px]'} text-gray-500 font-bold`}>
-                    {isInstagram ? '✨ Visit Way2Astro.com for more details ✨' : 'Visit Way2Astro.com for full details'}
+                <p className={`${isHighRes ? (isInstagram ? 'text-3xl' : 'text-4xl') : 'text-[10px]'} text-gray-500 font-bold uppercase tracking-tighter`}>
+                    {lang === 'hi'
+                        ? (isInstagram ? '✨ अधिक जानकारी के लिए Way2Astro.com पर जाएं ✨' : 'पूर्ण विवरण के लिए Way2Astro.com पर जाएं')
+                        : lang === 'te'
+                            ? (isInstagram ? '✨ మరిన్ని వివరాల కోసం Way2Astro.com ని సందర్శించండి ✨' : 'పూర్తి వివరాల కోసం Way2Astro.com ని సందర్శించండి')
+                            : (isInstagram ? '✨ Visit Way2Astro.com for more details ✨' : 'Visit Way2Astro.com for full details')}
                 </p>
             </div>
         </div>
@@ -297,7 +306,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                         {/* Header */}
                         <div className="flex-shrink-0 flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Share2 size={18} className="text-astro-yellow" /> Share Panchang
+                                <Share2 size={18} className="text-astro-yellow" /> {lang === 'hi' ? 'पंचांग शेयर करें' : lang === 'te' ? 'పంచాంగం షేర్ చేయండి' : 'Share Panchang'}
                             </h3>
                             <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
                                 <X size={20} />

@@ -12,7 +12,13 @@ import PlanetInsightModal from '../../../components/PlanetInsightModal';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import KundliChart from '../../../components/KundliChart';
-import { t } from '../../../utils/translations';
+import { t, tData } from '../../../utils/translations';
+
+// TODO: Telugu Support Tasks
+// - [x] Implement Telugu support for Kundali results page
+// - [x] Implement Telugu support for Divisional Charts results page
+// - [x] Verify Telugu translations for labels, signs, and planetary relations
+// - [x] Update documentation with verification results
 
 export default function KundliResult() {
     const searchParams = useSearchParams();
@@ -215,7 +221,8 @@ export default function KundliResult() {
     if (!data) return null;
 
     const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
-    const SIGNS_HI = ["मेष", "वृषभ", "मिथुन", "कर्क", "सिंह", "कन्या", "तुला", "वृश्चिक", "धनु", "मकर", "कुंभ", "मीन"];
+    const SIGNS_HI = ["मेष", "वृषभ", "मिथुन", "कर्क", "सिंह", "कन्या", "तुला", "वृश्चిక", "धनु", "मकर", "कुंभ", "मीन"];
+    const SIGNS_TE = ["మేషం", "వృషభం", "మిధునం", "కర్కాటకం", "సింహం", "కన్య", "తుల", "వృశ్చికం", "ధనుస్సు", "మకరం", "కుంభం", "మీనం"];
 
     // derived values
     const d1AscendantSign = Math.floor(data.houses.ascendant / 30) + 1;
@@ -271,6 +278,7 @@ export default function KundliResult() {
                                     <div className="flex bg-white/10 p-1 rounded-full backdrop-blur-md border border-white/10">
                                         <button onClick={() => setLang('en')} className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors ${lang === 'en' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}>English</button>
                                         <button onClick={() => setLang('hi')} className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors ${lang === 'hi' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}>हिंदी</button>
+                                        <button onClick={() => setLang('te')} className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors ${lang === 'te' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}>తెలుగు</button>
                                     </div>
 
                                     {!isDownloading && (
@@ -291,8 +299,8 @@ export default function KundliResult() {
                                     {(() => {
                                         const [y, m, d] = data.meta.date.split('-');
                                         const dateObj = new Date(y, m - 1, d);
-                                        const monthName = dateObj.toLocaleString('en-US', { month: 'long' });
-                                        return `${d}-${monthName}-${y}`;
+                                        const monthName = dateObj.toLocaleString(lang === 'hi' ? 'hi-IN' : lang === 'te' ? 'te-IN' : 'en-US', { month: 'long' });
+                                        return lang === 'te' ? `${d} ${monthName} ${y}` : `${d}-${monthName}-${y}`;
                                     })()}
                                     <span className="mx-2">•</span>
                                     {data.meta.time}
@@ -355,23 +363,23 @@ export default function KundliResult() {
                                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('lagna', lang)}</span>
-                                        <span className="text-xs font-black text-indigo-900">{lang === 'hi' ? SIGNS_HI[Math.floor(data.houses.ascendant / 30)] : SIGNS[Math.floor(data.houses.ascendant / 30)]}</span>
+                                        <span className="text-xs font-black text-indigo-900">{lang === 'hi' ? SIGNS_HI[Math.floor(data.houses.ascendant / 30)] : lang === 'te' ? SIGNS_TE[Math.floor(data.houses.ascendant / 30)] : SIGNS[Math.floor(data.houses.ascendant / 30)]}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('rashi', lang)}</span>
-                                        <span className="text-xs font-black text-indigo-900">{lang === 'hi' ? SIGNS_HI[data.planets.Moon.sign - 1] : SIGNS[data.planets.Moon.sign - 1]}</span>
+                                        <span className="text-xs font-black text-indigo-900">{lang === 'hi' ? SIGNS_HI[data.planets.Moon.sign - 1] : lang === 'te' ? SIGNS_TE[data.planets.Moon.sign - 1] : SIGNS[data.planets.Moon.sign - 1]}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('thithi', lang)}</span>
-                                        <span className="text-xs font-black text-indigo-900">{data.panchang?.tithi || '-'}</span>
+                                        <span className="text-xs font-black text-indigo-900">{tData('tithi', data.panchang?.tithi, lang) || '-'}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('varam', lang)}</span>
-                                        <span className="text-xs font-black text-indigo-900">{data.panchang?.vara || '-'}</span>
+                                        <span className="text-xs font-black text-indigo-900">{tData('vara', data.panchang?.vara, lang) || '-'}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('nakshatra', lang)}</span>
-                                        <span className="text-sm font-black text-indigo-900">{data.dashas.birthNakshatra}</span>
+                                        <span className="text-sm font-black text-indigo-900">{tData('nakshatra', data.dashas.birthNakshatra, lang)}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('pada', lang)}</span>
@@ -379,11 +387,11 @@ export default function KundliResult() {
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('yoga', lang)}</span>
-                                        <span className="text-sm font-black text-indigo-900">{data.panchang?.yoga || '-'}</span>
+                                        <span className="text-sm font-black text-indigo-900">{tData('yoga', data.panchang?.yoga, lang) || '-'}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
                                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('karana', lang)}</span>
-                                        <span className="text-sm font-black text-indigo-900">{data.panchang?.karana || '-'}</span>
+                                        <span className="text-sm font-black text-indigo-900">{tData('karana', data.panchang?.karana, lang) || '-'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -408,18 +416,18 @@ export default function KundliResult() {
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-[11px] font-black text-indigo-600 border border-indigo-100">
-                                                                {key === 'Ascendant' ? (lang === 'hi' ? 'ल' : 'As') : (lang === 'hi' ? (key === 'Sun' ? 'सू' : key === 'Moon' ? 'च' : key === 'Mars' ? 'मं' : key === 'Mercury' ? 'बु' : key === 'Jupiter' ? 'गु' : key === 'Venus' ? 'शु' : key === 'Saturn' ? 'श' : key === 'Rahu' ? 'रा' : 'के') : key.charAt(0))}
+                                                                {key === 'Ascendant' ? (lang === 'hi' ? 'ल' : lang === 'te' ? 'ల' : 'As') : (lang === 'hi' ? (key === 'Sun' ? 'सू' : key === 'Moon' ? 'च' : key === 'Mars' ? 'मं' : key === 'Mercury' ? 'बु' : key === 'Jupiter' ? 'गु' : key === 'Venus' ? 'शु' : key === 'Saturn' ? 'श' : key === 'Rahu' ? 'रा' : 'के') : lang === 'te' ? (key === 'Sun' ? 'సూ' : key === 'Moon' ? 'చం' : key === 'Mars' ? 'కు' : key === 'Mercury' ? 'బు' : key === 'Jupiter' ? 'గు' : key === 'Venus' ? 'శు' : key === 'Saturn' ? 'శ' : key === 'Rahu' ? 'రా' : 'కే') : key.charAt(0))}
                                                             </div>
-                                                            <span className="font-black text-slate-800">{lang === 'hi' ? (key === 'Sun' ? 'सूर्य' : key === 'Moon' ? 'चन्द्र' : key === 'Mars' ? 'मंगल' : key === 'Mercury' ? 'बुध' : key === 'Jupiter' ? 'गुरु' : key === 'Venus' ? 'शुक्र' : key === 'Saturn' ? 'शनि' : key === 'Rahu' ? 'राहु' : key === 'Ketu' ? 'केतु' : key) : key}</span>
+                                                            <span className="font-black text-slate-800">{tData('planets', key, lang)}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 font-black text-slate-600">
                                                         {Math.floor(planet.longitude % 30)}° {Math.floor((planet.longitude % 1) * 60)}'
                                                     </td>
-                                                    <td className="px-6 py-4 font-black text-slate-700">{lang === 'hi' ? SIGNS_HI[Math.floor(planet.longitude / 30)] : SIGNS[Math.floor(planet.longitude / 30)]}</td>
+                                                    <td className="px-6 py-4 font-black text-slate-700">{tData('rashi', SIGNS[Math.floor(planet.longitude / 30)], lang)}</td>
                                                     <td className="px-6 py-4">
                                                         <span className={`px-4 py-1.5 rounded-full border text-[11px] font-black tracking-wider shadow-sm inline-block min-w-[90px] text-center ${getRelationColor(planet.relation)}`}>
-                                                            {planet.relation || (lang === 'hi' ? 'सम' : 'Neutral')}
+                                                            {tData('relations', planet.relation, lang) || (lang === 'hi' ? 'सम' : lang === 'te' ? 'తటస్థం' : 'Neutral')}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -457,9 +465,9 @@ export default function KundliResult() {
                                                 {/* Left: Lord & Timeline */}
                                                 <div className="lg:w-1/3 flex flex-col items-start">
                                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl mb-4 shadow-lg ${getPlanetColor(dasha.lord)}`}>
-                                                        {lang === 'hi' ? (dasha.lord === 'Sun' ? 'सू' : dasha.lord === 'Moon' ? 'च' : dasha.lord === 'Mars' ? 'मं' : dasha.lord === 'Mercury' ? 'बु' : dasha.lord === 'Jupiter' ? 'गु' : dasha.lord === 'Venus' ? 'शु' : dasha.lord === 'Saturn' ? 'श' : dasha.lord === 'Rahu' ? 'रा' : 'के') : dasha.lord.charAt(0)}
+                                                        {lang === 'hi' ? (dasha.lord === 'Sun' ? 'सू' : dasha.lord === 'Moon' ? 'च' : dasha.lord === 'Mars' ? 'मं' : dasha.lord === 'Mercury' ? 'बु' : dasha.lord === 'Jupiter' ? 'गु' : dasha.lord === 'Venus' ? 'शु' : dasha.lord === 'Saturn' ? 'श' : dasha.lord === 'Rahu' ? 'रा' : 'के') : lang === 'te' ? (dasha.lord === 'Sun' ? 'సూ' : dasha.lord === 'Moon' ? 'చం' : dasha.lord === 'Mars' ? 'కు' : dasha.lord === 'Mercury' ? 'బు' : dasha.lord === 'Jupiter' ? 'గు' : dasha.lord === 'Venus' ? 'శు' : dasha.lord === 'Saturn' ? 'శ' : dasha.lord === 'Rahu' ? 'రా' : 'కే') : dasha.lord.charAt(0)}
                                                     </div>
-                                                    <h3 className="font-black text-slate-900 text-xl mb-3">{lang === 'hi' ? (dasha.lord === 'Sun' ? 'सूर्य' : dasha.lord === 'Moon' ? 'चन्द्र' : dasha.lord === 'Mars' ? 'मंगल' : dasha.lord === 'Mercury' ? 'बुध' : dasha.lord === 'Jupiter' ? 'गुरु' : dasha.lord === 'Venus' ? 'शुक्र' : dasha.lord === 'Saturn' ? 'शनि' : dasha.lord === 'Rahu' ? 'राहु' : dasha.lord === 'Ketu' ? 'केतु' : dasha.lord) : dasha.lord} {t('mahadasha', lang)}</h3>
+                                                    <h3 className="font-black text-slate-900 text-xl mb-3">{tData('planets', dasha.lord, lang)} {t('mahadasha', lang)}</h3>
 
                                                     <div className="space-y-1">
                                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t('timeline', lang)}</span>
@@ -485,7 +493,15 @@ export default function KundliResult() {
                                                             <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">{t('theInterpretation', lang)}</span>
                                                         </div>
                                                         <p className="text-sm text-slate-600 font-medium leading-relaxed whitespace-pre-line">
-                                                            {dasha.analysis?.text || dasha.analysis?.description || (lang === 'hi' ? `${dasha.lord} की महादशा आपके जीवन पथ में एक महत्वपूर्ण अवधि है, जो ग्रह के स्थान द्वारा नियंत्रित अद्वितीय ऊर्जा और सबक लाती है।` : `The Mahadasha of ${dasha.lord} is a significant period in your life path, bringing unique energy and lessons governed by the planet's placement.`)}
+                                                            {(() => {
+                                                                let text = dasha.analysis?.text || dasha.analysis?.description;
+                                                                if (!text) {
+                                                                    return lang === 'hi' ? `${tData('planets', dasha.lord, lang)} की महादशा आपके जीवन पथ में एक महत्वपूर्ण अवधि है, जो ग्रह के स्थान द्वारा नियंत्रित अद्वितीय ऊर्जा और सबक लाती है।` :
+                                                                        lang === 'te' ? `${tData('planets', dasha.lord, lang)} యొక్క మహాదశ మీ జీవిత ప్రయాణంలో ఒక ముఖ్యమైన కాలం, ఇది గ్రహం యొక్క స్థితి ద్వారా నియంత్రించబడే ప్రత్యేక శక్తులను మరియు పాఠాలను తెస్తుంది.` :
+                                                                            `The Mahadasha of ${dasha.lord} is a significant period in your life path, bringing unique energy and lessons governed by the planet's placement.`;
+                                                                }
+                                                                return text;
+                                                            })()}
                                                         </p>
                                                     </div>
                                                 </div>

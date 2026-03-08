@@ -121,6 +121,7 @@ export default function DivisionalChartsResult() {
                         <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10">
                             <button onClick={() => setLang('en')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${lang === 'en' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}>English</button>
                             <button onClick={() => setLang('hi')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${lang === 'hi' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}>हिंदी</button>
+                            <button onClick={() => setLang('te')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${lang === 'te' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}>తెలుగు</button>
                         </div>
 
                         <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10">

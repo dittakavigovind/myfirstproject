@@ -12,11 +12,12 @@ import CosmicLoader from '../../components/CosmicLoader';
 import FAQDisplay from '../../components/FAQDisplay';
 import PanchangShareCard from '../../components/PanchangShareCard';
 import PanchangShareModal from '../../components/PanchangShareModal';
-import CustomDateInput from '../../components/common/CustomDateInput';
 import analytics from '../../lib/analytics';
 import { useBirthDetails } from '../../context/BirthDetailsContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import HeroSection from '../../components/common/HeroSection';
+import { t, tData } from '../../utils/translations';
+import CustomDateInput from '../../components/common/CustomDateInput';
 
 export default function PanchangPageWrapper() {
     return (
@@ -42,6 +43,7 @@ function PanchangPage() {
     const [loading, setLoading] = useState(false);
     const [pageContent, setPageContent] = useState({ faqs: [], description: "" });
     const [showShareModal, setShowShareModal] = useState(false);
+    const [lang, setLang] = useState('en');
 
     // Share Card Ref
     const shareCardRef = useRef(null);
@@ -215,13 +217,13 @@ function PanchangPage() {
                         className="flex flex-col items-start text-left max-w-2xl pointer-events-auto flex-1"
                     >
                         <Link href="/calculators" className="inline-flex items-center gap-2 text-indigo-300/60 hover:text-indigo-300 transition-all mb-8 font-bold text-xs uppercase tracking-[0.2em] group">
-                            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> BACK TO CALCULATORS
+                            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> {t('backToCalculators', lang)}
                         </Link>
 
                         <div className="flex flex-wrap items-center gap-3 mb-4">
                             <div className="inline-flex items-center gap-2 py-1 px-3 rounded-full bg-white/10 border border-white/10 backdrop-blur-md shadow-lg group hover:bg-white/15 transition-all cursor-default">
                                 <Sparkles className="w-3 h-3 text-astro-yellow animate-pulse" />
-                                <span className="text-indigo-100 text-[10px] font-bold tracking-[0.2em] uppercase">Daily Celestial Almanac</span>
+                                <span className="text-indigo-100 text-[10px] font-bold tracking-[0.2em] uppercase">{t('dailyCelestialAlmanac', lang)}</span>
                             </div>
 
                             <button
@@ -229,16 +231,40 @@ function PanchangPage() {
                                 className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white transition-all transform hover:scale-105"
                             >
                                 <Share2 size={12} className="text-astro-yellow" />
-                                Share Card
+                                {t('shareCard', lang)}
                             </button>
+
+                            {/* Language Toggle */}
+                            <div className="flex bg-white/10 p-0.5 rounded-full backdrop-blur-md border border-white/10 ml-2">
+                                <button
+                                    onClick={() => setLang('en')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors ${lang === 'en' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}
+                                >
+                                    EN
+                                </button>
+                                <button
+                                    onClick={() => setLang('hi')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors ${lang === 'hi' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}
+                                >
+                                    हिं
+                                </button>
+                                <button
+                                    onClick={() => setLang('te')}
+                                    className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors ${lang === 'te' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}
+                                >
+                                    తె
+                                </button>
+                            </div>
                         </div>
 
-                        <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight drop-shadow-xl text-white">
-                            Daily <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-amber-200 to-orange-300 drop-shadow-sm">Panchang</span>
+                        <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight tracking-tight drop-shadow-xl text-white uppercase">
+                            {lang === 'hi' ? t('dailyPanchang', lang) : (
+                                <>Daily <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-amber-200 to-orange-300 drop-shadow-sm">Panchang</span></>
+                            )}
                         </h1>
 
                         <p className="text-slate-300/90 text-sm md:text-base font-medium leading-relaxed max-w-lg mb-0 text-left">
-                            Unlock the cosmic rhythm of your day. Precise auspicious timings calculated for <span className='text-white font-bold decoration-astro-yellow/30 underline decoration-2 underline-offset-4'>{place}</span>.
+                            {t('panchangIntroText', lang)} <span className='text-white font-bold decoration-astro-yellow/30 underline decoration-2 underline-offset-4'>{place}</span>.
                         </p>
                     </motion.div>
 
@@ -256,13 +282,13 @@ function PanchangPage() {
                             </div>
 
                             <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2 relative z-10">
-                                <Search className="w-4 h-4 text-astro-yellow" /> Check Details
+                                <Search className="w-4 h-4 text-astro-yellow" /> {t('checkDetails', lang)}
                             </h3>
 
                             <div className="flex flex-col md:flex-row items-center gap-3 relative z-10">
                                 {/* Location Search */}
                                 <div className="w-full md:flex-[1.5] space-y-1 relative z-50">
-                                    <label className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider ml-1">Location</label>
+                                    <label className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider ml-1">{t('location', lang)}</label>
                                     <div className="relative z-50 group bg-white/90 hover:bg-white rounded-xl flex items-center h-12 transition-all shadow-lg shadow-black/5">
                                         <div className="absolute left-3 text-indigo-600 pointer-events-none z-10">
                                             <MapPin className="w-4 h-4" />
@@ -280,7 +306,7 @@ function PanchangPage() {
 
                                 {/* Date Picker */}
                                 <div className="w-full md:flex-1 space-y-1">
-                                    <label className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider ml-1">Date</label>
+                                    <label className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider ml-1">{t('date', lang)}</label>
                                     <div className="relative group bg-white/90 hover:bg-white rounded-xl flex items-center h-12 transition-all shadow-lg shadow-black/5">
                                         <DatePicker customInput={<CustomDateInput Icon={Calendar} />} selected={date} onChange={handleDateChange} dateFormat="dd MMM yyyy" className="w-full h-full border-none focus:ring-0 text-slate-800 font-bold px-4 outline-none cursor-pointer bg-transparent rounded-xl text-sm placeholder-slate-400 select-none caret-transparent" showMonthDropdown showYearDropdown dropdownMode="select" portalId="root-portal" popperClassName="!z-[100]" closeOnScroll={true} />
                                     </div>
@@ -325,20 +351,20 @@ function PanchangPage() {
                                                 <Sun className="w-6 h-6 md:w-8 md:h-8" />
                                             </div>
                                             <div>
-                                                <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Sun Details</h3>
-                                                <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mt-0.5 md:mt-1">Solar Cycle</p>
+                                                <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{t('sunDetails', lang)}</h3>
+                                                <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mt-0.5 md:mt-1">{t('solarCycle', lang)}</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3 md:gap-4">
                                             <div className="bg-orange-50/50 rounded-xl md:rounded-2xl p-4 md:p-5 border border-orange-100 group-hover:bg-orange-50 transition-colors">
                                                 <span className="block text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-1 md:mb-2 flex items-center gap-1.5 md:gap-2">
-                                                    <Sun size={10} className="md:w-3 md:h-3" /> Sunrise
+                                                    <Sun size={10} className="md:w-3 md:h-3" /> {t('sunrise', lang)}
                                                 </span>
                                                 <span className="text-lg md:text-3xl font-black text-slate-800 tracking-tight">{data?.sun?.sunrise || '--:--'}</span>
                                             </div>
                                             <div className="bg-orange-50/50 rounded-xl md:rounded-2xl p-4 md:p-5 border border-orange-100 group-hover:bg-orange-50 transition-colors">
                                                 <span className="block text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-1 md:mb-2 flex items-center gap-1.5 md:gap-2">
-                                                    <ArrowDown size={10} className="md:w-3 md:h-3" /> Sunset
+                                                    <ArrowDown size={10} className="md:w-3 md:h-3" /> {t('sunset', lang)}
                                                 </span>
                                                 <span className="text-lg md:text-3xl font-black text-slate-800 tracking-tight">{data?.sun?.sunset || '--:--'}</span>
                                             </div>
@@ -358,20 +384,20 @@ function PanchangPage() {
                                                 <Moon className="w-6 h-6 md:w-8 md:h-8" />
                                             </div>
                                             <div>
-                                                <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Moon Details</h3>
-                                                <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mt-0.5 md:mt-1">Lunar Cycle</p>
+                                                <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{t('moonDetails', lang)}</h3>
+                                                <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider mt-0.5 md:mt-1">{t('lunarCycle', lang)}</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3 md:gap-4">
                                             <div className="bg-indigo-50/50 rounded-xl md:rounded-2xl p-4 md:p-5 border border-indigo-100 group-hover:bg-indigo-50 transition-colors">
                                                 <span className="block text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1 md:mb-2 flex items-center gap-1.5 md:gap-2">
-                                                    <Moon size={10} className="md:w-3 md:h-3" /> Moonrise
+                                                    <Moon size={10} className="md:w-3 md:h-3" /> {t('moonrise', lang)}
                                                 </span>
                                                 <span className="text-lg md:text-3xl font-black text-slate-800 tracking-tight">{data?.moon?.moonrise || '--:--'}</span>
                                             </div>
                                             <div className="bg-indigo-50/50 rounded-xl md:rounded-2xl p-4 md:p-5 border border-indigo-100 group-hover:bg-indigo-50 transition-colors">
                                                 <span className="block text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1 md:mb-2 flex items-center gap-1.5 md:gap-2">
-                                                    <ArrowDown size={10} className="md:w-3 md:h-3" /> Moonset
+                                                    <ArrowDown size={10} className="md:w-3 md:h-3" /> {t('moonset', lang)}
                                                 </span>
                                                 <span className="text-lg md:text-3xl font-black text-slate-800 tracking-tight">{data?.moon?.moonset || '--:--'}</span>
                                             </div>
@@ -396,16 +422,16 @@ function PanchangPage() {
                                             <Calendar size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">Hindu Year</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">{t('hinduYear', lang)}</p>
                                             <p className="text-lg font-black text-slate-800 leading-none">
-                                                {data.samvat.name} <span className="text-slate-400 font-bold text-xs opacity-60">Samvatsara</span>
+                                                {tData('samvatsara', data.samvat.name, lang)} <span className="text-slate-400 font-bold text-xs opacity-60">{t('samvatsara', lang)}</span>
                                             </p>
                                             {/* Lunar Month & Season */}
                                             {(data.masa || data.ritu) && (
                                                 <p className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-2">
-                                                    <span className="text-indigo-600">{data.masa?.amanta} Masa</span>
+                                                    <span className="text-indigo-600">{tData('masa', data.masa?.amanta, lang)} {t('masa', lang)}</span>
                                                     <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                    <span className="text-amber-600">{data.ritu}</span>
+                                                    <span className="text-amber-600">{tData('ritu', data.ritu, lang)}</span>
                                                 </p>
                                             )}
                                         </div>
@@ -413,11 +439,11 @@ function PanchangPage() {
 
                                     <div className="flex items-center gap-2 bg-slate-50 p-2 pr-6 rounded-xl border border-slate-100 w-full md:w-auto justify-between">
                                         <div className="text-right px-4 border-r border-slate-200">
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Vikram</p>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t('vikram', lang)}</p>
                                             <p className="text-base font-black text-slate-700 leading-none tabular-nums">{data.samvat.vikram}</p>
                                         </div>
                                         <div className="text-right pl-4">
-                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Shaka</p>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t('shaka', lang)}</p>
                                             <p className="text-base font-black text-slate-700 leading-none tabular-nums">{data.samvat.shaka}</p>
                                         </div>
                                     </div>
@@ -431,66 +457,73 @@ function PanchangPage() {
                                 data={data}
                                 location={place}
                                 date={date}
+                                lang={lang}
                             />
 
                             {/* Main Grid - planetary Elements */}
                             <h2 className="text-xl font-black text-slate-800 mb-5 px-1 flex items-center gap-2 mt-8">
                                 <Sparkles className="text-indigo-600 w-5 h-5" />
-                                Core Elements
+                                {t('coreElements', lang)}
                             </h2>
                             {/* CHANGED: Reverted to Grid Layout for 3-column cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
                                 <PanchangCard
-                                    label="Tithi"
-                                    value={data?.tithi?.name}
-                                    sub={data?.tithi?.paksha}
+                                    label={t('tithi', lang)}
+                                    value={tData('tithi', data?.tithi?.name, lang)}
+                                    sub={tData('paksha', data?.tithi?.paksha, lang)}
                                     start={data?.tithi?.start}
                                     end={data?.tithi?.end}
                                     icon={Clock}
                                     color="indigo"
                                     delay={0.1}
+                                    lang={lang}
                                 />
                                 <PanchangCard
-                                    label="Nakshatra"
-                                    value={data?.nakshatra?.name}
-                                    sub={`Pada ${data?.nakshatra?.padha || ''}`}
+                                    label={t('nakshatra', lang)}
+                                    value={tData('nakshatra', data?.nakshatra?.name, lang)}
+                                    sub={`${lang === 'hi' ? 'चरण' : 'Pada'} ${data?.nakshatra?.padha || ''}`}
                                     start={data?.nakshatra?.start}
                                     end={data?.nakshatra?.end}
                                     icon={Star}
                                     color="amber"
                                     delay={0.2}
+                                    lang={lang}
                                 />
                                 <PanchangCard
-                                    label="Yoga"
-                                    value={data?.yoga?.name}
+                                    label={t('yoga', lang)}
+                                    value={tData('yoga', data?.yoga?.name, lang)}
                                     start={data?.yoga?.start}
                                     end={data?.yoga?.end}
                                     icon={Sparkles}
                                     color="rose"
                                     delay={0.3}
+                                    lang={lang}
                                 />
                                 <PanchangCard
-                                    label="Karana"
-                                    value={data?.karana?.name}
+                                    label={t('karana', lang)}
+                                    value={tData('karana', data?.karana?.name, lang)}
                                     start={data?.karana?.start}
                                     end={data?.karana?.end}
                                     icon={Sun}
                                     color="emerald"
                                     delay={0.4}
+                                    lang={lang}
                                 />
                                 <PanchangCard
-                                    label="Vara (Day)"
-                                    value={data?.vara}
+                                    label={t('vara', lang)}
+                                    value={tData('vara', data?.vara, lang)}
                                     icon={Calendar}
                                     color="indigo"
                                     delay={0.5}
+                                    lang={lang}
                                 />
                                 <PanchangCard
-                                    label="Moon Sign"
-                                    value={data?.moon?.rashi}
+                                    label={t('moonSign', lang)}
+                                    value={tData('rashi', data?.moon?.rashi, lang)}
                                     icon={Moon}
                                     color="violet"
                                     delay={0.6}
+                                    lang={lang}
                                 />
                             </div>
 
@@ -500,28 +533,31 @@ function PanchangPage() {
                                 <div>
                                     <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        Auspicious Timings
+                                        {t('auspiciousTimings', lang)}
                                     </h3>
                                     <div className="space-y-4">
                                         <WideTimingCard
-                                            label="Abhijit Muhurta"
-                                            value="Best"
+                                            label={t('abhijitMuhurta', lang)}
+                                            value={t('good', lang)}
+                                            lang={lang}
                                             start={data?.abhijitMuhurta?.start}
                                             end={data?.abhijitMuhurta?.end}
                                             type="good"
                                             delay={0.5}
                                         />
                                         <WideTimingCard
-                                            label="Amrit Kaal"
-                                            value="Good"
+                                            label={t('amritKaal', lang)}
+                                            value={t('good', lang)}
+                                            lang={lang}
                                             start={data?.amritKaal?.start}
                                             end={data?.amritKaal?.end}
                                             type="good"
                                             delay={0.55}
                                         />
                                         <WideTimingCard
-                                            label="Gulika Kalam"
-                                            value="Neutral"
+                                            label={t('gulikaKalam', lang)}
+                                            value={t('neutral', lang)}
+                                            lang={lang}
                                             start={data?.gulikaKalam?.start}
                                             end={data?.gulikaKalam?.end}
                                             type="neutral"
@@ -534,28 +570,31 @@ function PanchangPage() {
                                 <div>
                                     <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
                                         <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        Inauspicious Timings
+                                        {t('inauspiciousTimings', lang)}
                                     </h3>
                                     <div className="space-y-4">
                                         <WideTimingCard
-                                            label="Rahu Kalam"
-                                            value="Avoid"
+                                            label={t('rahuKalam', lang)}
+                                            value={t('bad', lang)}
+                                            lang={lang}
                                             start={data?.rahuKalam?.start}
                                             end={data?.rahuKalam?.end}
                                             type="bad"
                                             delay={0.65}
                                         />
                                         <WideTimingCard
-                                            label="Yamaganda"
-                                            value="Avoid"
+                                            label={t('yamaganda', lang)}
+                                            value={t('bad', lang)}
+                                            lang={lang}
                                             start={data?.yamaganda?.start}
                                             end={data?.yamaganda?.end}
                                             type="bad"
                                             delay={0.7}
                                         />
                                         <WideTimingCard
-                                            label="Varjyam"
-                                            value="Avoid"
+                                            label={t('varjyam', lang)}
+                                            value={t('bad', lang)}
+                                            lang={lang}
                                             start={data?.varjyam?.start}
                                             end={data?.varjyam?.end}
                                             type="bad"
@@ -564,8 +603,9 @@ function PanchangPage() {
                                         {data?.durmuhurtham && data.durmuhurtham.map((dur, idx) => (
                                             <WideTimingCard
                                                 key={`dur-${idx}`}
-                                                label={`Durmuhurtham ${data.durmuhurtham.length > 1 ? idx + 1 : ''}`}
-                                                value="Avoid"
+                                                label={`${t('durmuhurtham', lang)} ${data.durmuhurtham.length > 1 ? idx + 1 : ''}`}
+                                                value={t('bad', lang)}
+                                                lang={lang}
                                                 start={dur.start}
                                                 end={dur.end}
                                                 type="bad"
@@ -580,7 +620,8 @@ function PanchangPage() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Choghadiya */}
                                 <TimingTable
-                                    title="Choghadiya"
+                                    title={t('choghadiya', lang)}
+                                    lang={lang}
                                     dayData={data?.choghadiya?.day}
                                     nightData={data?.choghadiya?.night}
                                     delay={0.7}
@@ -590,7 +631,8 @@ function PanchangPage() {
 
                                 {/* Hora */}
                                 <TimingTable
-                                    title="Hora"
+                                    title={t('hora', lang)}
+                                    lang={lang}
                                     dayData={data?.hora?.day}
                                     nightData={data?.hora?.night}
                                     delay={0.8}
@@ -612,7 +654,7 @@ function PanchangPage() {
 
 // --- Components ---
 
-function WideTimingCard({ label, value, start, end, type, delay }) {
+function WideTimingCard({ label, value, start, end, type, delay, lang }) {
     const styles = {
         good: { border: 'border-l-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' },
         neutral: { border: 'border-l-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' },
@@ -655,7 +697,7 @@ function WideTimingCard({ label, value, start, end, type, delay }) {
 }
 
 // Redesigned to be a Boxy Card (Grid Item) matching the second reference image
-function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay }) {
+function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay, lang }) {
     const theme = {
         amber: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-600', border: 'border-amber-100' },
         indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', icon: 'text-indigo-600', border: 'border-indigo-100' },
@@ -710,9 +752,9 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay 
             {(start || end) && (
                 <div className="mt-auto pt-1 border-t border-slate-50/80">
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 tabular-nums tracking-wide">
-                        <span>{formatTime(start)}</span>
-                        <div className="h-px bg-slate-200 flex-1 mx-3"></div>
-                        <span>{formatTime(end)}</span>
+                        <span className="flex items-center gap-1"><Clock size={10} className="text-slate-300" /> {lang === 'hi' ? 'शुरू:' : 'Starts:'} {formatTime(start)}</span>
+                        <div className="h-px bg-slate-100 flex-1 mx-2"></div>
+                        <span>{lang === 'hi' ? 'अंत:' : 'Ends:'} {formatTime(end)}</span>
                     </div>
                 </div>
             )}
@@ -720,32 +762,32 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay 
     );
 }
 
-function TimingTable({ title, dayData, nightData, delay, color, isHora, showQuality = false }) {
+function TimingTable({ title, dayData, nightData, delay, color, isHora, showQuality = false, lang }) {
     const [activeTab, setActiveTab] = useState('day'); // 'day' or 'night'
 
     const getQualityInfo = (type) => {
         const qualities = {
             // Good
-            Amrit: { label: 'Good', color: 'text-emerald-600', bg: 'bg-emerald-50', bar: 'bg-emerald-500', icon: CheckCircle },
-            Shubh: { label: 'Good', color: 'text-teal-600', bg: 'bg-teal-50', bar: 'bg-teal-500', icon: CheckCircle },
-            Labh: { label: 'Good', color: 'text-sky-600', bg: 'bg-sky-50', bar: 'bg-sky-500', icon: CheckCircle },
-            Char: { label: 'Neutral', color: 'text-indigo-600', bg: 'bg-indigo-50', bar: 'bg-indigo-500', icon: Info },
+            Amrit: { label: t('good', lang), color: 'text-emerald-600', bg: 'bg-emerald-50', bar: 'bg-emerald-500', icon: CheckCircle },
+            Shubh: { label: t('good', lang), color: 'text-teal-600', bg: 'bg-teal-50', bar: 'bg-teal-500', icon: CheckCircle },
+            Labh: { label: t('good', lang), color: 'text-sky-600', bg: 'bg-sky-50', bar: 'bg-sky-500', icon: CheckCircle },
+            Char: { label: t('neutral', lang), color: 'text-indigo-600', bg: 'bg-indigo-50', bar: 'bg-indigo-500', icon: Info },
 
             // Bad
-            Rog: { label: 'Bad', color: 'text-orange-600', bg: 'bg-orange-50', bar: 'bg-orange-500', icon: XCircle },
-            Kaal: { label: 'Bad', color: 'text-slate-600', bg: 'bg-slate-50', bar: 'bg-slate-500', icon: XCircle },
-            Udveg: { label: 'Bad', color: 'text-rose-600', bg: 'bg-rose-50', bar: 'bg-rose-500', icon: XCircle },
+            Rog: { label: t('bad', lang), color: 'text-orange-600', bg: 'bg-orange-50', bar: 'bg-orange-500', icon: XCircle },
+            Kaal: { label: t('bad', lang), color: 'text-slate-600', bg: 'bg-slate-50', bar: 'bg-slate-500', icon: XCircle },
+            Udveg: { label: t('bad', lang), color: 'text-rose-600', bg: 'bg-rose-50', bar: 'bg-rose-500', icon: XCircle },
 
             // Planets (Hora) - Using 'Energy' as a quality proxy or plain Colors
-            Sun: { label: 'Solar', color: 'text-orange-600', bg: 'bg-orange-50', bar: 'bg-orange-500', icon: Sun },
-            Moon: { label: 'Lunar', color: 'text-slate-600', bg: 'bg-slate-50', bar: 'bg-slate-400', icon: Moon },
-            Mars: { label: 'Martian', color: 'text-red-600', bg: 'bg-red-50', bar: 'bg-red-500', icon: Star },
-            Mercury: { label: 'Mercurial', color: 'text-emerald-600', bg: 'bg-emerald-50', bar: 'bg-emerald-500', icon: Sparkles },
-            Jupiter: { label: 'Jovian', color: 'text-amber-600', bg: 'bg-amber-50', bar: 'bg-amber-500', icon: Star },
-            Venus: { label: 'Venusian', color: 'text-pink-600', bg: 'bg-pink-50', bar: 'bg-pink-400', icon: Sparkles },
-            Saturn: { label: 'Saturnine', color: 'text-indigo-600', bg: 'bg-indigo-50', bar: 'bg-indigo-600', icon: Moon },
+            Sun: { label: tData('planets', 'Sun', lang), color: 'text-orange-600', bg: 'bg-orange-50', bar: 'bg-orange-500', icon: Sun },
+            Moon: { label: tData('planets', 'Moon', lang), color: 'text-slate-600', bg: 'bg-slate-50', bar: 'bg-slate-400', icon: Moon },
+            Mars: { label: tData('planets', 'Mars', lang), color: 'text-red-600', bg: 'bg-red-50', bar: 'bg-red-500', icon: Star },
+            Mercury: { label: tData('planets', 'Mercury', lang), color: 'text-emerald-600', bg: 'bg-emerald-50', bar: 'bg-emerald-500', icon: Sparkles },
+            Jupiter: { label: tData('planets', 'Jupiter', lang), color: 'text-amber-600', bg: 'bg-amber-50', bar: 'bg-amber-500', icon: Star },
+            Venus: { label: tData('planets', 'Venus', lang), color: 'text-pink-600', bg: 'bg-pink-50', bar: 'bg-pink-400', icon: Sparkles },
+            Saturn: { label: tData('planets', 'Saturn', lang), color: 'text-indigo-600', bg: 'bg-indigo-50', bar: 'bg-indigo-600', icon: Moon },
         };
-        return qualities[type] || { label: 'Neutral', color: 'text-slate-500', bg: 'bg-slate-50', bar: 'bg-slate-400', icon: MinusCircle };
+        return qualities[type] || { label: t('neutral', lang), color: 'text-slate-500', bg: 'bg-slate-50', bar: 'bg-slate-400', icon: MinusCircle };
     };
 
     return (
@@ -784,7 +826,7 @@ function TimingTable({ title, dayData, nightData, delay, color, isHora, showQual
                             )}
                             <span className="relative z-10 flex items-center justify-center gap-2">
                                 {tab === 'day' ? <Sun size={12} className={activeTab === 'day' ? 'text-amber-500' : ''} /> : <Moon size={12} className={activeTab === 'night' ? 'text-indigo-500' : ''} />}
-                                {tab}
+                                {t(tab, lang)}
                             </span>
                         </button>
                     ))}
@@ -823,7 +865,7 @@ function TimingTable({ title, dayData, nightData, delay, color, isHora, showQual
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <h4 className="text-xs md:text-sm font-black text-slate-900 tracking-tight uppercase truncate">
-                                                {isHora ? item.planet : item.name}
+                                                {isHora ? tData('planets', item.planet, lang) : tData('choghadiya', item.name, lang)}
                                             </h4>
                                             {showQuality && (
                                                 <div className={`inline-flex items-center gap-1 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${info.color}`}>

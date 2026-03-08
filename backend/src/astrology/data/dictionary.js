@@ -116,6 +116,114 @@ const dictionary = {
         'Thursday': 'गुरुवार',
         'Friday': 'शुक्रवार',
         'Saturday': 'शनिवार'
+    },
+    // English to Telugu Mappings
+    enToTe: {
+        // Planets
+        'Sun': 'సూర్యుడు (Sun)',
+        'Moon': 'చంద్రుడు (Moon)',
+        'Mars': 'కుజుడు (Mars)',
+        'Mercury': 'బుధుడు (Mercury)',
+        'Jupiter': 'గురుడు (Jupiter)',
+        'Venus': 'శుక్రుడు (Venus)',
+        'Saturn': 'శని (Saturn)',
+        'Rahu': 'రాహువు (Rahu)',
+        'Ketu': 'కేతువు (Ketu)',
+
+        // Zodiac Signs
+        'Aries': 'మేషం',
+        'Taurus': 'వృషభం',
+        'Gemini': 'మిధునం',
+        'Cancer': 'కర్కాటకం',
+        'Leo': 'సింహం',
+        'Virgo': 'కన్య',
+        'Libra': 'తుల',
+        'Scorpio': 'వృశ్చికం',
+        'Sagittarius': 'ధనుస్సు',
+        'Capricorn': 'మకరం',
+        'Aquarius': 'కుంభం',
+        'Pisces': 'మీనం',
+
+        // Relations / Dignities
+        'Exalted': 'ఉచ్చ',
+        'Mooltrikona': 'మూల త్రికోణం',
+        'Own Sign': 'స్వక్షేత్రం',
+        'Great Friend': 'అధి మిత్రుడు',
+        'Friend': 'మిత్రుడు',
+        'Neutral': 'తటస్థం',
+        'Enemy': 'శత్రువు',
+        'Great Enemy': 'అధి శత్రువు',
+        'Debilitated': 'నీచ',
+
+        // Nakshatras
+        'Ashwini': 'అశ్విని',
+        'Bharani': 'భరణి',
+        'Krittika': 'కృత్తిక',
+        'Rohini': 'రోహిణి',
+        'Mrigashira': 'మృగశిర',
+        'Ardra': 'ఆర్ద్ర',
+        'Punarvasu': 'పునర్వసు',
+        'Pushya': 'పుష్యమి',
+        'Ashlesha': 'ఆశ్లేష',
+        'Magha': 'మఖ',
+        'Purva Phalguni': 'పుబ్బ (పూర్వఫల్గుణి)',
+        'Uttara Phalguni': 'ఉత్తర (ఉత్తరఫల్గుణి)',
+        'Hasta': 'హస్త',
+        'Chitra': 'చిత్త',
+        'Swati': 'స్వాతి',
+        'Vishakha': 'విశాఖ',
+        'Anuradha': 'అనూరాధ',
+        'Jyeshtha': 'జ్యేష్ఠ',
+        'Mula': 'మూల',
+        'Purva Ashadha': 'పూర్వాషాఢ',
+        'Uttara Ashadha': 'ఉత్తరాషాఢ',
+        'Shravana': 'శ్రవణం',
+        'Dhanishta': 'ధనిష్ఠ',
+        'Shatabhisha': 'శతభిషం',
+        'Purva Bhadrapada': 'పూర్వాభాద్ర',
+        'Uttara Bhadrapada': 'ఉత్తరాభాద్ర',
+        'Revati': 'రేవతి',
+
+        // Yogas
+        'Vishkumbha': 'విష్కుంభము',
+        'Priti': 'ప్రీతి',
+        'Ayushman': 'ఆయుష్మాన్',
+        'Saubhagya': 'సౌభాగ్యము',
+        'Shobhana': 'శోభనము',
+        'Atiganda': 'అతిగండము',
+        'Sukarma': 'సుకర్మ',
+        'Dhriti': 'ధృతి',
+        'Shula': 'శూల',
+        'Ganda': 'గండము',
+        'Vriddhi': 'వృద్ధి',
+        'Dhruva': 'ధ్రువ',
+        'Vyaghata': 'వ్యాఘాతము',
+        'Harshana': 'హర్షణము',
+        'Vajra': 'వజ్రము',
+        'Siddhi': 'సిద్ధి',
+        'Vyatipata': 'వ్యతీపాతము',
+        'Variyan': 'వరీయాన్',
+        'Parigha': 'పరిఘ',
+        'Shiva': 'శివ',
+        'Siddha': 'సిద్ధ',
+        'Sadhya': 'సాధ్య',
+        'Shubha': 'శుభము',
+        'Shukla': 'శుక్లము',
+        'Brahma': 'బ్రహ్మ',
+        'Indra': 'ఇంద్ర',
+        'Vaidhriti': 'వైధృతి',
+
+        // Karanas
+        'Bava': 'బవ', 'Balava': 'బాలవ', 'Kaulava': 'కౌలవ', 'Taitila': 'తైతిల', 'Gara': 'గర', 'Vanija': 'వణిజ', 'Vishti': 'భద్ర (విష్టి)', 'Shakuni': 'శకుని', 'Chatushpada': 'చతుష్పాద', 'Naga': 'నాగ', 'Kimstughna': 'కింస్తుఘ్న',
+
+        // Days
+        'Sunday': 'ఆదివారము',
+        'Monday': 'సోమవారము',
+        'Tuesday': 'మంగళవారము',
+        'Wednesday': 'బుధవారము',
+        'Thursday': 'గురువారము',
+        'Friday': 'శుక్రవారము',
+        'Saturday': 'శనివారము'
     }
 };
 
@@ -175,7 +283,32 @@ const translateToHi = (text) => {
     return translated;
 };
 
+/**
+ * Translates a given English term to Telugu.
+ */
+const translateToTe = (text) => {
+    if (!text) return text;
+    if (dictionary.enToTe[text]) return dictionary.enToTe[text];
+    let translated = text;
+    translated = translated.replace('(Shukla-Paksha)', '(శుక్ల పక్షం)');
+    translated = translated.replace('(Krishna-Paksha)', '(కృష్ణ పక్షం)');
+    const tithis = {
+        'Pratipada': 'పాడ్యమి', 'Dwitiya': 'విదియ', 'Tritiya': 'తదియ', 'Chaturthi': 'చవితి', 'Panchami': 'పంచమి', 'Shashthi': 'షష్ఠి', 'Saptami': 'సప్తమి', 'Ashtami': 'అష్టమి', 'Navami': 'నవమి', 'Dashami': 'దశమి', 'Ekadashi': 'ఏకాదశి', 'Dwadashi': 'ద్వాదశి', 'Trayodashi': 'త్రయోదశి', 'Chaturdashi': 'చతుర్దశి', 'Purnima': 'పౌర్ణమి', 'Amavasya': 'అమావాస్య'
+    };
+    for (const [en, te] of Object.entries(tithis)) {
+        if (translated.includes(en)) translated = translated.replace(en, te);
+    }
+    if (translated.includes('(Pada ')) {
+        translated = translated.replace('(Pada 1)', '(పాదం 1)');
+        translated = translated.replace('(Pada 2)', '(పాదం 2)');
+        translated = translated.replace('(Pada 3)', '(పాదం 3)');
+        translated = translated.replace('(Pada 4)', '(పాదం 4)');
+    }
+    return translated;
+};
+
 module.exports = {
     dictionary,
-    translateToHi
+    translateToHi,
+    translateToTe
 };

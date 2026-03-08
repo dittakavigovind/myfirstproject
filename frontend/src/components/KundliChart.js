@@ -21,7 +21,7 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
 
         // Add Ascendant (Lagna) Label
         if (ascendantSign) {
-            map[ascendantSign].push(lang === 'hi' ? 'लग्न' : 'Lagna');
+            map[ascendantSign].push(lang === 'hi' ? 'लग्न' : lang === 'te' ? 'లగ్నం' : 'Lagna');
         }
 
         Object.entries(planets).forEach(([name, data]) => {
@@ -39,8 +39,9 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
             if (sign && map[sign]) {
                 const PLANET_ABBR_EN = { Sun: 'Su', Moon: 'Mo', Mars: 'Ma', Mercury: 'Me', Jupiter: 'Ju', Venus: 'Ve', Saturn: 'Sa', Rahu: 'Ra', Ketu: 'Ke' };
                 const PLANET_ABBR_HI = { Sun: 'सू', Moon: 'च', Mars: 'मं', Mercury: 'बु', Jupiter: 'गु', Venus: 'शु', Saturn: 'श', Rahu: 'रा', Ketu: 'के' };
+                const PLANET_ABBR_TE = { Sun: 'సూ', Moon: 'చం', Mars: 'కు', Mercury: 'బు', Jupiter: 'గు', Venus: 'శు', Saturn: 'శ', Rahu: 'రా', Ketu: 'కే' };
                 // Abbreviate planet names
-                const abbr = lang === 'hi' ? (PLANET_ABBR_HI[name] || name.substring(0, 2)) : (PLANET_ABBR_EN[name] || name.substring(0, 2));
+                const abbr = lang === 'hi' ? (PLANET_ABBR_HI[name] || name.substring(0, 2)) : lang === 'te' ? (PLANET_ABBR_TE[name] || name.substring(0, 2)) : (PLANET_ABBR_EN[name] || name.substring(0, 2));
                 if (!map[sign].includes(abbr)) { // Avoid dupes if any
                     map[sign].push(abbr);
                 }
@@ -180,10 +181,10 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, lang }) {
 function SouthIndianChart({ planetsBySign, ascendantSign, lang }) {
     // Matrix of Signs (1-12)
     const GRID = [
-        { sign: 12, x: 0, y: 0, nameHi: 'मीन', nameEn: 'Pi' }, { sign: 1, x: 100, y: 0, nameHi: 'मेष', nameEn: 'Ar' }, { sign: 2, x: 200, y: 0, nameHi: 'वृषभ', nameEn: 'Ta' }, { sign: 3, x: 300, y: 0, nameHi: 'मिथुन', nameEn: 'Ge' },
-        { sign: 11, x: 0, y: 100, nameHi: 'कुंभ', nameEn: 'Aq' }, { sign: 4, x: 300, y: 100, nameHi: 'कर्क', nameEn: 'Ca' },
-        { sign: 10, x: 0, y: 200, nameHi: 'मकर', nameEn: 'Cp' }, { sign: 5, x: 300, y: 200, nameHi: 'सिंह', nameEn: 'Le' },
-        { sign: 9, x: 0, y: 300, nameHi: 'धनु', nameEn: 'Sg' }, { sign: 8, x: 100, y: 300, nameHi: 'वृश्चिक', nameEn: 'Sc' }, { sign: 7, x: 200, y: 300, nameHi: 'तुला', nameEn: 'Li' }, { sign: 6, x: 300, y: 300, nameHi: 'कन्या', nameEn: 'Vi' },
+        { sign: 12, x: 0, y: 0, nameHi: 'मीन', nameTe: 'మీనం', nameEn: 'Pi' }, { sign: 1, x: 100, y: 0, nameHi: 'मेष', nameTe: 'మేషం', nameEn: 'Ar' }, { sign: 2, x: 200, y: 0, nameHi: 'वृषभ', nameTe: 'వృషభం', nameEn: 'Ta' }, { sign: 3, x: 300, y: 0, nameHi: 'मिथुन', nameTe: 'మిధునం', nameEn: 'Ge' },
+        { sign: 11, x: 0, y: 100, nameHi: 'कुंभ', nameTe: 'కుంభం', nameEn: 'Aq' }, { sign: 4, x: 300, y: 100, nameHi: 'कर्क', nameTe: 'కర్కాటకం', nameEn: 'Ca' },
+        { sign: 10, x: 0, y: 200, nameHi: 'मकर', nameTe: 'మకరం', nameEn: 'Cp' }, { sign: 5, x: 300, y: 200, nameHi: 'सिंह', nameTe: 'సింహం', nameEn: 'Le' },
+        { sign: 9, x: 0, y: 300, nameHi: 'धनु', nameTe: 'ధనుస్సు', nameEn: 'Sg' }, { sign: 8, x: 100, y: 300, nameHi: 'वृश्चिक', nameTe: 'వృశ్చికం', nameEn: 'Sc' }, { sign: 7, x: 200, y: 300, nameHi: 'तुला', nameTe: 'తుల', nameEn: 'Li' }, { sign: 6, x: 300, y: 300, nameHi: 'कन्या', nameTe: 'కన్య', nameEn: 'Vi' },
     ];
 
     return (
@@ -241,7 +242,7 @@ function SouthIndianChart({ planetsBySign, ascendantSign, lang }) {
             {/* Boxes */}
             {GRID.map(box => {
                 const planets = planetsBySign[box.sign] || [];
-                const lagnaLabel = lang === 'hi' ? 'लग्न' : 'Lagna';
+                const lagnaLabel = lang === 'hi' ? 'लग्न' : lang === 'te' ? 'లగ్నం' : 'Lagna';
                 const hasLagna = planets.includes(lagnaLabel);
                 const otherPlanets = planets.filter(p => p !== lagnaLabel);
 
@@ -261,7 +262,7 @@ function SouthIndianChart({ planetsBySign, ascendantSign, lang }) {
 
                         {/* Sign Name (Small) */}
                         <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#f59e0b" fillOpacity="0.8" fontWeight="bold">
-                            {lang === 'hi' ? box.nameHi : box.nameEn}
+                            {lang === 'hi' ? box.nameHi : lang === 'te' ? box.nameTe : box.nameEn}
                         </text>
 
                         <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="11" fontWeight="bold">

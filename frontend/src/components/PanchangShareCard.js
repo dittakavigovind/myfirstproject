@@ -5,8 +5,9 @@ import { toPng } from 'html-to-image';
 import { Share2, Download } from 'lucide-react';
 import analytics from '../lib/analytics';
 import { useEffect } from 'react';
+import { t, tData } from '../utils/translations';
 
-const PanchangShareCard = forwardRef(({ data, location, date, showButton = true }, ref) => {
+const PanchangShareCard = forwardRef(({ data, location, date, showButton = true, lang = 'en' }, ref) => {
     const cardRef = useRef(null);
     const [loading, setLoading] = useState(false);
 
@@ -35,11 +36,11 @@ const PanchangShareCard = forwardRef(({ data, location, date, showButton = true 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
-                        title: `Daily Panchang`,
-                        text: `Check out today's Panchang details for ${location}!`,
+                        title: t('dailyPanchang', lang),
+                        text: `${t('dailyPanchang', lang)} for ${location}!`,
                         files: [file]
                     });
-                    analytics.track('SHARE', 'PANCHANG', 'web_share_api', { location, date });
+                    analytics.track('SHARE', 'PANCHANG', 'web_share_api', { location, date, lang });
                     shared = true;
                 } catch (shareError) {
                     console.warn('Share failed or was cancelled, falling back to download:', shareError);
@@ -76,7 +77,7 @@ const PanchangShareCard = forwardRef(({ data, location, date, showButton = true 
                     disabled={loading}
                     className="flex items-center gap-2 bg-gradient-to-r from-astro-navy to-indigo-900 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:scale-105 transition-transform"
                 >
-                    {loading ? 'Generating...' : <><Share2 size={18} /> Share Panchang</>}
+                    {loading ? (lang === 'hi' ? 'तैयार हो रहा है...' : 'Generating...') : <><Share2 size={18} /> {lang === 'hi' ? 'पंचांग शेयर करें' : 'Share Panchang'}</>}
                 </button>
             )}
 
@@ -96,50 +97,50 @@ const PanchangShareCard = forwardRef(({ data, location, date, showButton = true 
 
                 {/* Date & Location */}
                 <div className="bg-orange-50 p-3 text-center border-b border-orange-100">
-                    <h3 className="text-lg font-bold text-gray-800">{new Date(date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h3>
-                    <p className="text-sm text-gray-500 font-medium">📍 {location}</p>
+                    <h3 className="text-lg font-bold text-gray-800">{new Date(date).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h3>
+                    <p className="text-sm text-gray-500 font-medium lowercase">📍 {location}</p>
                 </div>
 
                 {/* Panchang Grid */}
                 <div className="p-4 grid gap-3">
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
-                        <span className="text-sm text-gray-500 font-medium">✨ Tithi</span>
-                        <span className="font-bold text-astro-navy">{data.tithi?.name}</span>
+                        <span className="text-sm text-gray-500 font-medium">✨ {t('tithi', lang)}</span>
+                        <span className="font-bold text-astro-navy">{tData('tithi', data.tithi?.name, lang)}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
-                        <span className="text-sm text-gray-500 font-medium">🌟 Nakshatra</span>
-                        <span className="font-bold text-astro-navy">{data.nakshatra?.name}</span>
+                        <span className="text-sm text-gray-500 font-medium">🌟 {t('nakshatra', lang)}</span>
+                        <span className="font-bold text-astro-navy">{tData('nakshatra', data.nakshatra?.name, lang)}</span>
                     </div>
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
-                        <span className="text-sm text-gray-500 font-medium">🧘 Yoga</span>
-                        <span className="font-bold text-astro-navy">{data.yoga?.name}</span>
+                        <span className="text-sm text-gray-500 font-medium">🧘 {t('yoga', lang)}</span>
+                        <span className="font-bold text-astro-navy">{tData('yoga', data.yoga?.name, lang)}</span>
                     </div>
                     <div className="flex justify-between items-center pb-1">
-                        <span className="text-sm text-gray-500 font-medium">📅 Vara</span>
-                        <span className="font-bold text-astro-navy">{data.vara}</span>
+                        <span className="text-sm text-gray-500 font-medium">📅 {t('vara', lang)}</span>
+                        <span className="font-bold text-astro-navy">{tData('vara', data.vara, lang)}</span>
                     </div>
                 </div>
 
                 {/* Sun/Moon */}
                 <div className="bg-indigo-900 text-white p-3 flex justify-around items-center text-center text-xs">
                     <div>
-                        <span className="block text-astro-yellow mb-1 font-bold">Sunrise</span>
+                        <span className="block text-astro-yellow mb-1 font-bold">{t('sunrise', lang)}</span>
                         {data.sun?.sunrise}
                     </div>
                     <div>
-                        <span className="block text-astro-yellow mb-1 font-bold">Sunset</span>
+                        <span className="block text-astro-yellow mb-1 font-bold">{t('sunset', lang)}</span>
                         {data.sun?.sunset}
                     </div>
                     <div className="h-6 w-px bg-white/20"></div>
                     <div>
-                        <span className="block text-astro-yellow mb-1 font-bold">Moon Sign</span>
-                        {data.moon?.rashi}
+                        <span className="block text-astro-yellow mb-1 font-bold">{t('moonSign', lang)}</span>
+                        {tData('rashi', data.moon?.rashi, lang)}
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-100 p-2 text-center">
-                    <p className="text-[10px] text-gray-500 font-bold">Visit Way2Astro.com for full details</p>
+                <div className="bg-gray-100 p-2 text-center text-[8px] uppercase tracking-tighter">
+                    <p className="text-gray-500 font-black">{lang === 'hi' ? 'पूर्ण विवरण के लिए Way2Astro.com पर जाएं' : 'Visit Way2Astro.com for full details'}</p>
                 </div>
             </div>
         </div>
