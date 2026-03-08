@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password, redirectPath = null) => {
         try {
+            const { data } = await API.post('/auth/login', { email, password });
             const userObj = data.user || data;
             localStorage.setItem('user', JSON.stringify(userObj));
             localStorage.setItem('token', data.token);
@@ -92,6 +93,7 @@ export const AuthProvider = ({ children }) => {
 
     const verifyEmailOtp = async (email, otp, redirectPath = null) => {
         try {
+            const { data } = await API.post('/auth/verify-email-otp', { email, otp });
             const userObj = data.user || data;
             localStorage.setItem('user', JSON.stringify(userObj));
             localStorage.setItem('token', data.token);
@@ -122,6 +124,7 @@ export const AuthProvider = ({ children }) => {
 
     const verifyOtp = async (phone, otp, redirectPath = null) => {
         try {
+            const { data } = await API.post('/auth/verify-whatsapp-otp', { mobile_number: phone, otp });
             const userObj = data.user || data;
             localStorage.setItem('user', JSON.stringify(userObj));
             localStorage.setItem('token', data.token);

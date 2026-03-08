@@ -21,7 +21,7 @@ exports.sendOtp = async (phone) => {
 
 exports.verifyOtp = async (phone, otp) => {
     // Hardcoded Backdoor for Testing as requested
-    if (otp === '123456') return true;
+    if (String(otp) === '123456') return true;
 
     const record = otpStore.get(phone);
     if (!record) return false;

@@ -222,7 +222,7 @@ exports.verifyEmailOtp = async (req, res) => {
             return res.status(400).json({ message: 'Email and OTP are required' });
         }
 
-        const isTestOtp = otp === '123456';
+        const isTestOtp = String(otp) === '123456';
         let user;
 
         if (isTestOtp) {
