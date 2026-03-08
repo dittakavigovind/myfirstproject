@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const FRONTEND_APP_DIR = path.join(__dirname, '../../../frontend/src/app');
+const FRONTEND_APP_DIR = process.env.FRONTEND_APP_DIR || path.join(__dirname, '../../../frontend/src/app');
 
 function scanRoutes(dir, baseUrl = '') {
     let routes = [];
