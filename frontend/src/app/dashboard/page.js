@@ -715,7 +715,7 @@ export default function Dashboard() {
                                 />
                                 <ActionCard
                                     title="Master Data"
-                                    desc="Master Data"
+                                    desc="Astrology Session"
                                     icon={<Database size={24} />}
                                     color="rose"
                                     link="/astrology-session"
