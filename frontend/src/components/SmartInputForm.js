@@ -181,7 +181,6 @@ export default function SmartInputForm({
                                 selected={formData.date}
                                 onChange={(date) => setFormData({ ...formData, date })}
                                 dateFormat="dd/MM/yyyy"
-                                className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-400 rounded-xl py-3 px-4 text-slate-800 font-bold outline-none transition-all"
                                 wrapperClassName="w-full"
                                 showMonthDropdown
                                 showYearDropdown

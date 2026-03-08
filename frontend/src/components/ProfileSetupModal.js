@@ -182,7 +182,6 @@ export default function ProfileSetupModal() {
                                         selected={formData.dob}
                                         onChange={(date) => setFormData({ ...formData, dob: date })}
                                         dateFormat="dd/MM/yyyy"
-                                        className="w-full"
                                         wrapperClassName="w-full"
                                         showMonthDropdown
                                         showYearDropdown

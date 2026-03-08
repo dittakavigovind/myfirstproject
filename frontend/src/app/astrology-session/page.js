@@ -605,51 +605,49 @@ export default function AstrologySessionPage() {
         <div className="min-h-screen bg-slate-50 font-sans pb-20">
             {/* Screen Content - Hidden on Print */}
             <div className="print:hidden">
-                {/* Header / Birth Details Summary */}
-                <div className={`bg-white shadow-sm border-b border-slate-100 transition-all duration-300 ${isHeaderCollapsed ? 'py-4' : 'py-8'}`}>
-                    <div className="max-w-7xl mx-auto px-4 md:px-8">
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/20">
-                                    {birthDetails.name ? birthDetails.name.charAt(0) : 'G'}
-                                </div>
-                                <div>
-                                    <h1 className="text-xl md:text-2xl font-black text-slate-900 leading-none mb-1">
-                                        {birthDetails.name || "Guest Session"}
-                                    </h1>
-                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-wide">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar size={12} />
-                                            {formatDate(birthDetails.date)}
-                                        </span>
-                                        <span className="flex items-center gap-1"><Clock size={12} /> {typeof birthDetails.time === 'string' ? birthDetails.time : birthDetails.time?.toLocaleTimeString()}</span>
-                                        <span className="flex items-center gap-1"><MapPin size={12} /> {birthDetails.place || "Unknown Location"}</span>
-                                    </div>
+                {/* Sticky Header / Birth Details Summary */}
+                <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-slate-100 backdrop-blur-md bg-white/95">
+                    <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-500/10">
+                                {birthDetails.name ? birthDetails.name.charAt(0) : 'G'}
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-black text-slate-900 leading-none">
+                                    {birthDetails.name || "Guest Session"}
+                                </h1>
+                                <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                    <span className="flex items-center gap-1">
+                                        <Calendar size={10} />
+                                        {formatDate(birthDetails.date)}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <Clock size={10} />
+                                        {typeof birthDetails.time === 'string' ? birthDetails.time : birthDetails.time?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    <span className="hidden sm:flex items-center gap-1 truncate max-w-[150px]">
+                                        <MapPin size={10} />
+                                        {birthDetails.place || "Unknown Location"}
+                                    </span>
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    disabled={isGeneratingPdf}
-                                    className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-50"
-                                >
-                                    {isGeneratingPdf ? <CosmicLoader size="sm" /> : <Printer size={16} />}
-                                    <span>{isGeneratingPdf ? "Preparing..." : "Download PDF"}</span>
-                                </button>
-                                <button
-                                    onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
-                                    className="p-2 rounded-full hover:bg-slate-50 text-slate-400 transition-colors"
-                                >
-                                    {isHeaderCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-                                </button>
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleDownloadPDF}
+                                disabled={isGeneratingPdf}
+                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white text-[11px] font-black hover:bg-slate-800 transition-all disabled:opacity-50"
+                            >
+                                {isGeneratingPdf ? <CosmicLoader size="sm" /> : <Printer size={14} />}
+                                <span>{isGeneratingPdf ? "..." : "Download PDF"}</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Navigation Tabs */}
-                <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 pt-4 px-4 md:px-8 mb-8">
+                {/* Navigation Tabs - Also Sticky (Offset by header height) */}
+                <div className="sticky top-[65px] z-30 bg-slate-50/80 backdrop-blur-md border-b border-slate-100 pt-3 px-4 md:px-8 mb-8">
                     <div className="max-w-7xl mx-auto">
                         <SessionTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                     </div>
