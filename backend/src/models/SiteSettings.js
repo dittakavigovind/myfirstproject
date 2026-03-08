@@ -106,6 +106,13 @@ const siteSettingsSchema = new mongoose.Schema({
         enabled: { type: Boolean, default: true },
         order: { type: Number, default: 0 }
     }],
+    heroSection: {
+        showCarousel: { type: Boolean, default: false },
+        carouselImages: [{
+            image: { type: String, trim: true },
+            link: { type: String, trim: true, default: '' }
+        }]
+    },
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

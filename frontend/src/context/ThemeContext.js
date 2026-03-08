@@ -62,7 +62,8 @@ export const ThemeProvider = ({ children }) => {
                         promotionImage: settings.promotionImage,
                         promotionUrl: settings.promotionUrl,
                         promotionType: settings.promotionType || 'image',
-                        promotionVideoUrl: settings.promotionVideoUrl || ''
+                        promotionVideoUrl: settings.promotionVideoUrl || '',
+                        heroSection: settings.heroSection || { showCarousel: false, carouselImages: [] }
                     });
                 }
             }

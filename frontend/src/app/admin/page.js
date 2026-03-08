@@ -24,6 +24,7 @@ import PopupManager from '../../components/admin/PopupManager';
 import PageDescriptionManager from '../../components/admin/PageDescriptionManager';
 import FAQPageManager from '../../components/admin/FAQPageManager';
 import ExploreServicesSettings from '../../components/admin/ExploreServicesSettings';
+import HeroCarouselSettings from '../../components/admin/HeroCarouselSettings';
 
 export default function AdminDashboard() {
     const { user, loading } = useAuth();
@@ -1255,6 +1256,7 @@ export default function AdminDashboard() {
             {
                 activeTab === 'settings' && user.role === 'admin' && (
                     <div className="space-y-8">
+                        <HeroCarouselSettings />
                         <LogoSettings />
                         <NavigationSettings />
                     </div>

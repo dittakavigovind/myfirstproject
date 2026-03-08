@@ -146,6 +146,41 @@ exports.updateSiteSettings = async (req, res) => {
             settings.exploreServices = req.body.exploreServices;
         }
 
+        if (req.body.heroSection) {
+            console.log("RECEIVED HERO SECTION:", JSON.stringify(req.body.heroSection, null, 2));
+            console.log("carouselImages type:", typeof req.body.heroSection.carouselImages);
+            console.log("carouselImages isArray:", Array.isArray(req.body.heroSection.carouselImages));
+
+            // Handle if carouselImages is somehow a stringified JSON array
+            if (typeof req.body.heroSection.carouselImages === 'string') {
+                try {
+                    req.body.heroSection.carouselImages = JSON.parse(req.body.heroSection.carouselImages);
+                } catch (e) {
+                    console.error("Failed to parse carouselImages string:", e);
+                }
+            }
+
+            // Also check if elements inside the array are strings (stringified objects)
+            if (Array.isArray(req.body.heroSection.carouselImages)) {
+                req.body.heroSection.carouselImages = req.body.heroSection.carouselImages.map(img => {
+                    if (typeof img === 'string') {
+                        try {
+                            const parsed = JSON.parse(img);
+                            return typeof parsed === 'object' ? parsed : img;
+                        } catch (e) {
+                            // Valid if it's just a regular old string URL (backward compatibility)
+                            if (img.startsWith('http') || img.startsWith('/')) {
+                                return { image: img, link: '' };
+                            }
+                        }
+                    }
+                    return img;
+                });
+            }
+
+            settings.heroSection = { ...settings.heroSection, ...req.body.heroSection };
+        }
+
         settings.updatedBy = req.user._id;
 
         await settings.save();
