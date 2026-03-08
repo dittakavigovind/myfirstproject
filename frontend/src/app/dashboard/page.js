@@ -714,8 +714,8 @@ export default function Dashboard() {
                                     link="/panchang"
                                 />
                                 <ActionCard
-                                    title="Astrology Session"
-                                    desc="Update Master Data"
+                                    title="Master Data"
+                                    desc="Master Data"
                                     icon={<Database size={24} />}
                                     color="rose"
                                     link="/astrology-session"
