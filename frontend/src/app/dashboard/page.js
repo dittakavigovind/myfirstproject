@@ -15,7 +15,7 @@ import TimeInput from '../../components/TimeInput';
 import "react-datepicker/dist/react-datepicker.css";
 import {
     Wallet, Plus, ScrollText, Calendar, HeartHandshake, Sparkles,
-    MapPin, Clock, Edit2, User as UserIcon, X, ChevronRight, ArrowUpRight
+    MapPin, Clock, Edit2, User as UserIcon, X, ChevronRight, ArrowUpRight, Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -714,11 +714,11 @@ export default function Dashboard() {
                                     link="/panchang"
                                 />
                                 <ActionCard
-                                    title="Matchmaking"
-                                    desc="Check Love Compatibility"
-                                    icon={<HeartHandshake size={24} />}
+                                    title="Astrology Session"
+                                    desc="Update Master Data"
+                                    icon={<Database size={24} />}
                                     color="rose"
-                                    link="/matchmaking"
+                                    link="/astrology-session"
                                 />
                                 <ActionCard
                                     title="Daily Horoscope"
