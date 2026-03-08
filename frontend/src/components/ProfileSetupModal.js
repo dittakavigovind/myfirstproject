@@ -86,7 +86,7 @@ export default function ProfileSetupModal() {
             if (res.data.success) {
                 updateUser(res.data);
                 setIsOpen(false);
-                router.push('/dashboard');
+                router.push('/astrology-session');
             } else {
                 setError(res.data.message || 'Failed to update profile');
             }
