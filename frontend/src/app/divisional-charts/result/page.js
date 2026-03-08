@@ -9,6 +9,7 @@ import CosmicLoader from '../../../components/CosmicLoader';
 import KundliChart from '../../../components/KundliChart';
 import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { t } from '../../../utils/translations';
 
 export default function DivisionalChartsResult() {
     const searchParams = useSearchParams();
@@ -18,13 +19,14 @@ export default function DivisionalChartsResult() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [chartStyle, setChartStyle] = useState('north');
+    const [lang, setLang] = useState('en');
 
     // Auth & Data Fetch
     useEffect(() => {
         if (authLoading) return;
 
         if (!user) {
-            toast.error("Please Login to view charts.");
+            toast.error(t('pleaseLogin', lang));
             router.push('/login?redirect=/divisional-charts');
             return;
         }
@@ -36,23 +38,25 @@ export default function DivisionalChartsResult() {
                     time: searchParams.get('time'),
                     lat: parseFloat(searchParams.get('lat')),
                     lng: parseFloat(searchParams.get('lng')),
-                    timezone: parseFloat(searchParams.get('tz'))
+                    timezone: parseFloat(searchParams.get('tz')),
+                    lang
                 };
 
                 const res = await API.post('/astro/divisional-charts', payload);
                 setData(res.data.data);
             } catch (err) {
                 console.error(err);
-                setError('Failed to calculate Charts');
+                setError(t('failedCalculateCharts', lang));
             } finally {
                 setLoading(false);
             }
         };
 
         if (searchParams.get('date')) {
+            setLoading(true);
             fetchData();
         }
-    }, [searchParams, user, authLoading, router]);
+    }, [searchParams, user, authLoading, router, lang]);
 
     if (loading) return (
         <motion.div
@@ -62,7 +66,7 @@ export default function DivisionalChartsResult() {
             exit={{ opacity: 0 }}
             className="flex items-center justify-center min-h-screen bg-slate-900 text-white"
         >
-            <CosmicLoader size="lg" message="Calculating 16 Varga Chakras..." fullscreen={false} />
+            <CosmicLoader size="lg" message={t('calculatingVarga', lang)} fullscreen={false} />
         </motion.div>
     );
 
@@ -75,22 +79,22 @@ export default function DivisionalChartsResult() {
     if (!data) return null;
 
     const CHART_TITLES = {
-        D1: "Rasi (D1) - Body / General",
-        D2: "Hora (D2) - Wealth",
-        D3: "Drekkana (D3) - Siblings",
-        D4: "Chaturthamsa (D4) - Destiny / Assets",
-        D7: "Saptamsa (D7) - Progeny",
-        D9: "Navamsa (D9) - Marriage / Dharma",
-        D10: "Dasamsa (D10) - Career",
-        D12: "Dwadasamsa (D12) - Parents",
-        D16: "Shodasamsa (D16) - Vehicles / Pleasures",
-        D20: "Vimsamsa (D20) - Spiritual Progress",
-        D24: "Chaturvimsamsa (D24) - Education",
-        D27: "Saptavimsamsa (D27) - Strengths / Weaknesses",
-        D30: "Trimsamsa (D30) - Misfortunes",
-        D40: "Khavedamsa (D40) - Auspicious Effects",
-        D45: "Akshavedamsa (D45) - General Character",
-        D60: "Shashtyamsa (D60) - Past Karma"
+        D1: t('D1', lang),
+        D2: t('D2', lang),
+        D3: t('D3', lang),
+        D4: t('D4', lang),
+        D7: t('D7', lang),
+        D9: t('D9', lang),
+        D10: t('D10', lang),
+        D12: t('D12', lang),
+        D16: t('D16', lang),
+        D20: t('D20', lang),
+        D24: t('D24', lang),
+        D27: t('D27', lang),
+        D30: t('D30', lang),
+        D40: t('D40', lang),
+        D45: t('D45', lang),
+        D60: t('D60', lang)
     };
 
     const formatDate = (dateString) => {
@@ -106,26 +110,33 @@ export default function DivisionalChartsResult() {
                 <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-black text-white">
-                            Shodashvarga {searchParams.get('name') && <span className="text-slate-400 font-medium">- {searchParams.get('name')}</span>}
+                            {t('shodashvarga', lang)} {searchParams.get('name') && <span className="text-slate-400 font-medium">- {searchParams.get('name')}</span>}
                         </h1>
                         <p className="text-slate-400 text-xs mt-1">
-                            {formatDate(data.meta.date)} • {data.meta.time} • {searchParams.get('place') || 'Unknown Location'}
+                            {formatDate(data.meta.date)} • {data.meta.time} • {searchParams.get('place') || t('unknownLocation', lang)}
                         </p>
                     </div>
 
-                    <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10">
-                        <button
-                            onClick={() => setChartStyle('north')}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${chartStyle === 'north' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            North
-                        </button>
-                        <button
-                            onClick={() => setChartStyle('south')}
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${chartStyle === 'south' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            South
-                        </button>
+                    <div className="flex items-center gap-4">
+                        <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10">
+                            <button onClick={() => setLang('en')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${lang === 'en' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}>English</button>
+                            <button onClick={() => setLang('hi')} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${lang === 'hi' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}>हिंदी</button>
+                        </div>
+
+                        <div className="flex bg-white/5 p-1 rounded-xl backdrop-blur-md border border-white/10">
+                            <button
+                                onClick={() => setChartStyle('north')}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${chartStyle === 'north' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                {t('north', lang)}
+                            </button>
+                            <button
+                                onClick={() => setChartStyle('south')}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${chartStyle === 'south' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/40' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                {t('south', lang)}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -160,6 +171,7 @@ export default function DivisionalChartsResult() {
                                         planets={chartData}
                                         ascendantSign={ascendantSign}
                                         style={chartStyle}
+                                        lang={lang}
                                         smallMode={true} // Hint to make it responsive for grid
                                     />
                                 </div>
@@ -172,10 +184,10 @@ export default function DivisionalChartsResult() {
             {/* Disclaimer */}
             <div className="mt-12 pt-8 border-t border-white/10 text-center space-y-4 max-w-4xl mx-auto opacity-60 hover:opacity-100 transition-opacity pb-8 px-4">
                 <p className="text-[10px] md:text-xs text-slate-500 leading-relaxed font-medium uppercase tracking-wider">
-                    Disclaimer
+                    {t('disclaimer', lang)}
                 </p>
                 <p className="text-[10px] md:text-xs text-slate-500 leading-relaxed">
-                    The report generated above is based on classical Vedic Astrology calculations. The results in the report are subject to variations based on any change in the birth time, birth place or other factors. Our calculations are based on the Lahiri Ayanamsa of Dhrik Sidhanta. So, differences may arise upon comparison with other online horoscope services or other Panchangs. Therefore we strongly suggest that you consult an Astrologer to guide you in all your future decisions and not solely take decisions based on this report. By generating or downloading this report you agree that <Link href="/" className="text-purple-400 font-bold hover:underline">Way2Astro</Link> or any personnel related to Way2Astro will not be liable for any consequences that may arise due to decisions or actions taken by you or anyone based on the content of this report or any report generated using Way2Astro.
+                    {t('disclaimerCharts', lang)}
                 </p>
             </div>
         </div>

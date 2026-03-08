@@ -11,15 +11,7 @@ const SIGNS = ['Ar', 'Ta', 'Ge', 'Ca', 'Le', 'Vi', 'Li', 'Sc', 'Sa', 'Cp', 'Aq',
  * @param {Number} ascendantSign - The sign number (1-12) of the Ascendant
  * @param {String} style - 'north' | 'south'
  */
-/**
- * KundliChart Component
- * Renders a Vedic Astrology Chart in North or South Indian style.
- * 
- * @param {Object} planets - { Sun: { sign: 1, ... }, Moon: { sign: 4, ... } }
- * @param {Number} ascendantSign - The sign number (1-12) of the Ascendant
- * @param {String} style - 'north' | 'south'
- */
-export default function KundliChart({ planets, ascendantSign, style = 'north', smallMode = false }) {
+export default function KundliChart({ planets, ascendantSign, style = 'north', smallMode = false, lang = 'en' }) {
 
     // Group planets by sign for easy rendering
     // result: { 1: ['Sun', 'Mer'], 2: ['Jup'], ... }
@@ -29,7 +21,7 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
 
         // Add Ascendant (Lagna) Label
         if (ascendantSign) {
-            map[ascendantSign].push('Lagna');
+            map[ascendantSign].push(lang === 'hi' ? 'लग्न' : 'Lagna');
         }
 
         Object.entries(planets).forEach(([name, data]) => {
@@ -45,8 +37,10 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
             }
 
             if (sign && map[sign]) {
+                const PLANET_ABBR_EN = { Sun: 'Su', Moon: 'Mo', Mars: 'Ma', Mercury: 'Me', Jupiter: 'Ju', Venus: 'Ve', Saturn: 'Sa', Rahu: 'Ra', Ketu: 'Ke' };
+                const PLANET_ABBR_HI = { Sun: 'सू', Moon: 'च', Mars: 'मं', Mercury: 'बु', Jupiter: 'गु', Venus: 'शु', Saturn: 'श', Rahu: 'रा', Ketu: 'के' };
                 // Abbreviate planet names
-                const abbr = name.substring(0, 2);
+                const abbr = lang === 'hi' ? (PLANET_ABBR_HI[name] || name.substring(0, 2)) : (PLANET_ABBR_EN[name] || name.substring(0, 2));
                 if (!map[sign].includes(abbr)) { // Avoid dupes if any
                     map[sign].push(abbr);
                 }
@@ -57,16 +51,16 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
     }, [planets, ascendantSign]);
 
     if (style === 'north') {
-        return <NorthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} />;
+        return <NorthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} lang={lang} />;
     } else {
-        return <SouthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} />;
+        return <SouthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} lang={lang} />;
     }
 }
 
 /**
  * North Indian Chart (Diamond Style)
  */
-function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
+function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, lang }) {
 
     // POSITIONS (x,y in 0-400 grid)
     // House positions for text
@@ -95,8 +89,9 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
         const signSize = smallMode ? "8" : "10";
         const planetSize = smallMode ? "9" : "12";
 
-        const hasLagna = planets.includes('Lagna');
-        const otherPlanets = planets.filter(p => p !== 'Lagna');
+        const lagnaLabel = lang === 'hi' ? 'लग्न' : 'Lagna';
+        const hasLagna = planets.includes(lagnaLabel);
+        const otherPlanets = planets.filter(p => p !== lagnaLabel);
 
         // Split other planets into lines of 3
         const lines = [];
@@ -113,7 +108,7 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
                 {/* Planets */}
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={planetSize} fontWeight="bold">
                     {hasLagna && (
-                        <tspan x={coord.x} dy="0" fill="#d8b4fe">Lagna</tspan>
+                        <tspan x={coord.x} dy="0" fill="#d8b4fe">{lagnaLabel}</tspan>
                     )}
                     {lines.map((line, idx) => (
                         <tspan
@@ -182,13 +177,13 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
 /**
  * South Indian Chart (Square Style)
  */
-function SouthIndianChart({ planetsBySign, ascendantSign }) {
+function SouthIndianChart({ planetsBySign, ascendantSign, lang }) {
     // Matrix of Signs (1-12)
     const GRID = [
-        { sign: 12, x: 0, y: 0 }, { sign: 1, x: 100, y: 0 }, { sign: 2, x: 200, y: 0 }, { sign: 3, x: 300, y: 0 },
-        { sign: 11, x: 0, y: 100 }, { sign: 4, x: 300, y: 100 },
-        { sign: 10, x: 0, y: 200 }, { sign: 5, x: 300, y: 200 },
-        { sign: 9, x: 0, y: 300 }, { sign: 8, x: 100, y: 300 }, { sign: 7, x: 200, y: 300 }, { sign: 6, x: 300, y: 300 },
+        { sign: 12, x: 0, y: 0, nameHi: 'मीन', nameEn: 'Pi' }, { sign: 1, x: 100, y: 0, nameHi: 'मेष', nameEn: 'Ar' }, { sign: 2, x: 200, y: 0, nameHi: 'वृषभ', nameEn: 'Ta' }, { sign: 3, x: 300, y: 0, nameHi: 'मिथुन', nameEn: 'Ge' },
+        { sign: 11, x: 0, y: 100, nameHi: 'कुंभ', nameEn: 'Aq' }, { sign: 4, x: 300, y: 100, nameHi: 'कर्क', nameEn: 'Ca' },
+        { sign: 10, x: 0, y: 200, nameHi: 'मकर', nameEn: 'Cp' }, { sign: 5, x: 300, y: 200, nameHi: 'सिंह', nameEn: 'Le' },
+        { sign: 9, x: 0, y: 300, nameHi: 'धनु', nameEn: 'Sg' }, { sign: 8, x: 100, y: 300, nameHi: 'वृश्चिक', nameEn: 'Sc' }, { sign: 7, x: 200, y: 300, nameHi: 'तुला', nameEn: 'Li' }, { sign: 6, x: 300, y: 300, nameHi: 'कन्या', nameEn: 'Vi' },
     ];
 
     return (
@@ -246,8 +241,9 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
             {/* Boxes */}
             {GRID.map(box => {
                 const planets = planetsBySign[box.sign] || [];
-                const hasLagna = planets.includes('Lagna');
-                const otherPlanets = planets.filter(p => p !== 'Lagna');
+                const lagnaLabel = lang === 'hi' ? 'लग्न' : 'Lagna';
+                const hasLagna = planets.includes(lagnaLabel);
+                const otherPlanets = planets.filter(p => p !== lagnaLabel);
 
                 // Split other planets into lines of 3 or 4 based on density
                 const lines = [];
@@ -264,13 +260,13 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
                         )}
 
                         {/* Sign Name (Small) */}
-                        <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#f59e0b" fillOpacity="0.4" fontWeight="bold">
-                            {SIGNS[box.sign - 1]}
+                        <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#f59e0b" fillOpacity="0.8" fontWeight="bold">
+                            {lang === 'hi' ? box.nameHi : box.nameEn}
                         </text>
 
                         <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="11" fontWeight="bold">
                             {hasLagna && (
-                                <tspan x={box.x + 50} dy={lines.length > 0 ? "-5" : "5"} fill="#d8b4fe">Lagna</tspan>
+                                <tspan x={box.x + 50} dy={lines.length > 0 ? "-5" : "5"} fill="#d8b4fe">{lagnaLabel}</tspan>
                             )}
                             {lines.map((line, idx) => (
                                 <tspan

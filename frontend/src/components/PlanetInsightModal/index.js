@@ -2,8 +2,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Info, Star } from 'lucide-react';
+import { t } from '../../utils/translations';
 
-export default function PlanetInsightModal({ isOpen, onClose, planetName, insight, planetData }) {
+export default function PlanetInsightModal({ isOpen, onClose, planetName, insight, planetData, lang = 'en' }) {
     if (!isOpen) return null;
 
     return (
@@ -36,8 +37,10 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                                 <span className="text-3xl font-black">{planetName.charAt(0)}</span>
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-white leading-tight">{planetName}</h2>
-                                <p className="text-indigo-200 text-sm font-medium">Cosmic Insight</p>
+                                <h2 className="text-2xl font-black text-white leading-tight">
+                                    {lang === 'hi' ? (planetName === 'Sun' ? 'सूर्य' : planetName === 'Moon' ? 'चन्द्र' : planetName === 'Mars' ? 'मंगल' : planetName === 'Mercury' ? 'बुध' : planetName === 'Jupiter' ? 'गुरु' : planetName === 'Venus' ? 'शुक्र' : planetName === 'Saturn' ? 'शनि' : planetName === 'Rahu' ? 'राहु' : planetName === 'Ketu' ? 'केतु' : planetName) : planetName}
+                                </h2>
+                                <p className="text-indigo-200 text-sm font-medium">{t('cosmicInsight', lang)}</p>
                             </div>
                         </div>
 
@@ -55,10 +58,10 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 text-indigo-600">
                                 <Info className="w-4 h-4" />
-                                <span className="text-xs font-bold uppercase tracking-widest">Significance</span>
+                                <span className="text-xs font-bold uppercase tracking-widest">{t('significance', lang)}</span>
                             </div>
                             <p className="text-slate-600 font-medium leading-relaxed">
-                                {insight?.description || "General planetary influence in Vedic astrology."}
+                                {insight?.description || t('generalInfluence', lang)}
                             </p>
                         </div>
 
@@ -71,10 +74,10 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                             <div className="relative z-10 space-y-2">
                                 <h4 className="text-indigo-900 font-black flex items-center gap-2">
                                     <Star className="w-4 h-4 fill-indigo-900" />
-                                    Your Placement
+                                    {t('yourPlacement', lang)}
                                 </h4>
                                 <p className="text-indigo-800 text-sm font-bold opacity-90 leading-relaxed">
-                                    {planetData?.signName}: {insight?.signSpecific || insight?.relationSpecific || "Your unique planetary position brings a balance of elements to your chart."}
+                                    {lang === 'hi' ? (planetData?.signName === 'Aries' ? 'मेष' : planetData?.signName === 'Taurus' ? 'वृषभ' : planetData?.signName === 'Gemini' ? 'मिथुन' : planetData?.signName === 'Cancer' ? 'कर्क' : planetData?.signName === 'Leo' ? 'सिंह' : planetData?.signName === 'Virgo' ? 'कन्या' : planetData?.signName === 'Libra' ? 'तुला' : planetData?.signName === 'Scorpio' ? 'वृश्चिक' : planetData?.signName === 'Sagittarius' ? 'धनु' : planetData?.signName === 'Capricorn' ? 'मकर' : planetData?.signName === 'Aquarius' ? 'कुंभ' : planetData?.signName === 'Pisces' ? 'मीन' : planetData?.signName) : planetData?.signName}: {insight?.signSpecific || insight?.relationSpecific || t('uniquePlacement', lang)}
                                 </p>
                             </div>
                         </div>
@@ -82,12 +85,12 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                         {/* Additional Meta */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dignity</span>
-                                <span className="text-sm font-black text-slate-700">{planetData?.relation || "Neutral"}</span>
+                                <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t('dignity', lang)}</span>
+                                <span className="text-sm font-black text-slate-700">{lang === 'hi' ? (planetData?.relation === 'Own House' ? 'स्वग्रही' : planetData?.relation === 'Exalted' ? 'उच्च' : planetData?.relation === 'Debilitated' ? 'नीच' : planetData?.relation === 'Friendly House' ? 'मित्र क्षेत्री' : planetData?.relation === 'Enemy House' ? 'शत्रु क्षेत्री' : planetData?.relation === 'Neutral House' || planetData?.relation === 'Neutral' ? 'तटस्थ' : planetData?.relation) : (planetData?.relation || t('neutral', lang))}</span>
                             </div>
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Deg / Sign</span>
-                                <span className="text-sm font-black text-slate-700">{planetData?.deg}° {planetData?.signName}</span>
+                                <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t('degSign', lang)}</span>
+                                <span className="text-sm font-black text-slate-700">{planetData?.deg}° {lang === 'hi' ? (planetData?.signName === 'Aries' ? 'मेष' : planetData?.signName === 'Taurus' ? 'वृषभ' : planetData?.signName === 'Gemini' ? 'मिथुन' : planetData?.signName === 'Cancer' ? 'कर्क' : planetData?.signName === 'Leo' ? 'सिंह' : planetData?.signName === 'Virgo' ? 'कन्या' : planetData?.signName === 'Libra' ? 'तुला' : planetData?.signName === 'Scorpio' ? 'वृश्चिक' : planetData?.signName === 'Sagittarius' ? 'धनु' : planetData?.signName === 'Capricorn' ? 'मकर' : planetData?.signName === 'Aquarius' ? 'कुंभ' : planetData?.signName === 'Pisces' ? 'मीन' : planetData?.signName) : planetData?.signName}</span>
                             </div>
                         </div>
                     </div>
@@ -98,7 +101,7 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                             onClick={onClose}
                             className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
                         >
-                            Close Insight
+                            {t('closeInsight', lang)}
                         </button>
                     </div>
                 </motion.div>

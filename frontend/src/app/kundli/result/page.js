@@ -12,12 +12,14 @@ import PlanetInsightModal from '../../../components/PlanetInsightModal';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import KundliChart from '../../../components/KundliChart';
+import { t } from '../../../utils/translations';
 
 export default function KundliResult() {
     const searchParams = useSearchParams();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [lang, setLang] = useState('en');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -27,23 +29,26 @@ export default function KundliResult() {
                     time: searchParams.get('time'),
                     lat: parseFloat(searchParams.get('lat')),
                     lng: parseFloat(searchParams.get('lng')),
-                    timezone: searchParams.get('tz')
+                    timezone: searchParams.get('tz'),
+                    lang
                 };
 
                 const res = await API.post('/astro/kundli', payload);
                 setData(res.data.data);
             } catch (err) {
                 console.error(err);
-                setError('Failed to calculate Kundli');
+                setError(t('failedCalculate', lang));
             } finally {
                 setLoading(false);
             }
         };
 
         if (searchParams.get('date')) {
+            // Slight delay so the UI shows loading gracefully
+            setLoading(true);
             fetchData();
         }
-    }, [searchParams]);
+    }, [searchParams, lang]);
 
 
     // Chart Style State
@@ -197,7 +202,7 @@ export default function KundliResult() {
             exit={{ opacity: 0 }}
             className="flex items-center justify-center min-h-[400px]"
         >
-            <CosmicLoader size="lg" message="Aligning the Stars..." fullscreen={false} />
+            <CosmicLoader size="lg" message={t('aligningStars', lang)} fullscreen={false} />
         </motion.div>
     );
 
@@ -210,6 +215,7 @@ export default function KundliResult() {
     if (!data) return null;
 
     const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+    const SIGNS_HI = ["मेष", "वृषभ", "मिथुन", "कर्क", "सिंह", "कन्या", "तुला", "वृश्चिक", "धनु", "मकर", "कुंभ", "मीन"];
 
     // derived values
     const d1AscendantSign = Math.floor(data.houses.ascendant / 30) + 1;
@@ -257,8 +263,14 @@ export default function KundliResult() {
                                     <div className="inline-block px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
                                         <div className="flex items-center gap-2">
                                             <Sparkles size={12} className="text-astro-yellow fill-astro-yellow/20" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-astro-yellow">Vedic Astrology</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-astro-yellow">{t('vedicAstrology', lang)}</span>
                                         </div>
+                                    </div>
+
+                                    {/* Language Toggle */}
+                                    <div className="flex bg-white/10 p-1 rounded-full backdrop-blur-md border border-white/10">
+                                        <button onClick={() => setLang('en')} className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors ${lang === 'en' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}>English</button>
+                                        <button onClick={() => setLang('hi')} className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors ${lang === 'hi' ? 'bg-indigo-500 text-white' : 'text-indigo-200 hover:text-white'}`}>हिंदी</button>
                                     </div>
 
                                     {!isDownloading && (
@@ -267,7 +279,7 @@ export default function KundliResult() {
                                             className="flex items-center gap-2 py-1.5 px-4 rounded-full bg-astro-yellow text-slate-900 text-[10px] font-black uppercase tracking-wider hover:bg-white transition-all shadow-lg shadow-black/20"
                                         >
                                             <Download className="w-3 h-3" />
-                                            Download PDF Report
+                                            {t('downloadReport', lang)}
                                         </button>
                                     )}
                                 </div>
@@ -304,12 +316,12 @@ export default function KundliResult() {
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none uppercase">Way2Astro</h2>
-                                    <p className="text-xs text-indigo-600 font-black tracking-[0.2em] uppercase mt-1">Premium Vedic Insights</p>
+                                    <p className="text-xs text-indigo-600 font-black tracking-[0.2em] uppercase mt-1">{t('premiumVedicInsights', lang)}</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Confidential Report For</p>
-                                <p className="text-lg font-black text-slate-900">{searchParams.get('name') || 'Guest User'}</p>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">{t('confidentialReportFor', lang)}</p>
+                                <p className="text-lg font-black text-slate-900">{searchParams.get('name') || t('guestUser', lang)}</p>
                             </div>
                         </div>
                     </div>
@@ -322,16 +334,16 @@ export default function KundliResult() {
                             <motion.div className="bg-slate-900 rounded-[2rem] p-6 md:p-8 shadow-2xl shadow-indigo-900/30 border border-indigo-500/20 flex flex-col h-full relative overflow-hidden">
                                 <div className="relative z-10 flex flex-wrap justify-between items-center mb-8 gap-4">
                                     <div>
-                                        <h2 className="text-2xl font-black text-white">Your Chart</h2>
-                                        <p className="text-indigo-200 text-sm font-medium">Cosmic Alignment</p>
+                                        <h2 className="text-2xl font-black text-white">{t('yourChart', lang)}</h2>
+                                        <p className="text-indigo-200 text-sm font-medium">{t('cosmicAlignment', lang)}</p>
                                     </div>
                                     <div className="flex bg-white/10 p-1 rounded-xl backdrop-blur-md border border-white/10">
-                                        <button onClick={() => setChartStyle('north')} className={`px-4 py-2 text-xs font-bold rounded-lg ${chartStyle === 'north' ? 'bg-indigo-500 text-white' : 'text-indigo-200'}`}>North</button>
-                                        <button onClick={() => setChartStyle('south')} className={`px-4 py-2 text-xs font-bold rounded-lg ${chartStyle === 'south' ? 'bg-indigo-500 text-white' : 'text-indigo-200'}`}>South</button>
+                                        <button onClick={() => setChartStyle('north')} className={`px-4 py-2 text-xs font-bold rounded-lg ${chartStyle === 'north' ? 'bg-indigo-500 text-white' : 'text-indigo-200'}`}>{t('north', lang)}</button>
+                                        <button onClick={() => setChartStyle('south')} className={`px-4 py-2 text-xs font-bold rounded-lg ${chartStyle === 'south' ? 'bg-indigo-500 text-white' : 'text-indigo-200'}`}>{t('south', lang)}</button>
                                     </div>
                                 </div>
                                 <div className="relative z-10 aspect-square w-full max-w-[400px] mx-auto mt-6">
-                                    <KundliChart planets={activeChart === 'D1' ? data.planets : data.charts.D9} ascendantSign={activeChart === 'D1' ? d1AscendantSign : d9AscendantSign} style={chartStyle} />
+                                    <KundliChart planets={activeChart === 'D1' ? data.planets : data.charts.D9} ascendantSign={activeChart === 'D1' ? d1AscendantSign : d9AscendantSign} style={chartStyle} lang={lang} />
                                 </div>
                             </motion.div>
                         </div>
@@ -339,38 +351,38 @@ export default function KundliResult() {
                         {/* Right Column: Details */}
                         <div className="lg:col-span-7 space-y-6">
                             <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">Cosmic Identity</h3>
+                                <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">{t('cosmicIdentity', lang)}</h3>
                                 <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Lagna</span>
-                                        <span className="text-xs font-black text-indigo-900">{SIGNS[Math.floor(data.houses.ascendant / 30)]}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('lagna', lang)}</span>
+                                        <span className="text-xs font-black text-indigo-900">{lang === 'hi' ? SIGNS_HI[Math.floor(data.houses.ascendant / 30)] : SIGNS[Math.floor(data.houses.ascendant / 30)]}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Rashi</span>
-                                        <span className="text-xs font-black text-indigo-900">{SIGNS[data.planets.Moon.sign - 1]}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('rashi', lang)}</span>
+                                        <span className="text-xs font-black text-indigo-900">{lang === 'hi' ? SIGNS_HI[data.planets.Moon.sign - 1] : SIGNS[data.planets.Moon.sign - 1]}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Thithi</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('thithi', lang)}</span>
                                         <span className="text-xs font-black text-indigo-900">{data.panchang?.tithi || '-'}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Varam</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{t('varam', lang)}</span>
                                         <span className="text-xs font-black text-indigo-900">{data.panchang?.vara || '-'}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">Nakshatra</span>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('nakshatra', lang)}</span>
                                         <span className="text-sm font-black text-indigo-900">{data.dashas.birthNakshatra}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">Pada</span>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('pada', lang)}</span>
                                         <span className="text-sm font-black text-indigo-900">{data.charts.D9.Moon.nakshatraPada}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">Yoga</span>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('yoga', lang)}</span>
                                         <span className="text-sm font-black text-indigo-900">{data.panchang?.yoga || '-'}</span>
                                     </div>
                                     <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">Karana</span>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">{t('karana', lang)}</span>
                                         <span className="text-sm font-black text-indigo-900">{data.panchang?.karana || '-'}</span>
                                     </div>
                                 </div>
@@ -378,36 +390,36 @@ export default function KundliResult() {
 
                             <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
                                 <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                                    <h2 className="text-xl font-black text-slate-800 whitespace-nowrap">Planetary Details</h2>
+                                    <h2 className="text-xl font-black text-slate-800 whitespace-nowrap">{t('planetaryDetails', lang)}</h2>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
                                         <thead className="bg-slate-50 text-[11px] font-black text-slate-500 uppercase tracking-widest">
                                             <tr>
-                                                <th className="px-6 py-3 text-left">Planet</th>
-                                                <th className="px-6 py-3 text-left">Longitude</th>
-                                                <th className="px-6 py-3 text-left">Zodiac Sign</th>
-                                                <th className="px-6 py-3 text-left">Relation</th>
+                                                <th className="px-6 py-3 text-left">{t('planet', lang)}</th>
+                                                <th className="px-6 py-3 text-left">{t('longitude', lang)}</th>
+                                                <th className="px-6 py-3 text-left">{t('zodiacSign', lang)}</th>
+                                                <th className="px-6 py-3 text-left">{t('relation', lang)}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50 text-xs">
                                             {Object.entries(data.planets).map(([key, planet]) => (
-                                                <tr key={key} className="hover:bg-slate-50/50 transition-colors">
+                                                <tr key={key} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => openInsight(key, planet)}>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-[11px] font-black text-indigo-600 border border-indigo-100">
-                                                                {key.charAt(0)}
+                                                                {key === 'Ascendant' ? (lang === 'hi' ? 'ल' : 'As') : (lang === 'hi' ? (key === 'Sun' ? 'सू' : key === 'Moon' ? 'च' : key === 'Mars' ? 'मं' : key === 'Mercury' ? 'बु' : key === 'Jupiter' ? 'गु' : key === 'Venus' ? 'शु' : key === 'Saturn' ? 'श' : key === 'Rahu' ? 'रा' : 'के') : key.charAt(0))}
                                                             </div>
-                                                            <span className="font-black text-slate-800">{key}</span>
+                                                            <span className="font-black text-slate-800">{lang === 'hi' ? (key === 'Sun' ? 'सूर्य' : key === 'Moon' ? 'चन्द्र' : key === 'Mars' ? 'मंगल' : key === 'Mercury' ? 'बुध' : key === 'Jupiter' ? 'गुरु' : key === 'Venus' ? 'शुक्र' : key === 'Saturn' ? 'शनि' : key === 'Rahu' ? 'राहु' : key === 'Ketu' ? 'केतु' : key) : key}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 font-black text-slate-600">
                                                         {Math.floor(planet.longitude % 30)}° {Math.floor((planet.longitude % 1) * 60)}'
                                                     </td>
-                                                    <td className="px-6 py-4 font-black text-slate-700">{SIGNS[Math.floor(planet.longitude / 30)]}</td>
+                                                    <td className="px-6 py-4 font-black text-slate-700">{lang === 'hi' ? SIGNS_HI[Math.floor(planet.longitude / 30)] : SIGNS[Math.floor(planet.longitude / 30)]}</td>
                                                     <td className="px-6 py-4">
                                                         <span className={`px-4 py-1.5 rounded-full border text-[11px] font-black tracking-wider shadow-sm inline-block min-w-[90px] text-center ${getRelationColor(planet.relation)}`}>
-                                                            {planet.relation || 'Neutral'}
+                                                            {planet.relation || (lang === 'hi' ? 'सम' : 'Neutral')}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -427,7 +439,7 @@ export default function KundliResult() {
                                     <span className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
                                         <Sparkles size={20} />
                                     </span>
-                                    Life Predictions & Dasha Analysis
+                                    {t('lifePredictions', lang)}
                                 </h2>
                             </div>
                             <div className="space-y-6">
@@ -437,7 +449,7 @@ export default function KundliResult() {
                                         <div key={idx} data-pdf-section="dasha" className={`relative p-8 rounded-[2rem] border ${isCurrent ? 'bg-white border-indigo-200 shadow-xl' : 'bg-white/50 border-slate-100 shadow-sm'}`}>
                                             {isCurrent && (
                                                 <div className="absolute top-6 right-6 px-4 py-1.5 bg-indigo-600 text-[10px] font-black text-white rounded-full shadow-lg shadow-indigo-600/30 z-10 uppercase tracking-wider">
-                                                    ACTIVE PERIOD
+                                                    {t('activePeriod', lang)}
                                                 </div>
                                             )}
 
@@ -445,17 +457,17 @@ export default function KundliResult() {
                                                 {/* Left: Lord & Timeline */}
                                                 <div className="lg:w-1/3 flex flex-col items-start">
                                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl mb-4 shadow-lg ${getPlanetColor(dasha.lord)}`}>
-                                                        {dasha.lord.charAt(0)}
+                                                        {lang === 'hi' ? (dasha.lord === 'Sun' ? 'सू' : dasha.lord === 'Moon' ? 'च' : dasha.lord === 'Mars' ? 'मं' : dasha.lord === 'Mercury' ? 'बु' : dasha.lord === 'Jupiter' ? 'गु' : dasha.lord === 'Venus' ? 'शु' : dasha.lord === 'Saturn' ? 'श' : dasha.lord === 'Rahu' ? 'रा' : 'के') : dasha.lord.charAt(0)}
                                                     </div>
-                                                    <h3 className="font-black text-slate-900 text-xl mb-3">{dasha.lord} Mahadasha</h3>
+                                                    <h3 className="font-black text-slate-900 text-xl mb-3">{lang === 'hi' ? (dasha.lord === 'Sun' ? 'सूर्य' : dasha.lord === 'Moon' ? 'चन्द्र' : dasha.lord === 'Mars' ? 'मंगल' : dasha.lord === 'Mercury' ? 'बुध' : dasha.lord === 'Jupiter' ? 'गुरु' : dasha.lord === 'Venus' ? 'शुक्र' : dasha.lord === 'Saturn' ? 'शनि' : dasha.lord === 'Rahu' ? 'राहु' : dasha.lord === 'Ketu' ? 'केतु' : dasha.lord) : dasha.lord} {t('mahadasha', lang)}</h3>
 
                                                     <div className="space-y-1">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Timeline</span>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t('timeline', lang)}</span>
                                                         <p className="text-sm font-black text-slate-600 leading-tight">
                                                             {(() => {
                                                                 const f = (s) => {
                                                                     const d = new Date(s);
-                                                                    return `${d.getDate()}-${d.toLocaleString('en-US', { month: 'short' })}-${d.getFullYear()}`;
+                                                                    return `${d.getDate()}-${d.toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-US', { month: 'short' })}-${d.getFullYear()}`;
                                                                 };
                                                                 return `${f(dasha.start)} - ${f(dasha.end)}`;
                                                             })()}
@@ -470,10 +482,10 @@ export default function KundliResult() {
                                                             <div className="w-5 h-5 rounded-full border-2 border-indigo-600 flex items-center justify-center text-indigo-600">
                                                                 <Info size={10} className="stroke-[3]" />
                                                             </div>
-                                                            <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">The Interpretation</span>
+                                                            <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">{t('theInterpretation', lang)}</span>
                                                         </div>
                                                         <p className="text-sm text-slate-600 font-medium leading-relaxed whitespace-pre-line">
-                                                            {dasha.analysis?.text || dasha.analysis?.description || `The Mahadasha of ${dasha.lord} is a significant period in your life path, bringing unique energy and lessons governed by the planet's placement.`}
+                                                            {dasha.analysis?.text || dasha.analysis?.description || (lang === 'hi' ? `${dasha.lord} की महादशा आपके जीवन पथ में एक महत्वपूर्ण अवधि है, जो ग्रह के स्थान द्वारा नियंत्रित अद्वितीय ऊर्जा और सबक लाती है।` : `The Mahadasha of ${dasha.lord} is a significant period in your life path, bringing unique energy and lessons governed by the planet's placement.`)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -487,9 +499,9 @@ export default function KundliResult() {
 
                     {/* Disclaimer */}
                     <div data-pdf-section="disclaimer" className="mt-12 pt-8 border-t border-slate-100 text-center px-4 max-w-5xl mx-auto opacity-80">
-                        <p className="text-[11px] text-slate-600 font-black leading-relaxed uppercase tracking-widest mb-3">Disclaimer</p>
+                        <p className="text-[11px] text-slate-600 font-black leading-relaxed uppercase tracking-widest mb-3">{t('disclaimer', lang)}</p>
                         <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                            This report is purely based on classical Vedic Astrology observations. The results found in this report are for only educational purposes; these may change from context to person. No predictions or results should be taken as absolute truths or final commands for your life decisions. The predictions or results made in the report are not individual advice and should not be substituted for professional medical, legal, financial, or other expert advice. By using this software or the services of <a href="/" className="text-indigo-600 hover:text-indigo-700 font-bold decoration-none border-b border-indigo-200">Way2Astro</a>, you agree to hold Way2Astro and its associates harmless from any liability arising out of the use of this report.
+                            {t('disclaimerText', lang)}
                         </p>
                     </div>
                 </div>
@@ -508,6 +520,7 @@ export default function KundliResult() {
                 onClose={() => setIsModalOpen(false)}
                 planetName={selectedPlanet?.name || ''}
                 planetData={selectedPlanet}
+                lang={lang}
                 insight={{
                     description: planetInsights[selectedPlanet?.name]?.description,
                     signSpecific: planetInsights[selectedPlanet?.name]?.signs?.[selectedPlanet?.signName],

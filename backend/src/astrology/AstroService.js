@@ -1,7 +1,9 @@
 const path = require('path');
 const tzUtils = require('../utils/timezoneUtils');
 const { getDignity } = require('./dignityUtils');
-const dashaInterpretations = require('./data/dashaInterpretations');
+const dashaInterpretationsEn = require('./data/dashaInterpretations');
+const dashaInterpretationsHi = require('./data/dashaInterpretations_hi');
+const { translateToHi } = require('./data/dictionary');
 const calculateAshtakavarga = require('./Ashtakavarga');
 
 let SwissEphModule;
@@ -79,7 +81,7 @@ const getJulianDay = (swe, dateObj) => {
 /**
  * Calculate Planetary Positions (Sidereal / Nirayana)
  */
-const calculatePlanets = (swe, julianDay) => {
+const calculatePlanets = (swe, julianDay, lang = 'en') => {
     const results = {};
     const flag = (swe.SEFLG_SWIEPH || 2) | (swe.SEFLG_SIDEREAL || 65536) | (swe.SEFLG_SPEED || 256);
 
@@ -101,9 +103,9 @@ const calculatePlanets = (swe, julianDay) => {
             speed: planetData[3],
             retrograde: planetData[3] < 0,
             sign: sign,
-            nakshatra: NAKSHATRAS[nakIndex % 27] || "Unknown",
+            nakshatra: lang === 'hi' ? translateToHi(NAKSHATRAS[nakIndex % 27] || "Unknown") : NAKSHATRAS[nakIndex % 27] || "Unknown",
             pada: pada,
-            relation: getDignity(planetName, sign)
+            relation: lang === 'hi' ? translateToHi(getDignity(planetName, sign)) : getDignity(planetName, sign)
         };
     }
 
@@ -115,9 +117,9 @@ const calculatePlanets = (swe, julianDay) => {
             speed: results['Rahu'].speed,
             retrograde: results['Rahu'].retrograde,
             sign: ketuSign,
-            nakshatra: NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown",
+            nakshatra: lang === 'hi' ? translateToHi(NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown") : NAKSHATRAS[Math.floor(ketuLong / 13.333333333) % 27] || "Unknown",
             pada: Math.floor((ketuLong % 13.333333333) / 3.333333333) + 1,
-            relation: getDignity('Ketu', ketuSign)
+            relation: lang === 'hi' ? translateToHi(getDignity('Ketu', ketuSign)) : getDignity('Ketu', ketuSign)
         };
     }
     return results;
@@ -140,7 +142,7 @@ const calculateHouses = (swe, julianDay, lat, lng, ayanamsa) => {
 /**
  * Calculate Navamsa (D9) Chart
  */
-const calculateNavamsa = (planets) => {
+const calculateNavamsa = (planets, lang = 'en') => {
     const d9Chart = {};
     for (const [planet, data] of Object.entries(planets)) {
         const longitude = data.longitude;
@@ -171,10 +173,11 @@ const calculateNavamsa = (planets) => {
         const d9Pada = Math.floor((d9Longitude % 13.333333333) / 3.333333333) + 1;
 
         // Store both the Sign for D9 chart and the accurate Nakshatra Pada
+        const nakName = NAKSHATRAS[nakIndex % 27] || "Unknown";
         d9Chart[planet] = {
             sign: navamsaSign,
             pada: d9Pada, // This replaces the old 'pada' which might have been D1-based
-            nakshatra: NAKSHATRAS[nakIndex % 27] || "Unknown", // Added bounds check
+            nakshatra: lang === 'hi' ? translateToHi(nakName) : nakName, // Added bounds check
             longitude: d9Longitude,
             nakshatraPada: correctNakshatraPada
         };
@@ -185,7 +188,8 @@ const calculateNavamsa = (planets) => {
 /**
  * Calculate Vimshottari Dasha
  */
-const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
+const calculateVimshottari = (moonLongitude, birthDate, planets, houses, lang = 'en') => {
+    const dashaInterpretations = lang === 'hi' ? dashaInterpretationsHi : dashaInterpretationsEn;
     // Uses global NAKSHATRAS constant
     const dashaLords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
     const dashaYears = [7, 20, 6, 10, 7, 18, 16, 19, 17];
@@ -212,11 +216,17 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
         const interp = dashaInterpretations[planetName];
         const houseText = interp.houseEffects[p.house] || interp.houseEffects["1"] || "";
         const signText = interp.signEffects[signName] || "";
+
+        const translatedSignName = lang === 'hi' ? translateToHi(signName) : signName;
+
         return {
             sign: signName,
+            translatedSign: translatedSignName,
             house: p.house,
             description: interp.description,
-            text: `🎯 House Influence (${p.house}):\n${houseText}\n\n🌟 Zodiac Influence (${signName}):\n${signText}`.trim() || interp.description
+            text: lang === 'hi'
+                ? `🎯 भाव प्रभाव (${p.house}):\n${houseText}\n\n🌟 राशि प्रभाव (${translatedSignName}):\n${signText}`.trim() || interp.description
+                : `🎯 House Influence (${p.house}):\n${houseText}\n\n🌟 Zodiac Influence (${signName}):\n${signText}`.trim() || interp.description
         };
     };
 
@@ -365,7 +375,7 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
         list: dashaList,
         currentPath: findCurrentPath(dashaList),
         lordInterpretations,
-        birthNakshatra: NAKSHATRAS[nakshatraIndex]
+        birthNakshatra: lang === 'hi' ? translateToHi(NAKSHATRAS[nakshatraIndex]) : NAKSHATRAS[nakshatraIndex]
     };
 };
 
@@ -375,7 +385,7 @@ const calculateVimshottari = (moonLongitude, birthDate, planets, houses) => {
 /**
  * Calculate Extended Panchang
  */
-const calculatePanchang = (sunLong, moonLong, dateString, swe, julianDay) => {
+const calculatePanchang = (sunLong, moonLong, dateString, swe, julianDay, lang = 'en') => {
     // 1. Tithi
     let diff = moonLong - sunLong;
     if (diff < 0) diff += 360;
@@ -428,18 +438,18 @@ const calculatePanchang = (sunLong, moonLong, dateString, swe, julianDay) => {
     else karanaName = karanas[(karanaIndex - 1) % 7];
 
     return {
-        tithi: `${tithiName} (${paksha})`,
-        vara,
-        nakshatra: `${nakshatra} (Pada ${pada})`,
-        yoga,
-        karana: karanaName
+        tithi: lang === 'hi' ? translateToHi(`${tithiName} (${paksha})`) : `${tithiName} (${paksha})`,
+        vara: lang === 'hi' ? translateToHi(vara) : vara,
+        nakshatra: lang === 'hi' ? translateToHi(`${nakshatra} (Pada ${pada})`) : `${nakshatra} (Pada ${pada})`,
+        yoga: lang === 'hi' ? translateToHi(yoga) : yoga,
+        karana: lang === 'hi' ? translateToHi(karanaName) : karanaName
     };
 };
 
 /**
  * Generate Full Kundli Data
  */
-const generateKundli = async (dateString, timeString, lat, lng, timezone) => {
+const generateKundli = async (dateString, timeString, lat, lng, timezone, lang = 'en') => {
     const swe = await getGlobalSwe();
     let planets;
     try {
@@ -447,7 +457,7 @@ const generateKundli = async (dateString, timeString, lat, lng, timezone) => {
         if (!utcDate) throw new Error(`Invalid birth details: ${dateString} ${timeString}`);
         const jd = getJulianDay(swe, utcDate);
         const ayanamsa = swe.get_ayanamsa_ut(jd);
-        planets = calculatePlanets(swe, jd);
+        planets = calculatePlanets(swe, jd, lang);
         const houseData = calculateHouses(swe, jd, lat, lng, ayanamsa);
 
         const ascSign = Math.floor(houseData.ascendant / 30) + 1;
@@ -459,7 +469,7 @@ const generateKundli = async (dateString, timeString, lat, lng, timezone) => {
         });
 
         // Divisional Charts
-        const d9Chart = calculateNavamsa(planets);
+        const d9Chart = calculateNavamsa(planets, lang);
 
         // D10 Logic (Re-using logic inline or importing? Let's implement inline D10 simplified)
         // D10: Each sign divided into 10 parts of 3deg.
@@ -491,11 +501,13 @@ const generateKundli = async (dateString, timeString, lat, lng, timezone) => {
                 const nakIndex = Math.floor(d10Longitude / 13.333333333);
                 const d10Pada = Math.floor((d10Longitude % 13.333333333) / 3.333333333) + 1;
 
+                const nakName = NAKSHATRAS[nakIndex % 27] || "Unknown";
+
                 d10[name] = {
                     sign: d10Sign,
                     house: d10Sign,
                     longitude: d10Longitude,
-                    nakshatra: NAKSHATRAS[nakIndex % 27] || "Unknown", // Added bounds check
+                    nakshatra: lang === 'hi' ? translateToHi(nakName) : nakName, // Added bounds check
                     pada: d10Pada
                 }; // House is relative, but sign is absolute
             });
@@ -503,8 +515,8 @@ const generateKundli = async (dateString, timeString, lat, lng, timezone) => {
         };
         const d10Chart = calculateD10(planets);
 
-        const vimshottari = planets['Moon'] ? calculateVimshottari(planets['Moon'].longitude, dateString, planets, houseData) : null;
-        const panchang = planets['Sun'] && planets['Moon'] ? calculatePanchang(planets['Sun'].longitude, planets['Moon'].longitude, dateString, swe, jd) : null;
+        const vimshottari = planets['Moon'] ? calculateVimshottari(planets['Moon'].longitude, dateString, planets, houseData, lang) : null;
+        const panchang = planets['Sun'] && planets['Moon'] ? calculatePanchang(planets['Sun'].longitude, planets['Moon'].longitude, dateString, swe, jd, lang) : null;
         const arudha = calculateArudhaLagna(planets, houseData);
 
         return {
@@ -790,7 +802,7 @@ const calculateMatch = (boyMoonLong, girlMoonLong) => {
 /**
  * Generate All Divisional Charts (D1-D60)
  */
-const generateDivisionalCharts = async (dateString, timeString, lat, lng, timezone) => {
+const generateDivisionalCharts = async (dateString, timeString, lat, lng, timezone, lang = 'en') => {
     const swe = await getGlobalSwe();
     const DivisionalCharts = require('./DivisionalCharts');
 
@@ -800,7 +812,7 @@ const generateDivisionalCharts = async (dateString, timeString, lat, lng, timezo
         const ayanamsa = swe.get_ayanamsa_ut(jd);
 
         // 1. Calculate Core Planets (Sidereal)
-        const planets = calculatePlanets(swe, jd);
+        const planets = calculatePlanets(swe, jd, lang);
 
         // 2. Calculate Ascendant (Sidereal)
         const houseData = calculateHouses(swe, jd, lat, lng, ayanamsa);

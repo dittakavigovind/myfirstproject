@@ -11,7 +11,7 @@ const seoController = require('./seoController');
  */
 exports.getKundli = async (req, res) => {
     try {
-        const { date, time, lat, lng, timezone } = req.body;
+        const { date, time, lat, lng, timezone, lang } = req.body;
 
         // Basic validation
         if (!date || !time || lat === undefined || lng === undefined) {
@@ -25,7 +25,7 @@ exports.getKundli = async (req, res) => {
 
         const tz = timezone || 5.5; // Default IST
 
-        const kundliData = await AstroService.generateKundli(date, time, lat, lng, tz);
+        const kundliData = await AstroService.generateKundli(date, time, lat, lng, tz, lang || 'en');
 
         // [LOGGING] Log Activity if Authenticated
         // console.log("[KUNDLI] Checking for user...", req.user ? req.user._id : "Guest");
@@ -830,13 +830,13 @@ exports.getSessions = async (req, res) => {
  */
 exports.getDivisionalCharts = async (req, res) => {
     try {
-        const { date, time, lat, lng, timezone } = req.body;
+        const { date, time, lat, lng, timezone, lang } = req.body;
 
         if (!date || !time || lat === undefined || lng === undefined) {
             return res.status(400).json({ message: 'Missing required birth details' });
         }
 
-        const data = await AstroService.generateDivisionalCharts(date, time, lat, lng, timezone || 5.5);
+        const data = await AstroService.generateDivisionalCharts(date, time, lat, lng, timezone || 5.5, lang || 'en');
         res.json({ success: true, data });
 
     } catch (error) {
