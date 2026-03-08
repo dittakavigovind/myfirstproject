@@ -42,10 +42,15 @@ export const BirthDetailsProvider = ({ children }) => {
         // 2. Logic: User Logged In
         if (user) {
             const userObj = user.user || user;
-            const currentUserId = userObj._id || userObj.id;
+            const currentUserId = (userObj._id || userObj.id)?.toString();
+
+            if (!currentUserId) {
+                setIsInitialized(true);
+                return;
+            }
 
             // Scenario A: Active Session for THIS User exists
-            if (parsed && parsed.userId === currentUserId) {
+            if (parsed && parsed.userId?.toString() === currentUserId) {
                 setBirthDetails(parsed);
                 setIsInitialized(true);
                 return;
@@ -57,17 +62,20 @@ export const BirthDetailsProvider = ({ children }) => {
                 name: userObj.name || '',
                 gender: userObj.gender || 'male',
                 date: bd.date ? new Date(bd.date) : (bd.dob ? new Date(bd.dob) : null),
-                time: bd.time || bd.tob || null,
-                place: bd.place || bd.pob || '',
+                time: (bd.time || bd.tob || '').toString(),
+                place: (bd.place || bd.pob || '').toString(),
                 lat: bd.lat || '',
                 lng: bd.lng || '',
                 timezone: bd.timezone || 5.5,
                 userId: currentUserId
             };
 
-            setBirthDetails(profileDetails);
-            // Sync this "reset" to localStorage immediately so it persists on reload
-            localStorage.setItem('way2astro_birth_details', JSON.stringify(profileDetails));
+            // Only update if we actually have some profile data to use
+            if (profileDetails.name || profileDetails.date || profileDetails.place) {
+                setBirthDetails(profileDetails);
+                localStorage.setItem('way2astro_birth_details', JSON.stringify(profileDetails));
+            }
+
             setIsInitialized(true);
             return;
         }
