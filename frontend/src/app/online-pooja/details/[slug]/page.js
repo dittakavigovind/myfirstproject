@@ -22,7 +22,7 @@ export async function generateStaticParams() {
 // Generate dynamic metadata for each temple
 export async function generateMetadata({ params }) {
     const { slug } = params;
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.way2astro.com';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://way2astro.com';
 
     try {
         const res = await fetch(`${API_BASE}/pooja/temples/${slug}`);
