@@ -79,26 +79,12 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function BlogPostDynamicPage({ params }) {
+export default function BlogPostDynamicPage({ params }) {
     const { slug } = params;
-
-    // Fetch data for the client component
-    let post = null;
-    try {
-        const res = await fetch(`${API_BASE}/blog/posts/${slug}`, { cache: 'no-store' });
-        const data = await res.json();
-        if (data.success) post = data.data;
-    } catch (e) {
-        console.error("Error fetching post for dynamic page:", e);
-    }
-
-    if (!post) {
-        return <div className="p-20 text-center font-bold text-slate-500">Article Not Found</div>;
-    }
 
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]">Loading Article...</div>}>
-            <BlogPostClient post={post} />
+            <BlogPostClient slug={slug} />
         </Suspense>
     );
 }

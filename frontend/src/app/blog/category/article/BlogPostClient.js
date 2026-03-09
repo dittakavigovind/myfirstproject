@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import API from '@/lib/api';
 import { resolveImageUrl } from '@/lib/urlHelper';
 import SinglePostSidebar from '@/components/blog/SinglePostSidebar';
@@ -8,7 +8,30 @@ import FAQDisplay from '@/components/FAQDisplay';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
 import { FaWhatsapp, FaTwitter, FaLinkedinIn, FaFacebookF, FaTumblr } from 'react-icons/fa';
 
-export default function BlogPostClient({ post }) {
+export default function BlogPostClient({ post: initialPost, slug: propSlug }) {
+    const [post, setPost] = useState(initialPost);
+    const [loading, setLoading] = useState(!initialPost);
+    const [error, setError] = useState(initialPost ? null : (!initialPost && !propSlug ? 'No post specified' : null));
+
+    useEffect(() => {
+        if (!post && propSlug) {
+            setLoading(true);
+            API.get(`/blog/posts/${propSlug}`)
+                .then(res => {
+                    if (res.data.success) {
+                        setPost(res.data.data);
+                    } else {
+                        setError('Article Not Found');
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching post:", err);
+                    setError('Failed to load article');
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [post, propSlug]);
+
     useEffect(() => {
         if (post) {
             // Increment view count separately
@@ -21,7 +44,8 @@ export default function BlogPostClient({ post }) {
         }
     }, [post]);
 
-    if (!post) return <div className="p-20 text-center">Article Not Found</div>;
+    if (loading) return <div className="p-20 text-center animate-pulse">Loading Article...</div>;
+    if (error || !post) return <div className="p-20 text-center font-bold text-slate-500">{error || 'Article Not Found'}</div>;
 
     return (
         <div className="bg-white min-h-screen">
