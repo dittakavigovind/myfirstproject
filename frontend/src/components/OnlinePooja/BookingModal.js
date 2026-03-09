@@ -124,7 +124,7 @@ const BookingModal = ({ isOpen, onClose, temple, seva }) => {
         }));
         toast.error('Please login to continue');
         // Redirect to login, then back to the current temple page
-        router.push(`/login?redirect=/online-pooja/details?slug=${temple.slug}`);
+        router.push(`/login?redirect=/online-pooja/details/${temple.slug}/`);
     };
 
     const handleChange = (e) => {

@@ -50,23 +50,24 @@ export async function generateMetadata({ params }) {
                 }
             }
 
-            // Trim to avoid any issues with crawlers
-            imageUrl = imageUrl.trim();
+            // Add cache busting to force FB to re-fetch if they saw a "corrupted" version
+            const cacheBust = `?v=${Date.now()}`;
+            const finalImageUrl = imageUrl + cacheBust;
 
             return {
                 title,
                 description,
-                metadataBase: new URL(baseUrl),
                 openGraph: {
                     title,
                     description,
                     url: `${baseUrl}/online-pooja/details/${slug}/`,
                     images: [
                         {
-                            url: imageUrl,
+                            url: finalImageUrl,
                             width: 1200,
                             height: 630,
                             alt: temple.name,
+                            type: 'image/png', // Explicitly state the type
                         },
                     ],
                     type: 'website',
@@ -76,7 +77,7 @@ export async function generateMetadata({ params }) {
                     card: 'summary_large_image',
                     title,
                     description,
-                    images: [imageUrl],
+                    images: [finalImageUrl],
                 },
             };
         }
