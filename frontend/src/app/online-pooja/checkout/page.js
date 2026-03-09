@@ -7,7 +7,7 @@ import { X, Loader2, CreditCard, User, Phone, Mail, Home, Info, BookOpen, Plus, 
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import LocationSearch from '../../../components/LocationSearch';
+// import LocationSearch from '../../../components/LocationSearch';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from '../../../components/common/CustomDateInput';
@@ -802,13 +802,13 @@ const CheckoutContent = () => {
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                         <div className="col-span-2 sm:col-span-1 space-y-1.5 min-h-[48px]">
-                                            <LocationSearch
-                                                onLocationSelect={handleLocationSelect}
+                                            <input
+                                                required
+                                                name="city"
+                                                value={formData.city}
+                                                onChange={handleChange}
+                                                className="w-full bg-slate-50 border-slate-100 border-2 rounded-xl py-3 px-4 focus:bg-white focus:border-astro-navy outline-none transition-all font-medium placeholder:text-slate-300 text-sm"
                                                 placeholder="City *"
-                                                defaultValue={formData.city}
-                                                showLeftIcon={false}
-                                                showIcon={false}
-                                                restrictCountry="IN"
                                             />
                                         </div>
                                         <div className="col-span-1 sm:col-span-1 space-y-1.5">
@@ -871,34 +871,20 @@ const CheckoutContent = () => {
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-4">
-                                            {availableCoupons.length > 0 && (
-                                                <div className="relative">
-                                                    <select
-                                                        value={couponCode}
-                                                        onChange={(e) => setCouponCode(e.target.value)}
-                                                        className="w-full bg-white border-2 border-astro-yellow/50 rounded-2xl py-4 pl-5 pr-12 focus:border-astro-yellow outline-none font-bold text-base h-16 cursor-pointer appearance-none shadow-sm transition-colors"
-                                                    >
-                                                        <option value="">Select an available offer...</option>
-                                                        {availableCoupons.map((c) => (
-                                                            <option key={c._id} value={c.code}>
-                                                                {c.code} - Save {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute inset-y-0 right-5 items-center flex pointer-events-none">
-                                                        <Tag className="w-6 h-6 text-astro-yellow" />
-                                                    </div>
-                                                </div>
-                                            )}
                                             <div className="flex flex-col sm:flex-row gap-4 relative">
-                                                <div className="relative flex-1">
-                                                    <Tag className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                                <div className="relative flex-1 group">
+                                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full pr-4 hidden lg:flex items-center">
+                                                        <span className="bg-astro-yellow text-astro-navy text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm whitespace-nowrap animate-pulse">
+                                                            Use Coupon
+                                                        </span>
+                                                    </div>
+                                                    <Tag className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-astro-navy transition-colors" />
                                                     <input
                                                         type="text"
-                                                        placeholder="Or enter a discount code"
+                                                        placeholder="ENTER DISCOUNT CODE"
                                                         value={couponCode}
                                                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                        className="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:border-astro-navy outline-none uppercase font-mono tracking-wider font-bold text-base h-16 transition-colors"
+                                                        className="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:border-astro-navy outline-none uppercase font-mono tracking-wider font-bold text-base h-16 transition-all"
                                                     />
                                                 </div>
                                                 <button
