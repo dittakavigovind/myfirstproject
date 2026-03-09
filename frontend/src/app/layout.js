@@ -25,7 +25,7 @@ import { resolveImageUrl, API_BASE } from '../lib/urlHelper';
 import GoogleAdSense from '../components/GoogleAdSense';
 
 export async function generateMetadata() {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.way2astro.com';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://way2astro.com';
     let iconUrl = '/logo.png'; // Default fallback
     let googleAdsId = '';
     let googleAnalyticsId = '';

@@ -53,19 +53,20 @@ export async function generateMetadata({ params }) {
             return {
                 title,
                 description,
+                metadataBase: new URL(baseUrl),
                 openGraph: {
                     title,
                     description,
                     url: `${baseUrl}/online-pooja/details/${slug}/`,
-                    images: [
-                        {
-                            url: imageUrl,
-                            width: 1200,
-                            height: 630,
-                            alt: temple.name,
-                        },
-                    ],
+                    images: [imageUrl], // Use string instead of object for simpler merge
                     type: 'website',
+                    siteName: 'Way2Astro',
+                },
+                twitter: {
+                    card: 'summary_large_image',
+                    title,
+                    description,
+                    images: [imageUrl],
                 },
             };
         }
