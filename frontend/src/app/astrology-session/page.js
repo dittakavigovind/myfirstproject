@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from '@/context/SessionContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import SessionTabs from '@/components/SessionTabs';
 import SmartInputForm from '@/components/SmartInputForm'; // New Import
 import PrintSessionReport from '@/components/PrintSessionReport';
@@ -569,13 +571,41 @@ const KundliView = ({ data }) => {
     );
 };
 
+// Assuming these imports are present at the top of the file
+// import { useRouter } from 'next/router';
+// import { useAuth } from '@/hooks/useAuth'; // Adjust path as necessary
+// import CosmicLoader from '@/components/CosmicLoader'; // Adjust path as necessary
 
 export default function AstrologySessionPage() {
+    const { user, loading: authLoading } = useAuth();
+    const router = useRouter();
     const { activeTab, setActiveTab, birthDetails, getData, isLoading, downloadAllData } = useSession();
     const { logos } = useTheme();
     const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+    const [isSticky, setIsSticky] = useState(false);
     const [printData, setPrintData] = useState(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login?redirect=/astrology-session');
+        }
+    }, [user, authLoading, router]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // Existing scroll logic if any, or new logic for isSticky
+            const offset = window.scrollY;
+            if (offset > 100) { // Example threshold
+                setIsSticky(true);
+            } else {
+                setIsSticky(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleDownloadPDF = async () => {
         setIsGeneratingPdf(true);
@@ -600,6 +630,14 @@ export default function AstrologySessionPage() {
     // Let's assume Context handles defaults or User is logged in.
     const currentData = getData(activeTab);
     const loading = isLoading(activeTab);
+
+    // -------------------------------------------------------------------------
+    // RENDER
+    // -------------------------------------------------------------------------
+
+    if (authLoading || (!user && !authLoading)) {
+        return <CosmicLoader size="lg" message="Checking your access..." fullscreen={true} />;
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans pb-20">

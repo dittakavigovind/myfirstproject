@@ -17,7 +17,7 @@ import {
   BookOpen, Sparkles, Star, ArrowRight, Activity,
   CheckCircle, Heart, Moon, Sun, Users, Clock,
   Hash, Shield, Zap, AlertTriangle, Briefcase,
-  ChevronDown, Flower2
+  ChevronDown, Flower2, Database
 } from 'lucide-react';
 
 // For dynamic services, we can import what we need or use a map
@@ -25,7 +25,7 @@ const LucideIconMap = {
   MessageCircle, Phone, FileText, Calendar, Sparkles,
   Star, ArrowRight, Activity, Heart, Moon, Sun,
   Users, Clock, Hash, Shield, Zap, AlertTriangle,
-  Briefcase, PlayCircle, BookOpen, Flower2
+  Briefcase, PlayCircle, BookOpen, Flower2, Database
 };
 
 
@@ -405,7 +405,7 @@ export default function HomeClient() {
                         {featureFlags?.enableCall && <ServiceCard icon={Phone} title="Call" desc="Connect Now" color="green" href="/astrologers" delay={0.2} badges={navBadges} />}
                         <ServiceCard icon={Flower2} title="Online Pooja" desc="Temple Sevas" color="orange" href="/online-pooja" delay={0.25} badges={navBadges} />
                         <ServiceCard icon={FileText} title="Free Kundli" desc="Full Report" color="purple" href="/kundli" delay={0.3} badges={navBadges} />
-                        <ServiceCard icon={Users} title="Matchmaking" desc="Compatibility" color="indigo" href="/matchmaking" delay={0.4} badges={navBadges} />
+                        <ServiceCard icon={Database} title="Master Data" desc="Astrology Session" color="indigo" href="/astrology-session" delay={0.4} badges={navBadges} />
                         <ServiceCard icon={Briefcase} title="Marriage & Career" desc="Timing Analysis" color="pink" href="/calculators/marriage-career" delay={0.45} badges={navBadges} />
                         <ServiceCard icon={PlayCircle} title="Horoscope" desc="Daily Insights" color="red" href="/horoscope" delay={0.5} badges={navBadges} />
                         <ServiceCard icon={Calendar} title="Panchang" desc="Muhurat" color="orange" href="/panchang" delay={0.5} badges={navBadges} />
