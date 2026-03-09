@@ -8,9 +8,9 @@ import { resolveImageUrl, API_BASE } from '../../../lib/urlHelper';
 import { Loader2, MapPin, ChevronLeft, Calendar, User, Phone, Mail, Home, Info, CheckCircle2, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
-const TempleDetailContent = () => {
+const TempleDetailContent = ({ slug: propSlug }) => {
     const searchParams = useSearchParams();
-    const slug = searchParams.get('slug');
+    const slug = propSlug || searchParams.get('slug');
     const router = useRouter();
     const [temple, setTemple] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ const TempleDetailContent = () => {
                         <button
                             onClick={() => {
                                 const shareDomain = 'https://way2astro.com';
-                                const url = `${shareDomain}/online-pooja/details?slug=${temple.slug}`;
+                                const url = `${shareDomain}/online-pooja/details/${temple.slug}/`;
                                 const text = `Check out this Online Pooja: ${temple.name} at Way2Astro\n\n${url}`;
                                 window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                             }}
@@ -352,7 +352,7 @@ const TempleDetailContent = () => {
     );
 };
 
-const TempleDetailClient = () => {
+const TempleDetailClient = ({ slug }) => {
     return (
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -360,7 +360,7 @@ const TempleDetailClient = () => {
                 <p className="text-astro-navy font-medium">Loading Divine Energy...</p>
             </div>
         }>
-            <TempleDetailContent />
+            <TempleDetailContent slug={slug} />
         </Suspense>
     );
 };

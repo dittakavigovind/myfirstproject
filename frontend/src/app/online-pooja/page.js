@@ -17,7 +17,7 @@ const OnlinePoojaListing = () => {
         e.preventDefault();
         e.stopPropagation();
         const shareDomain = 'https://way2astro.com';
-        const url = `${shareDomain}/online-pooja/details?slug=${slug}`;
+        const url = `${shareDomain}/online-pooja/details/${slug}/`;
         let text = `Check out this Online Pooja: ${name} at Way2Astro\n\n${url}`;
         if (imageUrl) {
             let finalImageUrl = imageUrl;
@@ -131,7 +131,7 @@ const OnlinePoojaListing = () => {
                                 {/* Image Container */}
                                 <div className="relative block aspect-video overflow-hidden">
                                     <Link
-                                        href={`/online-pooja/details?slug=${temple.slug}`}
+                                        href={`/online-pooja/details/${temple.slug}/`}
                                         className="block w-full h-full"
                                     >
                                         <Image
@@ -212,7 +212,7 @@ const OnlinePoojaListing = () => {
                                     </p>
 
                                     <Link
-                                        href={`/online-pooja/details?slug=${temple.slug}`}
+                                        href={`/online-pooja/details/${temple.slug}/`}
                                         className="inline-flex items-center justify-center w-full bg-astro-navy text-white py-3.5 px-6 rounded-xl font-black hover:bg-astro-yellow hover:text-astro-navy transition-all duration-300 shadow-xl shadow-astro-navy/20 hover:shadow-astro-yellow/30"
                                     >
                                         Explore Sevas

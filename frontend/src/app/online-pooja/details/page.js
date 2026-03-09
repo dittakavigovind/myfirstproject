@@ -7,6 +7,9 @@ import TempleDetailClient from './TempleDetailClient';
 export const metadata = {
     title: 'Online Pooja | Way2Astro',
     description: "Book authentic Temple Sevas and Poojas online. Get blessings from top temples across India. Prasadam delivered to your doorstep.",
+    openGraph: {
+        images: ['/logo.png']
+    }
 };
 
 export default function TempleDetailPage() {

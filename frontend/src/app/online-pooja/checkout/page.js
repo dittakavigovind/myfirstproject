@@ -75,7 +75,7 @@ const CheckoutContent = () => {
                         }
                     } else {
                         toast.error("Seva not found");
-                        router.push(`/online-pooja/details?slug=${templeSlug}`);
+                        router.push(`/online-pooja/details/${templeSlug}/`);
                     }
                 }
             } catch (err) {
@@ -442,7 +442,7 @@ const CheckoutContent = () => {
             <div className="bg-white border-b border-gray-100 py-4 px-4 sticky top-[calc(65px+env(safe-area-inset-top,0px))] md:top-[calc(81px+env(safe-area-inset-top,0px))] lg:top-[calc(125px+env(safe-area-inset-top,0px))] z-40 shadow-sm">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <button
-                        onClick={() => router.push(`/online-pooja/details?slug=${templeSlug}`)}
+                        onClick={() => router.push(`/online-pooja/details/${templeSlug}/`)}
                         className="flex items-center text-astro-navy hover:text-astro-yellow font-bold transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5 mr-1" />
