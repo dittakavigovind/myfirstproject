@@ -1,5 +1,13 @@
 "use client";
 
+export const metadata = {
+    title: 'Blog | Way2Astro',
+    description: "Explore our latest articles and updates on Vedic Astrology.",
+    openGraph: {
+        images: ['/logo.png']
+    }
+};
+
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import BlogPostClient from './BlogPostClient';

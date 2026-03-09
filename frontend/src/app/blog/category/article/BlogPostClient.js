@@ -36,7 +36,6 @@ export default function BlogPostClient({ post }) {
                         <Breadcrumbs
                             items={[
                                 { label: 'Blog', href: '/blog' },
-                                { label: post.categories?.[0]?.name || 'Uncategorized', href: `/blog/category/?category=${post.categories?.[0]?.slug || ''}` },
                                 { label: post.title }
                             ]}
                         />
@@ -62,7 +61,7 @@ export default function BlogPostClient({ post }) {
                             <div className="flex gap-3 mb-10">
                                 <button
                                     onClick={() => {
-                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        const url = `https://way2astro.com/blog/article/${post.slug}`;
                                         const text = `Check out this article: ${post.title}\n\n${url}`;
                                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                                     }}
@@ -73,7 +72,7 @@ export default function BlogPostClient({ post }) {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        const url = `https://way2astro.com/blog/article/${post.slug}`;
                                         window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`, '_blank');
                                     }}
                                     className="w-10 h-10 rounded-full bg-[#1DA1F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
@@ -83,7 +82,7 @@ export default function BlogPostClient({ post }) {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        const url = `https://way2astro.com/blog/article/${post.slug}`;
                                         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
                                     }}
                                     className="w-10 h-10 rounded-full bg-[#0077B5] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
@@ -93,7 +92,7 @@ export default function BlogPostClient({ post }) {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const url = `https://way2astro.com/blog/category/article/?category=${post.categories?.[0]?.slug || ''}&slug=${post.slug}`;
+                                        const url = `https://way2astro.com/blog/article/${post.slug}`;
                                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
                                     }}
                                     className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md"
