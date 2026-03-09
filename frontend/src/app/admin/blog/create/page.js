@@ -8,6 +8,7 @@ import { Image as ImageIcon, X, Save, ArrowLeft, MoreHorizontal, Calendar, Eye }
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import FAQManager from '@/components/admin/FAQManager';
+import { resolveImageUrl } from '@/lib/urlHelper';
 
 export default function AdminCreatePost() {
     const { user } = useAuth();
@@ -42,7 +43,7 @@ export default function AdminCreatePost() {
     const [uploading, setUploading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
 
-    const handleImageUpload = async (e) => {
+    const handleImageUpload = async (e, target = 'featuredImage') => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -51,11 +52,14 @@ export default function AdminCreatePost() {
         setUploading(true);
 
         try {
-            // Explicitly unset Content-Type (using null) so browser sets it with boundary
             const res = await API.post('/upload', formData, {
                 headers: { 'Content-Type': null }
             });
-            setForm(prev => ({ ...prev, featuredImage: res.data.filePath }));
+            if (target === 'featuredImage') {
+                setForm(prev => ({ ...prev, featuredImage: res.data.filePath }));
+            } else if (target === 'ogImage') {
+                setForm(prev => ({ ...prev, seo: { ...prev.seo, ogImage: res.data.filePath } }));
+            }
         } catch (err) {
             console.error(err);
             alert('Failed to upload image');
@@ -206,12 +210,47 @@ export default function AdminCreatePost() {
                                     value={form.seo.ogDescription}
                                     onChange={(e) => setForm({ ...form, seo: { ...form.seo, ogDescription: e.target.value } })}
                                 />
-                                <input
-                                    className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/10 outline-none transition bg-slate-50 text-sm"
-                                    placeholder="OG Image URL"
-                                    value={form.seo.ogImage}
-                                    onChange={(e) => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })}
-                                />
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-slate-500">OG Image</label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1">
+                                            <input
+                                                className="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500/10 outline-none transition bg-slate-50 text-sm"
+                                                placeholder="OG Image URL (will be filled on upload)"
+                                                value={form.seo.ogImage}
+                                                onChange={(e) => setForm({ ...form, seo: { ...form.seo, ogImage: e.target.value } })}
+                                            />
+                                        </div>
+                                        <div className="relative">
+                                            <button className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition flex items-center gap-2">
+                                                <ImageIcon size={14} /> Upload
+                                            </button>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageUpload(e, 'ogImage')}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                disabled={uploading}
+                                            />
+                                        </div>
+                                    </div>
+                                    {form.seo.ogImage && (
+                                        <div className="relative mt-2 inline-block">
+                                            <img
+                                                src={resolveImageUrl(form.seo.ogImage)}
+                                                alt="OG Preview"
+                                                className="h-20 w-auto rounded-lg border border-slate-200 shadow-sm"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setForm(prev => ({ ...prev, seo: { ...prev.seo, ogImage: '' } }))}
+                                                className="absolute -top-2 -right-2 bg-white text-slate-600 p-1 rounded-full shadow-sm hover:text-red-600 transition border border-slate-100"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
 

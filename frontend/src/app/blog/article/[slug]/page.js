@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { API_BASE } from '../../../../lib/urlHelper';
-import BlogPostClient from '../category/article/BlogPostClient';
+import BlogPostClient from '../../category/article/BlogPostClient';
 
 // This function is required for static export to know which paths to generate
 export async function generateStaticParams() {
@@ -33,18 +33,19 @@ export async function generateMetadata({ params }) {
             const title = `${post.metaTitle || post.title} | Way2Astro`;
             const description = post.metaDescription || post.excerpt || (post.content ? post.content.substring(0, 160).replace(/(<([^>]+)>)/gi, "") : "Read the latest astrology insights on Way2Astro.");
 
+            // Dynamic OG Image with fallback: OG Image -> Featured Image -> Logo
             let imageUrl = `${baseUrl}/logo.png`;
-            if (post.featuredImage) {
-                if (post.featuredImage.startsWith('http')) {
-                    imageUrl = post.featuredImage.replace(/http:\/\/(localhost|192\.168\.29\.133):5000/, 'https://api.way2astro.com');
+            const rawImage = post.seo?.ogImage || post.featuredImage;
+
+            if (rawImage) {
+                if (rawImage.startsWith('http')) {
+                    imageUrl = rawImage.replace(/http:\/\/(localhost|192\.168\.29\.133):5000/, 'https://api.way2astro.com');
                 } else {
                     const apiDomain = 'https://api.way2astro.com';
-                    const relativePath = post.featuredImage.startsWith('/') ? post.featuredImage : `/${post.featuredImage}`;
-                    if (relativePath.startsWith('/uploads/')) {
-                        imageUrl = `${apiDomain}/api${relativePath}`;
-                    } else {
-                        imageUrl = `${apiDomain}${relativePath}`;
-                    }
+                    const relativePath = rawImage.startsWith('/') ? rawImage : `/${rawImage}`;
+                    // Support both /api/uploads and direct /uploads or other relative paths
+                    const finalPath = relativePath.startsWith('/uploads/') ? `/api${relativePath}` : relativePath;
+                    imageUrl = `${apiDomain}${finalPath}`;
                 }
             }
 
