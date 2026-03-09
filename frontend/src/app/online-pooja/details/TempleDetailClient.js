@@ -71,34 +71,6 @@ const TempleDetailContent = ({ slug: propSlug }) => {
         }
     }, [temple, router]);
 
-    useEffect(() => {
-        if (temple && typeof window !== 'undefined') {
-            // Dynamically update meta tags for social sharing
-            const updateMetaTag = (property, content) => {
-                if (!content) return;
-                let tag = document.querySelector(`meta[property="${property}"]`);
-                if (!tag) {
-                    tag = document.createElement('meta');
-                    tag.setAttribute('property', property);
-                    document.head.appendChild(tag);
-                }
-                tag.setAttribute('content', content);
-            };
-
-            updateMetaTag('og:title', temple.ogTitle || temple.name);
-            updateMetaTag('og:description', temple.ogDescription || temple.description?.substring(0, 160).replace(/(<([^>]+)>)/gi, ""));
-
-            if (temple.ogImage) {
-                updateMetaTag('og:image', resolveImageUrl(temple.ogImage));
-            } else if (temple.images && temple.images.length > 0) {
-                updateMetaTag('og:image', resolveImageUrl(temple.images[0]));
-            }
-
-            updateMetaTag('og:url', window.location.href);
-            updateMetaTag('og:type', 'website');
-        }
-    }, [temple]);
-
     const handleBookNow = (seva) => {
         router.push(`/online-pooja/checkout/?temple=${temple.slug}&seva=${seva._id}`);
     };

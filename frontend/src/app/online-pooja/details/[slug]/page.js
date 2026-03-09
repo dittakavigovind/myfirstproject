@@ -40,7 +40,6 @@ export async function generateMetadata({ params }) {
                 if (imageSource.startsWith('http')) {
                     imageUrl = imageSource.replace(/http:\/\/(localhost|192\.168\.29\.133):5000/, 'https://api.way2astro.com');
                 } else {
-                    // Prepend API base and handle /api/uploads prefix consistently
                     const apiDomain = 'https://api.way2astro.com';
                     const relativePath = imageSource.startsWith('/') ? imageSource : `/${imageSource}`;
                     if (relativePath.startsWith('/uploads/')) {
@@ -51,9 +50,13 @@ export async function generateMetadata({ params }) {
                 }
             }
 
+            // Trim to avoid any issues with crawlers
+            imageUrl = imageUrl.trim();
+
             return {
                 title,
                 description,
+                metadataBase: new URL(baseUrl),
                 openGraph: {
                     title,
                     description,
@@ -67,6 +70,13 @@ export async function generateMetadata({ params }) {
                         },
                     ],
                     type: 'website',
+                    siteName: 'Way2Astro',
+                },
+                twitter: {
+                    card: 'summary_large_image',
+                    title,
+                    description,
+                    images: [imageUrl],
                 },
             };
         }
