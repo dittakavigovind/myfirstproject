@@ -117,12 +117,12 @@ exports.generateSitemap = async (req, res) => {
 
         xml += '</urlset>';
 
-        res.header('Content-Type', 'application/xml');
-        res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-        res.header('Pragma', 'no-cache');
-        res.header('Expires', '0');
-        res.header('X-Robots-Tag', 'index, follow');
-        res.status(200).send(xml);
+        xml += '</urlset>';
+
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+        res.set('X-Robots-Tag', 'index, follow');
+        res.status(200).send(xml.trim());
     } catch (error) {
         console.error('Sitemap Generation Error:', error);
         res.status(500).json({ success: false, message: 'Failed to generate sitemap' });
@@ -177,12 +177,10 @@ exports.generateRobotsTxt = async (req, res) => {
         // Add sitemap reference
         robots += `\nSitemap: ${baseUrl}/sitemap.xml\n`;
 
-        res.header('Content-Type', 'text/plain');
-        res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-        res.header('Pragma', 'no-cache');
-        res.header('Expires', '0');
-        res.header('X-Robots-Tag', 'index, follow');
-        res.status(200).send(robots);
+        res.set('Content-Type', 'text/plain; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=3600');
+        res.set('X-Robots-Tag', 'index, follow');
+        res.status(200).send(robots.trim());
     } catch (error) {
         console.error('Robots.txt Generation Error:', error);
         res.header('Cache-Control', 'no-cache');

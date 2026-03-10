@@ -18,3 +18,4 @@ Disallow: /video/
 Disallow: /tmp/
 
 Sitemap: https://way2astro.com/sitemap.xml
+Sitemap: https://api.way2astro.com/sitemap.xml
