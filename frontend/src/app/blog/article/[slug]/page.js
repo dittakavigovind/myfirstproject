@@ -81,12 +81,25 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default function BlogPostDynamicPage({ params }) {
+export default async function BlogPostDynamicPage({ params }) {
     const { slug } = params;
+    let postData = null;
+
+    try {
+        const res = await fetch(`${API_BASE}/blog/posts/${slug}?t=${Date.now()}`, {
+            next: { revalidate: 0 }
+        });
+        const data = await res.json();
+        if (data.success) {
+            postData = data.data;
+        }
+    } catch (error) {
+        console.error('Error fetching blog post data for static page:', error);
+    }
 
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]">Loading Article...</div>}>
-            <BlogPostClient slug={slug} />
+            <BlogPostClient slug={slug} initialPost={postData} />
         </Suspense>
     );
 }

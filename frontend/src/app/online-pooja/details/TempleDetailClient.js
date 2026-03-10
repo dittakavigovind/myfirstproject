@@ -8,12 +8,12 @@ import { resolveImageUrl, API_BASE } from '../../../lib/urlHelper';
 import { Loader2, MapPin, ChevronLeft, Calendar, User, Phone, Mail, Home, Info, CheckCircle2, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
-const TempleDetailContent = ({ slug: propSlug }) => {
+const TempleDetailContent = ({ slug: propSlug, initialTemple }) => {
     const searchParams = useSearchParams();
     const slug = propSlug || searchParams.get('slug');
     const router = useRouter();
-    const [temple, setTemple] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [temple, setTemple] = useState(initialTemple || null);
+    const [loading, setLoading] = useState(!initialTemple);
     const [activeImage, setActiveImage] = useState(0);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
     const [showFloatingBtn, setShowFloatingBtn] = useState(false);
@@ -48,7 +48,7 @@ const TempleDetailContent = ({ slug: propSlug }) => {
                 return;
             }
             try {
-                const response = await axios.get(`${API_BASE}/pooja/temples/${slug}`);
+                const response = await axios.get(`${API_BASE}/pooja/temples/${slug}?t=${Date.now()}`);
                 if (response.data.success) {
                     setTemple(response.data.data);
                 }
@@ -324,7 +324,7 @@ const TempleDetailContent = ({ slug: propSlug }) => {
     );
 };
 
-const TempleDetailClient = ({ slug }) => {
+const TempleDetailClient = ({ slug, initialTemple }) => {
     return (
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -332,7 +332,7 @@ const TempleDetailClient = ({ slug }) => {
                 <p className="text-astro-navy font-medium">Loading Divine Energy...</p>
             </div>
         }>
-            <TempleDetailContent slug={slug} />
+            <TempleDetailContent slug={slug} initialTemple={initialTemple} />
         </Suspense>
     );
 };

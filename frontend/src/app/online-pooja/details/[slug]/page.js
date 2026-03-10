@@ -82,11 +82,25 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default function TempleDetailDynamicPage({ params }) {
+export default async function TempleDetailDynamicPage({ params }) {
     const { slug } = params;
+    let templeData = null;
+
+    try {
+        const res = await fetch(`${API_BASE}/pooja/temples/${slug}?t=${Date.now()}`, {
+            next: { revalidate: 0 }
+        });
+        const data = await res.json();
+        if (data.success) {
+            templeData = data.data;
+        }
+    } catch (error) {
+        console.error('Error fetching temple data for static page:', error);
+    }
+
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]">Loading Temple Details...</div>}>
-            <TempleDetailClient slug={slug} />
+            <TempleDetailClient slug={slug} initialTemple={templeData} />
         </Suspense>
     );
 }

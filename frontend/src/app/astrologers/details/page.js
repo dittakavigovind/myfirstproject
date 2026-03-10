@@ -51,7 +51,7 @@ function AstrologerProfile() {
 
     const fetchProfile = async () => {
         try {
-            const res = await API.get(`/astro/astrologers/${id}`);
+            const res = await API.get(`/astro/astrologers/${id}?t=${Date.now()}`);
             if (!res.data.data) {
                 setNotFound(true);
             } else {
