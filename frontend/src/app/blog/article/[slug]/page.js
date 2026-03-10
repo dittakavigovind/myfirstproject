@@ -25,7 +25,9 @@ export async function generateMetadata({ params }) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://way2astro.com';
 
     try {
-        const res = await fetch(`${API_BASE}/blog/posts/${slug}`);
+        const res = await fetch(`${API_BASE}/blog/posts/${slug}?t=${Date.now()}`, {
+            next: { revalidate: 0 }
+        });
         const data = await res.json();
 
         if (data.success && data.data) {

@@ -8,6 +8,7 @@ const emailService = require('../services/emailService');
 const whatsappService = require('../services/whatsappService');
 const Counter = require('../models/Counter');
 const moment = require('moment-timezone');
+const { triggerCloudflareRebuild } = require('../utils/deployHelper');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -340,6 +341,8 @@ exports.createTemple = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
+        // Trigger Cloudflare Rebuild
+        triggerCloudflareRebuild();
 
         res.status(201).json({ success: true, data: temple });
     } catch (error) {
@@ -364,6 +367,8 @@ exports.updateTemple = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
+        // Trigger Cloudflare Rebuild
+        triggerCloudflareRebuild();
 
         res.status(200).json({ success: true, data: temple });
     } catch (error) {
@@ -385,6 +390,8 @@ exports.deleteTemple = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
+        // Trigger Cloudflare Rebuild
+        triggerCloudflareRebuild();
 
         res.status(200).json({ success: true, message: 'Temple removed' });
     } catch (error) {

@@ -32,7 +32,9 @@ export async function generateMetadata() {
 
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
-        const res = await fetch(`${apiUrl}/site-settings`);
+        const res = await fetch(`${apiUrl}/site-settings?t=${Date.now()}`, {
+            next: { revalidate: 0 }
+        });
         const data = await res.json();
 
         if (data.success && data.settings) {
@@ -93,7 +95,9 @@ export default async function RootLayout({ children }) {
     let customHeadScripts = '';
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
-        const res = await fetch(`${apiUrl}/site-settings`);
+        const res = await fetch(`${apiUrl}/site-settings?t=${Date.now()}`, {
+            next: { revalidate: 0 }
+        });
         const data = await res.json();
         if (data.success && data.settings) {
             googleAdsId = data.settings.googleAdsId;
