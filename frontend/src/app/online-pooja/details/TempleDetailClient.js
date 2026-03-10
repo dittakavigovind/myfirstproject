@@ -8,12 +8,12 @@ import { resolveImageUrl, API_BASE } from '../../../lib/urlHelper';
 import { Loader2, MapPin, ChevronLeft, Calendar, User, Phone, Mail, Home, Info, CheckCircle2, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 
-const TempleDetailContent = ({ slug: propSlug, initialTemple }) => {
+const TempleDetailContent = ({ slug: propSlug }) => {
     const searchParams = useSearchParams();
     const slug = propSlug || searchParams.get('slug');
     const router = useRouter();
-    const [temple, setTemple] = useState(initialTemple || null);
-    const [loading, setLoading] = useState(!initialTemple);
+    const [temple, setTemple] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState(0);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
     const [showFloatingBtn, setShowFloatingBtn] = useState(false);
@@ -48,7 +48,7 @@ const TempleDetailContent = ({ slug: propSlug, initialTemple }) => {
                 return;
             }
             try {
-                const response = await axios.get(`${API_BASE}/pooja/temples/${slug}?t=${Date.now()}`);
+                const response = await axios.get(`${API_BASE}/pooja/temples/${slug}`);
                 if (response.data.success) {
                     setTemple(response.data.data);
                 }
@@ -324,7 +324,7 @@ const TempleDetailContent = ({ slug: propSlug, initialTemple }) => {
     );
 };
 
-const TempleDetailClient = ({ slug, initialTemple }) => {
+const TempleDetailClient = ({ slug }) => {
     return (
         <Suspense fallback={
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -332,7 +332,7 @@ const TempleDetailClient = ({ slug, initialTemple }) => {
                 <p className="text-astro-navy font-medium">Loading Divine Energy...</p>
             </div>
         }>
-            <TempleDetailContent slug={slug} initialTemple={initialTemple} />
+            <TempleDetailContent slug={slug} />
         </Suspense>
     );
 };

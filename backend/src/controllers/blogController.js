@@ -1,7 +1,6 @@
 const BlogPost = require('../models/BlogPost');
 const BlogCategory = require('../models/BlogCategory');
 const seoController = require('./seoController');
-const { triggerCloudflareRebuild } = require('../utils/deployHelper');
 
 // @desc    Get all categories
 // @route   GET /api/blog/categories
@@ -238,8 +237,6 @@ exports.createPost = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.status(201).json({ success: true, data: post });
     } catch (error) {
@@ -265,8 +262,6 @@ exports.updatePost = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.json({ success: true, data: post });
     } catch (error) {
@@ -289,8 +284,6 @@ exports.deletePost = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.json({ success: true, data: {} });
     } catch (error) {

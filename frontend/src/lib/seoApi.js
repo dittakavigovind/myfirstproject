@@ -35,9 +35,7 @@ export async function generateSeoMetadata(slug, defaultMeta = {}) {
     const baseUrl = API_BASE;
 
     try {
-        const res = await fetch(`${baseUrl}/seo/${slug}?t=${Date.now()}`, {
-            next: { revalidate: 0 }
-        });
+        const res = await fetch(`${baseUrl}/seo/${slug}`);
 
         if (!res.ok) throw new Error("Failed to fetch");
 

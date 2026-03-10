@@ -25,9 +25,7 @@ export async function generateMetadata({ params }) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://way2astro.com';
 
     try {
-        const res = await fetch(`${API_BASE}/pooja/temples/${slug}?t=${Date.now()}`, {
-            next: { revalidate: 0 } // Ensure No-Cache during build/revalidate
-        });
+        const res = await fetch(`${API_BASE}/pooja/temples/${slug}`);
         const data = await res.json();
 
         if (data.success && data.data) {
@@ -82,25 +80,11 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function TempleDetailDynamicPage({ params }) {
+export default function TempleDetailDynamicPage({ params }) {
     const { slug } = params;
-    let templeData = null;
-
-    try {
-        const res = await fetch(`${API_BASE}/pooja/temples/${slug}?t=${Date.now()}`, {
-            next: { revalidate: 0 }
-        });
-        const data = await res.json();
-        if (data.success) {
-            templeData = data.data;
-        }
-    } catch (error) {
-        console.error('Error fetching temple data for static page:', error);
-    }
-
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]">Loading Temple Details...</div>}>
-            <TempleDetailClient slug={slug} initialTemple={templeData} />
+            <TempleDetailClient slug={slug} />
         </Suspense>
     );
 }

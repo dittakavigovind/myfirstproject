@@ -16,7 +16,7 @@ export default function BlogPostClient({ post: initialPost, slug: propSlug }) {
     useEffect(() => {
         if (!post && propSlug) {
             setLoading(true);
-            API.get(`/blog/posts/${propSlug}?t=${Date.now()}`)
+            API.get(`/blog/posts/${propSlug}`)
                 .then(res => {
                     if (res.data.success) {
                         setPost(res.data.data);

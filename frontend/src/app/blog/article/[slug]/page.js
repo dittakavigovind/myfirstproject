@@ -25,9 +25,7 @@ export async function generateMetadata({ params }) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://way2astro.com';
 
     try {
-        const res = await fetch(`${API_BASE}/blog/posts/${slug}?t=${Date.now()}`, {
-            next: { revalidate: 0 }
-        });
+        const res = await fetch(`${API_BASE}/blog/posts/${slug}`);
         const data = await res.json();
 
         if (data.success && data.data) {
@@ -81,25 +79,12 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function BlogPostDynamicPage({ params }) {
+export default function BlogPostDynamicPage({ params }) {
     const { slug } = params;
-    let postData = null;
-
-    try {
-        const res = await fetch(`${API_BASE}/blog/posts/${slug}?t=${Date.now()}`, {
-            next: { revalidate: 0 }
-        });
-        const data = await res.json();
-        if (data.success) {
-            postData = data.data;
-        }
-    } catch (error) {
-        console.error('Error fetching blog post data for static page:', error);
-    }
 
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]">Loading Article...</div>}>
-            <BlogPostClient slug={slug} initialPost={postData} />
+            <BlogPostClient slug={slug} />
         </Suspense>
     );
 }

@@ -3,7 +3,6 @@ const User = require('../models/User');
 const Astrologer = require('../models/Astrologer');
 const { geocodePlace, searchPlaces } = require('../utils/geocoder');
 const seoController = require('./seoController');
-const { triggerCloudflareRebuild } = require('../utils/deployHelper');
 
 /**
  * Generate Kundli for Request
@@ -323,8 +322,6 @@ exports.updateCurrentAstrologer = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.json({ success: true, message: 'Profile updated successfully', data: astrologer });
 
@@ -414,8 +411,6 @@ exports.createAstrologer = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.status(201).json({ success: true, data: astrologer });
 
@@ -471,8 +466,6 @@ exports.updateAstrologer = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.json({ success: true, data: astrologer });
     } catch (error) {
@@ -597,8 +590,6 @@ exports.deleteAstrologer = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
-        // Trigger Cloudflare Rebuild
-        triggerCloudflareRebuild();
 
         res.json({ success: true, message: 'Astrologer removed' });
     } catch (error) {
