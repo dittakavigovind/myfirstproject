@@ -117,8 +117,6 @@ exports.generateSitemap = async (req, res) => {
 
         xml += '</urlset>';
 
-        xml += '</urlset>';
-
         res.set('Content-Type', 'application/xml; charset=utf-8');
         res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
         res.set('X-Robots-Tag', 'index, follow');
