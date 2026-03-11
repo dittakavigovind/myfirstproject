@@ -223,7 +223,7 @@ export default function DisclaimerPage() {
                             <div className="flex flex-wrap justify-center gap-8">
                                 <div className="flex items-center gap-3 text-indigo-100/70">
                                     <Mail size={18} className="text-astro-yellow" />
-                                    <span className="font-bold text-sm">support@way2astro.com</span>
+                                    <span className="font-bold text-sm">info@way2astro.com</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-indigo-100/70">
                                     <MapPin size={18} className="text-astro-yellow" />

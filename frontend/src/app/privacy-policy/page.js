@@ -229,7 +229,7 @@ export default function PrivacyPolicyPage() {
                             </ul>
                             <div className="mt-6 p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
                                 <p className="text-indigo-100/80 text-sm font-bold m-0">To exercise these rights, contact:</p>
-                                <p className="text-astro-yellow font-black text-sm m-0 mt-1">Email: support@way2astro.com</p>
+                                <p className="text-astro-yellow font-black text-sm m-0 mt-1">Email: info@way2astro.com</p>
                                 <p className="text-indigo-100/60 text-xs mt-4">We will respond within a reasonable and lawful timeframe.</p>
                             </div>
                         </section>
@@ -365,7 +365,7 @@ export default function PrivacyPolicyPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Email</p>
-                                    <p className="text-astro-yellow font-black">support@way2astro.com</p>
+                                    <p className="text-astro-yellow font-black">info@way2astro.com</p>
                                 </div>
                             </div>
                             <p className="text-indigo-100/60 text-xs italic pt-4 border-t border-white/5">The Grievance Officer will respond to complaints within 7–15 working days.</p>
