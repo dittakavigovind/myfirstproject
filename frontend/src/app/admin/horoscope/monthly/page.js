@@ -58,7 +58,7 @@ export default function MonthlyHoroscopeAdmin() {
             const month = date.getMonth() + 1;
             const year = date.getFullYear();
             const { data } = await API.get(`/horoscope-manager/monthly?month=${month}&year=${year}`);
-            if (data.success) {
+            if (data.success && data.data) {
                 setGlobalTitle(data.data.title || '');
                 setId(data.data._id);
 
@@ -74,6 +74,9 @@ export default function MonthlyHoroscopeAdmin() {
                 });
                 setSignsData(loadedSigns);
                 setExists(true);
+            } else {
+                resetForm();
+                setExists(false);
             }
         } catch (error) {
             if (error.response && error.response.status === 404) {

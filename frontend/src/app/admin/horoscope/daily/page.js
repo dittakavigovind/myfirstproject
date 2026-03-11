@@ -10,6 +10,7 @@ import CustomDateInput from '../../../../components/common/CustomDateInput';
 import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { format } from 'date-fns';
 
 const ZODIAC_SIGNS = [
     'aries', 'taurus', 'gemini', 'cancer',
@@ -56,9 +57,9 @@ export default function DailyHoroscopeAdmin() {
     const fetchHoroscope = async (date) => {
         setLoading(true);
         try {
-            const formattedDate = date.toISOString();
+            const formattedDate = format(date, 'yyyy-MM-dd');
             const { data } = await API.get(`/horoscope-manager/daily?date=${formattedDate}`);
-            if (data.success) {
+            if (data.success && data.data) {
                 setGlobalTitle(data.data.title || '');
                 setId(data.data._id);
 
@@ -75,6 +76,10 @@ export default function DailyHoroscopeAdmin() {
                 });
                 setSignsData(loadedSigns);
                 setExists(true);
+            } else {
+                // If data.success is true but data.data is null (404 handled gracefully by backend)
+                resetForm();
+                setExists(false);
             }
         } catch (error) {
             if (error.response && error.response.status === 404) {
