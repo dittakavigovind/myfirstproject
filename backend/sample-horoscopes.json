@@ -1,0 +1,63 @@
+[
+  {
+    "type": "daily",
+    "date": "2024-03-15",
+    "title": "A Day of New Beginnings",
+    "signs": {
+      "aries": {
+        "title": "Focus on Health",
+        "prediction": "Today is a great day to start a new gym routine. Energy levels are high.",
+        "luckyColor": "Red",
+        "luckyNumber": "9",
+        "cosmicVibe": 5
+      },
+      "taurus": {
+        "title": "Financial Gains",
+        "prediction": "Expect a small financial surprise today. Be cautious with spending.",
+        "luckyColor": "Green",
+        "luckyNumber": "6",
+        "cosmicVibe": 4
+      },
+      "gemini": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "cancer": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "leo": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "virgo": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "libra": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "scorpio": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "sagittarius": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "capricorn": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "aquarius": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 },
+      "pisces": { "title": "...", "prediction": "...", "luckyColor": "...", "luckyNumber": "...", "cosmicVibe": 3 }
+    }
+  },
+  {
+    "type": "weekly",
+    "weekStartDate": "2024-03-17",
+    "weekEndDate": "2024-03-23",
+    "title": "The Week of Opportunities",
+    "signs": {
+      "aries": {
+        "title": "Networking Success",
+        "prediction": "This week is perfect for meeting new people and expanding your professional circle.",
+        "advice": "Don't be afraid to take the lead in group discussions.",
+        "luck": "80%",
+        "energy": "High"
+      }
+    }
+  },
+  {
+    "type": "monthly",
+    "month": 4,
+    "year": 2024,
+    "title": "April 2024 Horoscope",
+    "signs": {
+      "aries": {
+        "title": "New Projects Ahead",
+        "overview": "April brings fresh energy and new projects to the table.",
+        "career": "Your hard work will be recognized by superiors.",
+        "love": "Relationships take a back seat for a while as you focus on your self-growth.",
+        "health": "Avoid overexertion; rest is just as important as action."
+      }
+    }
+  }
+]
