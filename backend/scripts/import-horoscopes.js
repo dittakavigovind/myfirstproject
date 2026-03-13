@@ -68,19 +68,20 @@ const importData = async () => {
                     continue;
                 }
                 
-                // Use IST Midnight for absolute consistency with manual entries
-                const istMidnight = moment(date).startOf('day').toDate();
+                // Use IST Noon (12:00) for maximum compatibility across all server timezones
+                // 12:00 IST is 06:30 UTC, which is safely inside the same calendar day on both UTC and IST servers.
+                const istNoon = moment(date).hour(12).startOf('hour').toDate();
                 
                 // Fuzzy match (+/- 12h) to find and replace any previous wrong-timezone records
-                const startWindow = moment(istMidnight).subtract(12, 'hours').toDate();
-                const endWindow = moment(istMidnight).add(12, 'hours').toDate();
+                const startWindow = moment(istNoon).subtract(12, 'hours').toDate();
+                const endWindow = moment(istNoon).add(12, 'hours').toDate();
 
                 await DailyHoroscope.findOneAndUpdate(
                     { date: { $gte: startWindow, $lte: endWindow } },
-                    { date: istMidnight, title, signs },
+                    { date: istNoon, title, signs },
                     { upsert: true, new: true }
                 );
-                console.log(`[Daily] Imported horoscope for ${moment(istMidnight).format('YYYY-MM-DD')} (IST)`);
+                console.log(`[Daily] Imported horoscope for ${moment(istNoon).format('YYYY-MM-DD')} (Noon IST)`);
 
             } else if (type === 'weekly') {
                 const { weekStartDate, weekEndDate } = entry;
@@ -89,9 +90,9 @@ const importData = async () => {
                     continue;
                 }
 
-                // Use IST Midnight for consistency
-                const start = moment(weekStartDate).startOf('day').toDate();
-                const end = moment(weekEndDate).endOf('day').toDate();
+                // Use IST Noon for consistency
+                const start = moment(weekStartDate).hour(12).startOf('hour').toDate();
+                const end = moment(weekEndDate).hour(12).startOf('hour').toDate();
 
                 // Fuzzy match for existing weekly ranges (+/- 12h)
                 const startWindowLow = moment(start).subtract(12, 'hours').toDate();
@@ -104,7 +105,7 @@ const importData = async () => {
                     { weekStartDate: start, weekEndDate: end, title, signs },
                     { upsert: true, new: true }
                 );
-                console.log(`[Weekly] Imported horoscope for ${moment(start).format('YYYY-MM-DD')} to ${moment(end).format('YYYY-MM-DD')} (IST)`);
+                console.log(`[Weekly] Imported horoscope for ${moment(start).format('YYYY-MM-DD')} to ${moment(end).format('YYYY-MM-DD')} (Noon IST)`);
 
             } else if (type === 'monthly') {
                 const { month, year } = entry;
