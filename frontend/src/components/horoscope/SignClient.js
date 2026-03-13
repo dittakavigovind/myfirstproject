@@ -24,14 +24,24 @@ export default function SignClient() {
                 const date = new Date();
                 const signKey = sign?.toLowerCase();
 
+                // Helper to get YYYY-MM-DD in local time
+                const getLocalDateString = (d) => {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                const localToday = getLocalDateString(date);
+
                 if (activeTab === 'daily') {
-                    res = await API.get(`/horoscope-manager/daily?date=${date.toISOString()}`);
+                    res = await API.get(`/horoscope-manager/daily?date=${localToday}`);
                 } else if (activeTab === 'tomorrow') {
                     const tomorrow = new Date(date);
                     tomorrow.setDate(tomorrow.getDate() + 1);
-                    res = await API.get(`/horoscope-manager/daily?date=${tomorrow.toISOString()}`);
+                    res = await API.get(`/horoscope-manager/daily?date=${getLocalDateString(tomorrow)}`);
                 } else if (activeTab === 'weekly') {
-                    res = await API.get(`/horoscope-manager/weekly?date=${date.toISOString()}`);
+                    res = await API.get(`/horoscope-manager/weekly?date=${localToday}`);
                 } else if (activeTab === 'monthly') {
                     res = await API.get(`/horoscope-manager/monthly?month=${date.getMonth() + 1}&year=${date.getFullYear()}`);
                 }

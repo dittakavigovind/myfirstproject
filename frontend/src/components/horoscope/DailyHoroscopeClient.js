@@ -61,7 +61,11 @@ export default function DailyHoroscopeClient() {
         const fetchHoroscope = async () => {
             setLoading(true);
             try {
-                const formattedDate = selectedDate.toISOString();
+                const year = selectedDate.getFullYear();
+                const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(selectedDate.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+                
                 const { data } = await API.get(`/horoscope-manager/daily?date=${formattedDate}`);
                 if (data.success) {
                     setHoroscopeData({

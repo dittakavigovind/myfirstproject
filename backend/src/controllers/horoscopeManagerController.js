@@ -2,14 +2,17 @@ const DailyHoroscope = require('../models/DailyHoroscope');
 const WeeklyHoroscope = require('../models/WeeklyHoroscope');
 const MonthlyHoroscope = require('../models/MonthlyHoroscope');
 const FeaturedAstrologer = require('../models/FeaturedAstrologer');
-const moment = require('moment');
+const moment = require('moment-timezone');
+
+// Set default timezone to IST for all horoscope calculations
+moment.tz.setDefault('Asia/Kolkata');
 
 // --- DAILY HOROSCOPE ---
 
 exports.createDailyHoroscope = async (req, res) => {
     try {
         const { date } = req.body;
-        // Check duplication
+        // Check duplication - use IST midnights
         const startOfDay = moment(date).startOf('day').toDate();
         const endOfDay = moment(date).endOf('day').toDate();
 
