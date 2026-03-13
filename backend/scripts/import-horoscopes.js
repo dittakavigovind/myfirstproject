@@ -65,16 +65,19 @@ const importData = async () => {
                     continue;
                 }
                 
-                // Use local time to match manual entry/browser behavior
-                const startOfDay = moment(date).startOf('day').toDate();
-                const endOfDay = moment(date).endOf('day').toDate();
+                // Use UTC Midnight for absolute consistency across all servers/browsers
+                const utcDate = moment.utc(date).startOf('day').toDate();
+                
+                // Find existing records within 12 hours of this date to catch IST/local shifts
+                const startWindow = moment.utc(utcDate).subtract(12, 'hours').toDate();
+                const endWindow = moment.utc(utcDate).add(12, 'hours').toDate();
 
                 await DailyHoroscope.findOneAndUpdate(
-                    { date: { $gte: startOfDay, $lte: endOfDay } },
-                    { date: startOfDay, title, signs },
+                    { date: { $gte: startWindow, $lte: endWindow } },
+                    { date: utcDate, title, signs },
                     { upsert: true, new: true }
                 );
-                console.log(`[Daily] Imported horoscope for ${date}`);
+                console.log(`[Daily] Imported horoscope for ${moment.utc(utcDate).format('YYYY-MM-DD')} (UTC)`);
 
             } else if (type === 'weekly') {
                 const { weekStartDate, weekEndDate } = entry;
@@ -83,19 +86,22 @@ const importData = async () => {
                     continue;
                 }
 
-                // Use local time for consistent week ranges matching the dashboard
-                const start = moment(weekStartDate).startOf('day').toDate();
-                const end = moment(weekEndDate).endOf('day').toDate();
+                // Use UTC Midnight for absolute consistency
+                const start = moment.utc(weekStartDate).startOf('day').toDate();
+                const end = moment.utc(weekEndDate).startOf('day').toDate();
+
+                // Fuzzy match for existing weekly ranges (+/- 12h)
+                const startWindowLow = moment.utc(start).subtract(12, 'hours').toDate();
+                const startWindowHigh = moment.utc(start).add(12, 'hours').toDate();
 
                 await WeeklyHoroscope.findOneAndUpdate(
                     { 
-                        weekStartDate: start, 
-                        weekEndDate: end 
+                        weekStartDate: { $gte: startWindowLow, $lte: startWindowHigh }
                     },
                     { weekStartDate: start, weekEndDate: end, title, signs },
                     { upsert: true, new: true }
                 );
-                console.log(`[Weekly] Imported horoscope for ${weekStartDate} to ${weekEndDate}`);
+                console.log(`[Weekly] Imported horoscope for ${moment.utc(start).format('YYYY-MM-DD')} to ${moment.utc(end).format('YYYY-MM-DD')} (UTC)`);
 
             } else if (type === 'monthly') {
                 const { month, year } = entry;
