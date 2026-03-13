@@ -100,15 +100,18 @@ exports.getWeeklyHoroscope = async (req, res) => {
     try {
         // Find weekly based on a provided date falling within range
         const { date } = req.query; // any date within the week
-        const queryDate = date ? new Date(date) : new Date();
+        const queryDate = date ? moment(date) : moment();
+
+        // Use startOf('day') to match the Noon IST storage logic safely
+        const checkDate = queryDate.startOf('day').toDate();
 
         const horoscope = await WeeklyHoroscope.findOne({
-            weekStartDate: { $lte: queryDate },
-            weekEndDate: { $gte: queryDate }
+            weekStartDate: { $lte: checkDate },
+            weekEndDate: { $gte: checkDate }
         });
 
         if (!horoscope) {
-            return res.status(404).json({ success: false, message: 'Weekly Horoscope not found' });
+            return res.status(200).json({ success: true, data: null, message: 'Weekly Horoscope not found' });
         }
 
         res.json({ success: true, data: horoscope });
@@ -156,10 +159,10 @@ exports.createMonthlyHoroscope = async (req, res) => {
 exports.getMonthlyHoroscope = async (req, res) => {
     try {
         const { month, year } = req.query;
-        // If not provided, use current
-        const d = new Date();
-        const qMonth = month ? parseInt(month) : d.getMonth() + 1; // 1-12
-        const qYear = year ? parseInt(year) : d.getFullYear();
+        // Use IST moment for current month/year fallback
+        const now = moment();
+        const qMonth = month ? parseInt(month) : now.month() + 1; // 1-12
+        const qYear = year ? parseInt(year) : now.year();
 
         const horoscope = await MonthlyHoroscope.findOne({ month: qMonth, year: qYear });
 
@@ -246,13 +249,12 @@ exports.getMonthlyAvailability = async (req, res) => {
 exports.getFeaturedAstrologer = async (req, res) => {
     try {
         // 1. Check if there exists a schedule where showOnHoroscope = true AND date is valid
-        const currentDate = new Date();
+        const currentDate = moment().toDate();
 
         // For End Date comparison, we want to include the entire end day.
         // If stored as 00:00:00, comparing against NOW (e.g. 14:00) will fail.
-        // So we compare endDate >= Start of Today (00:00:00).
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        // So we compare endDate >= Start of Today (00:00:00) in IST.
+        const startOfToday = moment().startOf('day').toDate();
 
         const activeSchedule = await FeaturedAstrologer.findOne({
             showOnHoroscope: true,
