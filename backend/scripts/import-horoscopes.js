@@ -67,11 +67,11 @@ const importData = async () => {
                     console.warn('Skipping daily entry: missing date');
                     continue;
                 }
-                
+
                 // Use IST Noon (12:00) for maximum compatibility across all server timezones
                 // 12:00 IST is 06:30 UTC, which is safely inside the same calendar day on both UTC and IST servers.
                 const istNoon = moment(date).hour(12).startOf('hour').toDate();
-                
+
                 // Fuzzy match (+/- 12h) to find and replace any previous wrong-timezone records
                 const startWindow = moment(istNoon).subtract(12, 'hours').toDate();
                 const endWindow = moment(istNoon).add(12, 'hours').toDate();
@@ -99,7 +99,7 @@ const importData = async () => {
                 const startWindowHigh = moment(start).add(12, 'hours').toDate();
 
                 await WeeklyHoroscope.findOneAndUpdate(
-                    { 
+                    {
                         weekStartDate: { $gte: startWindowLow, $lte: startWindowHigh }
                     },
                     { weekStartDate: start, weekEndDate: end, title, signs },

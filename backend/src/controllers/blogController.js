@@ -1,6 +1,24 @@
 const BlogPost = require('../models/BlogPost');
 const BlogCategory = require('../models/BlogCategory');
 const seoController = require('./seoController');
+const axios = require('axios');
+
+// Helper function to trigger Cloudflare build
+const triggerDeployment = async () => {
+    const webhookUrl = process.env.CLOUDFLARE_DEPLOY_WEBHOOK;
+    if (!webhookUrl) {
+        console.log('[Deploy] No deployment webhook configured');
+        return;
+    }
+
+    try {
+        console.log('[Deploy] Triggering frontend rebuild...');
+        await axios.post(webhookUrl, {});
+        console.log('[Deploy] Rebuild triggered successfully');
+    } catch (error) {
+        console.error('[Deploy] Failed to trigger rebuild:', error.message);
+    }
+};
 
 // @desc    Get all categories
 // @route   GET /api/blog/categories
@@ -235,6 +253,11 @@ exports.createPost = async (req, res) => {
 
         const post = await BlogPost.create(req.body);
 
+        // Trigger Cloudflare deployment if post is published
+        if (post.status === 'published') {
+            triggerDeployment();
+        }
+
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
@@ -259,6 +282,11 @@ exports.updatePost = async (req, res) => {
             new: true,
             runValidators: true
         });
+
+        // Trigger Cloudflare deployment if post is published
+        if (post.status === 'published') {
+            triggerDeployment();
+        }
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
