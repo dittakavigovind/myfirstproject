@@ -65,9 +65,9 @@ const importData = async () => {
                     continue;
                 }
                 
-                // Use UTC to avoid timezone shifts
-                const startOfDay = moment.utc(date).startOf('day').toDate();
-                const endOfDay = moment.utc(date).endOf('day').toDate();
+                // Use local time to match manual entry/browser behavior
+                const startOfDay = moment(date).startOf('day').toDate();
+                const endOfDay = moment(date).endOf('day').toDate();
 
                 await DailyHoroscope.findOneAndUpdate(
                     { date: { $gte: startOfDay, $lte: endOfDay } },
@@ -83,9 +83,9 @@ const importData = async () => {
                     continue;
                 }
 
-                // Use UTC for consistent week ranges
-                const start = moment.utc(weekStartDate).startOf('day').toDate();
-                const end = moment.utc(weekEndDate).endOf('day').toDate();
+                // Use local time for consistent week ranges matching the dashboard
+                const start = moment(weekStartDate).startOf('day').toDate();
+                const end = moment(weekEndDate).endOf('day').toDate();
 
                 await WeeklyHoroscope.findOneAndUpdate(
                     { 
