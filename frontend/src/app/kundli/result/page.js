@@ -68,7 +68,11 @@ export default function KundliResult() {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const openInsight = (planetName, planetData) => {
-        setSelectedPlanet({ name: planetName, ...planetData });
+        const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+        const deg = Math.floor(planetData.longitude % 30);
+        const min = Math.floor((planetData.longitude % 1) * 60);
+        const signName = SIGNS[Math.floor(planetData.longitude / 30)];
+        setSelectedPlanet({ name: planetName, deg, min, signName, ...planetData });
         setIsModalOpen(true);
     };
 

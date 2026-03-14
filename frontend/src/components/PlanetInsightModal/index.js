@@ -4,8 +4,50 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Info, Star } from 'lucide-react';
 import { t } from '../../utils/translations';
 
+const translateSignToHi = (sign) => {
+    const signs = {
+        'Aries': 'मेष', 'Taurus': 'वृषभ', 'Gemini': 'मिथुन', 'Cancer': 'कर्क',
+        'Leo': 'सिंह', 'Virgo': 'कन्या', 'Libra': 'तुला', 'Scorpio': 'वृश्चिक',
+        'Sagittarius': 'धनु', 'Capricorn': 'मकर', 'Aquarius': 'कुंभ', 'Pisces': 'मीन'
+    };
+    return signs[sign] || sign;
+};
+
+const translateSignToTe = (sign) => {
+    const signs = {
+        'Aries': 'మేషం', 'Taurus': 'వృషభం', 'Gemini': 'మిధునం', 'Cancer': 'కర్కాటకం',
+        'Leo': 'సింహం', 'Virgo': 'కన్య', 'Libra': 'తుల', 'Scorpio': 'వృశ్చికం',
+        'Sagittarius': 'ధనుస్సు', 'Capricorn': 'మకరం', 'Aquarius': 'కుంభం', 'Pisces': 'మీనం'
+    };
+    return signs[sign] || sign;
+};
+
 export default function PlanetInsightModal({ isOpen, onClose, planetName, insight, planetData, lang = 'en' }) {
     if (!isOpen) return null;
+
+    const translatePlanetName = (name, l) => {
+        if (l === 'hi') {
+            const names = { 'Sun': 'सूर्य', 'Moon': 'चन्द्र', 'Mars': 'मंगल', 'Mercury': 'बुध', 'Jupiter': 'गुरु', 'Venus': 'शुक्र', 'Saturn': 'शनि', 'Rahu': 'राहु', 'Ketu': 'केतु' };
+            return names[name] || name;
+        }
+        if (l === 'te') {
+            const names = { 'Sun': 'సూర్యుడు', 'Moon': 'చంద్రుడు', 'Mars': 'కుజుడు', 'Mercury': 'బుధుడు', 'Jupiter': 'గురువు', 'Venus': 'శుక్రుడు', 'Saturn': 'శని', 'Rahu': 'రాహువు', 'Ketu': 'కేతువు' };
+            return names[name] || name;
+        }
+        return name;
+    };
+
+    const translateRelation = (rel, l) => {
+        if (l === 'hi') {
+            const relations = { 'Own House': 'स्वग्रही', 'Exalted': 'उच्च', 'Debilitated': 'नीच', 'Friendly House': 'मित्र क्षेत्री', 'Enemy House': 'शत्रु क्षेत्री', 'Neutral House': 'तटस्थ', 'Neutral': 'तटस्थ' };
+            return relations[rel] || rel;
+        }
+        if (l === 'te') {
+            const relations = { 'Own House': 'స్వక్షేత్రం', 'Exalted': 'ఉచ్చ', 'Debilitated': 'నీచ', 'Friendly House': 'మిత్ర క్షేత్రం', 'Enemy House': 'శత్రు క్షేత్రం', 'Neutral House': 'తటస్థ క్షేత్రం', 'Neutral': 'తటస్థ క్షేత్రం' };
+            return relations[rel] || rel;
+        }
+        return rel;
+    };
 
     return (
         <AnimatePresence>
@@ -38,9 +80,7 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                             </div>
                             <div>
                                 <h2 className="text-2xl font-black text-white leading-tight">
-                                    {lang === 'hi' ? (planetName === 'Sun' ? 'सूर्य' : planetName === 'Moon' ? 'चन्द्र' : planetName === 'Mars' ? 'मंगल' : planetName === 'Mercury' ? 'बुध' : planetName === 'Jupiter' ? 'गुरु' : planetName === 'Venus' ? 'शुक्र' : planetName === 'Saturn' ? 'शनि' : planetName === 'Rahu' ? 'राहु' : planetName === 'Ketu' ? 'केतु' : planetName) :
-                                        lang === 'te' ? (planetName === 'Sun' ? 'సూర్యుడు' : planetName === 'Moon' ? 'చంద్రుడు' : planetName === 'Mars' ? 'కుజుడు' : planetName === 'Mercury' ? 'బుధుడు' : planetName === 'Jupiter' ? 'గురువు' : planetName === 'Venus' ? 'శుక్రుడు' : planetName === 'Saturn' ? 'శని' : planetName === 'Rahu' ? 'రాహువు' : planetName === 'Ketu' ? 'కేతువు' : planetName) :
-                                            planetName}
+                                    {translatePlanetName(planetName, lang)}
                                 </h2>
                                 <p className="text-indigo-200 text-sm font-medium">{t('cosmicInsight', lang)}</p>
                             </div>
@@ -79,9 +119,7 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                                     {t('yourPlacement', lang)}
                                 </h4>
                                 <p className="text-indigo-800 text-sm font-bold opacity-90 leading-relaxed">
-                                    {lang === 'hi' ? (planetData?.signName === 'Aries' ? 'मेष' : planetData?.signName === 'Taurus' ? 'वृषभ' : planetData?.signName === 'Gemini' ? 'मिथुन' : planetData?.signName === 'Cancer' ? 'कर्क' : planetData?.signName === 'Leo' ? 'सिंह' : planetData?.signName === 'Virgo' ? 'कन्या' : planetData?.signName === 'Libra' ? 'तुला' : planetData?.signName === 'Scorpio' ? 'वृश्चिक' : planetData?.signName === 'Sagittarius' ? 'धनु' : planetData?.signName === 'Capricorn' ? 'मकर' : planetData?.signName === 'Aquarius' ? 'कुंभ' : planetData?.signName === 'Pisces' ? 'मीन' : planetData?.signName) :
-                                        lang === 'te' ? (planetData?.signName === 'Aries' ? 'మేషం' : planetData?.signName === 'Taurus' ? 'వృషభం' : planetData?.signName === 'Gemini' ? 'మిధునం' : planetData?.signName === 'Cancer' ? 'కర్కాటకం' : planetData?.signName === 'Leo' ? 'సింహం' : planetData?.signName === 'Virgo' ? 'కన్య' : planetData?.signName === 'Libra' ? 'తుల' : planetData?.signName === 'Scorpio' ? 'వృశ్చికం' : planetData?.signName === 'Sagittarius' ? 'ధనుస్సు' : planetData?.signName === 'Capricorn' ? 'మకరం' : planetData?.signName === 'Aquarius' ? 'కుంభం' : planetData?.signName === 'Pisces' ? 'మీనం' : planetData?.signName) :
-                                            planetData?.signName}: {insight?.signSpecific || insight?.relationSpecific || t('uniquePlacement', lang)}
+                                    {lang === 'hi' ? translateSignToHi(planetData?.signName) : lang === 'te' ? translateSignToTe(planetData?.signName) : planetData?.signName}: {insight?.signSpecific || insight?.relationSpecific || t('uniquePlacement', lang)}
                                 </p>
                             </div>
                         </div>
@@ -91,17 +129,13 @@ export default function PlanetInsightModal({ isOpen, onClose, planetName, insigh
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                 <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t('dignity', lang)}</span>
                                 <span className="text-sm font-black text-slate-700">
-                                    {lang === 'hi' ? (planetData?.relation === 'Own House' ? 'स्वग्रही' : planetData?.relation === 'Exalted' ? 'उच्च' : planetData?.relation === 'Debilitated' ? 'नीच' : planetData?.relation === 'Friendly House' ? 'मित्र क्षेत्री' : planetData?.relation === 'Enemy House' ? 'शत्रु क्षेत्री' : planetData?.relation === 'Neutral House' || planetData?.relation === 'Neutral' ? 'तटस्थ' : planetData?.relation) :
-                                        lang === 'te' ? (planetData?.relation === 'Own House' ? 'స్వక్షేత్రం' : planetData?.relation === 'Exalted' ? 'ఉచ్చ' : planetData?.relation === 'Debilitated' ? 'నీచ' : planetData?.relation === 'Friendly House' ? 'మిత్ర క్షేత్రం' : planetData?.relation === 'Enemy House' ? 'శత్రు క్షేత్రం' : planetData?.relation === 'Neutral House' || planetData?.relation === 'Neutral' ? 'తటస్థ క్షేత్రం' : planetData?.relation) :
-                                            (planetData?.relation || t('neutral', lang))}
+                                    {translateRelation(planetData?.relation, lang) || t('neutral', lang)}
                                 </span>
                             </div>
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                 <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t('degSign', lang)}</span>
                                 <span className="text-sm font-black text-slate-700">
-                                    {planetData?.deg}° {lang === 'hi' ? (planetData?.signName === 'Aries' ? 'मेष' : planetData?.signName === 'Taurus' ? 'वृषभ' : planetData?.signName === 'Gemini' ? 'मिथुन' : planetData?.signName === 'Cancer' ? 'कर्क' : planetData?.signName === 'Leo' ? 'सिंह' : planetData?.signName === 'Virgo' ? 'कन्या' : planetData?.signName === 'Libra' ? 'तुला' : planetData?.signName === 'Scorpio' ? 'वृश्चिक' : planetData?.signName === 'Sagittarius' ? 'धनु' : planetData?.signName === 'Capricorn' ? 'मकर' : planetData?.signName === 'Aquarius' ? 'कुंभ' : planetData?.signName === 'Pisces' ? 'मीन' : planetData?.signName) :
-                                        lang === 'te' ? (planetData?.signName === 'Aries' ? 'మేషం' : planetData?.signName === 'Taurus' ? 'వృషభం' : planetData?.signName === 'Gemini' ? 'మిధునం' : planetData?.signName === 'Cancer' ? 'కర్కాటకం' : planetData?.signName === 'Leo' ? 'సింహం' : planetData?.signName === 'Virgo' ? 'కన్య' : planetData?.signName === 'Libra' ? 'తుల' : planetData?.signName === 'Scorpio' ? 'వృశ్చికం' : planetData?.signName === 'Sagittarius' ? 'ధనుస్సు' : planetData?.signName === 'Capricorn' ? 'మకరం' : planetData?.signName === 'Aquarius' ? 'కుంభం' : planetData?.signName === 'Pisces' ? 'మీనం' : planetData?.signName) :
-                                            planetData?.signName}
+                                    {planetData?.deg}° {planetData?.min}&apos; {lang === 'hi' ? translateSignToHi(planetData?.signName) : lang === 'te' ? translateSignToTe(planetData?.signName) : planetData?.signName}
                                 </span>
                             </div>
                         </div>

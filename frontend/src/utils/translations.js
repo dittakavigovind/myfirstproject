@@ -65,7 +65,7 @@ export const translations = {
         uniquePlacement: "Your unique planetary position brings a balance of elements to your chart.",
         dignity: "Dignity",
         neutral: "Neutral",
-        degSign: "Deg / Sign",
+        degSign: "Degrees / Sign",
         closeInsight: "Close Insight",
 
         // Panchang Static Labels
