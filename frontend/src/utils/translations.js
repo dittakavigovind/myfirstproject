@@ -115,7 +115,8 @@ export const translations = {
         good: "Good",
         bad: "Bad",
         auspicious: "Auspicious",
-        unfavorable: "Unfavorable"
+        unfavorable: "Unfavorable",
+        upto: "upto"
     },
     hi: {
         kundli: "जन्म कुंडली",
@@ -233,7 +234,8 @@ export const translations = {
         good: "शुभ",
         bad: "अशुभ",
         auspicious: "शुभ",
-        unfavorable: "अशुभ"
+        unfavorable: "अशुभ",
+        upto: "बजे तक"
     },
     te: {
         kundli: "జనన కుండలి",
@@ -350,6 +352,7 @@ export const translations = {
         bad: "అశుభం",
         auspicious: "శుభం",
         unfavorable: "అశుభం",
+        upto: "వరకు",
         ascendant: "లగ్నం",
         relation: "సంబంధం",
         friend: "మిత్రుడు",

@@ -18,6 +18,21 @@ const PanchangShareCard = forwardRef(({ data, location, date, showButton = true,
         }
     }, [showButton, location, date]);
 
+    // Helper to format full date-time string to time only
+    const formatTime = (dtStr) => {
+        if (!dtStr) return '--:--';
+        if (dtStr.includes(' | ')) return dtStr.split(' | ')[1];
+        if (/^\d{1,2}:\d{2}/.test(dtStr) && !dtStr.includes('-')) return dtStr;
+        if (dtStr.includes('T')) {
+            const d = new Date(dtStr);
+            if (!isNaN(d.getTime())) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+        if (/^\d{2}-\d{2}-\d{4}/.test(dtStr) && dtStr.includes(' ')) {
+            return dtStr.split(' ')[1];
+        }
+        return dtStr;
+    }
+
     const handleShare = async () => {
         if (!cardRef.current) return;
         setLoading(true);
@@ -105,11 +120,11 @@ const PanchangShareCard = forwardRef(({ data, location, date, showButton = true,
                 <div className="p-4 grid gap-3">
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
                         <span className="text-sm text-gray-500 font-medium">✨ {t('tithi', lang)}</span>
-                        <span className="font-bold text-astro-navy">{tData('tithi', data.tithi?.name, lang)}</span>
+                        <span className="font-bold text-astro-navy text-right">{tData('tithi', data.tithi?.name, lang)} <br/> <small className="text-[10px] opacity-60 font-medium">{lang === 'te' ? `${formatTime(data.tithi?.end)} ${t('upto', lang)}` : `(${t('upto', lang)} ${formatTime(data.tithi?.end)})`}</small></span>
                     </div>
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
                         <span className="text-sm text-gray-500 font-medium">🌟 {t('nakshatra', lang)}</span>
-                        <span className="font-bold text-astro-navy">{tData('nakshatra', data.nakshatra?.name, lang)}</span>
+                        <span className="font-bold text-astro-navy text-right">{tData('nakshatra', data.nakshatra?.name, lang)} <br/> <small className="text-[10px] opacity-60 font-medium">{lang === 'te' ? `${formatTime(data.nakshatra?.end)} ${t('upto', lang)}` : `(${t('upto', lang)} ${formatTime(data.nakshatra?.end)})`}</small></span>
                     </div>
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
                         <span className="text-sm text-gray-500 font-medium">🧘 {t('yoga', lang)}</span>

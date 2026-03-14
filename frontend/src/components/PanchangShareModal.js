@@ -51,19 +51,34 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
     // Helper to format full date-time string to time only
     const formatTime = (dtStr) => {
         if (!dtStr) return '--:--';
-        if (/^\d{1, 2}:\d{2}/.test(dtStr)) return dtStr;
+
+        // Extract time if format is "DD-MM-YYYY | hh:mm:ss A"
+        if (dtStr.includes(' | ')) {
+            return dtStr.split(' | ')[1];
+        }
+
+        // Already a time string?
+        if (/^\d{1,2}:\d{2}/.test(dtStr) && !dtStr.includes('-')) return dtStr;
+
+        // ISO format?
         if (dtStr.includes('T')) {
             const d = new Date(dtStr);
-            if (!isNaN(d)) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            if (!isNaN(d.getTime())) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
         }
+
+        // Legacy format "DD-MM-YYYY HH:mm:ss"?
+        if (/^\d{2}-\d{2}-\d{4}/.test(dtStr) && dtStr.includes(' ')) {
+            return dtStr.split(' ')[1];
+        }
+
         return dtStr;
     }
 
     const shareText = lang === 'hi'
-        ? `*दैनिक पंचांग - ${formattedDate}*\nस्थान: ${location}\n\n*हिंदू वर्ष:* ${tData('samvatsara', data.samvat?.name, lang)} (${data.samvat?.vikram})\n*मास:* ${tData('masa', data.masa?.amanta, lang)}\n*ऋतु:* ${tData('ritu', data.ritu, lang)}\n*वार:* ${tData('vara', data.vara, lang)}\n*पक्ष:* ${tData('paksha', data.tithi?.paksha, lang)}\n*तिथि:* ${tData('tithi', data.tithi?.name, lang)}\n*नक्षत्र:* ${tData('nakshatra', data.nakshatra?.name, lang)}\n*योग:* ${tData('yoga', data.yoga?.name, lang)}\n*करण:* ${tData('karana', data.karana?.name, lang)}\n*अमृत काल:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*राहु काल:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*सूर्योदय:* ${data.sun?.sunrise} | *सूर्यास्त:* ${data.sun?.sunset}\n*चंद्र राशि:* ${tData('rashi', data.moon?.rashi, lang)}\n\nपूर्ण विवरण Way2Astro.com पर देखें!`
+        ? `*दैनिक पंचांग - ${formattedDate}*\nस्थान: ${location}\n\n*हिंदू वर्ष:* ${tData('samvatsara', data.samvat?.name, lang)} (${data.samvat?.vikram})\n*मास:* ${tData('masa', data.masa?.amanta, lang)}\n*ऋतु:* ${tData('ritu', data.ritu, lang)}\n*वार:* ${tData('vara', data.vara, lang)}\n*पक्ष:* ${tData('paksha', data.tithi?.paksha, lang)}\n*तिथि:* ${tData('tithi', data.tithi?.name, lang)} (${t('upto', lang)} ${formatTime(data.tithi?.end)})\n*नक्षत्र:* ${tData('nakshatra', data.nakshatra?.name, lang)} (${t('upto', lang)} ${formatTime(data.nakshatra?.end)})\n*योग:* ${tData('yoga', data.yoga?.name, lang)}\n*करण:* ${tData('karana', data.karana?.name, lang)}\n*अमृत काल:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*राहु काल:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*सूर्योदय:* ${data.sun?.sunrise} | *सूर्यास्त:* ${data.sun?.sunset}\n*चंद्र राशि:* ${tData('rashi', data.moon?.rashi, lang)}\n\nपूर्ण विवरण Way2Astro.com पर देखें!`
         : lang === 'te'
-            ? `*దైనందిన పంచాంగం - ${formattedDate}*\nప్రదేశం: ${location}\n\n*హిందూ సంవత్సరం:* ${tData('samvatsara', data.samvat?.name, lang)} (${data.samvat?.vikram})\n*మాసం:* ${tData('masa', data.masa?.amanta, lang)}\n*ఋతువు:* ${tData('ritu', data.ritu, lang)}\n*వారం:* ${tData('vara', data.vara, lang)}\n*పక్షం:* ${tData('paksha', data.tithi?.paksha, lang)}\n*తిథి:* ${tData('tithi', data.tithi?.name, lang)}\n*నక్షత్రం:* ${tData('nakshatra', data.nakshatra?.name, lang)}\n*యోగం:* ${tData('yoga', data.yoga?.name, lang)}\n*కరణం:* ${tData('karana', data.karana?.name, lang)}\n*అమృత కాలం:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*రాహు కాలం:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*సూర్యోదయం:* ${data.sun?.sunrise} | *సూర్యాస్తమయం:* ${data.sun?.sunset}\n*చంద్ర రాశి:* ${tData('rashi', data.moon?.rashi, lang)}\n\nపూర్తి వివరాల కోసం Way2Astro.com ని సందర్శించండి!`
-            : `*Daily Panchang - ${formattedDate}*\nLocation: ${location}\n\n*Hindu Year:* ${data.samvat?.name} (${data.samvat?.vikram})\n*Masa:* ${data.masa?.amanta}\n*Ruthu:* ${data.ritu}\n*Vara:* ${data.vara}\n*Paksha:* ${data.tithi?.paksha}\n*Tithi:* ${data.tithi?.name}\n*Nakshatra:* ${data.nakshatra?.name}\n*Yoga:* ${data.yoga?.name}\n*Karana:* ${data.karana?.name}\n*Amrit Kal:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*Rahu Kal:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*Sunrise:* ${data.sun?.sunrise} | *Sunset:* ${data.sun?.sunset}\n*Moon Sign:* ${data.moon?.rashi}\n\nCheck full details on Way2Astro.com!`;
+            ? `*దైనందిన పంచాంగం - ${formattedDate}*\nప్రదేశం: ${location}\n\n*హిందూ సంవత్సరం:* ${tData('samvatsara', data.samvat?.name, lang)} (${data.samvat?.vikram})\n*మాసం:* ${tData('masa', data.masa?.amanta, lang)}\n*ఋతువు:* ${tData('ritu', data.ritu, lang)}\n*వారం:* ${tData('vara', data.vara, lang)}\n*పక్షం:* ${tData('paksha', data.tithi?.paksha, lang)}\n*తిథి:* ${tData('tithi', data.tithi?.name, lang)} (${formatTime(data.tithi?.end)} ${t('upto', lang)})\n*నక్షత్రం:* ${tData('nakshatra', data.nakshatra?.name, lang)} (${formatTime(data.nakshatra?.end)} ${t('upto', lang)})\n*యోగం:* ${tData('yoga', data.yoga?.name, lang)}\n*కరణం:* ${tData('karana', data.karana?.name, lang)}\n*అమృత కాలం:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*రాహు కాలం:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*సూర్యోదయం:* ${data.sun?.sunrise} | *సూర్యాస్తమయం:* ${data.sun?.sunset}\n*చంద్ర రాశి:* ${tData('rashi', data.moon?.rashi, lang)}\n\nపూర్తి వివరాల కోసం Way2Astro.com ని సందర్శించండి!`
+            : `*Daily Panchang - ${formattedDate}*\nLocation: ${location}\n\n*Hindu Year:* ${data.samvat?.name} (${data.samvat?.vikram})\n*Masa:* ${data.masa?.amanta}\n*Ruthu:* ${data.ritu}\n*Vara:* ${data.vara}\n*Paksha:* ${data.tithi?.paksha}\n*Tithi:* ${data.tithi?.name} (${t('upto', lang)} ${formatTime(data.tithi?.end)})\n*Nakshatra:* ${data.nakshatra?.name} (${t('upto', lang)} ${formatTime(data.nakshatra?.end)})\n*Yoga:* ${data.yoga?.name}\n*Karana:* ${data.karana?.name}\n*Amrit Kal:* ${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}\n*Rahu Kal:* ${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}\n\n*Sunrise:* ${data.sun?.sunrise} | *Sunset:* ${data.sun?.sunset}\n*Moon Sign:* ${data.moon?.rashi}\n\nCheck full details on Way2Astro.com!`;
     const whatsappLink = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
     const generateImage = async (ref) => {
@@ -206,8 +221,8 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                     { label: `🌦️ ${t('ritu', lang)}`, value: tData('ritu', data.ritu, lang) },
                     { label: `📅 ${t('vara', lang)}`, value: tData('vara', data.vara, lang) },
                     { label: `🌓 ${t('paksha', lang)}`, value: tData('paksha', data.tithi?.paksha, lang) },
-                    { label: `✨ ${t('tithi', lang)}`, value: tData('tithi', data.tithi?.name, lang) },
-                    { label: `🌟 ${t('nakshatra', lang)}`, value: tData('nakshatra', data.nakshatra?.name, lang) },
+                    { label: `✨ ${t('tithi', lang)}`, value: `${tData('tithi', data.tithi?.name, lang)} ${lang === 'te' ? `${formatTime(data.tithi?.end)} ${t('upto', lang)}` : `(${t('upto', lang)} ${formatTime(data.tithi?.end)})`}` },
+                    { label: `🌟 ${t('nakshatra', lang)}`, value: `${tData('nakshatra', data.nakshatra?.name, lang)} ${lang === 'te' ? `${formatTime(data.nakshatra?.end)} ${t('upto', lang)}` : `(${t('upto', lang)} ${formatTime(data.nakshatra?.end)})`}` },
                     { label: `🧘 ${t('yoga', lang)}`, value: tData('yoga', data.yoga?.name, lang) },
                     { label: `🦁 ${t('karana', lang)}`, value: tData('karana', data.karana?.name, lang) },
                     { label: `🍯 ${t('amritKaal', lang)}`, value: `${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}`, isTime: true },
