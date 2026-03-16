@@ -420,7 +420,11 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
                 index: tithiIndex + 1,
                 start: fmtFull(fromJD(tithiStartTimeJD)),
                 end: fmtFull(fromJD(tithiEndTimeJD)),
-                is_amavasya: isAmavasya
+                is_amavasya: isAmavasya,
+                next: {
+                    name: TITHI_NAMES[(tithiIndex + 1) % 30],
+                    end: fmtFull(fromJD(findBoundary(tithiEndTimeJD + 0.01, (jd) => getTithi(getPositions(jd).sun, getPositions(jd).moon), tithiIndex + 2, 30, true)))
+                }
             },
 
             nakshatra: {
@@ -428,8 +432,13 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
                 index: nakIndex + 1,
                 padha: nakPadha, // Output Padha
                 start: fmtFull(fromJD(nakStartJD)),
-                end: fmtFull(fromJD(nakEndJD))
+                end: fmtFull(fromJD(nakEndJD)),
+                next: {
+                    name: NAKSHATRA_NAMES[(nakIndex + 1) % 27],
+                    end: fmtFull(fromJD(findBoundary(nakEndJD + 0.01, (jd) => getNakshatra(getPositions(jd).moon), nakIndex + 2, 27, true)))
+                }
             },
+
             yoga: {
                 name: yogaName,
                 index: yogaIndex + 1,

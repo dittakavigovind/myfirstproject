@@ -469,10 +469,12 @@ function PanchangPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
                                 <PanchangCard
                                     label={t('tithi', lang)}
+                                    type="tithi"
                                     value={tData('tithi', data?.tithi?.name, lang)}
                                     sub={tData('paksha', data?.tithi?.paksha, lang)}
                                     start={data?.tithi?.start}
                                     end={data?.tithi?.end}
+                                    next={data?.tithi?.next}
                                     icon={Clock}
                                     color="indigo"
                                     delay={0.1}
@@ -480,15 +482,19 @@ function PanchangPage() {
                                 />
                                 <PanchangCard
                                     label={t('nakshatra', lang)}
+                                    type="nakshatra"
                                     value={tData('nakshatra', data?.nakshatra?.name, lang)}
                                     sub={`${lang === 'hi' ? 'चरण' : 'Pada'} ${data?.nakshatra?.padha || ''}`}
                                     start={data?.nakshatra?.start}
                                     end={data?.nakshatra?.end}
+                                    next={data?.nakshatra?.next}
                                     icon={Star}
                                     color="amber"
                                     delay={0.2}
                                     lang={lang}
                                 />
+
+
                                 <PanchangCard
                                     label={t('yoga', lang)}
                                     value={tData('yoga', data?.yoga?.name, lang)}
@@ -721,7 +727,7 @@ function WideTimingCard({ label, value, start, end, type, delay, lang }) {
 }
 
 // Redesigned to be a Boxy Card (Grid Item) matching the second reference image
-function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay, lang }) {
+function PanchangCard({ label, type, value, sub, start, end, next, icon: Icon, color, delay, lang }) {
     const theme = {
         amber: { bg: 'bg-amber-50', text: 'text-amber-700', icon: 'text-amber-600', border: 'border-amber-100' },
         indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', icon: 'text-indigo-600', border: 'border-indigo-100' },
@@ -731,7 +737,7 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay,
         violet: { bg: 'bg-violet-50', text: 'text-violet-700', icon: 'text-violet-600', border: 'border-violet-100' },
     };
 
-    const t = theme[color] || theme.amber;
+    const tStyle = theme[color] || theme.amber;
 
     // Helper to format full date-time string to time only
     const formatTime = (dtStr) => {
@@ -771,16 +777,16 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay,
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: delay, duration: 0.5 }}
             whileHover={{ y: -5 }}
-            className={`bg-white rounded-[1.5rem] p-5 border ${t.border} shadow-sm hover:shadow-lg transition-all duration-300 group flex flex-col h-full relative overflow-hidden`}
+            className={`bg-white rounded-[1.5rem] p-5 border ${tStyle.border} shadow-sm hover:shadow-lg transition-all duration-300 group flex flex-col h-full relative overflow-hidden`}
         >
             {/* Header: Icon + Paksha/Pada Badge (Top Right) */}
             <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${t.bg} ${t.icon} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${tStyle.bg} ${tStyle.icon} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                     <Icon size={22} strokeWidth={2} />
                 </div>
 
                 {sub && (
-                    <span className={`text-[9px] font-bold uppercase tracking-widest ${t.bg} ${t.text} px-2.5 py-1 rounded-lg border border-transparent`}>
+                    <span className={`text-[9px] font-bold uppercase tracking-widest ${tStyle.bg} ${tStyle.text} px-2.5 py-1 rounded-lg border border-transparent`}>
                         {sub}
                     </span>
                 )}
@@ -811,9 +817,29 @@ function PanchangCard({ label, value, sub, start, end, icon: Icon, color, delay,
                     </div>
                 )}
             </div>
+
+            {/* Next Info at Bottom */}
+            {next && (
+                <div className="mt-auto pt-3 border-t border-slate-50">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('next', lang)}</span>
+                            <span className={`text-xs md:text-sm font-black ${tStyle.text} truncate`}>
+                                {type ? tData(type, next.name, lang) : next.name}
+                            </span>
+                        </div>
+                        <div className="text-right shrink-0">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">{t('upto', lang)}</span>
+                            <span className="text-[10px] font-bold text-slate-500 tabular-nums">{formatTime(next.end)}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
         </motion.div>
     );
 }
+
+
 
 function TimingTable({ title, dayData, nightData, delay, color, isHora, showQuality = false, lang }) {
     const [activeTab, setActiveTab] = useState('day'); // 'day' or 'night'

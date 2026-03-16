@@ -116,8 +116,10 @@ export const translations = {
         bad: "Bad",
         auspicious: "Auspicious",
         unfavorable: "Unfavorable",
-        upto: "upto"
+        upto: "upto",
+        next: "Next"
     },
+
     hi: {
         kundli: "जन्म कुंडली",
         divisionalCharts: "वर्ग कुंडलियाँ (Divisional Charts)",
@@ -235,8 +237,10 @@ export const translations = {
         bad: "अशुभ",
         auspicious: "शुभ",
         unfavorable: "अशुभ",
-        upto: "बजे तक"
+        upto: "बजे तक",
+        next: "अगला"
     },
+
     te: {
         kundli: "జనన కుండలి",
         divisionalCharts: "విభాగ చక్రాలు",
@@ -363,8 +367,10 @@ export const translations = {
         ownSign: "స్వక్షేత్రం",
         exalted: "ఉచ్చ",
         debilitated: "నీచ",
-        mooltrikona: "మూల త్రికోణం"
+        mooltrikona: "మూల త్రికోణం",
+        next: "తదుపరి"
     }
+
 };
 
 export const panchagData = {
