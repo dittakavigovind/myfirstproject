@@ -143,6 +143,15 @@ export default async function RootLayout({ children }) {
                                     <ProfileSetupModal />
                                     <ScrollToTop />
                                     <PromotionalPopup />
+                                    
+                                    {/* --- CUSTOM RAW SCRIPTS (Cloudflare, Meta Pixel, Google Tags etc) --- */}
+                                    {customHeadScripts && (
+                                        <div 
+                                            dangerouslySetInnerHTML={{ __html: customHeadScripts }} 
+                                            suppressHydrationWarning 
+                                        />
+                                    )}
+
                                     <Navbar />
                                     <main className="min-h-screen">
                                         {children}
@@ -176,12 +185,7 @@ export default async function RootLayout({ children }) {
                     </ThemeProvider>
                 </AuthProvider>
                 <div id="root-portal" />
-
-                {/* --- CUSTOM RAW SCRIPTS (Cloudflare, Meta Pixel, etc) --- */}
-                {customHeadScripts && (
-                    <div dangerouslySetInnerHTML={{ __html: customHeadScripts }} suppressHydrationWarning />
-                )}
             </body>
-        </html >
+        </html>
     )
 }

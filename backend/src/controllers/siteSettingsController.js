@@ -1,4 +1,22 @@
 const SiteSettings = require('../models/SiteSettings');
+const axios = require('axios');
+
+// Helper function to trigger Cloudflare build
+const triggerDeployment = async () => {
+    const webhookUrl = process.env.CLOUDFLARE_DEPLOY_WEBHOOK;
+    if (!webhookUrl) {
+        console.log('[Deploy] No deployment webhook configured');
+        return;
+    }
+
+    try {
+        console.log('[Deploy] Triggering frontend rebuild from Site Settings update...');
+        await axios.post(webhookUrl, {});
+        console.log('[Deploy] Rebuild triggered successfully');
+    } catch (error) {
+        console.error('[Deploy] Failed to trigger rebuild:', error.message);
+    }
+};
 
 const defaultServices = [
     { id: 'chat', title: 'Chat', desc: 'First Free', icon: 'MessageCircle', color: 'blue', href: '/chat-with-astrologer', order: 1 },
@@ -184,6 +202,9 @@ exports.updateSiteSettings = async (req, res) => {
         settings.updatedBy = req.user._id;
 
         await settings.save();
+
+        // Trigger Cloudflare deployment to reflect new site settings in static frontend
+        triggerDeployment();
 
         res.json({ success: true, settings, message: 'Settings updated successfully' });
     } catch (error) {
