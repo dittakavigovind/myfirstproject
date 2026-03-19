@@ -3,26 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import API from '@/lib/api';
-import { FaFire, FaClock, FaCompass } from 'react-icons/fa'; // Importing icons for cleaner code, or use SVGs as before
+import { FaCompass } from 'react-icons/fa'; // Importing icons for cleaner code, or use SVGs as before
 
-const MOCK_TRENDING = [
-    { _id: 't1', title: 'How Astrotalk Is Using AI to Become a Smarter Platform', slug: 'ai-astrology', publishedAt: new Date().toISOString(), category: { slug: 'astrology', name: 'Astrology' } },
-    { _id: 't2', title: 'Mars in Scorpio: Why Does Winning seem to be all you can think about!', slug: 'mars-scorpio', publishedAt: new Date(Date.now() - 86400000).toISOString(), category: { slug: 'zodiac', name: 'Zodiac' } },
-    { _id: 't3', title: 'Suddenly Everyone’s Talking About Marriage? ‘Jupiter in Cancer’ Might Be the Reason', slug: 'jupiter-cancer', publishedAt: new Date(Date.now() - 172800000).toISOString(), category: { slug: 'planets', name: 'Planets' } },
-    { _id: 't4', title: 'Life Path Number 18: Meaning, Numerology & Personality', slug: 'life-path-18', publishedAt: new Date(Date.now() - 259200000).toISOString(), category: { slug: 'numerology', name: 'Numerology' } },
-];
 
-const MOCK_RECENT = [
-    { _id: 'r1', title: 'Khazani Ayurveda: Ancient Remedies Backed by Astrotalk', slug: 'ayurveda-remedies', publishedAt: new Date().toISOString(), category: { slug: 'ayurveda', name: 'Ayurveda' } },
-    { _id: 'r2', title: 'Understanding the 12 Houses in Astrology', slug: '12-houses', publishedAt: new Date(Date.now() - 86400000 * 2).toISOString(), category: { slug: 'astrology', name: 'Astrology' } },
-    { _id: 'r3', title: 'The Power of Gemstones: Which One Suits You?', slug: 'gemstones', publishedAt: new Date(Date.now() - 86400000 * 5).toISOString(), category: { slug: 'gemstones', name: 'Gemstones' } },
-];
 
 export default function SinglePostSidebar({ currentPostId, currentCategory }) {
     // Tabs state removed
     // Data
-    const [trending] = useState(MOCK_TRENDING);
-    const [recent] = useState(MOCK_RECENT);
     const [related, setRelated] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -110,26 +97,7 @@ export default function SinglePostSidebar({ currentPostId, currentCategory }) {
     );
 
     return (
-        <div className="lg:pl-8 pt-4">
-            {/* Trending Section */}
-            <SidebarSection
-                title="Trending Now"
-                subTitle="Trending Stories"
-                icon={<FaFire className="w-5 h-5" />}
-                posts={[]}
-                isDarkIcon={true}
-                showContent={false}
-            />
-
-            {/* Recent Section */}
-            <SidebarSection
-                title="Recent Blog"
-                subTitle="Recent Stories"
-                icon={<FaClock className="w-5 h-5" />}
-                posts={[]}
-                isDarkIcon={true}
-                showContent={false}
-            />
+<div className="lg:pl-8 pt-4">
 
             {/* Related Section */}
             <SidebarSection
