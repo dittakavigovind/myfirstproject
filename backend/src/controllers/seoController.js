@@ -119,7 +119,7 @@ exports.generateSitemap = async (req, res) => {
 
         res.set('Content-Type', 'application/xml; charset=utf-8');
         res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-        res.set('X-Robots-Tag', 'index, follow');
+        res.set('X-Robots-Tag', 'noindex, follow');
         res.status(200).send(xml.trim());
     } catch (error) {
         console.error('Sitemap Generation Error:', error);
@@ -177,7 +177,7 @@ exports.generateRobotsTxt = async (req, res) => {
 
         res.set('Content-Type', 'text/plain; charset=utf-8');
         res.set('Cache-Control', 'public, max-age=3600');
-        res.set('X-Robots-Tag', 'index, follow');
+        res.set('X-Robots-Tag', 'noindex, follow');
         res.status(200).send(robots.trim());
     } catch (error) {
         console.error('Robots.txt Generation Error:', error);
