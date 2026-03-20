@@ -207,7 +207,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                         WAY2<span className="text-astro-yellow">ASTRO</span>
                     </h2>
                 </div>
-                <p className={`${isHighRes ? (isInstagram ? 'text-2xl mt-1' : 'text-4xl mt-4') : 'text-xs'} uppercase tracking-widest opacity-80`}>{lang === 'hi' ? 'दैनिक खगोलीय गाइड' : lang === 'te' ? 'పంచాంగం' : 'Daily Celestial Guide'}</p>
+                <p className={`${isHighRes ? (isInstagram ? 'text-2xl mt-1' : 'text-4xl mt-4') : 'text-xs'} uppercase tracking-widest opacity-80`}>{lang === 'hi' ? 'दैनिक खगोलीय गाइड' : lang === 'te' ? 'దైనందిన ఖగోళ మార్గదర్శి' : 'Daily Celestial Guide'}</p>
             </div>
 
             {/* Date & Location */}

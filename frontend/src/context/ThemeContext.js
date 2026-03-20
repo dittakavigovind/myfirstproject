@@ -48,7 +48,7 @@ export const ThemeProvider = ({ children }) => {
                 if (settings.exploreServices) {
                     setExploreServices(settings.exploreServices);
                 }
-                if (settings.logoDesktop || settings.logoMobile || settings.logoReport || settings.favicon) {
+                if (settings.logoDesktop || settings.logoMobile || settings.logoReport || settings.favicon || settings.panchangSharePromo) {
                     setLogos({
                         desktop: settings.logoDesktop || '',
                         mobile: settings.logoMobile || '',
