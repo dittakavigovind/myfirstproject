@@ -7,8 +7,11 @@ import analytics from '../lib/analytics';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { t, tData } from '../utils/translations';
+import { useTheme } from '../context/ThemeContext';
+import { resolveImageUrl } from '../lib/urlHelper';
 
 export default function PanchangShareModal({ isOpen, onClose, data, location, date, lang = 'en' }) {
+    const { logos } = useTheme();
     const cardRef = useRef(null); // Ref for visible modal content
     const printRef = useRef(null); // Ref for high-quality hidden card (Auto Height)
     const instaRef = useRef(null); // Ref for Instagram hidden card (Fixed 1080x1350)
@@ -195,26 +198,26 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
     const CardContent = ({ isHighRes = false, isInstagram = false }) => (
         <div className={`bg-white overflow-hidden relative flex flex-col ${isHighRes ? (isInstagram ? 'w-[1080px] h-[1350px] border-[12px]' : 'w-[1080px] h-auto border-[12px]') : 'w-full h-auto border-4'} border-astro-yellow`}>
             {/* Header / Branding */}
-            <div className={`${isHighRes ? (isInstagram ? 'p-6' : 'p-12') : 'p-4'} bg-astro-navy text-white text-center relative overflow-hidden shrink-0`}>
+            <div className={`${isHighRes ? (isInstagram ? 'p-4' : 'p-12') : 'p-4'} bg-astro-navy text-white text-center relative overflow-hidden shrink-0`}>
                 <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
                 {/* Logo Placeholder */}
-                <div className={`flex justify-center ${isHighRes ? 'mb-6' : 'mb-2'}`}>
+                <div className={`flex justify-center ${isHighRes ? (isInstagram ? 'mb-2' : 'mb-6') : 'mb-2'}`}>
                     {/* Replaced with Text Logo if image fails, or use path if available */}
-                    <h2 className={`${isHighRes ? (isInstagram ? 'text-6xl' : 'text-7xl') : 'text-xl'} font-black tracking-tighter text-white`}>
+                    <h2 className={`${isHighRes ? (isInstagram ? 'text-5xl' : 'text-7xl') : 'text-xl'} font-black tracking-tighter text-white`}>
                         WAY2<span className="text-astro-yellow">ASTRO</span>
                     </h2>
                 </div>
-                <p className={`${isHighRes ? (isInstagram ? 'text-3xl mt-2' : 'text-4xl mt-4') : 'text-xs'} uppercase tracking-widest opacity-80`}>{lang === 'hi' ? 'दैनिक खगोलीय गाइड' : lang === 'te' ? 'దైనందిన ఖగోళ మార్గదర్శి' : 'Daily Celestial Guide'}</p>
+                <p className={`${isHighRes ? (isInstagram ? 'text-2xl mt-1' : 'text-4xl mt-4') : 'text-xs'} uppercase tracking-widest opacity-80`}>{lang === 'hi' ? 'दैनिक खगोलीय गाइड' : lang === 'te' ? 'పంచాంగం' : 'Daily Celestial Guide'}</p>
             </div>
 
             {/* Date & Location */}
-            <div className={`bg-orange-50 text-center border-b border-orange-100 shrink-0 ${isHighRes ? (isInstagram ? 'p-4' : 'p-10') : 'p-3'}`}>
-                <h3 className={`${isHighRes ? (isInstagram ? 'text-5xl mb-3' : 'text-7xl mb-4') : 'text-lg'} font-bold text-gray-800`}>{formattedDate}</h3>
-                <p className={`${isHighRes ? (isInstagram ? 'text-3xl' : 'text-5xl') : 'text-sm'} text-gray-500 font-medium`}>📍 {location}</p>
+            <div className={`bg-orange-50 text-center border-b border-orange-100 shrink-0 ${isHighRes ? (isInstagram ? 'p-3' : 'p-10') : 'p-3'}`}>
+                <h3 className={`${isHighRes ? (isInstagram ? 'text-4xl mb-1' : 'text-7xl mb-4') : 'text-lg'} font-bold text-gray-800`}>{formattedDate}</h3>
+                <p className={`${isHighRes ? (isInstagram ? 'text-2xl' : 'text-5xl') : 'text-sm'} text-gray-500 font-medium`}>📍 {location}</p>
             </div>
 
             {/* Panchang Grid */}
-            <div className={`${isHighRes ? (isInstagram ? 'p-6 gap-2' : 'p-12 gap-5') : 'p-4 gap-2'} grid bg-white content-start`}>
+            <div className={`${isHighRes ? (isInstagram ? 'p-4 gap-1' : 'p-12 gap-5') : 'p-4 gap-2'} grid bg-white content-start`}>
                 {[
                     { label: `🗓️ ${t('hinduYear', lang)}`, value: `${tData('samvatsara', data.samvat?.name, lang) || ''} (${data.samvat?.vikram || ''})` },
                     { label: `🌒 ${t('masa', lang)}`, value: tData('masa', data.masa?.amanta, lang) },
@@ -228,10 +231,10 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                     { label: `🍯 ${t('amritKaal', lang)}`, value: `${formatTime(data.amritKaal?.start)} - ${formatTime(data.amritKaal?.end)}`, isTime: true },
                     { label: `⚠️ ${t('rahuKalam', lang)}`, value: `${formatTime(data.rahuKalam?.start)} - ${formatTime(data.rahuKalam?.end)}`, isTime: true, isBad: true },
                 ].map((item, idx) => (
-                    <div key={idx} className={`flex justify-between items-center border-b border-dashed border-gray-200 ${isHighRes ? (isInstagram ? 'pb-2 last:border-0' : 'pb-3 last:border-0') : 'pb-1 last:border-0'}`}>
-                        <span className={`${isHighRes ? (isInstagram ? 'text-4xl' : 'text-5xl') : 'text-xs'} text-gray-500 font-medium`}>{item.label}</span>
+                    <div key={idx} className={`flex justify-between items-center border-b border-dashed border-gray-200 ${isHighRes ? (isInstagram ? 'pb-1 last:border-0' : 'pb-3 last:border-0') : 'pb-1 last:border-0'}`}>
+                        <span className={`${isHighRes ? (isInstagram ? 'text-3xl' : 'text-5xl') : 'text-xs'} text-gray-500 font-medium`}>{item.label}</span>
                         <div className="text-right">
-                            <span className={`block ${isHighRes ? (isInstagram ? 'text-4xl' : 'text-5xl') : 'text-xs'} font-bold ${item.isBad ? 'text-rose-600' : 'text-astro-navy'}`}>
+                            <span className={`block ${isHighRes ? (isInstagram ? 'text-3xl' : 'text-5xl') : 'text-xs'} font-bold ${item.isBad ? 'text-rose-600' : 'text-astro-navy'}`}>
                                 {item.value || '-'}
                             </span>
                         </div>
@@ -239,21 +242,60 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                 ))}
             </div>
 
-            {/* Features Section (Fills empty space in Instagram Card) */}
+            {/* Features Section (Follows the grid directly now) */}
             {isInstagram && isHighRes && (
-                <div className="flex-grow flex flex-col justify-end pb-8 px-6 text-center bg-white">
-                    <div className="border-t-2 border-dashed border-gray-100 w-1/2 mx-auto mb-4"></div>
-                    <p className="text-astro-navy font-bold text-4xl mb-3 tracking-wide">{lang === 'hi' ? '✨ हमारी सेवाएं ✨' : lang === 'te' ? '✨ మా సేవలు ✨' : '✨ OUR SERVICES ✨'}</p>
-                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-3xl font-semibold text-gray-600">
-                        <span>📜 {lang === 'hi' ? 'कुण्डली' : lang === 'te' ? 'కుండలి' : 'Kundli'}</span>
-                        <span>💑 {lang === 'hi' ? 'मिलान' : lang === 'te' ? 'పొంతన' : 'Matching'}</span>
-                        <span>️ {lang === 'hi' ? 'दोष जांच' : lang === 'te' ? 'దోష తనిఖీ' : 'Dosha Check'}</span>
-                        <span>🔮 {lang === 'hi' ? 'राशिफल' : lang === 'te' ? 'రాశిఫలాలు' : 'Horoscope'}</span>
-                        <span>⏳ {lang === 'hi' ? 'दशा' : lang === 'te' ? 'దశ' : 'Dasha'}</span>
-                        <span>🪐 {lang === 'hi' ? 'गोचर' : lang === 'te' ? 'గోచారం' : 'Gochar'}</span>
-                        <span>💍 {lang === 'hi' ? 'विवाह' : lang === 'te' ? 'వివాహం' : 'Marriage'}</span>
-                        <span>💼 {lang === 'hi' ? 'करियर' : lang === 'te' ? 'కెరీర్' : 'Career'}</span>
+                <div className="pb-2 px-8 text-center bg-white shrink-0 border-t border-gray-100">
+                    <div className="border-t-4 border-dashed border-gray-100 w-1/4 mx-auto mb-3"></div>
+                    <p className="text-astro-navy font-black text-2xl mb-3 tracking-widest uppercase">
+                        {lang === 'hi' ? '✨ हमारी सेवाएं ✨' : lang === 'te' ? '✨ మా సేవలు ✨' : '✨ OUR SERVICES ✨'}
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xl font-bold text-gray-700">
+                        {[
+                            { icon: '📜', hi: 'कुण्डली', te: 'కుండలి', en: 'Kundli' },
+                            { icon: '💑', hi: 'मिलान', te: 'పొంతన', en: 'Matching' },
+                            { icon: '🔍', hi: 'दोष जांच', te: 'దోష తనిఖీ', en: 'Dosha Check' },
+                            { icon: '🔮', hi: 'राशिफल', te: 'రాశిఫలాలు', en: 'Horoscope' },
+                            { icon: '⏳', hi: 'दशा', te: 'దశ', en: 'Dasha' },
+                            { icon: '🪐', hi: 'गोचर', te: 'గోచారం', en: 'Gochar' },
+                            { icon: '💍', hi: 'विवाह', te: 'వివాహం', en: 'Marriage' },
+                            { icon: '💼', hi: 'करियर', te: 'కెరీర్', en: 'Career' },
+                        ].map((s, i) => (
+                            <div key={i} className="flex items-center gap-1 whitespace-nowrap">
+                                <span>{s.icon}</span>
+                                <span>{lang === 'hi' ? s.hi : lang === 'te' ? s.te : s.en}</span>
+                                {i < 7 && <span className="ml-4 text-gray-300 opacity-50">|</span>}
+                            </div>
+                        ))}
                     </div>
+                </div>
+            )}
+
+            {/* Logo box to fill the gap in Instagram Card */}
+            {isInstagram && isHighRes && (
+                <div className="flex-grow bg-white flex items-center justify-center p-8">
+                    {logos.panchangSharePromo ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <img
+                                src={resolveImageUrl(logos.panchangSharePromo)}
+                                alt="Promotion"
+                                className="w-full h-auto max-h-full object-contain"
+                            />
+                        </div>
+                    ) : (logos.report || logos.desktop) ? (
+                        <div className="opacity-20 transform scale-150">
+                            <img
+                                src={resolveImageUrl(logos.report || logos.desktop)}
+                                alt="Logo"
+                                className="max-h-32 w-auto object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="opacity-15 transform scale-125">
+                            <h2 className="text-9xl font-black tracking-tighter text-astro-navy">
+                                WAY2<span className="text-astro-yellow">ASTRO</span>
+                            </h2>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -261,31 +303,31 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
             {(!isInstagram || !isHighRes) && <div className="flex-grow bg-white"></div>}
 
             {/* Sun/Moon Section */}
-            <div className={`bg-indigo-900 text-white flex justify-around items-center text-center shrink-0 ${isHighRes ? (isInstagram ? 'p-4 text-3xl' : 'p-10 text-4xl') : 'p-3 text-xs'}`}>
+            <div className={`bg-indigo-900 text-white flex justify-around items-center text-center shrink-0 border-t border-white/20 ${isHighRes ? (isInstagram ? 'p-3 text-2xl' : 'p-10 text-4xl') : 'p-3 text-xs'}`}>
                 <div>
-                    <span className="block text-astro-yellow mb-2 font-bold flex items-center justify-center gap-1">
-                        <Sun size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> {t('sunrise', lang)}
+                    <span className="block text-astro-yellow mb-1 font-bold flex items-center justify-center gap-1">
+                        <Sun size={isHighRes ? (isInstagram ? 32 : 64) : 12} /> {t('sunrise', lang)}
                     </span>
                     {data.sun?.sunrise}
                 </div>
-                <div className={`h-full w-px bg-white/20 ${isHighRes ? 'mx-4' : 'mx-1'}`}></div>
+                <div className={`h-full w-px bg-white/20 ${isHighRes ? (isInstagram ? 'mx-2' : 'mx-4') : 'mx-1'}`}></div>
                 <div>
-                    <span className="block text-astro-yellow mb-2 font-bold flex items-center justify-center gap-1">
-                        <ArrowDown size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> {t('sunset', lang)}
+                    <span className="block text-astro-yellow mb-1 font-bold flex items-center justify-center gap-1">
+                        <ArrowDown size={isHighRes ? (isInstagram ? 32 : 64) : 12} /> {t('sunset', lang)}
                     </span>
                     {data.sun?.sunset}
                 </div>
-                <div className={`h-full w-px bg-white/20 ${isHighRes ? 'mx-4' : 'mx-1'}`}></div>
+                <div className={`h-full w-px bg-white/20 ${isHighRes ? (isInstagram ? 'mx-2' : 'mx-4') : 'mx-1'}`}></div>
                 <div>
-                    <span className="block text-astro-yellow mb-2 font-bold flex items-center justify-center gap-1">
-                        <Moon size={isHighRes ? (isInstagram ? 48 : 64) : 12} /> {t('moonSign', lang)}
+                    <span className="block text-astro-yellow mb-1 font-bold flex items-center justify-center gap-1">
+                        <Moon size={isHighRes ? (isInstagram ? 32 : 64) : 12} /> {t('moonSign', lang)}
                     </span>
                     {tData('rashi', data.moon?.rashi, lang)}
                 </div>
             </div>
 
             {/* Footer */}
-            <div className={`bg-gray-100 text-center shrink-0 ${isHighRes ? (isInstagram ? 'p-2' : 'p-6') : 'p-2'}`}>
+            <div className={`bg-gray-100 text-center shrink-0 border-t border-gray-200 ${isHighRes ? (isInstagram ? 'p-2' : 'p-6') : 'p-2'}`}>
                 <p className={`${isHighRes ? (isInstagram ? 'text-3xl' : 'text-4xl') : 'text-[10px]'} text-gray-500 font-bold uppercase tracking-tighter`}>
                     {lang === 'hi'
                         ? (isInstagram ? '✨ अधिक जानकारी के लिए Way2Astro.com पर जाएं ✨' : 'पूर्ण विवरण के लिए Way2Astro.com पर जाएं')
@@ -360,7 +402,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
                                 disabled={isGenerating}
                                 className="flex-1 h-10 flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold rounded-lg transition-colors bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"
                             >
-                                <Instagram size={16} /> Instagram
+                                <Instagram size={16} /> {lang === 'hi' ? 'शेयर करें' : lang === 'te' ? 'షేర్ చేయండి' : 'Share'}
                             </button>
 
                             <a

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import API from '../../lib/api';
-import { Upload, Save, Smartphone, Monitor, Image as ImageIcon, Loader2, Palette, RefreshCw, FileText } from 'lucide-react';
+import { Upload, Save, Smartphone, Monitor, Image as ImageIcon, Loader2, Palette, RefreshCw, FileText, Sparkles, Trash2 } from 'lucide-react';
 import ColorThief from 'colorthief';
 import { useTheme } from '../../context/ThemeContext';
 import { resolveImageUrl } from '../../lib/urlHelper';
@@ -11,7 +11,8 @@ export default function LogoSettings() {
         logoDesktop: '',
         logoMobile: '',
         logoReport: '',
-        favicon: ''
+        favicon: '',
+        panchangSharePromo: ''
     });
     const { applyTheme, fetchTheme } = useTheme();
     const [themeColors, setThemeColors] = useState({
@@ -28,7 +29,7 @@ export default function LogoSettings() {
 
     const [extractedColors, setExtractedColors] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState({ desktop: false, mobile: false, report: false, favicon: false });
+    const [uploading, setUploading] = useState({ desktop: false, mobile: false, report: false, favicon: false, panchangSharePromo: false });
     const [message, setMessage] = useState(null);
 
     useEffect(() => {
@@ -107,7 +108,11 @@ export default function LogoSettings() {
             if (res.data.success) {
                 setSettings(prev => ({
                     ...prev,
-                    [type === 'desktop' ? 'logoDesktop' : type === 'mobile' ? 'logoMobile' : type === 'report' ? 'logoReport' : 'favicon']: res.data.filePath
+                    [type === 'desktop' ? 'logoDesktop' : 
+                     type === 'mobile' ? 'logoMobile' : 
+                     type === 'report' ? 'logoReport' : 
+                     type === 'panchangSharePromo' ? 'panchangSharePromo' : 
+                     'favicon']: res.data.filePath
                 }));
 
                 // If uploading desktop logo, try to extract colors
@@ -127,6 +132,17 @@ export default function LogoSettings() {
         } finally {
             setUploading(prev => ({ ...prev, [type]: false }));
         }
+    };
+
+    const handleRemoveImage = (type) => {
+        setSettings(prev => ({
+            ...prev,
+            [type === 'desktop' ? 'logoDesktop' : 
+             type === 'mobile' ? 'logoMobile' : 
+             type === 'report' ? 'logoReport' : 
+             type === 'panchangSharePromo' ? 'panchangSharePromo' : 
+             'favicon']: ''
+        }));
     };
 
     const handleSave = async () => {
@@ -373,6 +389,65 @@ export default function LogoSettings() {
                         </div>
                     </label>
                     <p className="text-xs text-slate-500 text-center mt-2">Recommended: 32x32px or 16x16px (.ico, .png)</p>
+                </div>
+
+                {/* Panchang Share Promo Image */}
+                <div className="space-y-4 md:col-span-2 pt-8 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-slate-700 font-bold mb-2">
+                        <Sparkles size={20} className="text-orange-500" />
+                        <h3>Panchang Share Promotion Image</h3>
+                        <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">New</span>
+                    </div>
+
+                    <label className="block group cursor-pointer">
+                        <div className={`bg-slate-100 rounded-xl p-8 flex flex-col items-center justify-center border-2 border-dashed ${uploading.panchangSharePromo ? 'border-orange-400 bg-orange-50' : 'border-slate-300 group-hover:border-orange-400 group-hover:bg-slate-50'} transition-all min-h-[200px] relative overflow-hidden`}>
+                            {uploading.panchangSharePromo ? (
+                                <div className="flex flex-col items-center text-orange-500">
+                                    <Loader2 size={32} className="animate-spin mb-2" />
+                                    <span className="text-xs font-bold uppercase">Uploading Promotion Image...</span>
+                                </div>
+                            ) : settings.panchangSharePromo ? (
+                                <>
+                                    <div className="bg-white p-2 rounded-lg shadow-sm mb-2 border border-slate-200 relative group/img">
+                                        <img src={resolveImageUrl(settings.panchangSharePromo)} alt="Panchang Promo" className="max-h-32 w-auto object-contain z-10 relative" />
+                                        <button 
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleRemoveImage('panchangSharePromo');
+                                            }}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity z-20 hover:bg-red-600 shadow-sm"
+                                            title="Remove Image"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none">
+                                        <div className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 shadow-sm transform translate-y-2 group-hover:translate-y-0 transition-all">
+                                            Change Promotion Image
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center text-slate-400 group-hover:text-orange-500 transition-colors">
+                                    <Upload size={32} className="mb-2" />
+                                    <span className="text-sm font-medium">Upload promotion banner for Instagram Share Card</span>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => handleFileUpload(e, 'panchangSharePromo')}
+                                disabled={uploading.panchangSharePromo}
+                            />
+                        </div>
+                    </label>
+                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 italic">
+                        <p className="text-xs text-blue-700 text-center">
+                            <strong>Recommended Size: 1080 x 330 PX</strong><br/>
+                            This image will appear in the bottom gap of the Instagram share card. Perfect for event announcements or special offers.
+                        </p>
+                    </div>
                 </div>
             </div>
 

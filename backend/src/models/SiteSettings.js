@@ -113,6 +113,11 @@ const siteSettingsSchema = new mongoose.Schema({
             link: { type: String, trim: true, default: '' }
         }]
     },
+    panchangSharePromo: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

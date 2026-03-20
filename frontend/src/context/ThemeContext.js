@@ -11,7 +11,7 @@ export const ThemeProvider = ({ children }) => {
         secondary: '#fbbf24',
         accent: '#3b82f6'
     });
-    const [logos, setLogos] = useState({ desktop: '', mobile: '', report: '', favicon: '' });
+    const [logos, setLogos] = useState({ desktop: '', mobile: '', report: '', favicon: '', panchangSharePromo: '' });
     const [navBadges, setNavBadges] = useState([]);
     const [exploreServices, setExploreServices] = useState([]);
 
@@ -53,7 +53,8 @@ export const ThemeProvider = ({ children }) => {
                         desktop: settings.logoDesktop || '',
                         mobile: settings.logoMobile || '',
                         report: settings.logoReport || '',
-                        favicon: settings.favicon || ''
+                        favicon: settings.favicon || '',
+                        panchangSharePromo: settings.panchangSharePromo || ''
                     });
                 }
                 if (settings.featureFlags) {

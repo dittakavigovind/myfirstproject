@@ -101,13 +101,14 @@ exports.getSiteSettings = async (req, res) => {
         const rawSettings = settings.toObject();
         const settingsResponse = {
             ...rawSettings,
-            logoReport: rawSettings.logoReport || settings.logoReport || '/logo.svg'
+            logoReport: rawSettings.logoReport || settings.logoReport || '/logo.svg',
+            panchangSharePromo: rawSettings.panchangSharePromo || ''
         };
 
         res.json({ success: true, settings: settingsResponse });
     } catch (error) {
-        console.error("getSiteSettings Error:", error);
-        res.status(500).json({ success: false, message: 'Server Error' });
+        console.error("getSiteSettings Error Details:", error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
 
@@ -136,6 +137,7 @@ exports.updateSiteSettings = async (req, res) => {
         if (req.body.googleAnalyticsId !== undefined) settings.googleAnalyticsId = req.body.googleAnalyticsId;
         if (req.body.cloudflareToken !== undefined) settings.cloudflareToken = req.body.cloudflareToken;
         if (req.body.customHeadScripts !== undefined) settings.customHeadScripts = req.body.customHeadScripts;
+        if (req.body.panchangSharePromo !== undefined) settings.panchangSharePromo = req.body.panchangSharePromo;
 
         // Feature Flags
         if (req.body.featureFlags) {
