@@ -135,6 +135,7 @@ export default async function RootLayout({ children }) {
                         as="image" 
                         href={lcpImageUrl} 
                         fetchPriority="high" 
+                        crossOrigin="anonymous"
                     />
                 )}
             </head>
@@ -161,11 +162,14 @@ export default async function RootLayout({ children }) {
                         id="cloudflare-beacon"
                         src="https://static.cloudflareinsights.com/beacon.min.js"
                         data-cf-beacon={`{"token": "${cloudflareToken}"}`}
-                        strategy="afterInteractive"
+                        strategy="lazyOnload"
                     />
                 )}
                 <GoogleAdSense publisherId={googleAdsId} />
-                <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+                <Script 
+                    src="https://checkout.razorpay.com/v1/checkout.js" 
+                    strategy="lazyOnload" 
+                />
                 <AuthProvider>
                     <ThemeProvider>
                         <BirthDetailsProvider>
