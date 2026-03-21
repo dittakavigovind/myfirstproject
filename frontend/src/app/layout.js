@@ -101,6 +101,8 @@ export default async function RootLayout({ children }) {
     let googleAnalyticsId = '';
     let cloudflareToken = '';
     let customHeadScripts = '';
+    let lcpImageUrl = '';
+
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE;
         const res = await fetch(`${apiUrl}/site-settings`);
@@ -110,6 +112,15 @@ export default async function RootLayout({ children }) {
             googleAnalyticsId = data.settings.googleAnalyticsId;
             cloudflareToken = data.settings.cloudflareToken;
             customHeadScripts = data.settings.customHeadScripts;
+
+            // Determine LCP Image for Preloading
+            const { heroSection, promotionImage } = data.settings;
+            if (heroSection?.showCarousel && heroSection?.carouselImages?.length > 0) {
+                const firstImg = heroSection.carouselImages[0];
+                lcpImageUrl = resolveImageUrl(typeof firstImg === 'string' ? firstImg : firstImg?.image);
+            } else if (promotionImage) {
+                lcpImageUrl = resolveImageUrl(promotionImage);
+            }
         }
     } catch (e) {
         console.error("Error fetching settings for layout:", e);
@@ -117,6 +128,16 @@ export default async function RootLayout({ children }) {
 
     return (
         <html lang="en">
+            <head>
+                {lcpImageUrl && (
+                    <link 
+                        rel="preload" 
+                        as="image" 
+                        href={lcpImageUrl} 
+                        fetchPriority="high" 
+                    />
+                )}
+            </head>
             <body className={`${poppins.variable} font-sans`}>
                 {googleAnalyticsId && (
                     <>
