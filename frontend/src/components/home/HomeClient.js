@@ -231,6 +231,8 @@ export default function HomeClient() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 1.5, ease: "easeInOut" }}
+                      fetchPriority="high"
+                      loading="eager"
                     />
                   </AnimatePresence>
                 </div>
@@ -335,6 +337,8 @@ export default function HomeClient() {
                                       src={featureFlags.promotionImage}
                                       alt="Promotion"
                                       className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                      fetchPriority="high"
+                                      loading="eager"
                                     />
                                   </Link>
                                 ) : (
@@ -343,6 +347,8 @@ export default function HomeClient() {
                                       src={featureFlags.promotionImage}
                                       alt="Promotion"
                                       className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                      fetchPriority="high"
+                                      loading="eager"
                                     />
                                   </Link>
                                 );
@@ -351,6 +357,8 @@ export default function HomeClient() {
                                   src={featureFlags.promotionImage}
                                   alt="Promotion"
                                   className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                  fetchPriority="high"
+                                  loading="eager"
                                 />
                               )}
                             </div>

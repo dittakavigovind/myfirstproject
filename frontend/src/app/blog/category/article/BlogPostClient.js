@@ -77,6 +77,8 @@ export default function BlogPostClient({ post: initialPost, slug: propSlug }) {
                                         src={resolveImageUrl(post.featuredImage)}
                                         alt={post.title}
                                         className="w-full h-auto object-cover"
+                                        fetchPriority="high"
+                                        loading="eager"
                                     />
                                 </div>
                             )}
