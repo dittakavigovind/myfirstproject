@@ -118,6 +118,12 @@ const PanchangShareCard = forwardRef(({ data, location, date, showButton = true,
 
                 {/* Panchang Grid */}
                 <div className="p-4 grid gap-3">
+                    {data.ayanam && (
+                        <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
+                            <span className="text-sm text-gray-500 font-medium">☀️ {t('ayanam', lang)}</span>
+                            <span className="font-bold text-astro-navy">{tData('ayanam', data.ayanam, lang)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between items-center border-b border-dashed border-gray-200 pb-2">
                         <span className="text-sm text-gray-500 font-medium">✨ {t('tithi', lang)}</span>
                         <span className="font-bold text-astro-navy text-right">{tData('tithi', data.tithi?.name, lang)} <br/> <small className="text-[10px] opacity-60 font-medium">{lang === 'te' ? `${formatTime(data.tithi?.end)} ${t('upto', lang)}` : `(${t('upto', lang)} ${formatTime(data.tithi?.end)})`}</small></span>

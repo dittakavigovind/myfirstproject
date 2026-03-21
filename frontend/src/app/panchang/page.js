@@ -422,9 +422,15 @@ function PanchangPage() {
                                             <Calendar size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">{t('hinduYear', lang)}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">{t('hinduYear', lang)} {data.ayanam && ` | ${t('ayanam', lang)}`}</p>
                                             <p className="text-lg font-black text-slate-800 leading-none">
                                                 {tData('samvatsara', data.samvat.name, lang)} <span className="text-slate-400 font-bold text-xs opacity-60">{t('samvatsara', lang)}</span>
+                                                {data.ayanam && (
+                                                    <>
+                                                        <span className="mx-2 text-slate-300 font-light">|</span>
+                                                        {tData('ayanam', data.ayanam, lang)}
+                                                    </>
+                                                )}
                                             </p>
                                             {/* Lunar Month & Season */}
                                             {(data.masa || data.ritu) && (

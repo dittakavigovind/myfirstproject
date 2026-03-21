@@ -72,6 +72,7 @@ exports.getPanchang = async (req, res) => {
             samvat: panchangRaw.samvat,
             masa: panchangRaw.masa,
             ritu: panchangRaw.ritu,
+            ayanam: panchangRaw.ayanam,
             vara: panchangRaw.vara,
             festivals: festivals, // Added festivals
             meta: panchangRaw.meta

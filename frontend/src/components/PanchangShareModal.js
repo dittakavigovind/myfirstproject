@@ -220,6 +220,7 @@ export default function PanchangShareModal({ isOpen, onClose, data, location, da
             <div className={`${isHighRes ? (isInstagram ? 'p-4 gap-1' : 'p-12 gap-5') : 'p-4 gap-2'} grid bg-white content-start`}>
                 {[
                     { label: `🗓️ ${t('hinduYear', lang)}`, value: `${tData('samvatsara', data.samvat?.name, lang) || ''} (${data.samvat?.vikram || ''})` },
+                    { label: `☀️ ${t('ayanam', lang)}`, value: tData('ayanam', data.ayanam, lang) },
                     { label: `🌒 ${t('masa', lang)}`, value: tData('masa', data.masa?.amanta, lang) },
                     { label: `🌦️ ${t('ritu', lang)}`, value: tData('ritu', data.ritu, lang) },
                     { label: `📅 ${t('vara', lang)}`, value: tData('vara', data.vara, lang) },

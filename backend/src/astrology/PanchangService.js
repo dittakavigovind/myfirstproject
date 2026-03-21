@@ -401,6 +401,7 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
                 purnimanta: purnimantaMonth
             },
             ritu: ritu,
+            ayanam: (Math.floor(sLong / 30) >= 9 || Math.floor(sLong / 30) <= 2) ? "Uttarayana" : "Dakshinayana",
             vara: WEEKDAYS[dayStart.day()],
             sun: {
                 sunrise: fmtTime(sunriseDate),
@@ -576,6 +577,7 @@ const calculateMonthlyPanchangLite = async (year, month, lat, lng, timezone) => 
                     purnimanta: purnimantaMonth
                 },
                 ritu: ritu,
+                ayanam: (Math.floor(sLong / 30) >= 9 || Math.floor(sLong / 30) <= 2) ? "Uttarayana" : "Dakshinayana",
                 vara: WEEKDAYS[dayStart.day()],
                 tithi: {
                     name: tithiName,

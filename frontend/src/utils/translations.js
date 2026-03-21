@@ -117,7 +117,8 @@ export const translations = {
         auspicious: "Auspicious",
         unfavorable: "Unfavorable",
         upto: "upto",
-        next: "Next"
+        next: "Next",
+        ayanam: "Ayanam"
     },
 
     hi: {
@@ -238,7 +239,8 @@ export const translations = {
         auspicious: "शुभ",
         unfavorable: "अशुभ",
         upto: "बजे तक",
-        next: "अगला"
+        next: "अगला",
+        ayanam: "अयन"
     },
 
     te: {
@@ -368,7 +370,8 @@ export const translations = {
         exalted: "ఉచ్చ",
         debilitated: "నీచ",
         mooltrikona: "మూల త్రికోణం",
-        next: "తదుపరి"
+        next: "తదుపరి",
+        ayanam: "అయనం"
     }
 
 };
@@ -421,6 +424,9 @@ export const panchagData = {
             Paridhavi: "परिधावी", Pramadicha: "प्रमादीचा", Ananda: "आनंद", Rakshasa: "राक्षस", Anala: "अनल",
             Pingala: "पिंगल", Kalayukti: "कालयुक्त", Siddharthi: "सिद्धार्थी", Raudri: "रौद्री", Durmati: "दुर्मति",
             Dundubhi: "दुन्दुभी", Rudhirodgari: "रुधिरोद्गारी", Raktakshi: "रक्ताक्षी", Krodhana: "क्रोधन", Akshaya: "अक्षय"
+        },
+        ayanam: {
+            Uttarayana: "उत्तरायण", Dakshinayana: "दक्षिणायन"
         }
     },
     te: {
@@ -470,6 +476,9 @@ export const panchagData = {
             Paridhavi: "పరిధావి", Pramadicha: "ప్రమాదీచ", Ananda: "ఆంద", Rakshasa: "రాక్షస", Anala: "అనల",
             Pingala: "పింగళ", Kalayukti: "కాలయుక్తి", Siddharthi: "సిద్ధార్థి", Raudri: "రౌద్రి", Durmati: "దుర్మతి",
             Dundubhi: "దుందుభి", Rudhirodgari: "రుధిరోద్గారి", Raktakshi: "రక్తాక్షి", Krodhana: "క్రోధన", Akshaya: "అక్షయ"
+        },
+        ayanam: {
+            Uttarayana: "ఉత్తరాయణం", Dakshinayana: "దక్షిణాయనం"
         },
         relations: {
             "Friend": "మిత్రుడు",
