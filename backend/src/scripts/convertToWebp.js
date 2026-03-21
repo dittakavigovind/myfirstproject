@@ -43,6 +43,9 @@ async function convertToWebp() {
             fs.mkdirSync(backupDir, { recursive: true });
         }
 
+        // Disable sharp cache to avoid file locking on Windows
+        sharp.cache(false);
+
         const files = fs.readdirSync(uploadDir);
         const imageFiles = files.filter(f => ['.jpg', '.jpeg', '.png', '.webp'].includes(path.extname(f).toLowerCase()));
 
@@ -64,13 +67,16 @@ async function convertToWebp() {
             if (!DRY_RUN) {
                 try {
                     // 1. Process with Sharp
-                    // If it's already a webp, we use a buffer to avoid "file in use" errors during write-back
                     if (ext === '.webp') {
-                        const buffer = await sharp(oldPath)
+                        const tempPath = path.join(uploadDir, `temp_${file}`);
+                        await sharp(oldPath)
                             .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
                             .webp({ quality: 70, effort: 6 })
-                            .toBuffer();
-                        fs.writeFileSync(oldPath, buffer);
+                            .toFile(tempPath);
+                        
+                        // Replace original with optimized
+                        fs.unlinkSync(oldPath);
+                        fs.renameSync(tempPath, oldPath);
                         console.log(`   --> Re-compressed existing WebP: ${file}`);
                     } else {
                         // Standard conversion for JPG/PNG
