@@ -96,8 +96,29 @@ if (isHostinger && fs.existsSync(localUploads) && localUploads !== UPLOAD_ROOT) 
 }
 app.set('UPLOAD_ROOT', UPLOAD_ROOT);
 
-// Middleware
-app.use(cors());
+// Robust CORS & Logger for development
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    // Log every request with more detail
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url} [Origin: ${origin || 'N/A'}]`);
+
+    // Universal Allow for Dev
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
+// Diagnostic Route
+app.get('/api/test-connection', (req, res) => {
+    res.json({ success: true, message: "Backend is reachable!", time: new Date() });
+});
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Static Files - Serving via /api prefix for Hostinger proxy reliability
@@ -232,7 +253,7 @@ app.use('/api/wallet', require('./src/routes/walletRoutes'));
 app.use('/api/agora', require('./src/routes/agoraRoutes'));
 // app.use('/api/auth', require('./src/routes/otpRoutes')); // Merged into authRoutes
 app.use('/api/users', require('./src/routes/userRoutes'));
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/astro', astroRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/astro/earnings', earningsRoutes);
@@ -245,11 +266,10 @@ app.use('/api/horoscope', horoscopeRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/site-settings', require('./src/routes/siteSettingsRoutes'));
-app.use('/api/chat', chatRoutes);
-app.use('/api/activity', require('./src/routes/activityRoutes'));
 app.use('/api/page-content', require('./src/routes/pageContentRoutes'));
 app.use('/api/popups', require('./src/routes/popupRoutes'));
 app.use('/api/pooja', poojaRoutes);
+app.use('/api/media', require('./src/routes/mediaRoutes'));
 // --- SEO PROXY SERVER LOGIC ---
 // In-memory cache for SEO optimized HTML strings to ensure lightning-fast responses
 const seoCache = {};
@@ -436,6 +456,6 @@ app.get('*', (req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });

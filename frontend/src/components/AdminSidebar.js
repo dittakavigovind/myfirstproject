@@ -155,6 +155,14 @@ export default function AdminSidebar({ pendingRequestsCount = 0 }) {
                     Manage Posts
                 </Link>
 
+                <Link href="/admin/gallery"
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname === '/admin/gallery' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                >
+                    <Layers size={18} />
+                    Image Gallery
+                </Link>
+
                 <Link href="/admin/blog/create"
                     className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname === '/admin/blog/create' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                         }`}
