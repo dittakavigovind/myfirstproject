@@ -99,13 +99,22 @@ router.post('/upload', protect, admin, upload.single('file'), async (req, res) =
         const ext = path.extname(filePath).toLowerCase();
 
         // Optimization
-        if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
-            const tempPath = filePath + '.tmp';
+        const supportedFormats = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+        if (supportedFormats.includes(ext)) {
+            const newFilename = req.file.filename.replace(ext, '.webp');
+            const newPath = path.join(uploadDir, newFilename);
+
             await sharp(filePath)
                 .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
-                .toFile(tempPath);
+                .webp({ quality: 80 })
+                .toFile(newPath);
+
             fs.unlinkSync(filePath);
-            fs.renameSync(tempPath, filePath);
+            
+            // Update req.file for DB entry
+            req.file.filename = newFilename;
+            req.file.path = newPath;
+            req.file.mimetype = 'image/webp';
         }
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -115,7 +124,7 @@ router.post('/upload', protect, admin, upload.single('file'), async (req, res) =
             filename: req.file.filename,
             originalName: req.file.originalname,
             url: mediaUrl,
-            size: fs.statSync(filePath).size,
+            size: fs.statSync(req.file.path).size,
             mimetype: req.file.mimetype,
             uploadedBy: req.user._id
         });

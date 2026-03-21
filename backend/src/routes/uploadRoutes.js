@@ -61,8 +61,10 @@ const uploadMiddleware = (req, res, next) => {
                 const ext = path.extname(filePath).toLowerCase();
 
                 // Only compress common image formats
-                if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
-                    const tempPath = filePath + '.tmp';
+                const supportedFormats = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+                if (supportedFormats.includes(ext)) {
+                    let newFilename = req.file.filename.replace(ext, '.webp');
+                    const newPath = path.join(uploadDir, newFilename);
 
                     let sharpInstance = sharp(filePath)
                         .resize({
@@ -72,27 +74,30 @@ const uploadMiddleware = (req, res, next) => {
                             withoutEnlargement: true
                         });
 
-                    if (ext === '.jpg' || ext === '.jpeg') {
-                        sharpInstance = sharpInstance.jpeg({ quality: 80, progressive: true });
-                    } else if (ext === '.png') {
-                        sharpInstance = sharpInstance.png({ quality: 80, compressionLevel: 9 });
-                    } else if (ext === '.webp') {
-                        sharpInstance = sharpInstance.webp({ quality: 80 });
+                    // Convert everything to webp by default for better performance
+                    sharpInstance = sharpInstance.webp({ quality: 80 });
+
+                    await sharpInstance.toFile(newPath);
+
+                    // If extension changed, delete original and update req.file
+                    if (ext !== '.webp') {
+                        fs.unlinkSync(filePath);
+                        req.file.path = newPath;
+                        req.file.filename = newFilename;
+                        req.file.mimetype = 'image/webp';
+                    } else if (newPath !== filePath) {
+                        // If it was already webp but we saved to a new path (unlikely but safe)
+                        fs.unlinkSync(filePath);
+                        fs.renameSync(newPath, filePath);
                     }
 
-                    await sharpInstance.toFile(tempPath);
-
-                    // Replace original with compressed version
-                    fs.unlinkSync(filePath);
-                    fs.renameSync(tempPath, filePath);
-
-                    // Update file size in req.file for accurate logging if needed
-                    const stats = fs.statSync(filePath);
+                    // Update file size in req.file for accurate logging
+                    const stats = fs.statSync(req.file.path);
                     req.file.size = stats.size;
                 }
             } catch (sharpErr) {
                 console.error("Sharp optimization error:", sharpErr);
-                // Continue despite optimization error to avoid blocking the upload
+                // Continue despite optimization error
             }
         }
 
