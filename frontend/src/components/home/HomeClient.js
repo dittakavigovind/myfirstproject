@@ -221,16 +221,18 @@ export default function HomeClient() {
                     }
                   }}
                 >
-                  <AnimatePresence mode="popLayout">
+                  <AnimatePresence initial={false} mode="popLayout">
                     <motion.img
                       key={currentImageIndex}
                       src={resolveImageUrl(typeof featureFlags.heroSection.carouselImages[currentImageIndex] === 'string' ? featureFlags.heroSection.carouselImages[currentImageIndex] : featureFlags.heroSection.carouselImages[currentImageIndex]?.image)}
                       alt="Hero Background"
                       className="absolute inset-0 w-full h-full object-[center_top] md:object-cover"
+                      width={1400}
+                      height={600}
                       initial={{ opacity: 0, scale: 1.05 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 1.5, ease: "easeInOut" }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
                       fetchPriority="high"
                       loading="eager"
                     />
@@ -337,6 +339,8 @@ export default function HomeClient() {
                                       src={featureFlags.promotionImage}
                                       alt="Promotion"
                                       className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                      width={800}
+                                      height={450}
                                       fetchPriority="high"
                                       loading="eager"
                                     />
@@ -347,6 +351,8 @@ export default function HomeClient() {
                                       src={featureFlags.promotionImage}
                                       alt="Promotion"
                                       className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                      width={800}
+                                      height={450}
                                       fetchPriority="high"
                                       loading="eager"
                                     />
@@ -357,6 +363,8 @@ export default function HomeClient() {
                                   src={featureFlags.promotionImage}
                                   alt="Promotion"
                                   className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                  width={800}
+                                  height={450}
                                   fetchPriority="high"
                                   loading="eager"
                                 />
