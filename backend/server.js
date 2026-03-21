@@ -125,6 +125,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.get('/api/uploads/:name', (req, res) => {
     const filePath = path.join(app.get('UPLOAD_ROOT'), req.params.name);
     if (fs.existsSync(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         return res.sendFile(filePath);
     }
     res.status(404).send('File not found');
@@ -136,14 +137,15 @@ app.get('/uploads/:name', (req, res, next) => {
     const filePath = path.join(app.get('UPLOAD_ROOT'), fileName);
 
     if (fs.existsSync(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         return res.sendFile(filePath);
     }
     next();
 });
 
 // Original static for other files (if any)
-app.use('/uploads', express.static(app.get('UPLOAD_ROOT')));
-app.use('/api/uploads', express.static(app.get('UPLOAD_ROOT')));
+app.use('/uploads', express.static(app.get('UPLOAD_ROOT'), { maxAge: '1y' }));
+app.use('/api/uploads', express.static(app.get('UPLOAD_ROOT'), { maxAge: '1y' }));
 
 // Rate Limiting
 const authLimiter = rateLimit({
