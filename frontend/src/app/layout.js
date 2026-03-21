@@ -1,18 +1,21 @@
 import { Poppins } from 'next/font/google'
 import Script from 'next/script'
+import dynamic from 'next/dynamic'
 import './globals.css'
 import "react-datepicker/dist/react-datepicker.css";
 import { AuthProvider } from '../context/AuthContext';
 import { AgoraProvider } from '../context/AgoraContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Toaster } from 'react-hot-toast';
-import ScrollToTop from '../components/ScrollToTop';
 import { ThemeProvider } from '../context/ThemeContext';
 import { BirthDetailsProvider } from '../context/BirthDetailsContext';
 import { SessionProvider } from '../context/SessionContext';
-import PromotionalPopup from '../components/PromotionalPopup';
-import ProfileSetupModal from '../components/ProfileSetupModal';
+
+// Dynamic imports for code splitting
+const ProfileSetupModal = dynamic(() => import('../components/ProfileSetupModal'), { ssr: false });
+const ScrollToTop = dynamic(() => import('../components/ScrollToTop'), { ssr: false });
+const PromotionalPopup = dynamic(() => import('../components/PromotionalPopup'), { ssr: false });
+const Toaster = dynamic(() => import('react-hot-toast').then(mod => mod.Toaster), { ssr: false });
 
 const poppins = Poppins({
     subsets: ['latin'],
