@@ -76,7 +76,10 @@ export default function HomeClient() {
   // If not mounted, show loader. If mounted, only show loader if auth is still loading
   // and component data is still loading.
   if (!mounted || (authLoading && loading)) {
-    return <CosmicLoader size="lg" message="Aligning the Stars..." fullscreen={true} />;
+    // If we're on the astrologer role, we still show the full screen loader
+    if (user?.role === 'astrologer') {
+      return <CosmicLoader size="lg" message="Aligning the Stars..." fullscreen={true} />;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -196,226 +199,229 @@ export default function HomeClient() {
   return (
     <main className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       <AnimatePresence mode="wait">
-        {loading ? (
-          <CosmicLoader key="loader" size="lg" message="Aligning the Stars..." fullscreen={true} />
-        ) : (
-          <motion.div
-            key="content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Hero Section */}
-            <div className="relative text-white overflow-hidden">
-              {featureFlags?.heroSection?.showCarousel && featureFlags.heroSection.carouselImages?.length > 0 ? (
-                <div className="absolute inset-0 z-0 bg-slate-900 rounded-b-[2.5rem] md:rounded-b-[3.5rem] overflow-hidden transform scale-x-[1.02] cursor-pointer"
-                  onClick={() => {
-                    const currentItem = featureFlags.heroSection.carouselImages[currentImageIndex];
-                    const link = typeof currentItem === 'string' ? '' : (currentItem?.link || '');
-                    const targetUrl = link || featureFlags.promotionUrl;
+        <motion.div
+           key="content"
+           initial={false}
+           animate={{ opacity: 1 }}
+           transition={{ duration: 0.5 }}
+        >
+          {/* Hero Section */}
+          <div className="relative text-white overflow-hidden">
+            {featureFlags?.heroSection?.showCarousel && featureFlags.heroSection.carouselImages?.length > 0 ? (
+              <div className="absolute inset-0 z-0 bg-slate-900 rounded-b-[2.5rem] md:rounded-b-[3.5rem] overflow-hidden transform scale-x-[1.02] cursor-pointer"
+                onClick={() => {
+                  const currentItem = featureFlags.heroSection.carouselImages[currentImageIndex];
+                  const link = typeof currentItem === 'string' ? '' : (currentItem?.link || '');
+                  const targetUrl = link || featureFlags.promotionUrl;
 
-                    if (targetUrl) {
-                      const isExternal = targetUrl.startsWith('http') || targetUrl.startsWith('www');
-                      const href = isExternal ? (targetUrl.startsWith('www') ? `https://${targetUrl}` : targetUrl) : (targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`);
-                      window.open(href, isExternal ? '_blank' : '_self');
-                    }
-                  }}
-                >
-                  <AnimatePresence initial={false} mode="popLayout">
-                    <motion.img
-                      key={currentImageIndex}
-                      src={resolveImageUrl(typeof featureFlags.heroSection.carouselImages[currentImageIndex] === 'string' ? featureFlags.heroSection.carouselImages[currentImageIndex] : featureFlags.heroSection.carouselImages[currentImageIndex]?.image)}
-                      alt="Hero Background"
-                      className="absolute inset-0 w-full h-full object-[center_top] md:object-cover"
-                      width={1400}
-                      height={600}
-                      initial={{ opacity: 0, scale: 1.05 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      fetchPriority="high"
-                      loading="eager"
-                    />
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black shadow-2xl rounded-b-[2.5rem] md:rounded-b-[3.5rem] z-0 overflow-hidden transform scale-x-[1.02]">
-                  <div className="absolute top-[-50%] left-[-10%] w-[800px] h-[800px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none animate-pulse"></div>
-                  <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-fuchsia-500/10 blur-[100px] pointer-events-none"></div>
-                  <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
-                </div>
-              )}
+                  if (targetUrl) {
+                    const isExternal = targetUrl.startsWith('http') || targetUrl.startsWith('www');
+                    const href = isExternal ? (targetUrl.startsWith('www') ? `https://${targetUrl}` : targetUrl) : (targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`);
+                    window.open(href, isExternal ? '_blank' : '_self');
+                  }
+                }}
+              >
+                <AnimatePresence initial={false} mode="popLayout">
+                  <motion.img
+                    key={currentImageIndex}
+                    src={resolveImageUrl(typeof featureFlags.heroSection.carouselImages[currentImageIndex] === 'string' ? featureFlags.heroSection.carouselImages[currentImageIndex] : featureFlags.heroSection.carouselImages[currentImageIndex]?.image)}
+                    alt="Hero Background"
+                    className="absolute inset-0 w-full h-full object-[center_top] md:object-cover"
+                    width={1400}
+                    height={600}
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    fetchPriority="high"
+                    loading="eager"
+                  />
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-astro-navy bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black shadow-2xl rounded-b-[2.5rem] md:rounded-b-[3.5rem] z-0 overflow-hidden transform scale-x-[1.02]">
+                <div className="absolute top-[-50%] left-[-10%] w-[800px] h-[800px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none animate-pulse"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-fuchsia-500/10 blur-[100px] pointer-events-none"></div>
+                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+              </div>
+            )}
 
-              <div className={`relative z-10 mx-auto ${featureFlags?.heroSection?.showCarousel && featureFlags.heroSection.carouselImages?.length > 0 ? 'h-[220px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full pointer-events-none' : 'max-w-7xl px-6 pt-6 pb-24 md:pt-12 md:pb-32'}`}>
-                {(!featureFlags?.heroSection?.showCarousel || !featureFlags.heroSection.carouselImages?.length) && (
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-12 md:gap-16 text-center md:text-left">
-                    {/* LEFT: Content */}
-                    <div className="flex-1">
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6">
-                        <Sparkles className="w-4 h-4 text-astro-yellow animate-pulse" />
-                        <span className="text-indigo-100 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase">
-                          India's #1 Astrology Platform
-                        </span>
-                      </div>
-
-                      <h1 className="text-3xl md:text-5xl font-black mb-6 leading-[1.1] tracking-tight text-white">
-                        Your Destiny, Decoded by <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-orange-300 to-yellow-200 drop-shadow-sm">
-                          Vedic experts
-                        </span>
-                      </h1>
-
-                      <p className="text-sm md:text-base text-indigo-100/80 mb-0 md:max-w-xl mx-auto md:mx-0 font-medium leading-relaxed">
-                        Get accurate guidance for your future, career, and relationships. Connect with certified astrologers instantly.
-                      </p>
+            <div className={`relative z-10 mx-auto ${featureFlags?.heroSection?.showCarousel && featureFlags.heroSection.carouselImages?.length > 0 ? 'h-[220px] sm:h-[300px] md:h-[400px] lg:h-[500px] w-full pointer-events-none' : 'max-w-7xl px-6 pt-6 pb-24 md:pt-12 md:pb-32'}`}>
+              {(!featureFlags?.heroSection?.showCarousel || !featureFlags.heroSection.carouselImages?.length) && (
+                <div className="flex flex-col md:flex-row items-center justify-between gap-12 md:gap-16 text-center md:text-left">
+                  {/* LEFT: Content */}
+                  <div className="flex-1">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6">
+                      <Sparkles className="w-4 h-4 text-astro-yellow animate-pulse" />
+                      <span className="text-indigo-100 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase">
+                        India's #1 Astrology Platform
+                      </span>
                     </div>
 
-                    {/* RIGHT: Actions (Moved from Left) */}
-                    {((featureFlags?.enableChat || featureFlags?.enableCall) || (!featureFlags?.heroSection?.showCarousel && (featureFlags?.promotionImage || featureFlags?.promotionVideoUrl))) && (
-                      <div className="flex-1 w-full md:max-w-md">
-                        <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group max-w-[400px] mx-auto aspect-video min-h-[200px] md:min-h-0 md:aspect-auto xl:aspect-video lg:aspect-auto md:max-w-none flex flex-col justify-center">
-                          {/* Subtle Decorative Background */}
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-colors pointer-events-none"></div>
+                    <h1 className="text-3xl md:text-5xl font-black mb-6 leading-[1.1] tracking-tight text-white">
+                      Your Destiny, Decoded by <br />
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-astro-yellow via-orange-300 to-yellow-200 drop-shadow-sm">
+                        Vedic experts
+                      </span>
+                    </h1>
 
-                          {(featureFlags?.enableChat || featureFlags?.enableCall) ? (
-                            <div className="relative z-10 flex flex-col gap-4">
-                              <h3 className="text-lg font-bold text-white mb-2 ml-1 drop-shadow">Connect with Experts</h3>
-                              {featureFlags?.enableChat && (
-                                <Link href="/chat-with-astrologer" className="w-full">
-                                  <button className="w-full bg-gradient-to-r from-astro-yellow to-orange-500 text-astro-navy px-8 py-4 rounded-2xl font-black shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 text-base border-2 border-transparent">
-                                    <MessageCircle size={20} /> Chat Now
-                                  </button>
-                                </Link>
-                              )}
-                              {featureFlags?.enableCall && (
-                                <Link href="/astrologers" className="w-full">
-                                  <button className="w-full bg-slate-900/60 hover:bg-slate-900/80 border border-white/20 text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 backdrop-blur-md transition-all hover:scale-[1.02] active:scale-95 text-base">
-                                    <Phone size={20} /> Talk to Astrologer
-                                  </button>
-                                </Link>
-                              )}
-                              <div className="mt-4 flex items-center justify-center gap-6 text-indigo-100/90 drop-shadow-md text-xs font-bold uppercase tracking-widest">
-                                <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400 drop-shadow" /> Secure</span>
-                                <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400 drop-shadow" /> Private</span>
-                                <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400 drop-shadow" /> 24/7</span>
-                              </div>
-                            </div>
-                          ) : featureFlags?.promotionType === 'video' && featureFlags?.promotionVideoUrl && !featureFlags?.heroSection?.showCarousel ? (
-                            <div className="absolute inset-0 z-0 overflow-hidden rounded-[2.5rem]">
-                              {(() => {
-                                const getYouTubeID = (url) => {
-                                  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-                                  const match = url?.match(regExp);
-                                  return (match && match[2].length === 11) ? match[2] : null;
-                                };
-                                const videoId = getYouTubeID(featureFlags.promotionVideoUrl);
-                                return videoId ? (
-                                  <iframe
-                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto aspect-video scale-[1.05]"
-                                    src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0&iv_load_policy=3`}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                  ></iframe>
-                                ) : (
-                                  <div className="flex items-center justify-center h-full text-white opacity-50 font-bold">Invalid Video URL</div>
-                                );
-                              })()}
-                            </div>
-                          ) : featureFlags?.promotionImage && !featureFlags?.heroSection?.showCarousel ? (
-                            <div className="absolute inset-0 z-0 cursor-pointer block h-full w-full">
-                              {featureFlags?.promotionUrl ? (() => {
-                                const url = featureFlags.promotionUrl;
-                                const isExternal = url.startsWith('http') || url.startsWith('www');
-                                let href = url;
-                                if (isExternal) {
-                                  href = url.startsWith('www') ? `https://${url}` : url;
-                                } else {
-                                  href = url.startsWith('/') ? url : `/${url}`;
-                                }
+                    <p className="text-sm md:text-base text-indigo-100/80 mb-0 md:max-w-xl mx-auto md:mx-0 font-medium leading-relaxed">
+                      Get accurate guidance for your future, career, and relationships. Connect with certified astrologers instantly.
+                    </p>
+                  </div>
 
-                                return isExternal ? (
-                                  <Link href={href} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                                    <img
-                                      src={featureFlags.promotionImage}
-                                      alt="Promotion"
-                                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                      width={800}
-                                      height={450}
-                                      fetchPriority="high"
-                                      loading="eager"
-                                    />
-                                  </Link>
-                                ) : (
-                                  <Link href={href} className="block w-full h-full">
-                                    <img
-                                      src={featureFlags.promotionImage}
-                                      alt="Promotion"
-                                      className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                      width={800}
-                                      height={450}
-                                      fetchPriority="high"
-                                      loading="eager"
-                                    />
-                                  </Link>
-                                );
-                              })() : (
-                                <img
-                                  src={featureFlags.promotionImage}
-                                  alt="Promotion"
-                                  className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                                  width={800}
-                                  height={450}
-                                  fetchPriority="high"
-                                  loading="eager"
-                                />
-                              )}
+                  {/* RIGHT: Actions (Moved from Left) */}
+                  {((featureFlags?.enableChat || featureFlags?.enableCall) || (!featureFlags?.heroSection?.showCarousel && (featureFlags?.promotionImage || featureFlags?.promotionVideoUrl))) && (
+                    <div className="flex-1 w-full md:max-w-md">
+                      <div className="bg-white/5 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group max-w-[400px] mx-auto aspect-video min-h-[200px] md:min-h-0 md:aspect-auto xl:aspect-video lg:aspect-auto md:max-w-none flex flex-col justify-center">
+                        {/* Subtle Decorative Background */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-colors pointer-events-none"></div>
+
+                        {(featureFlags?.enableChat || featureFlags?.enableCall) ? (
+                          <div className="relative z-10 flex flex-col gap-4">
+                            <h3 className="text-lg font-bold text-white mb-2 ml-1 drop-shadow">Connect with Experts</h3>
+                            {featureFlags?.enableChat && (
+                              <Link href="/chat-with-astrologer" className="w-full">
+                                <button className="w-full bg-gradient-to-r from-astro-yellow to-orange-500 text-astro-navy px-8 py-4 rounded-2xl font-black shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 text-base border-2 border-transparent">
+                                  <MessageCircle size={20} /> Chat Now
+                                </button>
+                              </Link>
+                            )}
+                            {featureFlags?.enableCall && (
+                              <Link href="/astrologers" className="w-full">
+                                <button className="w-full bg-slate-900/60 hover:bg-slate-900/80 border border-white/20 text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 backdrop-blur-md transition-all hover:scale-[1.02] active:scale-95 text-base">
+                                  <Phone size={20} /> Talk to Astrologer
+                                </button>
+                              </Link>
+                            )}
+                            <div className="mt-4 flex items-center justify-center gap-6 text-indigo-100/90 drop-shadow-md text-xs font-bold uppercase tracking-widest">
+                              <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400 drop-shadow" /> Secure</span>
+                              <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400 drop-shadow" /> Private</span>
+                              <span className="flex items-center gap-1.5"><CheckCircle size={14} className="text-emerald-400 drop-shadow" /> 24/7</span>
                             </div>
-                          ) : null}
-                        </div>
+                          </div>
+                        ) : featureFlags?.promotionType === 'video' && featureFlags?.promotionVideoUrl && !featureFlags?.heroSection?.showCarousel ? (
+                          <div className="absolute inset-0 z-0 overflow-hidden rounded-[2.5rem]">
+                            {(() => {
+                              const getYouTubeID = (url) => {
+                                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                                const match = url?.match(regExp);
+                                return (match && match[2].length === 11) ? match[2] : null;
+                              };
+                              const videoId = getYouTubeID(featureFlags.promotionVideoUrl);
+                              return videoId ? (
+                                <iframe
+                                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto aspect-video scale-[1.05]"
+                                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=1&modestbranding=1&rel=0&iv_load_policy=3`}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
+                              ) : (
+                                <div className="flex items-center justify-center h-full text-white opacity-50 font-bold">Invalid Video URL</div>
+                              );
+                            })()}
+                          </div>
+                        ) : featureFlags?.promotionImage && !featureFlags?.heroSection?.showCarousel ? (
+                          <div className="absolute inset-0 z-0 cursor-pointer block h-full w-full">
+                            {featureFlags?.promotionUrl ? (() => {
+                              const url = featureFlags.promotionUrl;
+                              const isExternal = url.startsWith('http') || url.startsWith('www');
+                              let href = url;
+                              if (isExternal) {
+                                href = url.startsWith('www') ? `https://${url}` : url;
+                              } else {
+                                href = url.startsWith('/') ? url : `/${url}`;
+                              }
+
+                              return isExternal ? (
+                                <Link href={href} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                                  <img
+                                    src={featureFlags.promotionImage}
+                                    alt="Promotion"
+                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                    width={800}
+                                    height={450}
+                                    fetchPriority="high"
+                                    loading="eager"
+                                  />
+                                </Link>
+                              ) : (
+                                <Link href={href} className="block w-full h-full">
+                                  <img
+                                    src={featureFlags.promotionImage}
+                                    alt="Promotion"
+                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                    width={800}
+                                    height={450}
+                                    fetchPriority="high"
+                                    loading="eager"
+                                  />
+                                </Link>
+                              );
+                            })() : (
+                              <img
+                                src={featureFlags.promotionImage}
+                                alt="Promotion"
+                                className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                                width={800}
+                                height={450}
+                                fetchPriority="high"
+                                loading="eager"
+                              />
+                            )}
+                          </div>
+                        ) : null}
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Services Section */}
-            <div className="max-w-7xl mx-auto px-4 relative z-20 -mt-6 md:-mt-24 mb-10">
-              <motion.div
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                className="bg-white rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 border border-slate-100 p-8 md:p-12 mb-4"
-              >
-                <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight mb-2">Explore Services</h3>
-                    <p className="text-slate-500 font-medium">Ancient wisdom meets modern technology.</p>
-                  </div>
-                  <div className="w-full md:w-auto h-1 bg-slate-100 rounded-full flex-1 md:mx-6"></div>
+                    </div>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-                  {exploreServices && exploreServices.length > 0 ? (
-                    exploreServices
-                      .filter(s => s.enabled)
-                      .sort((a, b) => (a.order || 0) - (b.order || 0))
-                      .map((service, index) => {
-                        const Icon = LucideIconMap[service.icon] || Sparkles;
-                        return (
-                          <ServiceCard
-                            key={service.id || index}
-                            icon={Icon}
-                            title={service.title}
-                            desc={service.desc}
-                            color={service.color}
-                            href={service.href}
-                            delay={0.1 + (index * 0.1)}
-                            badges={navBadges}
-                          />
-                        );
-                      })
-                  ) : (
-                    <>
+              )}
+            </div>
+          </div>
+
+          {/* Targeted Loader for lower section only */}
+          <div className="max-w-7xl mx-auto px-4 relative z-20 -mt-6 md:-mt-24 mb-10">
+            {(!mounted || (authLoading && loading)) ? (
+               <div className="bg-white rounded-[2.5rem] p-20 flex flex-col items-center justify-center border border-slate-100 shadow-xl">
+                  <CosmicLoader size="lg" message="Aligning the Stars..." />
+               </div>
+            ) : (
+              <>
+                {/* Services Section */}
+                <motion.div
+                  initial={{ y: 40, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6 }}
+                  className="bg-white rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 border border-slate-100 p-8 md:p-12 mb-4"
+                >
+                  <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight mb-2">Explore Services</h3>
+                      <p className="text-slate-500 font-medium">Ancient wisdom meets modern technology.</p>
+                    </div>
+                    <div className="w-full md:w-auto h-1 bg-slate-100 rounded-full flex-1 md:mx-6"></div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+                    {exploreServices && exploreServices.length > 0 ? (
+                      exploreServices
+                        .filter(s => s.enabled)
+                        .sort((a, b) => (a.order || 0) - (b.order || 0))
+                        .map((service, index) => {
+                          const Icon = LucideIconMap[service.icon] || Sparkles;
+                          return (
+                            <ServiceCard
+                              key={service.id || index}
+                              icon={Icon}
+                              title={service.title}
+                              desc={service.desc}
+                              color={service.color}
+                              href={service.href}
+                              delay={0.1 + (index * 0.1)}
+                              badges={navBadges}
+                            />
+                          );
+                        })
+                    ) : (
                       <>
                         {featureFlags?.enableChat && <ServiceCard icon={MessageCircle} title="Chat" desc="First Free" color="blue" href="/chat-with-astrologer" delay={0.1} badges={navBadges} />}
                         {featureFlags?.enableCall && <ServiceCard icon={Phone} title="Call" desc="Connect Now" color="green" href="/astrologers" delay={0.2} badges={navBadges} />}
@@ -426,110 +432,109 @@ export default function HomeClient() {
                         <ServiceCard icon={PlayCircle} title="Horoscope" desc="Daily Insights" color="red" href="/horoscope" delay={0.5} badges={navBadges} />
                         <ServiceCard icon={Calendar} title="Panchang" desc="Muhurat" color="orange" href="/panchang" delay={0.5} badges={navBadges} />
                       </>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Live Astrologers Section */}
-            {featureFlags?.enableTopAstrologers && (
-              <div className="max-w-7xl mx-auto px-6 mt-10">
-                <div className="flex justify-between items-end mb-10">
-                  <div>
-                    <span className="text-emerald-600 font-bold tracking-wider text-xs uppercase mb-2 block flex items-center gap-2">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      Live Now
-                    </span>
-                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">Top Astrologers</h3>
+                    )}
                   </div>
-                  <Link href="/astrologers" className="hidden md:flex items-center gap-2 text-slate-500 font-bold hover:text-indigo-600 transition-colors group">
-                    View All Experts <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {astrologers.map((astro, index) => (
-                    <motion.div
-                      key={astro._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 + (index * 0.1) }}
-                      className="bg-white p-5 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl hover:shadow-indigo-500/10 transition-all group relative overflow-hidden"
-                    >
-                      <div className="flex flex-row gap-5 items-start">
-                        <div className="flex-shrink-0 flex flex-col items-center">
-                          <div className="relative">
-                            <div className={`w-24 h-24 rounded-full p-1 border-[3px] ${astro.isOnline ? 'border-emerald-500' : 'border-orange-400'}`}>
-                              <div className="w-full h-full rounded-full overflow-hidden">
-                                {astro.image ? (
-                                  <img src={astro.image} alt={astro.displayName} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300 font-bold text-2xl">
-                                    {astro.displayName?.[0]}
+                {/* Live Astrologers Section */}
+                {featureFlags?.enableTopAstrologers && (
+                  <div className="mt-10">
+                    <div className="flex justify-between items-end mb-10">
+                      <div>
+                        <span className="text-emerald-600 font-bold tracking-wider text-xs uppercase mb-2 block flex items-center gap-2">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          Live Now
+                        </span>
+                        <h3 className="text-3xl font-black text-slate-900 tracking-tight">Top Astrologers</h3>
+                      </div>
+                      <Link href="/astrologers" className="hidden md:flex items-center gap-2 text-slate-500 font-bold hover:text-indigo-600 transition-colors group">
+                        View All Experts <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {astrologers.map((astro, index) => (
+                        <motion.div
+                          key={astro._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 + (index * 0.1) }}
+                          className="bg-white p-5 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl hover:shadow-indigo-500/10 transition-all group relative overflow-hidden"
+                        >
+                          <div className="flex flex-row gap-5 items-start">
+                            <div className="flex-shrink-0 flex flex-col items-center">
+                              <div className="relative">
+                                <div className={`w-24 h-24 rounded-full p-1 border-[3px] ${astro.isOnline ? 'border-emerald-500' : 'border-orange-400'}`}>
+                                  <div className="w-full h-full rounded-full overflow-hidden">
+                                    {astro.image ? (
+                                      <img src={astro.image} alt={astro.displayName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300 font-bold text-2xl">
+                                        {astro.displayName?.[0]}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                </div>
+                                {astro.isOnline && <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full z-10" />}
+                              </div>
+                              <div className="mt-2 flex flex-col items-center">
+                                <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                                  <Star size={12} fill="currentColor" />
+                                  <span>{astro.rating || 4.5}</span>
+                                </div>
                               </div>
                             </div>
-                            {astro.isOnline && <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full z-10" />}
-                          </div>
-                          <div className="mt-2 flex flex-col items-center">
-                            <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
-                              <Star size={12} fill="currentColor" />
-                              <span>{astro.rating || 4.5}</span>
+
+                            <div className="flex-1 min-w-0 pt-1">
+                              <Link href={`/astrologers/details?id=${astro.slug || astro._id}`}>
+                                <h4 className="font-bold text-lg text-slate-900 mb-0.5 flex items-center gap-1.5 truncate">
+                                  {astro.displayName}
+                                  <CheckCircle size={14} className="text-emerald-500 fill-emerald-50" />
+                                </h4>
+                              </Link>
+                              <p className="text-xs text-slate-500 font-medium truncate mb-1">{astro.skills?.slice(0, 3).join(', ')}</p>
+                              <p className="text-xs text-slate-500 font-medium mb-3">Exp: {astro.experienceYears || 5} Years</p>
+                              <p className="text-sm font-bold text-slate-900">
+                                ₹{astro.charges?.chatPerMinute}<span className="text-slate-400 font-normal text-xs">/min</span>
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col gap-2 w-28">
+                              {featureFlags?.enableChat && (
+                                <Link href={`/chat-with-astrologer/session?id=${astro._id}`}>
+                                  <button className="w-full py-2 px-3 rounded-xl border border-indigo-500 text-indigo-600 font-bold text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5">
+                                    <MessageCircle size={14} /> Chat
+                                  </button>
+                                </Link>
+                              )}
+                              {featureFlags?.enableCall && (
+                                <Link href={`/astrologers/details?id=${astro.slug || astro._id}`}>
+                                  <button className="w-full py-2 px-3 rounded-xl border border-emerald-500 text-emerald-600 font-bold text-sm hover:bg-emerald-50 transition-all flex items-center justify-center gap-1.5">
+                                    <Phone size={14} /> Call
+                                  </button>
+                                </Link>
+                              )}
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                        <div className="flex-1 min-w-0 pt-1">
-                          <Link href={`/astrologers/details?id=${astro.slug || astro._id}`}>
-                            <h4 className="font-bold text-lg text-slate-900 mb-0.5 flex items-center gap-1.5 truncate">
-                              {astro.displayName}
-                              <CheckCircle size={14} className="text-emerald-500 fill-emerald-50" />
-                            </h4>
-                          </Link>
-                          <p className="text-xs text-slate-500 font-medium truncate mb-1">{astro.skills?.slice(0, 3).join(', ')}</p>
-                          <p className="text-xs text-slate-500 font-medium mb-3">Exp: {astro.experienceYears || 5} Years</p>
-                          <p className="text-sm font-bold text-slate-900">
-                            ₹{astro.charges?.chatPerMinute}<span className="text-slate-400 font-normal text-xs">/min</span>
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col gap-2 w-28">
-                          {featureFlags?.enableChat && (
-                            <Link href={`/chat-with-astrologer/session?id=${astro._id}`}>
-                              <button className="w-full py-2 px-3 rounded-xl border border-indigo-500 text-indigo-600 font-bold text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-1.5">
-                                <MessageCircle size={14} /> Chat
-                              </button>
-                            </Link>
-                          )}
-                          {featureFlags?.enableCall && (
-                            <Link href={`/astrologers/details?id=${astro.slug || astro._id}`}>
-                              <button className="w-full py-2 px-3 rounded-xl border border-emerald-500 text-emerald-600 font-bold text-sm hover:bg-emerald-50 transition-all flex items-center justify-center gap-1.5">
-                                <Phone size={14} /> Call
-                              </button>
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                {/* Dynamic Page Content & FAQs */}
+                <div className="mt-10">
+                  <PageContentSection slug="home" />
                 </div>
-              </div>
+              </>
             )}
-
-            {/* Dynamic Page Content & FAQs */}
-            <div className="mt-10">
-              <PageContentSection slug="home" />
-            </div>
-          </motion.div>
-        )
-        }
-      </AnimatePresence >
-    </main >
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </main>
   );
 }
 
