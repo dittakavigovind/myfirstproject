@@ -11,6 +11,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import JsonUpload from '@/components/admin/JsonUpload';
 
 const ZODIAC_SIGNS = [
     'aries', 'taurus', 'gemini', 'cancer',
@@ -246,6 +247,16 @@ export default function MonthlyHoroscopeAdmin() {
                                     const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                                     return filledMonths.includes(monthStr) ? "bg-purple-100 text-purple-600 font-bold rounded-lg" : undefined;
                                 }}
+                            />
+                        </div>
+                        
+                        <div className="mt-8 pt-8 border-t border-slate-100">
+                            <JsonUpload 
+                                typeLabel="Monthly Horoscope" 
+                                onUploadSuccess={() => {
+                                    fetchAvailability(selectedDate.getFullYear());
+                                    fetchHoroscope(selectedDate);
+                                }} 
                             />
                         </div>
                     </div>

@@ -30,23 +30,20 @@ export default function WalletPage() {
     ];
 
     return (
-        <div className="min-h-screen pb-24 animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="pt-6 px-4 flex items-center justify-between">
-                <button
+        <div className="pb-40 animate-in fade-in duration-500 px-4">
+            {/* Minimal Sub-header with Back Button */}
+            <div className="flex items-center gap-4 mb-6 pt-2">
+                <button 
                     onClick={() => router.back()}
-                    className="p-2 bg-white/5 rounded-full text-white/40 mb-4"
+                    className="p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10 active:scale-95 transition-all"
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <div className="text-right">
-                    <h1 className="text-xl font-black text-white">My Wallet</h1>
-                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1">Ready for Consultations</p>
-                </div>
+                <h1 className="text-sm font-black text-white uppercase tracking-widest">My Wallet</h1>
             </div>
 
             {/* Balance Card */}
-            <div className="px-4 mt-6">
+            <div className="mt-2">
                 <div className="relative h-48 rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-indigo-600 to-electric-violet p-8 flex flex-col justify-between shadow-2xl shadow-indigo-500/20">
                     <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
                     <div className="flex justify-between items-start relative z-10">
@@ -69,7 +66,7 @@ export default function WalletPage() {
             </div>
 
             {/* Recharge Plans */}
-            <div className="px-4 mt-10">
+            <div className="mt-10">
                 <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-1 flex items-center gap-2">
                     <Plus size={14} className="text-solar-gold" /> Recharge Credits
                 </h3>
@@ -99,7 +96,7 @@ export default function WalletPage() {
             </div>
 
             {/* Transaction History */}
-            <div className="px-4 mt-12">
+            <div className="mt-12">
                 <div className="flex items-center justify-between mb-4 px-1">
                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                         <History size={14} /> Recent Activity
@@ -127,11 +124,11 @@ export default function WalletPage() {
                 </div>
             </div>
 
-            {/* Bottom Button */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0b1026] to-transparent pointer-events-none">
+            {/* Bottom Button - Positioned above Bottom Nav */}
+            <div className="fixed bottom-24 left-0 right-0 px-4 pointer-events-none">
                 <button
                     disabled={!selectedPlan}
-                    className="w-full h-16 rounded-[2rem] bg-indigo-600 text-white font-black text-lg shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
+                    className="w-full h-16 rounded-[2rem] bg-indigo-600 text-white font-black text-lg shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
                 >
                     <CreditCard size={20} />
                     Confirm Recharge

@@ -11,6 +11,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { startOfWeek, endOfWeek, format } from 'date-fns';
+import JsonUpload from '@/components/admin/JsonUpload';
 
 const ZODIAC_SIGNS = [
     'aries', 'taurus', 'gemini', 'cancer',
@@ -241,6 +242,17 @@ export default function WeeklyHoroscopeAdmin() {
                                 dayClassName={(date) => filledWeeks.some(w => date >= w.start && date <= w.end) ? "bg-green-100 text-green-600 font-bold" : undefined}
                             />
                         </div>
+                        
+                        <div className="mt-8 pt-8 border-t border-slate-100">
+                            <JsonUpload 
+                                typeLabel="Weekly Horoscope" 
+                                onUploadSuccess={() => {
+                                    fetchAvailability(selectedDate.getFullYear());
+                                    fetchHoroscope(selectedDate);
+                                }} 
+                            />
+                        </div>
+
                         <p className="text-xs text-slate-400 mt-4 text-center">
                             Pick any day to select that entire week (Sun-Sat).
                         </p>

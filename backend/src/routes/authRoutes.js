@@ -14,6 +14,16 @@ const {
 const passport = require('../config/passport');
 const { protect } = require('../middleware/authMiddleware');
 
+// Diagnostic Test Route
+router.get('/test', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'Backend is reachable from App!', 
+        time: new Date(),
+        headers: req.headers
+    });
+});
+
 // Email Auth
 router.post('/register', registerUser);
 router.post('/login', loginUser);
@@ -50,6 +60,13 @@ router.post('/otp/verify', verifyOtp);
 
 // WhatsApp OTP (MSG91) - Merged from otpRoutes
 const { sendWhatsappOtp, verifyWhatsappOtp } = require('../controllers/otpController');
+router.get('/send-whatsapp-otp', (req, res) => {
+    console.log('--- [DEBUG] ACCIDENTAL GET on send-whatsapp-otp ---', {
+        headers: req.headers,
+        query: req.query
+    });
+    res.status(405).json({ success: false, message: 'Method Not Allowed. Please use POST.' });
+});
 router.post('/send-whatsapp-otp', sendWhatsappOtp);
 router.post('/verify-whatsapp-otp', verifyWhatsappOtp);
 

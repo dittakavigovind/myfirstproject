@@ -11,6 +11,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import JsonUpload from '@/components/admin/JsonUpload';
 
 const ZODIAC_SIGNS = [
     'aries', 'taurus', 'gemini', 'cancer',
@@ -255,6 +256,16 @@ export default function DailyHoroscopeAdmin() {
                                 highlightDates={[{ "react-datepicker__day--highlighted-custom-1": filledDates, }]}
                                 className="border rounded-lg"
                                 dayClassName={(date) => filledDates.some(d => d.toDateString() === date.toDateString()) ? "bg-green-100 text-green-600 font-bold rounded-full" : undefined}
+                            />
+                        </div>
+                        
+                        <div className="mt-8 pt-8 border-t border-slate-100">
+                            <JsonUpload 
+                                typeLabel="Daily Horoscope" 
+                                onUploadSuccess={() => {
+                                    fetchAvailability(selectedDate.getFullYear());
+                                    fetchHoroscope(selectedDate);
+                                }} 
                             />
                         </div>
                     </div>

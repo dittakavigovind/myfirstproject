@@ -26,6 +26,9 @@ router.get('/daily/availability', protect, authorize('admin', 'manager'), contro
 router.get('/weekly/availability', protect, authorize('admin', 'manager'), controller.getWeeklyAvailability);
 router.get('/monthly/availability', protect, authorize('admin', 'manager'), controller.getMonthlyAvailability);
 
+// Import
+router.post('/import', protect, authorize('admin', 'manager'), controller.importHoroscopes);
+
 // Featured Astrologer
 router.get('/featured-astrologer/availability', protect, authorize('admin', 'manager'), controller.checkFeaturedAvailability);
 router.get('/featured-astrologer/search', protect, authorize('admin', 'manager'), controller.getFeaturedAstrologerByName);

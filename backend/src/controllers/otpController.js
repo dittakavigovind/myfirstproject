@@ -13,37 +13,51 @@ const generateToken = (id) => {
 };
 
 exports.sendWhatsappOtp = async (req, res) => {
+    console.log('--- [DEBUG] START sendWhatsappOtp ---', req.body);
     try {
         const { mobile_number } = req.body;
 
         if (!mobile_number) {
+            console.log('--- [DEBUG] ERROR: Mobile number missing');
             return res.status(400).json({ success: false, message: 'Mobile number is required' });
         }
 
+        console.log('--- [DEBUG] CHECKING RATE LIMIT ---');
         // 1. Rate Limiting Check (Simple 20 req/hour per number)
         const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
         const count = await OtpVerification.countDocuments({
             mobileNumber: mobile_number,
             createdAt: { $gte: hourAgo }
         });
+        console.log(`--- [DEBUG] RATE LIMIT COUNT: ${count} ---`);
 
         if (count >= 20) {
+            console.log('--- [DEBUG] ERROR: Rate limit exceeded');
             return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
         }
 
         // 2. Generate OTP
+        console.log('--- [DEBUG] GENERATING OTP ---');
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         // 3. Hash OTP
+        console.log('--- [DEBUG] HASHING OTP ---');
         const salt = await bcrypt.genSalt(10);
         const otpHash = await bcrypt.hash(otp, salt);
 
         // 4. Store in DB
-        await OtpVerification.create({
-            mobileNumber: mobile_number,
-            otpHash: otpHash,
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
-        });
+        console.log('--- [DEBUG] STORING OTP IN DB ---');
+        try {
+            await OtpVerification.create({
+                mobileNumber: mobile_number,
+                otpHash: otpHash,
+                expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+            });
+            console.log('--- [DEBUG] OTP STORED SUCCESSFULLY ---');
+        } catch (dbErr) {
+            console.error('--- [DEBUG] DATABASE ERROR during OTP creation:', dbErr.message);
+            throw dbErr;
+        }
 
         // 4b. Hardcoded OTP for Testing
         const purePhone = mobile_number.replace(/\D/g, ''); // Strip all non-digits
@@ -119,6 +133,7 @@ exports.sendWhatsappOtp = async (req, res) => {
 };
 
 exports.verifyWhatsappOtp = async (req, res) => {
+    console.log('--- Verify OTP Request ---', req.body);
     try {
         const { mobile_number, otp } = req.body;
 

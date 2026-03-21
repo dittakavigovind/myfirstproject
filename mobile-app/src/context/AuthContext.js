@@ -44,7 +44,13 @@ export function AuthProvider({ children }) {
     const login = async (token, userData) => {
         await Preferences.set({ key: "authToken", value: token });
         setUser(userData);
-        router.push("/");
+        
+        // Role-based redirection: Astrologers land on Profile, Seekers land on Home
+        if (userData?.role === 'astrologer') {
+            router.push("/profile");
+        } else {
+            router.push("/");
+        }
     };
 
     const logout = async () => {
@@ -61,7 +67,7 @@ export function AuthProvider({ children }) {
     }, [user, loading, pathname, router]);
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, setUser }}>
             {!loading ? children : <div className="min-h-screen flex items-center justify-center bg-cosmic-indigo"><div className="w-8 h-8 rounded-full border-t-2 border-electric-violet animate-spin" /></div>}
         </AuthContext.Provider>
     );

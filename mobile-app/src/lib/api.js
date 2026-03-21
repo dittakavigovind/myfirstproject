@@ -3,7 +3,8 @@ import { Preferences } from "@capacitor/preferences";
 
 // Assuming the local backend runs on localhost:5000. 
 // For physical devices, you might need your local IP here (e.g., http://192.168.x.x:5000)
-const API_URL = "http://localhost:5000/api";
+// Use localhost for Port Forwarding (Most stable for physical devices via USB)
+const API_URL = "http://192.168.29.133:5000/api";
 
 const api = axios.create({
     baseURL: API_URL,

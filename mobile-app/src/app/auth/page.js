@@ -112,10 +112,15 @@ export default function AuthPage() {
                                         <input
                                             type="tel"
                                             value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setPhone(val);
+                                            }}
                                             placeholder="Enter 10-digit number"
                                             className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium"
                                             disabled={loading}
+                                            maxLength={10}
+                                            inputMode="numeric"
                                         />
                                     </div>
                                     <p className="text-[10px] text-slate-500 mt-2 text-center">We'll send an OTP via WhatsApp</p>
@@ -154,11 +159,15 @@ export default function AuthPage() {
                                         <input
                                             type="text"
                                             value={otp}
-                                            onChange={(e) => setOtp(e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                setOtp(val);
+                                            }}
                                             placeholder="Enter OTP"
                                             className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white tracking-[0.2em] font-bold text-lg placeholder:text-slate-500 placeholder:tracking-normal placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-solar-gold/50 transition-all"
                                             disabled={loading}
                                             maxLength={6}
+                                            inputMode="numeric"
                                         />
                                     </div>
                                     <p className="text-[10px] text-slate-500 mt-2 text-center">OTP sent to {phone.startsWith('+') ? phone : `+91 ${phone}`}</p>

@@ -429,3 +429,94 @@ exports.getAllFeaturedSchedules = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.importHoroscopes = async (req, res) => {
+    try {
+        const data = req.body;
+
+        if (!Array.isArray(data)) {
+            return res.status(400).json({ success: false, message: 'JSON data must be an array of horoscope objects' });
+        }
+
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        for (const entry of data) {
+            const { type, signs, title } = entry;
+
+            if (!type || !signs || !title) {
+                skippedCount++;
+                continue;
+            }
+
+            if (type === 'daily') {
+                const { date } = entry;
+                if (!date) {
+                    skippedCount++;
+                    continue;
+                }
+
+                // Use IST Noon (12:00) for maximum compatibility across all server timezones
+                const istNoon = moment(date).hour(12).startOf('hour').toDate();
+
+                // Fuzzy match (+/- 12h) to find and replace any previous wrong-timezone records
+                const startWindow = moment(istNoon).subtract(12, 'hours').toDate();
+                const endWindow = moment(istNoon).add(12, 'hours').toDate();
+
+                await DailyHoroscope.findOneAndUpdate(
+                    { date: { $gte: startWindow, $lte: endWindow } },
+                    { date: istNoon, title, signs },
+                    { upsert: true, new: true }
+                );
+                importedCount++;
+
+            } else if (type === 'weekly') {
+                const { weekStartDate, weekEndDate } = entry;
+                if (!weekStartDate || !weekEndDate) {
+                    skippedCount++;
+                    continue;
+                }
+
+                const start = moment(weekStartDate).hour(12).startOf('hour').toDate();
+                const end = moment(weekEndDate).hour(12).startOf('hour').toDate();
+
+                const startWindowLow = moment(start).subtract(12, 'hours').toDate();
+                const startWindowHigh = moment(start).add(12, 'hours').toDate();
+
+                await WeeklyHoroscope.findOneAndUpdate(
+                    {
+                        weekStartDate: { $gte: startWindowLow, $lte: startWindowHigh }
+                    },
+                    { weekStartDate: start, weekEndDate: end, title, signs },
+                    { upsert: true, new: true }
+                );
+                importedCount++;
+
+            } else if (type === 'monthly') {
+                const { month, year } = entry;
+                if (!month || !year) {
+                    skippedCount++;
+                    continue;
+                }
+                await MonthlyHoroscope.findOneAndUpdate(
+                    { month: parseInt(month), year: parseInt(year) },
+                    { month, year, title, signs },
+                    { upsert: true, new: true }
+                );
+                importedCount++;
+            } else {
+                skippedCount++;
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Import completed: ${importedCount} imported, ${skippedCount} skipped.`,
+            data: { importedCount, skippedCount }
+        });
+
+    } catch (error) {
+        console.error('Import process error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

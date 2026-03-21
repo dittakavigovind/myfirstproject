@@ -13,6 +13,9 @@
 :root {
   --background: #0b1026;
   --foreground: #f8fafc;
+  /* Safe Area Insets for Mobile Devices */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body {
