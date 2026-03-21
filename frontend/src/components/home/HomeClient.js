@@ -222,20 +222,33 @@ export default function HomeClient() {
                 }}
               >
                 <AnimatePresence initial={false} mode="popLayout">
-                  <motion.img
-                    key={currentImageIndex}
-                    src={resolveImageUrl(typeof featureFlags.heroSection.carouselImages[currentImageIndex] === 'string' ? featureFlags.heroSection.carouselImages[currentImageIndex] : featureFlags.heroSection.carouselImages[currentImageIndex]?.image)}
-                    alt="Hero Background"
-                    className="absolute inset-0 w-full h-full object-[center_top] md:object-cover"
-                    width={1400}
-                    height={600}
-                    initial={{ opacity: 0, scale: 1.05 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    fetchPriority="high"
-                    loading="eager"
-                  />
+                  {currentImageIndex === 0 ? (
+                    <img
+                      key="hero-first"
+                      src={resolveImageUrl(typeof featureFlags.heroSection.carouselImages[0] === 'string' ? featureFlags.heroSection.carouselImages[0] : featureFlags.heroSection.carouselImages[0]?.image)}
+                      alt="Hero Background"
+                      className="absolute inset-0 w-full h-full object-[center_top] md:object-cover"
+                      width={1400}
+                      height={600}
+                      fetchPriority="high"
+                      loading="eager"
+                    />
+                  ) : (
+                    <motion.img
+                      key={currentImageIndex}
+                      src={resolveImageUrl(typeof featureFlags.heroSection.carouselImages[currentImageIndex] === 'string' ? featureFlags.heroSection.carouselImages[currentImageIndex] : featureFlags.heroSection.carouselImages[currentImageIndex]?.image)}
+                      alt="Hero Background"
+                      className="absolute inset-0 w-full h-full object-[center_top] md:object-cover"
+                      width={1400}
+                      height={600}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      fetchPriority="high"
+                      loading="eager"
+                    />
+                  )}
                 </AnimatePresence>
               </div>
             ) : (
