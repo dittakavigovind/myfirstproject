@@ -30,8 +30,9 @@ export async function generateMetadata({ params }) {
 
         if (data.success && data.data) {
             const post = data.data;
-            const title = `${post.metaTitle || post.title} | Way2Astro`;
-            const description = post.metaDescription || post.excerpt || (post.content ? post.content.substring(0, 160).replace(/(<([^>]+)>)/gi, "") : "Read the latest astrology insights on Way2Astro.");
+            const seoTitle = post.seo?.ogTitle || post.seo?.metaTitle || post.title;
+            const title = `${seoTitle} | Way2Astro`;
+            const description = post.seo?.ogDescription || post.seo?.metaDescription || post.excerpt || (post.content ? post.content.substring(0, 160).replace(/(<([^>]+)>)/gi, "") : "Read the latest astrology insights on Way2Astro.");
 
             // Dynamic OG Image with fallback: OG Image -> Featured Image -> Logo
             let imageUrl = `${baseUrl}/logo.png`;
