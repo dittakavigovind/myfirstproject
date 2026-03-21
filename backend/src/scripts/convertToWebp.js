@@ -65,8 +65,8 @@ async function convertToWebp() {
                 try {
                     // 1. Convert to WebP
                     await sharp(oldPath)
-                        .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
-                        .webp({ quality: 80 })
+                        .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+                        .webp({ quality: 70, effort: 6 })
                         .toFile(newPath);
 
                     // 2. Update Database References

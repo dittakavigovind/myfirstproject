@@ -66,18 +66,16 @@ const uploadMiddleware = (req, res, next) => {
                     let newFilename = req.file.filename.replace(ext, '.webp');
                     const newPath = path.join(uploadDir, newFilename);
 
-                    let sharpInstance = sharp(filePath)
+                    // Convert everything to webp by default for better performance
+                    await sharp(filePath)
                         .resize({
-                            width: 1920,
-                            height: 1920,
+                            width: 1400,
+                            height: 1400,
                             fit: 'inside',
                             withoutEnlargement: true
-                        });
-
-                    // Convert everything to webp by default for better performance
-                    sharpInstance = sharpInstance.webp({ quality: 80 });
-
-                    await sharpInstance.toFile(newPath);
+                        })
+                        .webp({ quality: 70, effort: 6 })
+                        .toFile(newPath);
 
                     // If extension changed, delete original and update req.file
                     if (ext !== '.webp') {

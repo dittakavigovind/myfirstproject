@@ -105,8 +105,8 @@ router.post('/upload', protect, admin, upload.single('file'), async (req, res) =
             const newPath = path.join(uploadDir, newFilename);
 
             await sharp(filePath)
-                .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
-                .webp({ quality: 80 })
+                .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 70, effort: 6 })
                 .toFile(newPath);
 
             fs.unlinkSync(filePath);
