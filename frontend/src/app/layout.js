@@ -57,6 +57,16 @@ export async function generateMetadata() {
         title: 'Way2Astro - Your Path to Destiny',
         description: 'Premium Astrology Consultations, Kundli & Daily Horoscopes.',
         metadataBase: new URL(baseUrl),
+        preconnect: [
+            'https://api.way2astro.com',
+            'https://api.razorpay.com',
+            'https://cdn.razorpay.com'
+        ],
+        dnsPrefetch: [
+            'https://api.way2astro.com',
+            'https://api.razorpay.com',
+            'https://cdn.razorpay.com'
+        ],
         openGraph: {
             images: ['/logo.png']
         },
