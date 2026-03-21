@@ -44,125 +44,136 @@ async function convertToWebp() {
         }
 
         const files = fs.readdirSync(uploadDir);
-        const imageFiles = files.filter(f => ['.jpg', '.jpeg', '.png'].includes(path.extname(f).toLowerCase()));
+        const imageFiles = files.filter(f => ['.jpg', '.jpeg', '.png', '.webp'].includes(path.extname(f).toLowerCase()));
 
-        console.log(`Found ${imageFiles.length} images to convert.`);
+        console.log(`Found ${imageFiles.length} images to process (including WebP for re-compression).`);
         if (DRY_RUN) console.log('--- DRY RUN MODE ---');
 
         let convertedCount = 0;
 
         for (const file of imageFiles) {
-            const ext = path.extname(file);
+            const ext = path.extname(file).toLowerCase();
             const baseName = path.basename(file, ext);
-            const newFile = `${baseName}.webp`;
+            const newFile = ext === '.webp' ? file : `${baseName}.webp`;
             
             const oldPath = path.join(uploadDir, file);
             const newPath = path.join(uploadDir, newFile);
 
-            console.log(`Processing ${file} -> ${newFile}`);
+            console.log(`Processing ${file} (target: ${newFile})`);
 
             if (!DRY_RUN) {
                 try {
-                    // 1. Convert to WebP
-                    await sharp(oldPath)
-                        .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
-                        .webp({ quality: 70, effort: 6 })
-                        .toFile(newPath);
+                    // 1. Process with Sharp
+                    // If it's already a webp, we use a buffer to avoid "file in use" errors during write-back
+                    if (ext === '.webp') {
+                        const buffer = await sharp(oldPath)
+                            .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+                            .webp({ quality: 70, effort: 6 })
+                            .toBuffer();
+                        fs.writeFileSync(oldPath, buffer);
+                        console.log(`   --> Re-compressed existing WebP: ${file}`);
+                    } else {
+                        // Standard conversion for JPG/PNG
+                        await sharp(oldPath)
+                            .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+                            .webp({ quality: 70, effort: 6 })
+                            .toFile(newPath);
 
-                    // 2. Update Database References
-                    const oldUrlPart = file;
-                    const newUrlPart = newFile;
+                        // 2. Update Database References (Only for new conversions)
+                        const oldUrlPart = file;
+                        const newUrlPart = newFile;
 
-                    // Media
-                    const mediaItems = await Media.find({ filename: file });
-                    for (const item of mediaItems) {
-                        item.filename = newFile;
-                        item.url = item.url.replace(file, newFile);
-                        await item.save();
-                    }
-
-                    // BlogPost (Content + FeaturedImage + SEO)
-                    await BlogPost.updateMany(
-                        { featuredImage: { $regex: file } },
-                        [{ $set: { featuredImage: { $replaceOne: { input: "$featuredImage", find: file, replacement: newFile } } } }]
-                    );
-                    await BlogPost.updateMany(
-                        { "seo.ogImage": { $regex: file } },
-                        [{ $set: { "seo.ogImage": { $replaceOne: { input: "$seo.ogImage", find: file, replacement: newFile } } } }]
-                    );
-                    // BlogPost Content (HTML)
-                    const postsWithContent = await BlogPost.find({ content: { $regex: file } });
-                    for (const post of postsWithContent) {
-                        post.content = post.content.split(file).join(newFile);
-                        await post.save();
-                    }
-
-                    // Temple
-                    const temples = await Temple.find({ 
-                        $or: [
-                            { images: { $regex: file } },
-                            { ogImage: { $regex: file } },
-                            { "sevas.image": { $regex: file } }
-                        ]
-                    });
-                    for (const temple of temples) {
-                        temple.images = temple.images.map(img => img.includes(file) ? img.replace(file, newFile) : img);
-                        if (temple.ogImage && temple.ogImage.includes(file)) {
-                            temple.ogImage = temple.ogImage.replace(file, newFile);
+                        // Media
+                        const mediaItems = await Media.find({ filename: file });
+                        for (const item of mediaItems) {
+                            item.filename = newFile;
+                            item.url = item.url.replace(file, newFile);
+                            await item.save();
                         }
-                        temple.sevas = temple.sevas.map(seva => {
-                            if (seva.image && seva.image.includes(file)) {
-                                seva.image = seva.image.replace(file, newFile);
-                            }
-                            return seva;
+
+                        // BlogPost (Content + FeaturedImage + SEO)
+                        await BlogPost.updateMany(
+                            { featuredImage: { $regex: file } },
+                            [{ $set: { featuredImage: { $replaceOne: { input: "$featuredImage", find: file, replacement: newFile } } } }]
+                        );
+                        await BlogPost.updateMany(
+                            { "seo.ogImage": { $regex: file } },
+                            [{ $set: { "seo.ogImage": { $replaceOne: { input: "$seo.ogImage", find: file, replacement: newFile } } } }]
+                        );
+                        // BlogPost Content (HTML)
+                        const postsWithContent = await BlogPost.find({ content: { $regex: file } });
+                        for (const post of postsWithContent) {
+                            post.content = post.content.split(file).join(newFile);
+                            await post.save();
+                        }
+
+                        // Temple
+                        const temples = await Temple.find({ 
+                            $or: [
+                                { images: { $regex: file } },
+                                { ogImage: { $regex: file } },
+                                { "sevas.image": { $regex: file } }
+                            ]
                         });
-                        await temple.save();
-                    }
-
-                    // Astrologer
-                    const astrologers = await Astrologer.find({
-                        $or: [
-                            { image: { $regex: file } },
-                            { gallery: { $regex: file } }
-                        ]
-                    });
-                    for (const astro of astrologers) {
-                        if (astro.image && astro.image.includes(file)) {
-                            astro.image = astro.image.replace(file, newFile);
-                        }
-                        astro.gallery = astro.gallery.map(img => img.includes(file) ? img.replace(file, newFile) : img);
-                        await astro.save();
-                    }
-
-                    // SiteSettings
-                    const settings = await SiteSettings.find();
-                    for (const s of settings) {
-                        let changed = false;
-                        if (s.logoDesktop && s.logoDesktop.includes(file)) { s.logoDesktop = s.logoDesktop.replace(file, newFile); changed = true; }
-                        if (s.logoMobile && s.logoMobile.includes(file)) { s.logoMobile = s.logoMobile.replace(file, newFile); changed = true; }
-                        if (s.logoReport && s.logoReport.includes(file)) { s.logoReport = s.logoReport.replace(file, newFile); changed = true; }
-                        if (s.promotionImage && s.promotionImage.includes(file)) { s.promotionImage = s.promotionImage.replace(file, newFile); changed = true; }
-                        if (s.panchangSharePromo && s.panchangSharePromo.includes(file)) { s.panchangSharePromo = s.panchangSharePromo.replace(file, newFile); changed = true; }
-                        if (s.heroSection?.carouselImages) {
-                            s.heroSection.carouselImages = s.heroSection.carouselImages.map(ci => {
-                                if (ci.image && ci.image.includes(file)) {
-                                    ci.image = ci.image.replace(file, newFile);
-                                    changed = true;
+                        for (const temple of temples) {
+                            temple.images = temple.images.map(img => img.includes(file) ? img.replace(file, newFile) : img);
+                            if (temple.ogImage && temple.ogImage.includes(file)) {
+                                temple.ogImage = temple.ogImage.replace(file, newFile);
+                            }
+                            temple.sevas = temple.sevas.map(seva => {
+                                if (seva.image && seva.image.includes(file)) {
+                                    seva.image = seva.image.replace(file, newFile);
                                 }
-                                return ci;
+                                return seva;
                             });
+                            await temple.save();
                         }
-                        if (changed) await s.save();
+
+                        // Astrologer
+                        const astrologers = await Astrologer.find({
+                            $or: [
+                                { image: { $regex: file } },
+                                { gallery: { $regex: file } }
+                            ]
+                        });
+                        for (const astro of astrologers) {
+                            if (astro.image && astro.image.includes(file)) {
+                                astro.image = astro.image.replace(file, newFile);
+                            }
+                            astro.gallery = astro.gallery.map(img => img.includes(file) ? img.replace(file, newFile) : img);
+                            await astro.save();
+                        }
+
+                        // SiteSettings
+                        const settings = await SiteSettings.find();
+                        for (const s of settings) {
+                            let changed = false;
+                            if (s.logoDesktop && s.logoDesktop.includes(file)) { s.logoDesktop = s.logoDesktop.replace(file, newFile); changed = true; }
+                            if (s.logoMobile && s.logoMobile.includes(file)) { s.logoMobile = s.logoMobile.replace(file, newFile); changed = true; }
+                            if (s.logoReport && s.logoReport.includes(file)) { s.logoReport = s.logoReport.replace(file, newFile); changed = true; }
+                            if (s.promotionImage && s.promotionImage.includes(file)) { s.promotionImage = s.promotionImage.replace(file, newFile); changed = true; }
+                            if (s.panchangSharePromo && s.panchangSharePromo.includes(file)) { s.panchangSharePromo = s.panchangSharePromo.replace(file, newFile); changed = true; }
+                            if (s.heroSection?.carouselImages) {
+                                s.heroSection.carouselImages = s.heroSection.carouselImages.map(ci => {
+                                    if (ci.image && ci.image.includes(file)) {
+                                        ci.image = ci.image.replace(file, newFile);
+                                        changed = true;
+                                    }
+                                    return ci;
+                                });
+                            }
+                            if (changed) await s.save();
+                        }
+
+                        // Popup
+                        await Popup.updateMany(
+                            { imageUrl: { $regex: file } },
+                            [{ $set: { imageUrl: { $replaceOne: { input: "$imageUrl", find: file, replacement: newFile } } } }]
+                        );
+
+                        // 3. Move original to backup
+                        fs.renameSync(oldPath, path.join(backupDir, file));
                     }
-
-                    // Popup
-                    await Popup.updateMany(
-                        { imageUrl: { $regex: file } },
-                        [{ $set: { imageUrl: { $replaceOne: { input: "$imageUrl", find: file, replacement: newFile } } } }]
-                    );
-
-                    // 3. Move original to backup
-                    fs.renameSync(oldPath, path.join(backupDir, file));
                     
                     convertedCount++;
                 } catch (err) {
