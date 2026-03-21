@@ -10,12 +10,12 @@ import Footer from '../components/Footer';
 import { ThemeProvider } from '../context/ThemeContext';
 import { BirthDetailsProvider } from '../context/BirthDetailsContext';
 import { SessionProvider } from '../context/SessionContext';
+import { Toaster } from 'react-hot-toast';
 
-// Dynamic imports for code splitting
+// Dynamic imports for code splitting - only for components not needed at first paint
 const ProfileSetupModal = dynamic(() => import('../components/ProfileSetupModal'), { ssr: false });
 const ScrollToTop = dynamic(() => import('../components/ScrollToTop'), { ssr: false });
 const PromotionalPopup = dynamic(() => import('../components/PromotionalPopup'), { ssr: false });
-const Toaster = dynamic(() => import('react-hot-toast').then(mod => mod.Toaster), { ssr: false });
 
 const poppins = Poppins({
     subsets: ['latin'],
