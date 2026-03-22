@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ import { useBirthDetails } from '../../../context/BirthDetailsContext';
 import HeroSection from '../../../components/common/HeroSection';
 import PageContentSection from '../../../components/common/PageContentSection';
 
-export default function NakshatraCalculator() {
+function NakshatraCalculatorContent() {
     // Use BirthDetailsContext
     const { birthDetails, setBirthDetails, isInitialized } = useBirthDetails();
     const searchParams = useSearchParams();
@@ -375,5 +375,22 @@ export default function NakshatraCalculator() {
 
             <PageContentSection slug="calculators/nakshatra-calculator" />
         </main>
+    );
+}
+
+export default function NakshatraCalculator() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center animate-pulse">
+                    <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Star className="text-violet-500" size={32} />
+                    </div>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Loading Calculator...</p>
+                </div>
+            </div>
+        }>
+            <NakshatraCalculatorContent />
+        </Suspense>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import API from '../../../lib/api';
@@ -11,7 +11,7 @@ import { useAuth } from '../../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { t } from '../../../utils/translations';
 
-export default function DivisionalChartsResult() {
+function DivisionalChartsResultContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
@@ -192,5 +192,17 @@ export default function DivisionalChartsResult() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function DivisionalChartsResult() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
+                <CosmicLoader size="lg" message="Calculating Shodashvarga..." fullscreen={false} />
+            </div>
+        }>
+            <DivisionalChartsResultContent />
+        </Suspense>
     );
 }

@@ -1,10 +1,10 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import API from '../../../../lib/api';
 import { RefreshCw, Heart, Briefcase, Calendar, ArrowLeft, AlertCircle } from 'lucide-react';
 
-const MarriageCareerResult = () => {
+const MarriageCareerResultContent = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [data, setData] = useState(null);
@@ -223,6 +223,21 @@ const MarriageCareerResult = () => {
 
             </main>
         </div>
+    );
+};
+
+const MarriageCareerResult = () => {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <RefreshCw className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold text-slate-700">Loading analysis...</h2>
+                </div>
+            </div>
+        }>
+            <MarriageCareerResultContent />
+        </Suspense>
     );
 };
 

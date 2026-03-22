@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import API from '../../../lib/api';
@@ -20,7 +20,7 @@ import { t, tData } from '../../../utils/translations';
 // - [x] Verify Telugu translations for labels, signs, and planetary relations
 // - [x] Update documentation with verification results
 
-export default function KundliResult() {
+function KundliResultContent() {
     const searchParams = useSearchParams();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -548,5 +548,17 @@ export default function KundliResult() {
                 }}
             />
         </div>
+    );
+}
+
+export default function KundliResult() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px] bg-slate-50">
+                <CosmicLoader size="lg" message="Aligning the Stars..." fullscreen={false} />
+            </div>
+        }>
+            <KundliResultContent />
+        </Suspense>
     );
 }
