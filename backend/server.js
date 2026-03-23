@@ -96,6 +96,30 @@ if (isHostinger && fs.existsSync(localUploads) && localUploads !== UPLOAD_ROOT) 
 }
 app.set('UPLOAD_ROOT', UPLOAD_ROOT);
 
+// SEO: Legacy URL Redirects (301)
+app.use((req, res, next) => {
+    const legacyRedirects = {
+        '/home/': '/',
+        '/psychic-advice/': '/',
+        '/blog/category/general/': '/blog/',
+        '/blog/category/panchang/': '/panchang/',
+        '/blog/Kundli-Matching-22/': '/blog/',
+        '/blog/astrology-consultations/': '/astrologers/',
+        '/blog/Kundli/': '/blog/'
+    };
+
+    // Standardize path for matching
+    let normalizedPath = req.path;
+    if (!normalizedPath.endsWith('/')) normalizedPath += '/';
+
+    const target = legacyRedirects[normalizedPath];
+    if (target) {
+        console.log(`[SEO Redirect] ${req.path} -> ${target}`);
+        return res.redirect(301, target);
+    }
+    next();
+});
+
 // Robust CORS & Logger for development
 app.use((req, res, next) => {
     const origin = req.headers.origin;
