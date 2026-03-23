@@ -99,24 +99,33 @@ app.set('UPLOAD_ROOT', UPLOAD_ROOT);
 // SEO: Legacy URL Redirects (301)
 app.use((req, res, next) => {
     const legacyRedirects = {
-        '/home/': '/',
-        '/psychic-advice/': '/',
-        '/blog/category/general/': '/blog/',
-        '/blog/category/panchang/': '/panchang/',
-        '/blog/kundli-matching-22/': '/blog/',
-        '/blog/astrology-consultations/': '/astrologers/',
-        '/blog/kundli/': '/blog/'
+        '/home': '/',
+        '/psychic-advice': '/',
+        '/blog/category/general': '/blog/',
+        '/blog/category/panchang': '/panchang/',
+        '/blog/kundli-matching-22': '/blog/',
+        '/blog/astrology-consultations': '/astrologers/',
+        '/blog/kundli': '/blog/'
     };
 
-    // Standardize path for matching: lowercase and ensure trailing slash
-    let normalizedPath = req.path.toLowerCase();
-    if (!normalizedPath.endsWith('/')) normalizedPath += '/';
-
-    const target = legacyRedirects[normalizedPath];
+    const path = req.path.toLowerCase().replace(/\/$/, ''); // Remove trailing slash for base comparison
+    
+    // Check for exact match (without trailing slash) or with trailing slash
+    const target = legacyRedirects[path];
+    
     if (target) {
-        console.log(`[SEO Redirect] ${req.path} -> ${target}`);
+        console.log(`[SEO Redirect Hit] Path: ${req.path} -> Target: ${target}`);
         return res.redirect(301, target);
     }
+
+    // Backup check for sub-paths or Hostinger specific path differences
+    for (const key in legacyRedirects) {
+        if (path === key.toLowerCase()) {
+            console.log(`[SEO Redirect Backup Hit] ${req.path} -> ${legacyRedirects[key]}`);
+            return res.redirect(301, legacyRedirects[key]);
+        }
+    }
+
     next();
 });
 
