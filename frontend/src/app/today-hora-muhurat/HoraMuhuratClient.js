@@ -10,6 +10,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { motion, AnimatePresence } from 'framer-motion';
 import CosmicLoader from '../../components/CosmicLoader';
 import HeroSection from '../../components/common/HeroSection';
+import FAQDisplay from '../../components/FAQDisplay';
 import { t } from '../../utils/translations';
 import CustomDateInput from '../../components/common/CustomDateInput';
 import { TimingTable, PanchangCard } from '../../components/common/PanchangUI';
@@ -37,6 +38,7 @@ function HoraContent() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [lang, setLang] = useState('en');
+    const [pageContent, setPageContent] = useState({ faqs: [], description: "" });
 
     const formatDate = (date, lang) => {
         return date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : lang === 'te' ? 'te-IN' : 'en-GB', {
@@ -69,6 +71,24 @@ function HoraContent() {
             fetchCoords();
         }
     }, [searchParams]);
+
+    // Fetch Page Content (FAQs & Description)
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const res = await API.get('/page-content/today-hora-muhurat');
+                if (res.data.success && res.data.data) {
+                    setPageContent({
+                        faqs: res.data.data.faqs || [],
+                        description: res.data.data.description || ""
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch page content:", err);
+            }
+        };
+        fetchContent();
+    }, []);
 
     // Update Title and URL (Client-side sync)
     useEffect(() => {
@@ -224,6 +244,9 @@ function HoraContent() {
                     ) : null}
                 </AnimatePresence>
             </div>
+
+            {/* FAQs & Description */}
+            <FAQDisplay faqs={pageContent.faqs} description={pageContent.description} />
         </div>
     );
 }

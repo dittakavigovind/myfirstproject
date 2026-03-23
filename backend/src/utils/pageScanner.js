@@ -15,6 +15,8 @@ const CORE_PAGES = [
     { slug: 'weekly-horoscope', path: '/weekly-horoscope', isDynamic: false, name: 'Weekly Horoscope' },
     { slug: 'monthly-horoscope', path: '/monthly-horoscope', isDynamic: false, name: 'Monthly Horoscope' },
     { slug: 'today-panchang', path: '/today-panchang', isDynamic: false, name: 'Today Panchang' },
+    { slug: 'today-hora-muhurat', path: '/today-hora-muhurat', isDynamic: false, name: 'Hora Muhurat' },
+    { slug: 'today-choghadiya-muhurat', path: '/today-choghadiya-muhurat', isDynamic: false, name: 'Choghadiya Muhurat' },
     { slug: 'login', path: '/login', isDynamic: false, name: 'Login' },
     { slug: 'register', path: '/register', isDynamic: false, name: 'Register' },
     { slug: 'about-us', path: '/about-us', isDynamic: false, name: 'About Us' },
