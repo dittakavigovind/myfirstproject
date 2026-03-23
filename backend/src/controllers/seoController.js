@@ -22,7 +22,9 @@ exports.generateSitemap = async (req, res) => {
             { url: '/blog/', priority: 0.8, changefreq: 'daily' },
             { url: '/panchang/', priority: 0.8, changefreq: 'daily' },
             { url: '/kundli/', priority: 0.8, changefreq: 'daily' },
-            { url: '/horoscope/', priority: 0.8, changefreq: 'daily' }
+            { url: '/horoscope/', priority: 0.8, changefreq: 'daily' },
+            { url: '/today-hora-muhurat/', priority: 0.8, changefreq: 'daily' },
+            { url: '/today-choghadiya-muhurat/', priority: 0.8, changefreq: 'daily' }
         ];
         urls.push(...coreRoutes);
 

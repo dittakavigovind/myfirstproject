@@ -118,7 +118,12 @@ export const translations = {
         unfavorable: "Unfavorable",
         upto: "upto",
         next: "Next",
-        ayanam: "Ayanam"
+        ayanam: "Ayanam",
+        moonset: "Moonset",
+        todayHoraMuhurat: "Today Hora Muhurat",
+        todayChoghadiyaMuhurat: "Today Choghadiya Muhurat",
+        todayPanchang: "Today's Panchang",
+        viewDetails: "View Details"
     },
 
     hi: {
@@ -240,7 +245,12 @@ export const translations = {
         unfavorable: "अशुभ",
         upto: "बजे तक",
         next: "अगला",
-        ayanam: "अयन"
+        ayanam: "अयनम (Ayanam)",
+        moonset: "चंद्रास्त (Moonset)",
+        todayHoraMuhurat: "आज का होरा मुहूर्त",
+        todayChoghadiyaMuhurat: "आज का चौघड़िया मुहूर्त",
+        todayPanchang: "आज का पंचांग",
+        viewDetails: "विवरण देखें"
     },
 
     te: {
@@ -371,7 +381,12 @@ export const translations = {
         debilitated: "నీచ",
         mooltrikona: "మూల త్రికోణం",
         next: "తదుపరి",
-        ayanam: "అయనం"
+        ayanam: "అయనం",
+        moonset: "చంద్రాస్తమయం",
+        todayHoraMuhurat: "నేటి హోరా ముహూర్తం",
+        todayChoghadiyaMuhurat: "నేటి చోఘడియా ముహూర్తం",
+        todayPanchang: "నేటి పంచాంగం",
+        viewDetails: "వివరాలు చూడండి"
     }
 
 };
