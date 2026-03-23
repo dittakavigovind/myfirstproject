@@ -103,13 +103,13 @@ app.use((req, res, next) => {
         '/psychic-advice/': '/',
         '/blog/category/general/': '/blog/',
         '/blog/category/panchang/': '/panchang/',
-        '/blog/Kundli-Matching-22/': '/blog/',
+        '/blog/kundli-matching-22/': '/blog/',
         '/blog/astrology-consultations/': '/astrologers/',
-        '/blog/Kundli/': '/blog/'
+        '/blog/kundli/': '/blog/'
     };
 
-    // Standardize path for matching
-    let normalizedPath = req.path;
+    // Standardize path for matching: lowercase and ensure trailing slash
+    let normalizedPath = req.path.toLowerCase();
     if (!normalizedPath.endsWith('/')) normalizedPath += '/';
 
     const target = legacyRedirects[normalizedPath];
