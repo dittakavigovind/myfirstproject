@@ -2,13 +2,15 @@ import { Suspense } from 'react';
 import { API_BASE } from '../../../../lib/urlHelper';
 import BlogPostClient from '../../category/article/BlogPostClient';
 
+export const dynamicParams = false;
+
 // This function is required for static export to know which paths to generate
 export async function generateStaticParams() {
     try {
-        const res = await fetch(`${API_BASE}/blog/posts?status=published`);
+        const res = await fetch(`${API_BASE}/blog/posts?status=published`, { next: { revalidate: 3600 } });
         const data = await res.json();
 
-        if (data.success && data.data) {
+        if (data.success && data.data && data.data.length > 0) {
             return data.data.map((post) => ({
                 slug: post.slug,
             }));
@@ -16,7 +18,9 @@ export async function generateStaticParams() {
     } catch (error) {
         console.error('Error fetching dynamic params for blog posts:', error);
     }
-    return [];
+    
+    // Fallback path to ensure Next.js sees this as a valid static route during build failures
+    return [{ slug: 'vighnaharta-ganesh' }];
 }
 
 // Generate dynamic metadata for each blog post
