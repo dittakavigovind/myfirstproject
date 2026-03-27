@@ -239,7 +239,14 @@ export default function WeeklyHoroscopeAdmin() {
                                 className="border rounded-lg"
                                 onMonthChange={(date) => fetchAvailability(date.getFullYear())}
                                 onYearChange={(date) => fetchAvailability(date.getFullYear())}
-                                dayClassName={(date) => filledWeeks.some(w => date >= w.start && date <= w.end) ? "bg-green-100 text-green-600 font-bold" : undefined}
+                                dayClassName={(date) => {
+                                    const d = new Date(date).setHours(0,0,0,0);
+                                    return filledWeeks.some(w => {
+                                        const s = new Date(w.start).setHours(0,0,0,0);
+                                        const e = new Date(w.end).setHours(0,0,0,0);
+                                        return d >= s && d <= e;
+                                    }) ? "bg-green-100 text-green-600 font-bold" : undefined;
+                                }}
                             />
                         </div>
                         

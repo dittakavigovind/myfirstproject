@@ -106,8 +106,8 @@ exports.getWeeklyHoroscope = async (req, res) => {
         const checkDate = queryDate.startOf('day').toDate();
 
         const horoscope = await WeeklyHoroscope.findOne({
-            weekStartDate: { $lte: checkDate },
-            weekEndDate: { $gte: checkDate }
+            weekStartDate: { $lte: moment(checkDate).endOf('day').toDate() },
+            weekEndDate: { $gte: moment(checkDate).startOf('day').toDate() }
         });
 
         if (!horoscope) {
