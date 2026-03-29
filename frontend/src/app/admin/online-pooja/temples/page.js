@@ -634,7 +634,6 @@ const AdminTemples = () => {
                                                     </div>
                                                 </div>
                                             )}
-                                        </div>
 
                                         <textarea
                                             placeholder="Seva Description (Optional)"

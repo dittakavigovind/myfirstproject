@@ -16,8 +16,12 @@ const TempleDetailContent = ({ slug: propSlug }) => {
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState(0);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
-    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
+    const [currentTime, setCurrentTime] = useState(null);
     const sevasRef = useRef(null);
+
+    useEffect(() => {
+        setCurrentTime(new Date());
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -270,7 +274,7 @@ const TempleDetailContent = ({ slug: propSlug }) => {
                                                     <span>Available Daily</span>
                                                 )}
                                             </div>
-                                            {seva.registrationEndDate && new Date() > new Date(seva.registrationEndDate) ? (
+                                            {currentTime && seva.registrationEndDate && currentTime > new Date(seva.registrationEndDate) ? (
                                                 <div className="w-full bg-red-500/20 text-red-100 py-3 px-6 rounded-xl font-black text-center border border-red-500/30">
                                                     Registrations Closed
                                                 </div>
