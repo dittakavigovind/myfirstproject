@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
 import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from '../../../../components/common/CustomDateInput';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
