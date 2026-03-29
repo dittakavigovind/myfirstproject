@@ -33,7 +33,7 @@ const AdminTemples = () => {
         ogImage: '',
         images: [],
         faqs: [{ question: '', answer: '' }],
-        sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
+        sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '', registrationEndDate: '' }],
         isActive: true
     });
 
@@ -78,8 +78,9 @@ const AdminTemples = () => {
                     dateSelectionType: s.dateSelectionType || 'Any',
                     fixedDate: s.fixedDate || '',
                     startDate: s.startDate || '',
-                    endDate: s.endDate || ''
-                })) : [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
+                    endDate: s.endDate || '',
+                    registrationEndDate: s.registrationEndDate || ''
+                })) : [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '', registrationEndDate: '' }],
                 isActive: temple.isActive
             });
         } else {
@@ -96,7 +97,7 @@ const AdminTemples = () => {
                 ogImage: '',
                 images: [],
                 faqs: [{ question: '', answer: '' }],
-                sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }],
+                sevas: [{ name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '', registrationEndDate: '' }],
                 isActive: true
             });
         }
@@ -106,7 +107,7 @@ const AdminTemples = () => {
     const handleAddSeva = () => {
         setFormData({
             ...formData,
-            sevas: [...formData.sevas, { name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '' }]
+            sevas: [...formData.sevas, { name: '', price: '', originalPrice: '', maxSlots: '', description: '', dateSelectionType: 'Any', fixedDate: '', startDate: '', endDate: '', registrationEndDate: '' }]
         });
     };
 
@@ -589,7 +590,23 @@ const AdminTemples = () => {
                                                 </div>
                                             )}
 
-                                            {seva.dateSelectionType === 'Range' && (
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest pl-1">Registration End Date (Deadline)</label>
+                                                <DatePicker
+                                                    selected={seva.registrationEndDate ? new Date(seva.registrationEndDate) : null}
+                                                    onChange={(date) => handleSevaChange(idx, 'registrationEndDate', date)}
+                                                    showTimeSelect
+                                                    timeFormat="HH:mm"
+                                                    timeIntervals={15}
+                                                    timeCaption="time"
+                                                    customInput={<CustomDateInput className="py-2 text-sm border-red-100" />}
+                                                    dateFormat="dd-MM-yyyy HH:mm"
+                                                    placeholderText="Registration Cutoff Time"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {seva.dateSelectionType === 'Range' && (
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div className="space-y-1">
                                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Start Date</label>

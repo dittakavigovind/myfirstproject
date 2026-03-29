@@ -167,6 +167,11 @@ exports.createBookingOrder = async (req, res) => {
             }
         }
 
+        // 2.5 Check Registration End Date
+        if (seva.registrationEndDate && new Date() > new Date(seva.registrationEndDate)) {
+            return res.status(400).json({ success: false, message: `Registrations for ${sevaName} have closed.` });
+        }
+
         // 3. Process Coupon Logic
         let finalPrice = parseInt(sevaPrice);
         let appliedCouponId = null;

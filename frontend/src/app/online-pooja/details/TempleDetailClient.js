@@ -270,12 +270,18 @@ const TempleDetailContent = ({ slug: propSlug }) => {
                                                     <span>Available Daily</span>
                                                 )}
                                             </div>
-                                            <button
-                                                onClick={() => handleBookNow(seva)}
-                                                className="w-full bg-white text-astro-navy py-3 px-6 rounded-xl font-black hover:bg-astro-yellow transition-all duration-300 shadow-lg"
-                                            >
-                                                Book Now
-                                            </button>
+                                            {seva.registrationEndDate && new Date() > new Date(seva.registrationEndDate) ? (
+                                                <div className="w-full bg-red-500/20 text-red-100 py-3 px-6 rounded-xl font-black text-center border border-red-500/30">
+                                                    Registrations Closed
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleBookNow(seva)}
+                                                    className="w-full bg-white text-astro-navy py-3 px-6 rounded-xl font-black hover:bg-astro-yellow transition-all duration-300 shadow-lg"
+                                                >
+                                                    Book Now
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

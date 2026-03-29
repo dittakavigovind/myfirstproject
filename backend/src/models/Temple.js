@@ -57,6 +57,9 @@ const templeSchema = new mongoose.Schema({
         },
         endDate: {
             type: Date
+        },
+        registrationEndDate: {
+            type: Date
         }
     }],
     isActive: {
