@@ -16,6 +16,7 @@ const TempleDetailContent = ({ slug: propSlug }) => {
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState(0);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
+    const [showFloatingBtn, setShowFloatingBtn] = useState(false);
     const [currentTime, setCurrentTime] = useState(null);
     const sevasRef = useRef(null);
 
