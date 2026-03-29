@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Astrologer = require('../models/Astrologer');
 const { geocodePlace, searchPlaces } = require('../utils/geocoder');
 const seoController = require('./seoController');
+const { triggerDeployment } = require('../services/deploymentService');
 
 /**
  * Generate Kundli for Request
@@ -173,7 +174,7 @@ exports.getAstrologers = async (req, res) => {
 
         let astrologers = await Astrologer.find(query)
             .populate('userId', 'role') // Populate role from User model
-            .select('userId displayName skills languages charges rating image experienceYears isOnline bio isActive slug location createdAt');
+            .select('userId displayName skills languages charges rating image experienceYears isOnline bio isActive slug location createdAt commissionRate');
 
         // Filter out those where userId is null (User deleted) or role is NOT 'astrologer'
         astrologers = astrologers.filter(astro => astro.userId && astro.userId.role === 'astrologer');
@@ -323,6 +324,9 @@ exports.updateCurrentAstrologer = async (req, res) => {
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
+        // Trigger Cloudflare deployment to reflect profile update in static frontend
+        triggerDeployment(`Update Astrologer Profile: ${astrologer.displayName}`);
+
         res.json({ success: true, message: 'Profile updated successfully', data: astrologer });
 
     } catch (error) {
@@ -412,6 +416,9 @@ exports.createAstrologer = async (req, res) => {
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
+        // Trigger Cloudflare deployment to reflect new astrologer in static frontend
+        triggerDeployment(`Create Astrologer: ${displayName}`);
+
         res.status(201).json({ success: true, data: astrologer });
 
     } catch (error) {
@@ -466,6 +473,9 @@ exports.updateAstrologer = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
+
+        // Trigger Cloudflare deployment to reflect astrologer update in static frontend
+        triggerDeployment(`Update Astrologer (Admin): ${astrologer.displayName}`);
 
         res.json({ success: true, data: astrologer });
     } catch (error) {
@@ -591,6 +601,9 @@ exports.deleteAstrologer = async (req, res) => {
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
+        // Trigger Cloudflare deployment to reflect astrologer removal in static frontend
+        triggerDeployment(`Delete Astrologer: ${astrologer.displayName}`);
+
         res.json({ success: true, message: 'Astrologer removed' });
     } catch (error) {
         console.error('Delete Astrologer Error:', error);
@@ -663,7 +676,7 @@ exports.toggleStatus = async (req, res) => {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
-        const AstrologerSession = require('../models/AstrologerSession');
+        const Session = require('../models/Session');
         const astrologer = await Astrologer.findOne({ userId: req.user.id });
 
         if (!astrologer) {
@@ -689,7 +702,7 @@ exports.toggleStatus = async (req, res) => {
         const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
         // Find existing open session
-        let openSession = await AstrologerSession.findOne({
+        let openSession = await Session.findOne({
             astrologerId: astrologer._id,
             endTime: { $exists: false }
         }).sort({ startTime: -1 });
@@ -706,7 +719,7 @@ exports.toggleStatus = async (req, res) => {
                 if (astrologer.isVoiceOnline) currentServices.push('voice');
                 if (astrologer.isVideoOnline) currentServices.push('video');
 
-                await AstrologerSession.create({
+                await Session.create({
                     astrologerId: astrologer._id,
                     sessionDate: dateStr,
                     startTime: now,
@@ -792,7 +805,7 @@ exports.getSessions = async (req, res) => {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
-        const AstrologerSession = require('../models/AstrologerSession');
+        const Session = require('../models/Session');
         const astrologer = await Astrologer.findOne({ userId: req.user.id });
 
         if (!astrologer) return res.status(404).json({ message: 'Astrologer not found' });
@@ -804,7 +817,7 @@ exports.getSessions = async (req, res) => {
             query.sessionDate = date;
         }
 
-        const sessions = await AstrologerSession.find(query).sort({ startTime: -1 });
+        const sessions = await Session.find(query).sort({ startTime: -1 });
 
         // Calculate aggregations
         const totalDuration = sessions.reduce((acc, sess) => acc + (sess.duration || 0), 0);

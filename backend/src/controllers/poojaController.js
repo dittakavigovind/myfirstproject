@@ -8,6 +8,7 @@ const emailService = require('../services/emailService');
 const whatsappService = require('../services/whatsappService');
 const Counter = require('../models/Counter');
 const moment = require('moment-timezone');
+const { triggerDeployment } = require('../services/deploymentService');
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -341,6 +342,9 @@ exports.createTemple = async (req, res) => {
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
+        // Trigger Cloudflare deployment to reflect new temple in static frontend
+        triggerDeployment('Create Temple');
+
         res.status(201).json({ success: true, data: temple });
     } catch (error) {
         console.error('Create Temple Error:', error);
@@ -365,6 +369,9 @@ exports.updateTemple = async (req, res) => {
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
+        // Trigger Cloudflare deployment to reflect updated temple in static frontend
+        triggerDeployment('Update Temple');
+
         res.status(200).json({ success: true, data: temple });
     } catch (error) {
         console.error('Update Temple Error:', error);
@@ -385,6 +392,9 @@ exports.deleteTemple = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
+
+        // Trigger Cloudflare deployment to reflect temple removal in static frontend
+        triggerDeployment('Delete Temple');
 
         res.status(200).json({ success: true, message: 'Temple removed' });
     } catch (error) {

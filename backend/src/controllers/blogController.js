@@ -2,23 +2,7 @@ const BlogPost = require('../models/BlogPost');
 const BlogCategory = require('../models/BlogCategory');
 const seoController = require('./seoController');
 const axios = require('axios');
-
-// Helper function to trigger Cloudflare build
-const triggerDeployment = async () => {
-    const webhookUrl = process.env.CLOUDFLARE_DEPLOY_WEBHOOK;
-    if (!webhookUrl) {
-        console.log('[Deploy] No deployment webhook configured');
-        return;
-    }
-
-    try {
-        console.log('[Deploy] Triggering frontend rebuild...');
-        await axios.post(webhookUrl, {});
-        console.log('[Deploy] Rebuild triggered successfully');
-    } catch (error) {
-        console.error('[Deploy] Failed to trigger rebuild:', error.message);
-    }
-};
+const { triggerDeployment } = require('../services/deploymentService');
 
 // @desc    Get all categories
 // @route   GET /api/blog/categories
@@ -312,6 +296,9 @@ exports.deletePost = async (req, res) => {
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
+
+        // Trigger Cloudflare deployment to reflect post removal in static frontend
+        triggerDeployment('Delete BlogPost');
 
         res.json({ success: true, data: {} });
     } catch (error) {

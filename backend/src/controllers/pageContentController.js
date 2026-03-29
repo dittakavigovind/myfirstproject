@@ -1,4 +1,5 @@
 const PageContent = require('../models/PageContent');
+const { triggerDeployment } = require('../services/deploymentService');
 
 // @desc    Get content for a specific page
 // @route   GET /api/page-content/:slug
@@ -60,6 +61,9 @@ exports.updatePageContent = async (req, res) => {
         }
 
         res.status(200).json({ success: true, data: content, message: 'Page content updated successfully' });
+
+        // Trigger Cloudflare deployment to reflect page content update in static frontend
+        triggerDeployment(`Update Page Content: ${slug}`);
     } catch (error) {
         console.error('Error updating page content:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
