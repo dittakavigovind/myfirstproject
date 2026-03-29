@@ -12,6 +12,11 @@ const OnlinePoojaListing = () => {
     const [temples, setTemples] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentTime, setCurrentTime] = useState(null);
+
+    useEffect(() => {
+        setCurrentTime(new Date());
+    }, []);
 
     const handleShare = (e, slug, name, imageUrl) => {
         e.preventDefault();
@@ -147,19 +152,52 @@ const OnlinePoojaListing = () => {
                                                 {temple.location}
                                             </div>
                                             {temple.sevas && temple.sevas.length > 0 && (
-                                                <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm">
-                                                    <div className="w-1.5 h-1.5 bg-astro-yellow rounded-full animate-pulse"></div>
+                                                <div className="flex flex-col items-end gap-1.5">
                                                     {(() => {
-                                                        const fixedSeva = temple.sevas.find(s => s.dateSelectionType === 'Fixed');
-                                                        if (fixedSeva && fixedSeva.fixedDate) {
-                                                            return new Date(fixedSeva.fixedDate).toLocaleDateString('en-GB');
+                                                        const sevasWithDeadline = temple.sevas.filter(s => s.registrationEndDate);
+                                                        const isAllClosed = sevasWithDeadline.length > 0 && 
+                                                            currentTime && 
+                                                            sevasWithDeadline.every(s => currentTime > new Date(s.registrationEndDate));
+
+                                                        if (isAllClosed) {
+                                                            return (
+                                                                <div className="bg-red-500/90 backdrop-blur-md px-3 py-1 rounded-full border border-red-500/20 flex items-center gap-1.5 shadow-sm text-[10px] font-black uppercase">
+                                                                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                                                                    Registrations Closed
+                                                                </div>
+                                                            );
                                                         }
-                                                        const rangeSeva = temple.sevas.find(s => s.dateSelectionType === 'Range');
-                                                        if (rangeSeva && rangeSeva.startDate && rangeSeva.endDate) {
-                                                            return `${new Date(rangeSeva.startDate).toLocaleDateString('en-GB')} - ${new Date(rangeSeva.endDate).toLocaleDateString('en-GB')}`;
+
+                                                        const nearestDeadline = sevasWithDeadline
+                                                            .filter(s => currentTime && new Date(s.registrationEndDate) > currentTime)
+                                                            .sort((a, b) => new Date(a.registrationEndDate) - new Date(b.registrationEndDate))[0];
+
+                                                        if (nearestDeadline) {
+                                                            return (
+                                                                <div className="bg-astro-navy/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm text-[10px] font-black">
+                                                                    <div className="w-1.5 h-1.5 bg-astro-yellow rounded-full"></div>
+                                                                    Ends: {new Date(nearestDeadline.registrationEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
+                                                                </div>
+                                                            );
                                                         }
-                                                        return "Available Daily";
+
+                                                        return null;
                                                     })()}
+
+                                                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-sm">
+                                                        <div className="w-1.5 h-1.5 bg-astro-yellow rounded-full animate-pulse"></div>
+                                                        {(() => {
+                                                            const fixedSeva = temple.sevas.find(s => s.dateSelectionType === 'Fixed');
+                                                            if (fixedSeva && fixedSeva.fixedDate) {
+                                                                return new Date(fixedSeva.fixedDate).toLocaleDateString('en-GB');
+                                                            }
+                                                            const rangeSeva = temple.sevas.find(s => s.dateSelectionType === 'Range');
+                                                            if (rangeSeva && rangeSeva.startDate && rangeSeva.endDate) {
+                                                                return `${new Date(rangeSeva.startDate).toLocaleDateString('en-GB')} - ${new Date(rangeSeva.endDate).toLocaleDateString('en-GB')}`;
+                                                            }
+                                                            return "Available Daily";
+                                                        })()}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
