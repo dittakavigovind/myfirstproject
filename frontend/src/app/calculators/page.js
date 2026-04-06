@@ -37,6 +37,22 @@ const calculators = [
         delay: 0.25
     },
     {
+        title: "Today Hora Muhurat",
+        description: "Find the most auspicious time (Hora) for your daily activities and important decisions.",
+        icon: Clock,
+        href: "/today-hora-muhurat",
+        color: "amber",
+        delay: 1.0
+    },
+    {
+        title: "Today Choghadiya Muhurat",
+        description: "Check the day and night Choghadiya to find auspicious timings for new tasks.",
+        icon: Activity,
+        href: "/today-choghadiya-muhurat",
+        color: "orange",
+        delay: 1.02
+    },
+    {
         title: "Planetary Dasha Periods",
         description: "Analyze your 120-year Vimshottari Dasha cycle and understand the planetary phases of your life.",
         icon: Sparkles,
@@ -133,6 +149,7 @@ const calculators = [
         color: "indigo",
         delay: 0.98
     }
+
 ];
 
 export default function CalculatorsLanding() {
