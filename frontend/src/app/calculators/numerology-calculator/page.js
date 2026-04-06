@@ -210,7 +210,7 @@ function NumberResultCard({ title, num, desc, color }) {
             <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${colors[color].split(' ').slice(0, 2).join(' ')} flex items-center justify-center text-white text-3xl font-black mb-6 shadow-lg shadow-current/20 group-hover:scale-110 transition-transform duration-500`}>
                 {num}
             </div>
-            <h4 className={`text-sm font-bold uppercase tracking-widest mb-4 ${colors[color].split(' ')[3].replace('text-', 'text-indigo-')}`}>{title}</h4>
+            <h4 className="text-sm font-bold uppercase tracking-widest mb-4 text-white/90">{title}</h4>
             <div className="h-1 w-8 bg-white/10 rounded-full mb-6"></div>
             <p className="text-white/60 font-medium leading-relaxed text-sm italic">
                 {desc}
