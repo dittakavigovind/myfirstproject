@@ -343,26 +343,6 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
             end: tzUtils.addMinutes(sunriseDate, (rule.idx + rule.dur) * oneMuhurthaMin)
         }));
 
-        // Samvat
-        const month = utcDate.getUTCMonth();
-        const currentYear = utcDate.getFullYear();
-        let isBeforeNewYear = false;
-        if (month <= 1) isBeforeNewYear = true;
-        else if (month === 2 || month === 3) {
-            if (sLong < 330 && sLong > 250) isBeforeNewYear = true;
-            else if (sLong >= 330) {
-                const tPhase = getTithi(sLong, mLong);
-                if (tPhase >= 15) isBeforeNewYear = true;
-            }
-        }
-
-        const samvatsaraIndex = ((isBeforeNewYear ? currentYear - 1 : currentYear) - 1987 + 60) % 60;
-        const samvat = {
-            name: SAMVATSARA_NAMES[samvatsaraIndex],
-            vikram: isBeforeNewYear ? currentYear + 56 : currentYear + 57,
-            shaka: isBeforeNewYear ? currentYear - 79 : currentYear - 78
-        };
-
         // --- MASA (Lunar Month) & RITU (Season) ---
         // Rule: Amanta Month is determined by the Rashi the Sun is in at the moment of the *New Moon* (Amavasya) that began the month.
         // We approximate the Sun's position at the last New Moon by subtracting the degrees the Sun moved since then.
@@ -390,6 +370,24 @@ const calculatePanchang = async (utcDate, lat, lng, timezone) => {
         // 2,3 -> Grishma (1)
         const rituIndex = Math.floor(amantaIndex / 2);
         const ritu = RITU_NAMES[rituIndex % 6];
+
+        // Samvat
+        const month = utcDate.getUTCMonth();
+        const currentYear = utcDate.getFullYear();
+        let isBeforeNewYear = false;
+        
+        // Hindu months 8 (Margashirsha) through 11 (Phalguna) occurring in the first half 
+        // of the Gregorian year belong to the previous Hindu year.
+        if (amantaIndex >= 8 && month < 6) {
+            isBeforeNewYear = true;
+        }
+
+        const samvatsaraIndex = ((isBeforeNewYear ? currentYear - 1 : currentYear) - 1987 + 60) % 60;
+        const samvat = {
+            name: SAMVATSARA_NAMES[samvatsaraIndex],
+            vikram: isBeforeNewYear ? currentYear + 56 : currentYear + 57,
+            shaka: isBeforeNewYear ? currentYear - 79 : currentYear - 78
+        };
 
 
         return {
@@ -550,14 +548,13 @@ const calculateMonthlyPanchangLite = async (year, month, lat, lng, timezone) => 
             const m = utcDate.getUTCMonth();
             const y = utcDate.getFullYear();
             let isBeforeNewYear = false;
-            if (m <= 1) isBeforeNewYear = true;
-            else if (m === 2 || m === 3) {
-                if (sLong < 330 && sLong > 250) isBeforeNewYear = true;
-                else if (sLong >= 330) {
-                    const tPhase = getTithi(sLong, mLong);
-                    if (tPhase >= 15) isBeforeNewYear = true;
-                }
+            
+            // Hindu months 8 (Margashirsha) through 11 (Phalguna) occurring in the first half 
+            // of the Gregorian year belong to the previous Hindu year.
+            if (amantaIndex >= 8 && m < 6) {
+                isBeforeNewYear = true;
             }
+
             const samvatsaraIndex = ((isBeforeNewYear ? y - 1 : y) - 1987 + 60) % 60;
             const samvat = {
                 name: SAMVATSARA_NAMES[samvatsaraIndex],
