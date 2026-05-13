@@ -1,5 +1,5 @@
 const AnalyticsService = require('../services/AnalyticsService');
-const AstrologerSession = require('../models/AstrologerSession');
+const Session = require('../models/Session');
 const AstrologerPayout = require('../models/AstrologerPayout');
 const Astrologer = require('../models/Astrologer');
 
@@ -61,13 +61,13 @@ exports.getSessions = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        const sessions = await AstrologerSession.find({ astrologerId: astro._id })
+        const sessions = await Session.find({ astrologerId: astro._id })
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
             .populate('userId', 'name profileImage'); // Show user name
 
-        const total = await AstrologerSession.countDocuments({ astrologerId: astro._id });
+        const total = await Session.countDocuments({ astrologerId: astro._id });
 
         res.json({
             success: true,

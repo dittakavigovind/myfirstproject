@@ -37,14 +37,16 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (user?.role === 'astrologer') {
+      router.replace('/profile');
+      return;
+    }
+    
     fetchDashboardData();
 
     // Set up polling for astrologer statuses every 15 seconds (only for Seekers)
-    let pollInterval;
-    if (user?.role !== 'astrologer') {
-      pollInterval = setInterval(pollAstrologers, 15000);
-    }
-    return () => pollInterval && clearInterval(pollInterval);
+    let pollInterval = setInterval(pollAstrologers, 15000);
+    return () => clearInterval(pollInterval);
   }, [user, router]);
 
   const fetchDashboardData = async () => {

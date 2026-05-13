@@ -30,6 +30,57 @@ const NAKSHATRAS = [
     'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'
 ];
 
+// Matchmaking Data Constants
+const VARNAS = ["Brahmin", "Kshatriya", "Vaishya", "Shudra"];
+const VASHYAS = ["Chatushpad", "Manav", "Jalchar", "Vanachar", "Keet"];
+const YONIS = ["Ashwa (Horse)", "Gaja (Elephant)", "Mesha (Sheep)", "Sarpa (Serpent)", "Shwan (Dog)", "Marjara (Cat)", "Mushaka (Rat)", "Gau (Cow)", "Mahisha (Buffalo)", "Vyaghra (Tiger)", "Mriga (Deer)", "Vanar (Monkey)", "Sinha (Lion)", "Nakula (Mongoose)"];
+const GANAS = ["Deva", "Manushya", "Rakshasa"];
+const NADIS = ["Adi", "Madhya", "Antya"];
+
+// Nakshatra to Attribute Mappings
+const NAK_YONI = [0, 1, 2, 3, 3, 4, 5, 2, 5, 6, 6, 7, 8, 9, 8, 9, 10, 10, 4, 11, 13, 11, 12, 0, 12, 7, 1];
+const NAK_GANA = [0, 1, 2, 1, 0, 1, 0, 0, 2, 2, 1, 1, 0, 2, 0, 2, 0, 2, 2, 1, 1, 0, 2, 2, 1, 1, 0];
+const NAK_NADI = [0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 2];
+
+// Ashta Koot Milan Lookup Matrices
+const VASHYA_MATRIX = [
+    [2, 1, 1, 0.5, 1], // Chatushpad
+    [1, 2, 0.5, 0, 1], // Manav
+    [1, 0.5, 2, 1, 1], // Jalchar
+    [0.5, 0, 1, 2, 0], // Vanachar
+    [1, 1, 1, 0, 2]    // Keet
+];
+
+const YONI_MATRIX = [
+    [4, 2, 2, 3, 2, 2, 2, 2, 2, 1, 0, 2, 1, 1], // Horse
+    [2, 4, 3, 3, 2, 2, 2, 2, 3, 1, 2, 3, 2, 0], // Elephant
+    [2, 3, 4, 2, 1, 2, 1, 3, 3, 1, 1, 2, 1, 2], // Sheep
+    [3, 3, 2, 4, 2, 1, 1, 1, 1, 2, 2, 2, 0, 2], // Serpent
+    [2, 2, 1, 2, 4, 2, 1, 2, 2, 1, 0, 2, 1, 1], // Dog
+    [2, 2, 2, 1, 2, 4, 0, 2, 2, 1, 3, 3, 2, 1], // Cat
+    [2, 2, 1, 1, 1, 0, 4, 2, 2, 2, 2, 2, 1, 2], // Rat
+    [2, 2, 3, 1, 2, 2, 2, 4, 3, 0, 3, 2, 2, 1], // Cow
+    [2, 3, 3, 1, 2, 2, 2, 3, 4, 1, 2, 2, 2, 1], // Buffalo
+    [1, 1, 1, 2, 1, 1, 2, 0, 1, 4, 1, 1, 2, 1], // Tiger
+    [0, 2, 1, 2, 0, 3, 2, 3, 2, 1, 4, 2, 2, 2], // Deer
+    [2, 3, 2, 2, 2, 3, 2, 2, 2, 1, 2, 4, 3, 2], // Monkey
+    [1, 2, 1, 0, 1, 2, 1, 2, 2, 2, 2, 3, 4, 2], // Lion
+    [1, 0, 2, 2, 1, 1, 2, 1, 1, 1, 2, 2, 2, 4]  // Mongoose
+];
+
+// Planet IDs for Maitri lookup: Sun(0), Moon(1), Mercury(2), Venus(3), Mars(4), Jupiter(5), Saturn(6)
+const MAITRI_MATRIX = [
+    [5, 5, 4, 0, 5, 5, 0],   // Sun (0)
+    [5, 5, 5, 3, 3, 3, 3],   // Moon (1)
+    [4, 3, 5, 5, 3, 3, 3],   // Mercury (2)
+    [0, 3, 5, 5, 3, 3, 5],   // Venus (3)
+    [5, 4, 0, 3, 5, 5, 3],   // Mars (4)
+    [5, 5, 0, 0, 5, 5, 3],   // Jupiter (5)
+    [0, 3, 4, 5, 0, 3, 5]    // Saturn (6)
+];
+
+const RASI_LORDS = [4, 3, 2, 1, 0, 2, 3, 4, 5, 6, 6, 5]; // Rasi to Lord Mapping
+
 // Singleton instance helper with initialization lock
 const getGlobalSwe = async () => {
     if (globalSwe) return globalSwe;
@@ -756,42 +807,130 @@ const calculateMatch = (boyMoonLong, girlMoonLong) => {
     const boySign = getSign(boyMoonLong);
     const girlSign = getSign(girlMoonLong);
 
-    // Simplified Ashta Koot Logic (Demo logic for robustness, real logic is huge lookup tables)
-    // We will simulate a score based on simple harmonic relationships for this MVP/Demo.
-    // In a real app, you need a 27x27 matrix for each of the 8 Koots.
-
-    let score = {
-        varna: 1,      // 1
-        vashya: 2,     // 2
-        tara: 1.5,     // 3
-        yoni: 2,       // 4
-        maitri: 3,     // 5
-        gana: 3,       // 6
-        bhakoot: 5,    // 7
-        nadi: 0        // 8
+    // Helpers for detailed attributes
+    const getVarna = (sign) => {
+        if ([4, 8, 12].includes(sign)) return 0; // Brahmin
+        if ([1, 5, 9].includes(sign)) return 1;  // Kshatriya
+        if ([2, 6, 10].includes(sign)) return 2; // Vaishya
+        return 3; // Shudra
     };
 
-    // Simple logic:
-    // Same Sign or Trine (1, 5, 9 houses apart) = Good Maitri
-    // Same Nadi = Bad (0)
-    // Same Gana = Good (6)
+    const getVashya = (sign, long) => {
+        const deg = long % 30;
+        if ([1, 2].includes(sign)) return 0; // Chatushpad
+        if (sign === 9 && deg <= 15) return 0; // Chatushpad
+        if (sign === 10 && deg >= 15) return 0; // Chatushpad
+        if ([3, 6, 7, 11].includes(sign)) return 1; // Manav
+        if (sign === 9 && deg > 15) return 1; // Manav
+        if (sign === 4 || sign === 12) return 2; // Jalchar
+        if (sign === 10 && deg < 15) return 2; // Jalchar
+        if (sign === 5) return 3; // Vanachar
+        return 4; // Keet
+    };
 
-    // Mock Calculation for meaningful demo variation:
-    const diffNak = Math.abs(boyNak - girlNak);
+    const getTaraStatus = (bNak, gNak) => {
+        const diff = (gNak - bNak + 27 + 1) % 9 || 9;
+        const taraNames = ["Janma", "Sampat", "Vipat", "Kshem", "Pratyari", "Sadhak", "Vadha", "Mitra", "Ati-Mitra"];
+        return taraNames[diff - 1];
+    };
 
-    if (diffNak % 2 === 0) {
-        score.nadi = 0; // Dosha
-    } else {
-        score.nadi = 8;
-    }
+    const signNames = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+    const planetNames = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
 
-    if (boySign === girlSign || Math.abs(boySign - girlSign) === 4 || Math.abs(boySign - girlSign) === 8) {
-        score.bhakoot = 7;
-    } else {
-        score.bhakoot = 0;
-    }
+    const boyVarnaIdx = getVarna(boySign);
+    const girlVarnaIdx = getVarna(girlSign);
+    const boyVashyaIdx = getVashya(boySign, boyMoonLong);
+    const girlVashyaIdx = getVashya(girlSign, girlMoonLong);
+    const boyYoniIdx = NAK_YONI[boyNak];
+    const girlYoniIdx = NAK_YONI[girlNak];
+    const boyGanaIdx = NAK_GANA[boyNak];
+    const girlGanaIdx = NAK_GANA[girlNak];
+    const boyNadiIdx = NAK_NADI[boyNak];
+    const girlNadiIdx = NAK_NADI[girlNak];
+    const boyLordIdx = RASI_LORDS[boySign - 1];
+    const girlLordIdx = RASI_LORDS[girlSign - 1];
 
-    if (diffNak % 3 === 0) score.gana = 6; else score.gana = 0;
+    const boyAttr = {
+        varna: VARNAS[boyVarnaIdx],
+        vashya: VASHYAS[boyVashyaIdx],
+        tara: NAKSHATRAS[boyNak],
+        yoni: YONIS[boyYoniIdx],
+        maitri: planetNames[boyLordIdx],
+        gana: GANAS[boyGanaIdx],
+        bhakoot: signNames[boySign - 1],
+        nadi: NADIS[boyNadiIdx]
+    };
+
+    const girlAttr = {
+        varna: VARNAS[girlVarnaIdx],
+        vashya: VASHYAS[girlVashyaIdx],
+        tara: NAKSHATRAS[girlNak],
+        yoni: YONIS[girlYoniIdx],
+        maitri: planetNames[girlLordIdx],
+        gana: GANAS[girlGanaIdx],
+        bhakoot: signNames[girlSign - 1],
+        nadi: NADIS[girlNadiIdx]
+    };
+
+    // --- Scoring Logic ---
+    let score = { varna: 0, vashya: 0, tara: 0, yoni: 0, maitri: 0, gana: 0, bhakoot: 0, nadi: 0 };
+
+    // 1. Varna (1 Point)
+    // Rule: Boy's Varna >= Girl's Varna (Brahmin(0) > Kshatriya(1) > Vaishya(2) > Shudra(3))
+    // So boyVarnaIdx <= girlVarnaIdx
+    if (boyVarnaIdx <= girlVarnaIdx) score.varna = 1;
+    else score.varna = 0;
+
+    // 2. Vashya (2 Points)
+    score.vashya = VASHYA_MATRIX[boyVashyaIdx][girlVashyaIdx];
+
+    // 3. Tara (3 Points)
+    const t1 = (girlNak - boyNak + 27 + 1) % 9;
+    const t2 = (boyNak - girlNak + 27 + 1) % 9;
+    const badTara = [3, 5, 7, 0]; // 3, 5, 7, 9
+    const isT1Good = !badTara.includes(t1 % 9);
+    const isT2Good = !badTara.includes(t2 % 9);
+    if (isT1Good && isT2Good) score.tara = 3;
+    else if (isT1Good || isT2Good) score.tara = 1.5;
+    else score.tara = 0;
+
+    // 4. Yoni (4 Points)
+    score.yoni = YONI_MATRIX[boyYoniIdx][girlYoniIdx];
+
+    // 5. Graha Maitri (5 Points)
+    score.maitri = MAITRI_MATRIX[boyLordIdx][girlLordIdx];
+
+    // 6. Gana (6 Points)
+    if (boyGanaIdx === girlGanaIdx) score.gana = 6;
+    else if (boyGanaIdx === 0 && girlGanaIdx === 1) score.gana = 6; // Deva + Manushya = 6? Wait, usually 3.
+    else if (boyGanaIdx === 1 && girlGanaIdx === 0) score.gana = 5; // Manushya + Deva = 5? 
+    else if (boyGanaIdx === 0 && girlGanaIdx === 2) score.gana = 1; // Deva + Rakshasa = 1
+    else if (boyGanaIdx === 2 && girlGanaIdx === 0) score.gana = 0; // Rakshasa + Deva = 0
+    else if (boyGanaIdx === 1 && girlGanaIdx === 2) score.gana = 0; // Manushya + Rakshasa = 0
+    else if (boyGanaIdx === 2 && girlGanaIdx === 1) score.gana = 0; // Rakshasa + Manushya = 0
+    else score.gana = 3;
+
+    // Standard Gana Scoring (simplified standard):
+    // Same: 6
+    // Deva + Manushya: 6
+    // Manushya + Deva: 5
+    // Rakshasa + Rakshasa: 6
+    // Rakshasa + others: 0 or 1
+    // Let's use the most common one:
+    if (boyGanaIdx === girlGanaIdx) score.gana = 6;
+    else if ((boyGanaIdx === 0 && girlGanaIdx === 1) || (boyGanaIdx === 1 && girlGanaIdx === 0)) score.gana = 3;
+    else if (boyGanaIdx === 0 && girlGanaIdx === 2) score.gana = 1;
+    else score.gana = 0;
+
+    // 7. Bhakoot (7 Points)
+    const diff = (girlSign - boySign + 12) % 12 + 1;
+    const goodBhakoot = [1, 7, 3, 11, 4, 10];
+    if (goodBhakoot.includes(diff)) score.bhakoot = 7;
+    else score.bhakoot = 0;
+
+    // 8. Nadi (8 Points)
+    if (boyNadiIdx !== girlNadiIdx) score.nadi = 8;
+    else score.nadi = 0;
 
     const totalScore = Object.values(score).reduce((a, b) => a + b, 0);
 
@@ -799,7 +938,9 @@ const calculateMatch = (boyMoonLong, girlMoonLong) => {
         total: totalScore,
         minPass: 18,
         details: score,
-        boyNak: boyNak + 1, // 1-27
+        boy: boyAttr,
+        girl: girlAttr,
+        boyNak: boyNak + 1,
         girlNak: girlNak + 1,
         boySign,
         girlSign

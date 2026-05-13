@@ -23,6 +23,7 @@ export const metadata = {
 import MobileLayout from "@/components/layout/MobileLayout";
 import { AuthProvider } from "@/context/AuthContext";
 import { BirthDetailsProvider } from "@/context/BirthDetailsContext";
+import { SocketProvider } from "@/context/SocketContext";
 import SessionBanner from "@/components/SessionBanner";
 
 export default function RootLayout({ children }) {
@@ -30,12 +31,14 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${poppins.variable} font-sans antialiased text-slate-100 selection:bg-electric-violet selection:text-white`}>
         <AuthProvider>
-          <BirthDetailsProvider>
-            <SessionBanner />
-            <MobileLayout>
-              {children}
-            </MobileLayout>
-          </BirthDetailsProvider>
+          <SocketProvider>
+            <BirthDetailsProvider>
+              <SessionBanner />
+              <MobileLayout>
+                {children}
+              </MobileLayout>
+            </BirthDetailsProvider>
+          </SocketProvider>
         </AuthProvider>
       </body>
     </html>

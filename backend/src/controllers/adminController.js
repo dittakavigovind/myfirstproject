@@ -1,8 +1,12 @@
 const User = require('../models/User');
+const Astrologer = require('../models/Astrologer');
 const AstrologerActivity = require('../models/AstrologerActivity');
+const Session = require('../models/Session');
+const AppConfig = require('../models/AppConfig');
+const QueueService = require('../services/QueueService');
+const Transaction = require('../models/Transaction');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
-// const Transaction = require('../models/Transaction'); // If I need revenue stats
 
 // @desc    Get Dashboard Stats
 // @route   GET /api/admin/stats
@@ -11,18 +15,100 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const users = await User.countDocuments({ role: 'user' });
         const astrologers = await User.countDocuments({ role: 'astrologer' });
-        // Calculate revenue if Transaction model exists, else 0
-        // const revenue = await Transaction.aggregate(...) 
-        const revenue = 0;
+        
+        const revenueAggregate = await Session.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: null, totalRevenue: { $sum: '$totalAmountDeducted' }, totalDuration: { $sum: '$totalDuration' } } }
+        ]);
+        
+        const activeChats = await Session.countDocuments({ status: 'active' });
+
+        // Calculate total locked liquidity across all user wallets
+        const walletAggregate = await User.aggregate([
+            { $match: { role: 'user' } },
+            { $group: { _id: null, totalBalance: { $sum: '$walletBalance' } } }
+        ]);
 
         res.json({
             users,
             astrologers,
-            revenue,
-            activeChats: 0 // Placeholder
+            revenue: revenueAggregate[0]?.totalRevenue || 0,
+            activeChats,
+            totalChatMinutes: Math.floor((revenueAggregate[0]?.totalDuration || 0) / 60),
+            totalUserWallets: walletAggregate[0]?.totalBalance || 0
         });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Update Astrologer Settings (Commission, Verified, Verification Status)
+// @route   PUT /api/admin/astrologers/:id/settings
+// @access  Private/Admin
+exports.updateAstrologerSettings = async (req, res) => {
+    try {
+        const astrologer = await Astrologer.findOne({ userId: req.params.id });
+        if (!astrologer) {
+            return res.status(404).json({ message: 'Astrologer not found' });
+        }
+
+        const { commissionRate, isVerified, verificationStatus } = req.body;
+
+        if (commissionRate !== undefined) astrologer.commissionRate = commissionRate;
+        if (isVerified !== undefined) astrologer.isVerified = isVerified;
+        if (verificationStatus !== undefined) astrologer.verificationStatus = verificationStatus;
+
+        await astrologer.save();
+        res.json({ success: true, message: 'Astrologer settings updated', data: astrologer });
+    } catch (error) {
+        console.error('Update Astrologer Settings Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get All Live and Completed Sessions
+// @route   GET /api/admin/sessions
+// @access  Private/Admin
+exports.getAllSessions = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 50;
+        const skip = (page - 1) * limit;
+
+        const sessions = await Session.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate('userId', 'name email phone')
+            .populate('astrologerId', 'name email');
+
+        const total = await Session.countDocuments();
+
+        res.json({
+            success: true,
+            data: sessions,
+            pagination: { total, page, pages: Math.ceil(total / limit) }
+        });
+    } catch (error) {
+        console.error('GetAllSessions Error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Bypass Waitlist for Priority Routing
+// @route   POST /api/admin/queue/bypass
+// @access  Private/Admin/Manager
+exports.bypassWaitlist = async (req, res) => {
+    try {
+        const { astrologerId, userId, sessionType } = req.body;
+        if (!astrologerId || !userId || !sessionType) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+        await QueueService.bypassQueue(astrologerId, userId, sessionType);
+        res.json({ success: true, message: 'User forcefully moved to front of the queue via system override.' });
+    } catch (error) {
+        console.error('Waitlist Bypass Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

@@ -11,6 +11,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from './common/CustomDateInput';
 import TimeInput from './TimeInput';
+import toast from 'react-hot-toast';
+
 
 export default function ProfileSetupModal() {
     const { user, updateUser, logout } = useAuth();
@@ -242,7 +244,13 @@ export default function ProfileSetupModal() {
 
                         <button
                             type="button"
-                            onClick={logout}
+                            onClick={() => {
+                                if (user?.role === 'astrologer' && (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline)) {
+                                    toast.error("Please turn off all availability before logging out.");
+                                    return;
+                                }
+                                logout();
+                            }}
                             className="w-full text-[10px] text-slate-400 font-bold hover:text-slate-600 transition-colors flex items-center justify-center gap-1 mt-4"
                         >
                             <LogOut size={12} /> Log Out instead

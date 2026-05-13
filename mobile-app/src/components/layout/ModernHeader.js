@@ -95,9 +95,14 @@ export default function ModernHeader() {
                         <Wallet size={16} className="text-solar-gold" />
                         <span className="text-xs font-black">₹{user?.walletBalance || 0}</span>
                     </button>
-                    <button className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:bg-white/10 transition-colors relative border-white/5 bg-white/5">
+                    <button 
+                        onClick={() => router.push('/notifications')}
+                        className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:bg-white/10 transition-colors relative border-white/5 bg-white/5 active:scale-95 transition-all"
+                    >
                         <Bell size={18} />
-                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0b1026]" />
+                        {user?.unreadNotifications > 0 && (
+                            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0b1026]" />
+                        )}
                     </button>
                 </div>
             </motion.header>
@@ -159,7 +164,14 @@ export default function ModernHeader() {
 
                             <div className="p-6 border-t border-white/5 pb-[calc(var(--safe-area-inset-bottom)+1.5rem)]">
                                 <button 
-                                    onClick={() => { setIsMenuOpen(false); logout(); }}
+                                    onClick={() => {
+                                        if (user?.role === 'astrologer' && (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline)) {
+                                            alert("Please turn off Chat, Voice, and Video availability before logging out.");
+                                            return;
+                                        }
+                                        setIsMenuOpen(false);
+                                        logout();
+                                    }}
                                     className="w-full flex items-center gap-4 p-3 rounded-2xl text-rose-400 hover:bg-rose-400/10 transition-all active:scale-95 group"
                                 >
                                     <div className="p-2 rounded-xl bg-rose-400/10 group-hover:bg-rose-400/20">

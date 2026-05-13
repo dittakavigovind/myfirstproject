@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema({
     verificationTokenExpire: Date,
     role: {
         type: String,
-        enum: ['user', 'astrologer', 'admin', 'manager'],
+        enum: ['user', 'astrologer', 'admin', 'manager', 'super_admin', 'support_admin', 'finance_admin'],
         default: 'user',
     },
     walletBalance: {
@@ -60,6 +60,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'default-avatar.png' // Or URL
     },
+    fcmTokens: [{
+        type: String // Stores device IDs for Push Notifications
+    }],
     lastLogin: {
         type: Date
     },

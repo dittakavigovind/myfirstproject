@@ -128,6 +128,10 @@ exports.updateSiteSettings = async (req, res) => {
             settings.featureFlags = { ...settings.featureFlags, ...req.body.featureFlags };
         }
 
+        // Sound Settings
+        if (req.body.chatAlertSoundUrl !== undefined) settings.chatAlertSoundUrl = req.body.chatAlertSoundUrl;
+        if (req.body.callAlertSoundUrl !== undefined) settings.callAlertSoundUrl = req.body.callAlertSoundUrl;
+
         // Update theme colors if provided
         if (req.body.themeColors) {
             settings.themeColors = { ...settings.themeColors, ...req.body.themeColors };

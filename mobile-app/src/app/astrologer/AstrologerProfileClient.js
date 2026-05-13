@@ -137,9 +137,12 @@ export default function AstrologerProfileClient() {
 
             {/* Error Banner for Consultation */}
             {consultError && (
-                <div className="fixed top-20 left-4 right-4 z-[100] bg-rose-500 text-white px-4 py-3 rounded-2xl flex items-center gap-3 shadow-2xl animate-in slide-in-from-top duration-300">
-                    <MessageCircle size={18} />
-                    <span className="text-xs font-bold">{consultError}</span>
+                <div 
+                    className="fixed left-4 right-4 z-[100] bg-rose-500/20 backdrop-blur-md border border-rose-500/30 text-rose-200 px-5 py-4 rounded-[2rem] flex items-center gap-4 shadow-xl animate-in slide-in-from-top duration-300"
+                    style={{ top: 'calc(var(--safe-area-inset-top) + 4.5rem)' }}
+                >
+                    <MessageCircle size={20} className="text-rose-500" />
+                    <span className="text-sm font-black tracking-tight">{consultError}</span>
                 </div>
             )}
 

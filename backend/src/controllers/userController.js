@@ -135,3 +135,24 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+exports.saveFCMToken = async (req, res) => {
+    try {
+        const { fcmToken } = req.body;
+        if (!fcmToken) return res.status(400).json({ success: false, message: 'Token is required' });
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (!user.fcmTokens) user.fcmTokens = [];
+        if (!user.fcmTokens.includes(fcmToken)) {
+            user.fcmTokens.push(fcmToken);
+            await user.save();
+        }
+
+        res.status(200).json({ success: true, message: 'FCM Token registered successfully' });
+    } catch (error) {
+        console.error('Save FCM Token Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

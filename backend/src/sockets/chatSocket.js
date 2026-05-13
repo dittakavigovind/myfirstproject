@@ -1,12 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Astrologer = require('../models/Astrologer');
-const ChatSession = require('../models/ChatSession');
+const Session = require('../models/Session');
 const Transaction = require('../models/Transaction');
 const Message = require('../models/Message');
+const QueueService = require('../services/QueueService');
+const CryptoUtil = require('../utils/cryptoUtil');
 
 const activeSessions = new Map(); // Store interval IDs by roomId
-
+const disconnectTimers = new Map(); // Store timeout IDs for auto-ending sessions
 module.exports = function (io) {
     // Middleware for Socket Authentication
     io.use(async (socket, next) => {
@@ -15,11 +17,15 @@ module.exports = function (io) {
             if (!token) return next(new Error('Authentication error: No token provided'));
 
             const decoded = jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET);
-            socket.user = decoded; // { id, role }
+            
+            const user = await User.findById(decoded.id).select('-password');
+            if (!user) return next(new Error('User not found'));
+            
+            socket.user = user;
 
             // Validate user exists
-            if (decoded.role === 'astrologer') {
-                const astro = await Astrologer.findOne({ userId: decoded.id });
+            if (socket.user.role === 'astrologer') {
+                const astro = await Astrologer.findOne({ userId: socket.user._id });
                 if (!astro) return next(new Error('Astrologer not found'));
                 socket.astrologerId = astro._id.toString();
             }
@@ -31,24 +37,33 @@ module.exports = function (io) {
     });
 
     io.on('connection', (socket) => {
+        // Handle presence
+        if (socket.user.role === 'astrologer') {
+            QueueService.setAstrologerStatus(socket.astrologerId, 'online');
+            socket.join(`astro_${socket.astrologerId}`); // Channel for their own notifications
+        } else {
+            // Join user-specific channel
+            socket.join(`user_${socket.user.id}`);
+        }
 
         socket.on('join_chat_session', async ({ roomId }) => {
             try {
-                const session = await ChatSession.findOne({ roomId });
+                const session = await Session.findOne({ roomId });
                 if (!session) return socket.emit('error', 'Session not found');
 
                 socket.join(roomId);
                 socket.roomId = roomId;
 
-                if (session.status === 'initiated') {
-                    // Start the session properly if an astrologer joins, or both joined.
-                    // Usually we start timer when both are connected, but let's say it starts when astrologer sends first message or joins.
-                    session.status = 'active';
-                    session.startTime = new Date();
-                    await session.save();
+                // Clear any pending disconnect timer
+                if (disconnectTimers.has(roomId)) {
+                    clearTimeout(disconnectTimers.get(roomId));
+                    disconnectTimers.delete(roomId);
+                    console.log(`Cleared disconnect timer for room ${roomId}`);
+                }
 
-                    startBillingEngine(roomId, session._id, io);
-                    io.to(roomId).emit('session_started', { startTime: session.startTime });
+                if (session.status === 'initiated') {
+                    // Do not activate session here.
+                    // The session will become active when the astrologer sends the first message.
                 } else if (session.status === 'active') {
                     socket.emit('session_restored', { startTime: session.startTime, duration: session.totalDuration });
                 } else {
@@ -65,23 +80,63 @@ module.exports = function (io) {
             try {
                 const { roomId, content } = data;
 
-                const session = await ChatSession.findOne({ roomId });
-                if (!session || session.status !== 'active') return socket.emit('error', 'Session not active');
+                const session = await Session.findOne({ roomId });
+                if (!session || (session.status !== 'active' && session.status !== 'initiated')) {
+                    return socket.emit('error', 'Session not active');
+                }
+
+                // If sender is Astrologer and session is initiated, start it!
+                if (socket.user.role === 'astrologer' && session.status === 'initiated') {
+                    session.status = 'active';
+                    session.startTime = new Date();
+                    await session.save();
+
+                    startBillingEngine(roomId, session._id, io);
+                    io.to(roomId).emit('session_started', { startTime: session.startTime });
+                }
 
                 const senderModel = socket.user.role === 'astrologer' ? 'Astrologer' : 'User';
                 const senderId = socket.user.role === 'astrologer' ? socket.astrologerId : socket.user.id;
+
+                // Encrypt message at rest
+                const { encryptedData, iv } = CryptoUtil.encrypt(content);
 
                 const newMessage = new Message({
                     sessionId: session._id,
                     sender: senderId,
                     senderModel,
-                    content
+                    content: encryptedData,
+                    isEncrypted: true,
+                    iv: iv,
+                    status: 'sent' // Default to sent, wait for client ack for delivered
                 });
                 await newMessage.save();
 
-                io.to(roomId).emit('receive_session_message', newMessage);
+                // Decrypt for live broadcast to the room so recipients see it clearly
+                const broadcastMessage = newMessage.toObject();
+                broadcastMessage.content = content; 
+
+                io.to(roomId).emit('receive_session_message', broadcastMessage);
             } catch (err) {
                 console.error("Socket Message Error:", err);
+            }
+        });
+
+        // Read Receipts & Delivery Ack
+        socket.on('message_delivered', async ({ messageId }) => {
+            await Message.findByIdAndUpdate(messageId, { status: 'delivered' });
+            // Notify original sender
+            const msg = await Message.findById(messageId).populate('sessionId');
+            if (msg && msg.sessionId) {
+                io.to(msg.sessionId.roomId).emit('message_status_update', { messageId, status: 'delivered' });
+            }
+        });
+
+        socket.on('message_seen', async ({ messageId }) => {
+            await Message.findByIdAndUpdate(messageId, { status: 'seen' });
+            const msg = await Message.findById(messageId).populate('sessionId');
+            if (msg && msg.sessionId) {
+                io.to(msg.sessionId.roomId).emit('message_status_update', { messageId, status: 'seen' });
             }
         });
 
@@ -97,8 +152,60 @@ module.exports = function (io) {
             await terminateSession(roomId, io, 'Manual termination by ' + socket.user.role);
         });
 
-        socket.on('disconnect', () => {
-            // Could add reconnect-timeout logic here if a user disconnects, rather than ending immediately.
+        socket.on('join_waitlist', async ({ astrologerId, sessionType }) => {
+            try {
+                const status = await QueueService.getAstrologerStatus(astrologerId);
+                if (status === 'offline') {
+                    return socket.emit('waitlist_error', { message: 'Astrologer is offline' });
+                }
+
+                const position = await QueueService.enqueueUser(astrologerId, socket.user.id, sessionType);
+                socket.emit('waitlist_update', { position, message: 'You are in the queue' });
+
+                // Notify Astrologer
+                io.to(`astro_${astrologerId}`).emit('waitlist_new_user', {
+                    userId: socket.user.id,
+                    sessionType,
+                    queueLength: await QueueService.getFullWaitlist(astrologerId).then(q => q.length)
+                });
+            } catch (err) {
+                console.error("Waitlist Error:", err);
+            }
+        });
+
+        socket.on('set_status', async ({ status }) => {
+            if (socket.user.role === 'astrologer') {
+                await QueueService.setAstrologerStatus(socket.astrologerId, status);
+                io.emit('astrologer_status_changed', { astrologerId: socket.astrologerId, status });
+            }
+        });
+
+        socket.on('disconnect', async () => {
+            if (socket.user.role === 'astrologer') {
+                QueueService.setAstrologerStatus(socket.astrologerId, 'offline');
+                io.emit('astrologer_status_changed', { astrologerId: socket.astrologerId, status: 'offline' });
+            }
+
+            // Start a 30-second grace period timer to auto-end session on prolonged disconnect
+            if (socket.roomId) {
+                const session = await Session.findOne({ roomId: socket.roomId });
+                if (session && (session.status === 'active' || session.status === 'initiated')) {
+                    console.log(`Socket disconnected for room ${socket.roomId}. Starting 30s auto-end timer.`);
+                    
+                    // Clear existing timer if any (e.g. multiple tabs disconnecting)
+                    if (disconnectTimers.has(socket.roomId)) {
+                        clearTimeout(disconnectTimers.get(socket.roomId));
+                    }
+
+                    const timeoutId = setTimeout(async () => {
+                        console.log(`Auto-ending session ${socket.roomId} due to prolonged disconnect.`);
+                        await terminateSession(socket.roomId, io, 'Terminated due to participant disconnection');
+                        disconnectTimers.delete(socket.roomId);
+                    }, 30000);
+                    
+                    disconnectTimers.set(socket.roomId, timeoutId);
+                }
+            }
         });
     });
 
@@ -108,13 +215,13 @@ module.exports = function (io) {
         // Run every 60 seconds
         const intervalId = setInterval(async () => {
             try {
-                const session = await ChatSession.findById(sessionId);
+                const session = await Session.findById(sessionId);
                 if (!session || session.status !== 'active') {
                     return stopBillingEngine(roomId);
                 }
 
                 const pricePerMinute = session.pricePerMinute;
-                const user = await User.findById(session.user);
+                const user = await User.findById(session.userId);
 
                 if (user.walletBalance < pricePerMinute) {
                     // Insufficient balance, terminate immediately
@@ -127,12 +234,12 @@ module.exports = function (io) {
                 await user.save();
 
                 // Add to Astrologer earnings
-                const astrologer = await Astrologer.findById(session.astrologer);
+                const astrologer = await Astrologer.findById(session.astrologerId);
                 const commission = astrologer.commissionRate || 20; // e.g. platform takes 20%
                 const earnings = pricePerMinute * ((100 - commission) / 100);
 
-                astrologer.totalEarnings += earnings;
-                astrologer.walletBalance += earnings; // Add to payout balance
+                astrologer.totalEarnings = (astrologer.totalEarnings || 0) + earnings;
+                astrologer.walletBalance = (astrologer.walletBalance || 0) + earnings; // Add to payout balance
                 await astrologer.save();
 
                 // Record Transaction
@@ -142,7 +249,7 @@ module.exports = function (io) {
                     type: 'debit',
                     status: 'success',
                     description: `Chat deduction for session ${roomId} (1 min)`,
-                    referenceModel: 'ChatSession',
+                    referenceModel: 'Session',
                     referenceId: session._id
                 });
 
@@ -153,7 +260,7 @@ module.exports = function (io) {
                     type: 'credit',
                     status: 'success',
                     description: `Chat earning for session ${roomId} (1 min)`,
-                    referenceModel: 'ChatSession',
+                    referenceModel: 'Session',
                     referenceId: session._id
                 });
 
@@ -192,7 +299,7 @@ module.exports = function (io) {
         stopBillingEngine(roomId);
 
         try {
-            const session = await ChatSession.findOneAndUpdate(
+            const session = await Session.findOneAndUpdate(
                 { roomId },
                 {
                     status: 'completed',

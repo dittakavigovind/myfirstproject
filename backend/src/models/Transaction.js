@@ -32,7 +32,7 @@ const transactionSchema = new mongoose.Schema({
     },
     referenceModel: {
         type: String,
-        enum: ['Consultation', 'Report', 'ECommerce', 'Recharge', 'ChatSession', 'WalletRecharge'],
+        enum: ['Consultation', 'Report', 'ECommerce', 'Recharge', 'Session', 'WalletRecharge'],
         default: 'Recharge'
     },
     referenceId: {

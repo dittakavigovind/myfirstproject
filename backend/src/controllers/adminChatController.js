@@ -1,4 +1,4 @@
-const ChatSession = require('../models/ChatSession');
+const Session = require('../models/Session');
 const Message = require('../models/Message');
 const Transaction = require('../models/Transaction');
 const { Parser } = require('json2csv');
@@ -10,7 +10,7 @@ exports.getAllSessions = async (req, res) => {
         const { status, limit = 50, page = 1 } = req.query;
         const query = status ? { status } : {};
 
-        const sessions = await ChatSession.find(query)
+        const sessions = await Session.find(query)
             .populate('user', 'name email phone')
             .populate('astrologer', 'displayName')
             .sort('-createdAt')
@@ -18,7 +18,7 @@ exports.getAllSessions = async (req, res) => {
             .skip((page - 1) * limit)
             .exec();
 
-        const count = await ChatSession.countDocuments(query);
+        const count = await Session.countDocuments(query);
 
         res.status(200).json({
             success: true,
@@ -37,7 +37,7 @@ exports.getAllSessions = async (req, res) => {
 exports.forceEndSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const session = await ChatSession.findById(sessionId);
+        const session = await Session.findById(sessionId);
 
         if (!session || session.status !== 'active') {
             return res.status(404).json({ success: false, message: 'Active session not found' });
@@ -101,7 +101,7 @@ exports.exportChatLogs = async (req, res) => {
 // @route GET /api/admin/chats/stats
 exports.getChatStats = async (req, res) => {
     try {
-        const statsAggregation = await ChatSession.aggregate([
+        const statsAggregation = await Session.aggregate([
             {
                 $group: {
                     _id: null,
@@ -112,12 +112,12 @@ exports.getChatStats = async (req, res) => {
             }
         ]);
 
-        const activeNow = await ChatSession.countDocuments({ status: 'active' });
+        const activeNow = await Session.countDocuments({ status: 'active' });
 
         const stats = statsAggregation[0] || { totalRevenue: 0, totalDuration: 0, totalSessions: 0 };
         stats.activeNow = activeNow;
 
-        const recentTransactions = await Transaction.find({ referenceModel: 'ChatSession' })
+        const recentTransactions = await Transaction.find({ referenceModel: 'Session' })
             .populate('user', 'name')
             .sort('-createdAt')
             .limit(10);

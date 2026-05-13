@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ConfirmationModal from './ConfirmationModal';
 import { resolveImageUrl, API_BASE } from '../lib/urlHelper';
+import toast from 'react-hot-toast';
+
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -52,6 +54,10 @@ export default function Navbar() {
     }, []);
 
     const handleLogoutClick = () => {
+        if (user?.role === 'astrologer' && (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline)) {
+            toast.error("Please turn off all availability statuses before logging out.");
+            return;
+        }
         setShowLogoutModal(true);
     };
 

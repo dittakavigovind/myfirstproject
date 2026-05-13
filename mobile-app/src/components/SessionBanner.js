@@ -43,10 +43,13 @@ export default function SessionBanner() {
             const { data } = await api.get("/chat/active-session");
             if (data.success && data.session) {
                 setActiveSession(data.session);
-                // Calculate elapsed time from startTime
-                const start = new Date(data.session.startTime);
-                const now = new Date();
-                setDuration(Math.floor((now - start) / 1000));
+                if (data.session.status === 'active' && data.session.startTime) {
+                    const start = new Date(data.session.startTime);
+                    const now = new Date();
+                    setDuration(Math.floor((now - start) / 1000));
+                } else {
+                    setDuration(0);
+                }
             } else {
                 setActiveSession(null);
             }
@@ -63,6 +66,11 @@ export default function SessionBanner() {
 
     if (!activeSession || isChatPage) return null;
 
+    const isAstrologer = user?.role === 'astrologer';
+    const partner = isAstrologer ? activeSession.userId : activeSession.astrologerId;
+    const partnerName = partner?.displayName || partner?.name || "Partner";
+    const partnerImage = partner?.image || partner?.profileImage || `https://ui-avatars.com/api/?name=${partnerName}&background=random`;
+
     return (
         <AnimatePresence>
             <motion.div
@@ -73,14 +81,25 @@ export default function SessionBanner() {
             >
                 <div
                     className="glass-panel border-electric-violet/30 bg-electric-violet/10 backdrop-blur-xl p-4 rounded-3xl flex items-center justify-between shadow-2xl shadow-electric-violet/20"
-                    onClick={() => router.push(`/chat/${activeSession.roomId}`)}
+                    onClick={() => {
+                        if (!activeSession.roomId) {
+                            alert("Error: Room ID is missing from active session!");
+                            return;
+                        }
+                        router.push(`/chat/room?id=${activeSession.roomId}`);
+                        setTimeout(() => {
+                            if (!window.location.pathname.includes('/chat/room')) {
+                                window.location.href = `/chat/room?id=${activeSession.roomId}`;
+                            }
+                        }, 500);
+                    }}
                 >
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <div className="w-12 h-12 rounded-full border-2 border-electric-violet overflow-hidden">
                                 <img
-                                    src={activeSession.astrologer?.image || activeSession.astrologer?.profileImage || "https://i.pravatar.cc/100?u=astro"}
-                                    alt="Astro"
+                                    src={partnerImage}
+                                    alt={partnerName}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -89,7 +108,7 @@ export default function SessionBanner() {
 
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-electric-violet mb-0.5">Active Consultation</p>
-                            <h4 className="text-white font-bold text-sm leading-tight">{activeSession.astrologer?.displayName || activeSession.astrologer?.name || "Astrologer Guide"}</h4>
+                            <h4 className="text-white font-bold text-sm leading-tight">{partnerName}</h4>
                             <div className="flex items-center gap-2 mt-1">
                                 <Clock size={12} className="text-slate-400" />
                                 <span className="text-xs font-mono font-bold text-slate-300">{formatTime(duration)}</span>

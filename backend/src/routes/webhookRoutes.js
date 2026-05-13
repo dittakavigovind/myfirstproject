@@ -6,4 +6,7 @@ const webhookController = require('../controllers/webhookController');
 // Ensure you set up Agora Console to hit this URL
 router.post('/agora', webhookController.handleAgoraWebhook);
 
+// Razorpay Webhook
+router.post('/razorpay', webhookController.handleRazorpayWebhook);
+
 module.exports = router;

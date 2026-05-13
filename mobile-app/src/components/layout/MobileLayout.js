@@ -25,7 +25,7 @@ export default function MobileLayout({ children }) {
 
             {!isSpecialPage && !isProfile && <ModernHeader />}
 
-            <main className="relative z-10 px-4 h-full">
+            <main className={`relative z-10 h-full ${isSpecialPage ? '' : 'px-4'}`}>
                 {children}
             </main>
 

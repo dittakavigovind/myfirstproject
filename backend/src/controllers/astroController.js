@@ -566,8 +566,8 @@ exports.getMatchMaking = async (req, res) => {
             success: true,
             data: {
                 score: matchResult,
-                boy: { moon: boyMoon, nakshatra: matchResult.boyNak, sign: matchResult.boySign },
-                girl: { moon: girlMoon, nakshatra: matchResult.girlNak, sign: matchResult.girlSign }
+                boy: { ...matchResult.boy, moon: boyMoon },
+                girl: { ...matchResult.girl, moon: girlMoon }
             }
         });
 

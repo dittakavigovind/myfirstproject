@@ -46,3 +46,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
 }
+
+.pt-safe {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: var(--safe-area-inset-bottom);
+}

@@ -1,17 +1,28 @@
 const mongoose = require('mongoose');
 
-const chatSessionSchema = new mongoose.Schema({
+const sessionSchema = new mongoose.Schema({
     roomId: {
         type: String,
         required: true,
         unique: true
     },
-    user: {
+    sessionType: {
+        type: String,
+        enum: ['chat', 'audio', 'video'],
+        default: 'chat',
+        required: true
+    },
+    callType: {
+        type: String, 
+        enum: ['private', 'public'], // Public typically for free broadcast audio
+        default: 'private'
+    },
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    astrologer: {
+    astrologerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Astrologer',
         required: true
@@ -22,7 +33,7 @@ const chatSessionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['initiated', 'active', 'completed', 'terminated'],
+        enum: ['initiated', 'active', 'completed', 'terminated', 'failed'],
         default: 'initiated'
     },
     startTime: {
@@ -39,6 +50,18 @@ const chatSessionSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    agoraChannelId: {
+        type: String
+    },
+    agoraResourceId: {
+        type: String // For Cloud Recording
+    },
+    agoraSid: {
+        type: String // For Cloud Recording
+    },
+    recordingUrl: {
+        type: String // To store final recording path
+    },
     disconnectHistory: [{
         role: { type: String, enum: ['user', 'astrologer'] },
         disconnectedAt: Date,
@@ -47,7 +70,8 @@ const chatSessionSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Create indexes for efficient querying
-chatSessionSchema.index({ user: 1, status: 1 });
-chatSessionSchema.index({ astrologer: 1, status: 1 });
+sessionSchema.index({ userId: 1, status: 1 });
+sessionSchema.index({ astrologerId: 1, status: 1 });
+sessionSchema.index({ sessionType: 1, status: 1 });
 
-module.exports = mongoose.model('ChatSession', chatSessionSchema);
+module.exports = mongoose.model('Session', sessionSchema);

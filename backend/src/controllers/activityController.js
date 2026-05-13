@@ -1,7 +1,7 @@
 const Astrologer = require('../models/Astrologer');
 const AstrologerOnlineSession = require('../models/AstrologerOnlineSession');
 const AstrologerDailyStat = require('../models/AstrologerDailyStat');
-const AstrologerSession = require('../models/AstrologerSession');
+const Session = require('../models/Session');
 
 // Helper to get today's midnight date
 const getTodayDate = () => {
@@ -102,7 +102,7 @@ exports.toggleOnlineStatus = async (req, res) => {
                             totalNetEarnings: sessionEarnings
                         },
                         $set: {
-                            totalSessions: (await AstrologerSession.countDocuments({ astrologerId, sessionDate: activeSession.sessionDate }))
+                            totalSessions: (await Session.countDocuments({ astrologerId, sessionDate: activeSession.sessionDate }))
                         }
                     },
                     { upsert: true, new: true }
@@ -137,19 +137,19 @@ exports.getDashboardStats = async (req, res) => {
         const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
         // 1. Get Today's Sessions (for history stats)
-        const sessions = await AstrologerSession.find({
+        const sessions = await Session.find({
             astrologerId,
             sessionDate: dateStr
         });
 
         // 2. Get Active Session (Separate query to ensure we catch it even if date differs)
-        const activeSession = await AstrologerSession.findOne({
+        const activeSession = await Session.findOne({
             astrologerId,
             endTime: { $exists: false }
         });
 
         // 3. Calculate History (Completed sessions today)
-        // duration is stored in seconds in AstrologerSession
+        // duration is stored in seconds in Session
         const historySeconds = sessions
             .filter(s => s.endTime) // Only completed ones
             .reduce((acc, curr) => acc + (curr.duration || 0), 0);

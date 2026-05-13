@@ -2,11 +2,27 @@ const { RtcTokenBuilder, RtmTokenBuilder, RtcRole, RtmRole } = require('agora-ac
 
 exports.generateAgoraToken = async (req, res) => {
     try {
-        const { channelName, uid } = req.body;
+        const { channelName, uid, sessionType } = req.body; // sessionType: 'chat', 'voice', 'video'
 
         if (!channelName) {
             return res.status(400).json({ success: false, message: 'Channel name is required' });
         }
+
+        // --- ENFORCE GLOBAL APP TOGGLES ---
+        const AppConfig = require('../models/AppConfig');
+        const config = await AppConfig.findOne();
+        if (config && config.features) {
+            if (sessionType === 'chat' && config.features.chatEnabled === false) {
+                return res.status(403).json({ success: false, message: 'Chat is currently disabled globally.' });
+            }
+            if (sessionType === 'voice' && config.features.voiceEnabled === false) {
+                return res.status(403).json({ success: false, message: 'Audio calls are currently disabled globally.' });
+            }
+            if (sessionType === 'video' && config.features.videoEnabled === false) {
+                return res.status(403).json({ success: false, message: 'Video calls are currently disabled globally.' });
+            }
+        }
+        // ----------------------------------
 
         const appID = process.env.AGORA_APP_ID;
         const appCertificate = process.env.AGORA_APP_CERTIFICATE;

@@ -304,10 +304,19 @@ export default function Profile() {
 
             {/* Logout */}
             <button
-                onClick={() => {
+                onClick={async () => {
                     if (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline) {
                         alert("Please turn off Chat, Voice, and Video availability before logging out.");
                         return;
+                    }
+                    try {
+                        const { data } = await api.get("/chat/active-session");
+                        if (data.success && data.session) {
+                            alert("You have an active consultation. Please end the session before logging out.");
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Error checking active session during logout:", e);
                     }
                     logout();
                 }}

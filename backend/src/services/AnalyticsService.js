@@ -1,4 +1,4 @@
-const AstrologerSession = require('../models/AstrologerSession');
+const Session = require('../models/Session');
 const AstrologerDailyStat = require('../models/AstrologerDailyStat');
 const mongoose = require('mongoose');
 
@@ -15,7 +15,7 @@ class AnalyticsService {
         endOfDay.setHours(23, 59, 59, 999);
 
         // Fetch all sessions for today to calculate in memory (complex logic harder in pure mongo 4.x)
-        const sessions = await AstrologerSession.find({
+        const sessions = await Session.find({
             createdAt: { $gte: startOfDay, $lte: endOfDay },
             endTime: { $exists: true } // Only completed sessions
         });

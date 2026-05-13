@@ -7,7 +7,16 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'http',
     hostname: 'localhost'
-  }
+  },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+    Keyboard: {
+      resize: "native",
+      style: "dark",
+    },
+  },
 };
 
 export default config;

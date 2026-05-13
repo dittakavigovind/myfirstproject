@@ -42,6 +42,21 @@ const upload = multer({
     limits: { fileSize: 1024 * 1024 * 50 } // 50MB limit
 });
 
+// File Filter (Audio only)
+const audioFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('audio/') || file.originalname.match(/\.(mp3|wav|ogg)$/i)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Not an audio file! Please upload an mp3 or wav.'), false);
+    }
+};
+
+const uploadAudio = multer({
+    storage: storage,
+    fileFilter: audioFilter,
+    limits: { fileSize: 1024 * 1024 * 20 } // 20MB limit for audio
+});
+
 /**
  * @route POST /api/upload
  * @desc Upload an image/file
@@ -116,6 +131,37 @@ router.post('/', uploadMiddleware, (req, res) => {
         success: true,
         filePath: filePath,
         message: 'File uploaded successfully'
+    });
+});
+
+const uploadAudioMiddleware = (req, res, next) => {
+    uploadAudio.single('file')(req, res, (err) => {
+        if (err) {
+            console.error("Audio Upload Middleware Error:", err);
+            return res.status(400).json({ message: 'Audio upload failed', error: err.message });
+        }
+        next();
+    });
+};
+
+/**
+ * @route POST /api/upload/audio
+ * @desc Upload an audio file
+ * @access Public (or protected if needed)
+ */
+router.post('/audio', uploadAudioMiddleware, (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No audio file uploaded' });
+    }
+
+    // Construct accessible URL
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const filePath = `${baseUrl}/api/uploads/${req.file.filename}`;
+
+    res.json({
+        success: true,
+        filePath: filePath,
+        message: 'Audio uploaded successfully'
     });
 });
 

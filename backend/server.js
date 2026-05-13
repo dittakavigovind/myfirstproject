@@ -154,6 +154,11 @@ app.get('/api/test-connection', (req, res) => {
 });
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Global Maintenance Mode check
+const { checkMaintenanceMode } = require('./src/middleware/appConfigMiddleware');
+app.use('/api', checkMaintenanceMode);
+
 // Static Files - Serving via /api prefix for Hostinger proxy reliability
 app.get('/api/uploads/:name', (req, res) => {
     const filePath = path.join(app.get('UPLOAD_ROOT'), req.params.name);
@@ -289,6 +294,7 @@ app.use('/api/agora', require('./src/routes/agoraRoutes'));
 // app.use('/api/auth', require('./src/routes/otpRoutes')); // Merged into authRoutes
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/astro', astroRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/astro/earnings', earningsRoutes);
@@ -296,6 +302,7 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin/chats', require('./src/routes/adminChatRoutes'));
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', require('./src/routes/notificationRoutes'));
 app.use('/api/panchang', panchangRoutes);
 app.use('/api/horoscope', horoscopeRoutes);
 app.use('/api/requests', requestRoutes);
@@ -305,6 +312,7 @@ app.use('/api/page-content', require('./src/routes/pageContentRoutes'));
 app.use('/api/popups', require('./src/routes/popupRoutes'));
 app.use('/api/pooja', poojaRoutes);
 app.use('/api/media', require('./src/routes/mediaRoutes'));
+app.use('/api/matchmaking', require('./src/routes/matchmakingRoutes'));
 // --- SEO PROXY SERVER LOGIC ---
 // In-memory cache for SEO optimized HTML strings to ensure lightning-fast responses
 const seoCache = {};

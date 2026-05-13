@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { Preferences } from "@capacitor/preferences";
+import { PushNotifications } from "@capacitor/push-notifications";
+import { Capacitor } from "@capacitor/core";
 import { useRouter, usePathname } from "next/navigation";
 import api from "@/lib/api";
 
@@ -33,6 +35,14 @@ export function AuthProvider({ children }) {
                 // Fetch user details from the backend
                 const response = await api.get("/auth/me");
                 setUser(response.data);
+                
+                // Fetch unread count for the bell badge
+                const notifRes = await api.get("/notifications/my");
+                if (notifRes.data.success) {
+                    setUser(prev => ({ ...prev, unreadNotifications: notifRes.data.unreadCount }));
+                }
+
+                registerPushNotifications();
             }
         } catch (error) {
             console.error("Failed to authenticate user on load", error);
@@ -41,9 +51,70 @@ export function AuthProvider({ children }) {
         }
     };
 
+    const registerPushNotifications = async () => {
+        if (Capacitor.isNativePlatform()) {
+            let permStatus = await PushNotifications.checkPermissions();
+            if (permStatus.receive === 'prompt') {
+                permStatus = await PushNotifications.requestPermissions();
+            }
+            if (permStatus.receive !== 'granted') return;
+
+            await PushNotifications.register();
+
+            // Create Android Notification Channels for Custom Sounds
+            try {
+                await PushNotifications.createChannel({
+                    id: 'astro_chat_alerts',
+                    name: 'Chat Requests',
+                    description: 'Alerts for incoming chat requests',
+                    importance: 5,
+                    visibility: 1,
+                    sound: 'chat_alert', // Must match the wav file name without extension in res/raw
+                    vibration: true
+                });
+            } catch (err) {
+                console.log('Failed to create notification channel, possibly iOS or not supported:', err);
+            }
+
+            // Set up listeners just once
+            PushNotifications.addListener('registration', async (token) => {
+                console.log('Mobile Hardware FCM Token: ' + token.value);
+                try {
+                    await api.put('/users/fcm-token', { fcmToken: token.value });
+                    console.log('Device securely registered to Astro Platform for Push Notifications.');
+                } catch (e) {
+                    console.error('Failed to save FCM token to backend', e);
+                }
+            });
+
+            PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                console.log('Live Push Received: ', notification);
+                // Optionally refresh unread count here
+                checkUnreadCount();
+            });
+
+            PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+                console.log('Push Action Performed: ', notification);
+                router.push('/notifications');
+            });
+        }
+    };
+
+    const checkUnreadCount = async () => {
+        try {
+            const notifRes = await api.get("/notifications/my");
+            if (notifRes.data.success) {
+                setUser(prev => prev ? ({ ...prev, unreadNotifications: notifRes.data.unreadCount }) : prev);
+            }
+        } catch (e) {
+            console.error("Failed to refresh unread count", e);
+        }
+    };
+
     const login = async (token, userData) => {
         await Preferences.set({ key: "authToken", value: token });
         setUser(userData);
+        registerPushNotifications();
         
         // Role-based redirection: Astrologers land on Profile, Seekers land on Home
         if (userData?.role === 'astrologer') {
@@ -54,6 +125,13 @@ export function AuthProvider({ children }) {
     };
 
     const logout = async () => {
+        try {
+            if (user) {
+                await api.post("/chat/end-all-sessions");
+            }
+        } catch (e) {
+            console.error("Error ending sessions on logout", e);
+        }
         await Preferences.remove({ key: "authToken" });
         setUser(null);
         router.push("/auth");

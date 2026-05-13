@@ -30,6 +30,13 @@ exports.registerUser = async (req, res) => {
             finalName = email.split('@')[0];
         }
 
+        // Check Global App Config
+        const AppConfig = require('../models/AppConfig');
+        const config = await AppConfig.findOne();
+        if (config && config.disableNewSignups) {
+            return res.status(403).json({ message: 'New user registrations are currently disabled by the Platform Administrator.' });
+        }
+
         // Check if user exists
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -179,6 +186,13 @@ exports.verifyOtp = async (req, res) => {
         let user = await User.findOne({ phone: normalizedPhone });
 
         if (!user) {
+            // Check Global App Config before creating account
+            const AppConfig = require('../models/AppConfig');
+            const config = await AppConfig.findOne();
+            if (config && config.disableNewSignups) {
+                return res.status(403).json({ message: 'New user registrations are currently disabled by the Platform Administrator.' });
+            }
+
             // Create new incomplete user
             user = await User.create({
                 phone: normalizedPhone,

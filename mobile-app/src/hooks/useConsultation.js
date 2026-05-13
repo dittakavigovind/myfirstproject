@@ -35,7 +35,7 @@ export function useConsultation() {
 
             if (data.success) {
                 // 3. Redirect to chat room
-                router.push(`/chat/${data.roomId}`);
+                router.push(`/chat/room?id=${data.roomId}`);
             } else {
                 setError(data.message || "Failed to start consultation.");
             }

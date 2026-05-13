@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
     ArrowLeft, Wallet, Plus, ChevronRight,
@@ -9,12 +9,15 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import CosmicCard from "@/components/CosmicCard";
+import API from "@/lib/api";
 
 export default function WalletPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, fetchProfile } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState(null);
+    const [history, setHistory] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
 
     const plans = [
         { id: 1, amount: 100, bonus: 0, label: "Starter" },
@@ -23,11 +26,48 @@ export default function WalletPage() {
         { id: 4, amount: 1000, bonus: 200, label: "Celestial" },
     ];
 
-    const history = [
-        { id: 1, type: "recharge", amount: 500, date: "Today, 02:30 PM", status: "success" },
-        { id: 2, type: "consultation", amount: -150, target: "Astro Govind", date: "Yesterday", status: "success" },
-        { id: 3, type: "consultation", amount: -200, target: "Astro Kavita", date: "04 Mar 2026", status: "success" },
-    ];
+    useEffect(() => {
+        fetchHistory();
+        if (fetchProfile) fetchProfile();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const res = await API.get('/wallet/transactions');
+            if (res.data.success) {
+                setHistory(res.data.transactions);
+            }
+        } catch (error) {
+            console.error('Failed to fetch wallet history:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRecharge = async () => {
+        if (!selectedPlan) return;
+        setProcessing(true);
+        const planToBuy = plans.find(p => p.id === selectedPlan);
+
+        try {
+            // Initiate Razorpay Order on Backend
+            const res = await API.post('/wallet/recharge', { amount: planToBuy.amount });
+            if (res.data.success) {
+                const orderId = res.data.order.id;
+                // For Native Mobile Apps, you would typically pass this orderId to a Razorpay Capacitor/Cordova Plugin here.
+                // For now, we will alert to prove the API integration is physically connected to the node server.
+                alert(`Razorpay Order Created: ${orderId}\nReady for Native Checkout Plugin Integration.`);
+                
+                // If using Web Checkout as fallback:
+                // window.location.href = `https://your-checkout-url.com?order_id=${orderId}`;
+            }
+        } catch (error) {
+            console.error('Recharge Initiation Failed:', error);
+            alert('Failed to initiate recharge. Check network.');
+        } finally {
+            setProcessing(false);
+        }
+    };
 
     return (
         <div className="pb-40 animate-in fade-in duration-500 px-4">
@@ -101,37 +141,44 @@ export default function WalletPage() {
                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                         <History size={14} /> Recent Activity
                     </h3>
-                    <button className="text-[10px] font-black text-electric-violet uppercase tracking-widest">View All</button>
+                    <button onClick={fetchHistory} className="text-[10px] font-black text-electric-violet uppercase tracking-widest">Refresh</button>
                 </div>
 
                 <div className="space-y-3">
-                    {history.map((tx) => (
-                        <div key={tx.id} className="glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/5">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.amount > 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                                    {tx.amount > 0 ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                    {loading ? (
+                        <div className="text-center text-slate-500 text-sm py-8">Loading history...</div>
+                    ) : history.length === 0 ? (
+                        <div className="text-center text-slate-500 text-sm py-8">No transactions found.</div>
+                    ) : (
+                        history.map((tx) => (
+                            <div key={tx._id} className="glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/5">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                                        {tx.type === 'credit' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-black text-white capitalize">{tx.description || tx.type}</h4>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase">{new Date(tx.createdAt).toLocaleString()}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="text-xs font-black text-white">{tx.type === 'recharge' ? 'Wallet Recharge' : tx.target}</h4>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase">{tx.date}</p>
+                                <div className={`text-sm font-black ${tx.type === 'credit' ? 'text-emerald-400' : 'text-white'}`}>
+                                    {tx.type === 'credit' ? `+₹${tx.amount}` : `-₹${Math.abs(tx.amount)}`}
                                 </div>
                             </div>
-                            <div className={`text-sm font-black ${tx.amount > 0 ? 'text-emerald-400' : 'text-white'}`}>
-                                {tx.amount > 0 ? `+₹${tx.amount}` : `-₹${Math.abs(tx.amount)}`}
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 
             {/* Bottom Button - Positioned above Bottom Nav */}
             <div className="fixed bottom-24 left-0 right-0 px-4 pointer-events-none">
                 <button
-                    disabled={!selectedPlan}
+                    disabled={!selectedPlan || processing}
+                    onClick={handleRecharge}
                     className="w-full h-16 rounded-[2rem] bg-indigo-600 text-white font-black text-lg shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
                 >
                     <CreditCard size={20} />
-                    Confirm Recharge
+                    {processing ? 'Processing...' : 'Confirm Recharge'}
                 </button>
             </div>
         </div>

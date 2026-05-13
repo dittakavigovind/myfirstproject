@@ -28,7 +28,7 @@ export default function BottomNav() {
     const items = user?.role === 'astrologer' ? astroItems : navItems;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-2 bg-gradient-to-t from-cosmic-indigo via-cosmic-indigo/90 to-transparent pointer-events-none">
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe pt-2 bg-gradient-to-t from-cosmic-indigo via-cosmic-indigo/90 to-transparent pointer-events-none">
             <nav className="glass-panel mx-auto max-w-md rounded-full px-2 py-2 flex items-center justify-between pointer-events-auto shadow-2xl shadow-electric-violet/10">
                 {items.map((item, idx) => {
                     const isActive = pathname === item.href;

@@ -113,6 +113,16 @@ const siteSettingsSchema = new mongoose.Schema({
             link: { type: String, trim: true, default: '' }
         }]
     },
+    chatAlertSoundUrl: {
+        type: String,
+        trim: true,
+        default: '/sounds/chat_alert.mp3'
+    },
+    callAlertSoundUrl: {
+        type: String,
+        trim: true,
+        default: '/sounds/call_alert.mp3'
+    },
     panchangSharePromo: {
         type: String,
         trim: true,

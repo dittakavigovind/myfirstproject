@@ -7,7 +7,7 @@ const MessageSchema = new mongoose.Schema({
     },
     sessionId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'ChatSession'
+        ref: 'Session'
     },
     sender: {
         type: mongoose.Schema.Types.ObjectId,
@@ -22,6 +22,18 @@ const MessageSchema = new mongoose.Schema({
     content: {
         type: String,
         required: true
+    },
+    isEncrypted: {
+        type: Boolean,
+        default: false
+    },
+    iv: {
+        type: String // Initialization Vector for decryption if stored encrypted
+    },
+    status: {
+        type: String,
+        enum: ['sent', 'delivered', 'seen'],
+        default: 'sent'
     },
     readBy: [{
         type: mongoose.Schema.Types.ObjectId,

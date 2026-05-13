@@ -8,7 +8,7 @@ const astrologerEventSchema = new mongoose.Schema({
     },
     sessionId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'AstrologerSession',
+        ref: 'Session',
         index: true
     },
     eventType: {

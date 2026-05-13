@@ -1,4 +1,6 @@
 const BillingService = require('../services/BillingService');
+const WalletService = require('../services/walletService');
+const Transaction = require('../models/Transaction');
 const crypto = require('crypto');
 
 /**
@@ -51,6 +53,63 @@ exports.handleAgoraWebhook = async (req, res) => {
 
     } catch (error) {
         console.error('Webhook Error:', error);
+        res.status(500).send('Server Error');
+    }
+};
+
+/**
+ * Razorpay Webhook Handler
+ */
+exports.handleRazorpayWebhook = async (req, res) => {
+    try {
+        const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+        const signature = req.headers['x-razorpay-signature'];
+        
+        // Validate signature
+        const expectedSignature = crypto.createHmac('sha256', secret)
+            .update(JSON.stringify(req.body))
+            .digest('hex');
+
+        if (expectedSignature !== signature) {
+            return res.status(400).send('Invalid Signature');
+        }
+
+        const event = req.body.event;
+        const payload = req.body.payload.payment.entity;
+
+        if (event === 'payment.captured') {
+            const orderId = payload.order_id;
+            const paymentId = payload.id;
+            
+            // Check if transaction exists and is pending
+            const transaction = await Transaction.findOne({ orderId });
+            
+            if (transaction && transaction.status === 'pending') {
+                // Fulfill payment
+                await WalletService.creditBalance(
+                    transaction.user, 
+                    transaction.amount, 
+                    paymentId, 
+                    orderId, 
+                    'Wallet Recharge via Hook'
+                );
+                
+                transaction.status = 'success';
+                transaction.paymentId = paymentId;
+                await transaction.save();
+                console.log(`[Webhook] Razorpay Payment Captured & Wallet Credited: ${paymentId}`);
+            }
+        } else if (event === 'payment.failed') {
+            const orderId = payload.order_id;
+            await Transaction.findOneAndUpdate(
+                { orderId, status: 'pending' },
+                { status: 'failed', description: 'Payment Failed via Webhook' }
+            );
+        }
+
+        res.status(200).json({ status: 'ok' });
+    } catch (error) {
+        console.error('Razorpay Webhook Error:', error);
         res.status(500).send('Server Error');
     }
 };

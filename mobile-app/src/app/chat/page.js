@@ -22,9 +22,23 @@ export default function Chat() {
 
     const fetchConversations = async () => {
         try {
-            const { data } = await api.get('/chat');
-            // Backend returns array directly from exports.getChats
-            setConversations(Array.isArray(data) ? data : []);
+            const { data } = await api.get('/chat/history');
+            if (data.success && data.sessions) {
+                // Group by unique partner to show latest conversation per person
+                const uniqueConversations = [];
+                const seenPartners = new Set();
+
+                for (const session of data.sessions) {
+                    const partnerId = session.astrologerId?._id || session.userId?._id;
+                    if (partnerId && !seenPartners.has(partnerId)) {
+                        seenPartners.add(partnerId);
+                        uniqueConversations.push(session);
+                    }
+                }
+                setConversations(uniqueConversations);
+            } else {
+                setConversations([]);
+            }
         } catch (err) {
             console.error("Failed to fetch conversations", err);
         } finally {
@@ -33,16 +47,20 @@ export default function Chat() {
     };
 
     const filteredConversations = useMemo(() => {
-        return conversations.filter(chat => {
-            const otherParticipant = chat.participants.find(p => p._id !== user?.id);
-            const nameMatch = otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-            const messageMatch = chat.lastMessage?.content?.toLowerCase().includes(searchQuery.toLowerCase());
-            return nameMatch || messageMatch;
+        return conversations.filter(session => {
+            const partner = session.astrologerId || session.userId || {};
+            const nameMatch = (partner.name || partner.displayName || "").toLowerCase().includes(searchQuery.toLowerCase());
+            return nameMatch;
         });
-    }, [conversations, searchQuery, user?.id]);
+    }, [conversations, searchQuery]);
 
-    const getChatPartner = (chat) => {
-        return chat.participants.find(p => p._id !== user?.id) || { name: "System" };
+    const getChatPartner = (session) => {
+        const partner = session.astrologerId || session.userId || {};
+        return {
+            ...partner,
+            name: partner.displayName || partner.name || "Unknown User",
+            profileImage: partner.image || partner.profileImage
+        };
     };
 
     if (authLoading || loading) return <CosmicLoader message="Fetching cosmic signals..." />;
@@ -81,7 +99,7 @@ export default function Chat() {
                     return (
                         <div 
                             key={chat._id} 
-                            onClick={() => router.push(`/chat/${chat._id}`)}
+                            onClick={() => router.push(`/chat/room?id=${chat.roomId}`)}
                             className="glass-panel rounded-xl p-4 flex gap-4 items-center relative overflow-hidden group cursor-pointer"
                         >
                             {/* Highlight on touch/hover */}
@@ -105,8 +123,20 @@ export default function Chat() {
                                         {chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ""}
                                     </span>
                                 </div>
-                                <p className="text-sm truncate text-slate-400">
-                                    {chat.lastMessage?.content || "No messages yet"}
+                                <p className="text-sm truncate font-medium text-slate-400">
+                                    {chat.status === 'active' ? (
+                                        <span className="text-emerald-400 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                            Live Session
+                                        </span>
+                                    ) : chat.status === 'initiated' ? (
+                                        <span className="text-amber-400 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                            Connecting...
+                                        </span>
+                                    ) : (
+                                        <span className="capitalize">{chat.status}</span>
+                                    )}
                                 </p>
                             </div>
                         </div>
