@@ -23,6 +23,15 @@ const reviewSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    reviewerName: {
+        type: String, // Custom name used when admin adds a review manually
+        trim: true
+    },
+    reviewerGender: {
+        type: String,
+        enum: ['Male', 'Female', null],
+        default: null
+    },
     isAnonymous: {
         type: Boolean,
         default: false

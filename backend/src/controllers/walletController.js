@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const RechargePlan = require('../models/RechargePlan');
+const PricingConfig = require('../models/PricingConfig');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -23,16 +25,35 @@ exports.getWalletBalance = async (req, res) => {
 };
 
 exports.addMoney = async (req, res) => {
-    const { amount } = req.body;
-
-    if (!amount || amount <= 0) {
-        return res.status(400).json({ success: false, message: 'Invalid amount' });
-    }
+    const { amount: customAmount, planId } = req.body;
+    
+    let amount = customAmount ? parseFloat(customAmount) : 0;
+    let bonusAmount = 0;
 
     try {
+        if (planId) {
+            const plan = await RechargePlan.findById(planId);
+            if (!plan || !plan.isActive) {
+                return res.status(400).json({ success: false, message: 'Invalid or inactive recharge plan' });
+            }
+            amount = plan.amount;
+            bonusAmount = plan.bonus || 0;
+        }
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid amount' });
+        }
+
+        const config = await PricingConfig.findOne() || {};
+        const isGstEnabled = config.gst?.enabled === true;
+        const gstPercentage = config.gst?.percentage || 18;
+
+        const gstAmount = isGstEnabled ? (amount * (gstPercentage / 100)) : 0;
+        const totalAmount = amount + gstAmount;
+
         // Create Razorpay Order
         const options = {
-            amount: amount * 100, // Amount in paise
+            amount: Math.round(totalAmount * 100), // Amount in paise
             currency: "INR",
             receipt: `receipt_${Date.now()}`
         };
@@ -43,6 +64,9 @@ exports.addMoney = async (req, res) => {
         const transaction = await Transaction.create({
             user: req.user.id,
             amount: amount,
+            gstAmount: gstAmount,
+            totalAmount: totalAmount,
+            bonusAmount: bonusAmount,
             type: 'credit',
             status: 'pending',
             description: 'Wallet Recharge - Pending',
@@ -54,6 +78,9 @@ exports.addMoney = async (req, res) => {
             success: true,
             order_id: order.id,
             amount: amount,
+            gstAmount: gstAmount,
+            totalAmount: totalAmount,
+            bonusAmount: bonusAmount,
             currency: "INR",
             key_id: process.env.RAZORPAY_KEY_ID,
             transactionId: transaction._id
@@ -100,7 +127,7 @@ exports.verifyPayment = async (req, res) => {
             // 3. Update User Balance
             const user = await User.findByIdAndUpdate(
                 req.user.id,
-                { $inc: { walletBalance: transaction.amount } },
+                { $inc: { walletBalance: transaction.amount + (transaction.bonusAmount || 0) } },
                 { new: true }
             );
 
@@ -134,7 +161,14 @@ exports.getTransactions = async (req, res) => {
         const transactions = await Transaction.find({ user: req.user.id })
             .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(limit);
+            .limit(limit)
+            .populate({
+                path: 'referenceId',
+                populate: {
+                    path: 'astrologerId',
+                    select: 'displayName'
+                }
+            });
 
         const total = await Transaction.countDocuments({ user: req.user.id });
 

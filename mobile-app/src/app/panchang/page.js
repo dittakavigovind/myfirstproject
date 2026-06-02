@@ -16,7 +16,14 @@ export default function PanchangPage() {
     const router = useRouter();
 
     // State
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const getLocalDateStr = () => {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    const [date, setDate] = useState(getLocalDateStr());
     const [place, setPlace] = useState("New Delhi, India");
     const [coords, setCoords] = useState({ lat: 28.6139, lng: 77.2090, timezone: "Asia/Kolkata" });
     const [data, setData] = useState(null);

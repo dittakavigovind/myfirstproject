@@ -146,15 +146,15 @@ export default function MobileAdminNotifications() {
                         ) : (
                             <div className="space-y-4">
                                 {notifications.map((notif) => (
-                                    <div key={notif._id} className="p-5 bg-slate-950/50 rounded-xl border border-slate-800 flex flex-col md:flex-row gap-4 items-start justify-between hover:border-slate-700 transition">
-                                        <div className="flex gap-4">
+                                    <div key={notif._id} className="p-5 bg-slate-950/50 rounded-xl border border-slate-800 flex flex-col md:flex-row gap-4 items-start justify-between hover:border-slate-700 transition w-full overflow-hidden">
+                                        <div className="flex gap-4 flex-1 min-w-0 w-full">
                                             <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-1">
                                                 {notif.targetAudience === 'astrologers' ? <Activity size={18} /> : 
                                                  notif.targetAudience === 'users' ? <User size={18} /> : <Users size={18} />}
                                             </div>
-                                            <div>
-                                                <h4 className="text-white font-bold text-lg">{notif.title}</h4>
-                                                <p className="text-slate-400 text-sm mt-1">{notif.message}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-white font-bold text-lg truncate">{notif.title}</h4>
+                                                <p className="text-slate-400 text-sm mt-1 break-all whitespace-pre-wrap">{notif.message}</p>
                                                 
                                                 <div className="flex flex-wrap gap-3 mt-3">
                                                     <span className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium tracking-wide">

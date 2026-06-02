@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { Settings, Save, Sparkles, AlertTriangle, DollarSign } from 'lucide-react';
+import { Settings, Save, Sparkles, AlertTriangle, DollarSign, Info } from 'lucide-react';
+import RechargePlanManager from '../../../components/admin/RechargePlanManager';
 
 export default function MobilePricingDashboard() {
     const [pricingConfig, setPricingConfig] = useState(null);
@@ -121,6 +122,43 @@ export default function MobilePricingDashboard() {
                             </div>
                             <p className="text-xs text-slate-500 mt-2">This is used if an individual Astrologer does not have a customized rate in their profile.</p>
                          </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative p-8 mt-8">
+                         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Tax & Compliance</h3>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                             <ToggleSwitch 
+                                 label="Collect GST on Recharges" 
+                                 description="Automatically add GST on top of user wallet recharges."
+                                 icon={<Info size={16} className="text-blue-400" />}
+                                 checked={pricingConfig.gst?.enabled || false} 
+                                 onChange={(v) => setPricingConfig({ ...pricingConfig, gst: { ...pricingConfig.gst, enabled: v } })} 
+                             />
+                             <div className="max-w-xs mt-4 md:mt-0">
+                                 <label className="block text-sm font-medium text-slate-400 mb-2">GST Percentage</label>
+                                 <div className="relative">
+                                     <input 
+                                         type="number" 
+                                         max="100" min="0" step="1"
+                                         value={pricingConfig.gst?.percentage ?? 18} 
+                                         onChange={(e) => setPricingConfig({ ...pricingConfig, gst: { ...pricingConfig.gst, percentage: parseInt(e.target.value) } })}
+                                         className="w-full bg-slate-950 border border-slate-800 text-white p-3 pl-8 rounded-lg focus:ring-2 focus:ring-blue-500/50 font-bold disabled:opacity-50"
+                                         disabled={!(pricingConfig.gst?.enabled)}
+                                     />
+                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">%</span>
+                                 </div>
+                                 <p className="text-xs text-slate-500 mt-2">Currently set to {pricingConfig.gst?.percentage ?? 18}%.</p>
+                             </div>
+                         </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative mt-8">
+                        <div className="p-8">
+                             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-800 pb-2">Wallet Recharge Plans</h3>
+                             <div className="bg-slate-100 rounded-2xl p-1 overflow-hidden">
+                                 <RechargePlanManager />
+                             </div>
+                        </div>
                     </div>
                 </>
             )}

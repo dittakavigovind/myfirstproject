@@ -13,11 +13,34 @@ export default function EarningsPage() {
     const router = useRouter();
     const [stats, setStats] = useState({
         total: user?.walletBalance || 0,
-        withdrawn: 0,
+        todayGross: 0,
+        todayPlatform: 0,
+        todayNet: 0
     });
     const [withdrawAmount, setWithdrawAmount] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: "", text: "" });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/activity/stats/dashboard');
+                if (res.data.success) {
+                    setStats(prev => ({
+                        ...prev,
+                        todayGross: res.data.data.todayGross,
+                        todayPlatform: res.data.data.todayPlatformShare,
+                        todayNet: res.data.data.todayNet
+                    }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch earnings stats:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
 
     const handleRequestPayout = async () => {
         const amount = parseFloat(withdrawAmount);
@@ -54,7 +77,7 @@ export default function EarningsPage() {
 
             {/* Total Earnings Card */}
             <CosmicCard className="bg-gradient-to-tr from-cosmic-indigo to-electric-violet/20 border-white/10 p-6 mb-6">
-                <p className="text-slate-400 text-sm font-medium mb-2">Total balance</p>
+                <p className="text-slate-400 text-sm font-medium mb-2">Available for Withdrawal</p>
                 <div className="flex items-baseline gap-1 mb-6">
                     <span className="text-4xl font-black text-white">₹{stats.total.toLocaleString()}</span>
                 </div>
@@ -66,6 +89,28 @@ export default function EarningsPage() {
                     </p>
                 </div>
             </CosmicCard>
+
+            {/* Today's Breakdown */}
+            <div className="grid grid-cols-1 gap-4 mb-8">
+                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest pl-1">Today's Performance</h3>
+                <div className="glass-panel p-5 rounded-2xl border-white/5 bg-gradient-to-br from-white/5 to-transparent">
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400 text-sm font-medium">Today's Gross</span>
+                            <span className="text-white font-bold">₹{stats.todayGross}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400 text-sm font-medium">Platform Share</span>
+                            <span className="text-red-400 font-bold">- ₹{stats.todayPlatform}</span>
+                        </div>
+                        <div className="h-px bg-white/5 w-full" />
+                        <div className="flex justify-between items-center">
+                            <span className="text-emerald-400 font-bold uppercase tracking-tighter">Your Net Earnings</span>
+                            <span className="text-emerald-400 text-xl font-black">₹{stats.todayNet}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* Withdraw Amount Input */}
             <div className="mb-6 space-y-4">

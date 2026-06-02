@@ -36,23 +36,40 @@ export default function HistoryPage() {
                         }
 
                         // Determine name and status
-                        const partner = session.astrologerId || session.userId || {};
+                        let partner = {};
+                        if (session.astrologerId && typeof session.astrologerId === 'object') {
+                            partner = session.astrologerId;
+                        } else if (session.userId && typeof session.userId === 'object') {
+                            partner = session.userId;
+                        }
+
                         const name = partner.displayName || partner.name || "Unknown User";
                         
                         let type = "recent";
                         let status = session.status;
+                        let displayStatus = status;
                         if (status === 'missed' || status === 'failed') {
                             type = "missed";
+                            if (session.terminationReason === 'declined_by_astrologer') {
+                                displayStatus = 'declined';
+                            } else {
+                                displayStatus = 'missed';
+                            }
                         }
                         
                         return {
                             id: session._id,
+                            roomId: session.roomId,
                             name,
                             time: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                            status,
+                            status: displayStatus,
                             date: dateGroup,
                             type,
-                            avatar: partner.image || partner.profileImage
+                            avatar: partner.image || partner.profileImage,
+                            duration: session.totalDuration || 0,
+                            partnerId: partner._id,
+                            isAstrologerSession: !!(session.astrologerId && typeof session.astrologerId === 'object'),
+                            sessionType: session.sessionType || 'chat'
                         };
                     });
                     setHistoryData(formattedData);
@@ -90,7 +107,7 @@ export default function HistoryPage() {
                     onClick={() => setActiveTab('recent')}
                     className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all duration-300 border ${
                         activeTab === 'recent' 
-                        ? 'bg-white text-cosmic-indigo border-white scale-[1.02]' 
+                        ? 'bg-solar-gold text-[#0b1026] border-solar-gold scale-[1.02]' 
                         : 'bg-white/5 text-slate-400 border-white/5'
                     }`}
                 >
@@ -101,7 +118,7 @@ export default function HistoryPage() {
                     onClick={() => setActiveTab('missed')}
                     className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all duration-300 border ${
                         activeTab === 'missed' 
-                        ? 'bg-solar-gold text-cosmic-indigo border-solar-gold scale-[1.02]' 
+                        ? 'bg-solar-gold text-[#0b1026] border-solar-gold scale-[1.02]' 
                         : 'bg-white/5 text-slate-400 border-white/5'
                     }`}
                 >
@@ -129,7 +146,12 @@ export default function HistoryPage() {
                                         key={item.id || i}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        className="glass-panel p-4 rounded-2xl border-white/5 flex items-center gap-4 group"
+                                        onClick={() => {
+                                            if (item.roomId && item.sessionType !== 'audio') {
+                                                router.push(`/chat/room?id=${item.roomId}`);
+                                            }
+                                        }}
+                                        className={`glass-panel p-4 rounded-2xl border-white/5 flex items-center gap-4 group ${item.sessionType !== 'audio' ? 'cursor-pointer' : ''}`}
                                     >
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-white/10 to-transparent flex items-center justify-center border border-white/10 overflow-hidden">
                                             {item.avatar ? (
@@ -139,13 +161,37 @@ export default function HistoryPage() {
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-white font-bold text-sm mb-0.5">{item.name}</h3>
+                                            <h3 
+                                                className="text-white font-bold text-sm mb-0.5 hover:text-electric-violet transition cursor-pointer"
+                                                onClick={(e) => {
+                                                    if (item.isAstrologerSession) {
+                                                        e.stopPropagation();
+                                                        router.push(`/astrologer?id=${item.partnerId}`);
+                                                    }
+                                                }}
+                                            >
+                                                {item.name}
+                                            </h3>
                                             <div className="flex items-center gap-2 opacity-60">
                                                 <span className="text-[10px] font-medium text-slate-400">{item.time}</span>
+                                                {item.duration !== undefined && (
+                                                    <>
+                                                        <span className="w-1 h-1 bg-slate-600 rounded-full" />
+                                                        <span className="text-[10px] font-medium text-rose-500">
+                                                            {Math.floor(item.duration / 60)}m {Math.floor(item.duration % 60)}s
+                                                        </span>
+                                                    </>
+                                                )}
                                                 <span className="w-1 h-1 bg-slate-600 rounded-full" />
                                                 <div className="flex items-center gap-1">
-                                                    {item.type === 'missed' ? <PhoneOff size={10} className="text-red-400" /> : <MessageCircle size={10} className="text-slate-400" />}
-                                                    <span className="text-[10px] font-medium text-slate-400 capitalize">{item.status}</span>
+                                                    {item.type === 'missed' ? (
+                                                        item.sessionType === 'audio' ? <PhoneOff size={10} className="text-red-400" /> : <PhoneOff size={10} className="text-red-400" />
+                                                    ) : (
+                                                        item.sessionType === 'audio' ? <Phone size={10} className="text-slate-400" /> : <MessageCircle size={10} className="text-slate-400" />
+                                                    )}
+                                                    <span className="text-[10px] font-medium text-slate-400 capitalize">
+                                                        {item.sessionType === 'audio' ? 'Audio Call' : 'Chat Session'} • {item.status}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>

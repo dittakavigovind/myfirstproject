@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { Settings, Save, Smartphone, Code, ShieldAlert, Sparkles, AlertTriangle, UploadCloud, Loader2 } from 'lucide-react';
+import { Settings, Save, Smartphone, Code, ShieldAlert, Sparkles, AlertTriangle, UploadCloud, Loader2, Info } from 'lucide-react';
 
 export default function MobileConfigDashboard() {
     const [appConfig, setAppConfig] = useState(null);
@@ -171,6 +171,24 @@ export default function MobileConfigDashboard() {
                                     icon={<Sparkles size={16} className="text-emerald-400" />}
                                     checked={appConfig.features?.videoEnabled} 
                                     onChange={(v) => setAppConfig({ ...appConfig, features: { ...appConfig.features, videoEnabled: v } })} 
+                                />
+                                
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-6 mb-4 border-b border-slate-800 pb-2">Chat Room UI</h3>
+
+                                <ToggleSwitch 
+                                    label="Show 'Session Ended By' (To User)" 
+                                    description="Displays who ended the session in the user's chat popup."
+                                    icon={<Info size={16} className="text-blue-400" />}
+                                    checked={appConfig.showSessionEndedBy?.toUser ?? true} 
+                                    onChange={(v) => setAppConfig({ ...appConfig, showSessionEndedBy: { ...appConfig.showSessionEndedBy, toUser: v } })} 
+                                />
+
+                                <ToggleSwitch 
+                                    label="Show 'Session Ended By' (To Astrologer)" 
+                                    description="Displays who ended the session in the astrologer's chat popup."
+                                    icon={<Info size={16} className="text-blue-400" />}
+                                    checked={appConfig.showSessionEndedBy?.toAstrologer ?? true} 
+                                    onChange={(v) => setAppConfig({ ...appConfig, showSessionEndedBy: { ...appConfig.showSessionEndedBy, toAstrologer: v } })} 
                                 />
                             </div>
                         </div>

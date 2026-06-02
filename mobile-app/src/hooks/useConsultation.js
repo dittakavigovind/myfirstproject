@@ -22,9 +22,9 @@ export function useConsultation() {
 
         try {
             // 1. Initial Balance Check (Frontend)
-            const minBalanceRequired = (chatRate || 10) * 5;
+            const minBalanceRequired = (chatRate || 10) * 3;
             if ((user.walletBalance || 0) < minBalanceRequired) {
-                setError(`Insufficient balance. Minimum ₹${minBalanceRequired} (5 mins) required.`);
+                setError(`Insufficient balance. Minimum ₹${minBalanceRequired} (3 mins) required.`);
                 // Small delay before redirecting to wallet so user can read error
                 setTimeout(() => router.push("/wallet"), 2000);
                 return;
@@ -48,8 +48,38 @@ export function useConsultation() {
     };
 
     const startCall = async (astrologerId, callRate) => {
-        // Implementation for calls (Agora integration usually goes here)
-        setError("Voice calls are coming soon to the stars.");
+        if (!user) {
+            router.push("/auth");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+
+        try {
+            // 1. Initial Balance Check (Frontend)
+            const minBalanceRequired = (callRate || 20) * 3;
+            if ((user.walletBalance || 0) < minBalanceRequired) {
+                setError(`Insufficient balance. Minimum ₹${minBalanceRequired} (3 mins) required.`);
+                setTimeout(() => router.push("/wallet"), 2000);
+                return;
+            }
+
+            // 2. Call API to start paid call
+            const { data } = await api.post("/chat/start-paid", { astrologerId, sessionType: 'audio' });
+
+            if (data.success) {
+                // 3. Redirect to call room
+                router.push(`/call/room?id=${data.roomId}`);
+            } else {
+                setError(data.message || "Failed to start call.");
+            }
+        } catch (err) {
+            console.error("Start Call Error:", err);
+            setError(err.response?.data?.message || "Cosmic connection failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return {

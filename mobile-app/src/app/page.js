@@ -4,19 +4,23 @@ import CosmicCard from "@/components/CosmicCard";
 import { Sparkles, Moon, Sun, Star, MessageCircle, Phone, FileText, ArrowRight, Heart, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import { useBirthDetails } from "@/context/BirthDetailsContext";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "@/lib/api";
 
 export default function Home() {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const { birthDetails } = useBirthDetails();
   const router = useRouter();
 
   const [horoscope, setHoroscope] = useState(null);
-  const [astrologers, setAstrologers] = useState([]);
   const [blogs, setBlogs] = useState([]);
+  const [astrologers, setAstrologers] = useState([]);
+  const [followingIds, setFollowingIds] = useState([]);
+  const [sessionCounts, setSessionCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
   // Determine user's sign or default to Aries
@@ -30,11 +34,18 @@ export default function Home() {
     sagittarius: "♐", capricorn: "♑", aquarius: "♒", pisces: "♓"
   };
 
-  const getImageUrl = (path) => {
-    if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-    if (path.startsWith("http")) return path;
-    return `http://192.168.29.133:5000${path.startsWith("/") ? "" : "/"}${path}`;
-  };
+      const getImageUrl = (path) => {
+        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        
+        // If it's a full URL, ensure localhost is rewritten to the real network IP
+        if (path.startsWith("http")) {
+            return path.replace('localhost:5000', '192.168.29.133:5000');
+        }
+        
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
 
   useEffect(() => {
     if (user?.role === 'astrologer') {
@@ -44,10 +55,49 @@ export default function Home() {
     
     fetchDashboardData();
 
-    // Set up polling for astrologer statuses every 15 seconds (only for Seekers)
-    let pollInterval = setInterval(pollAstrologers, 15000);
-    return () => clearInterval(pollInterval);
-  }, [user, router]);
+    if (socket) {
+      const handleStatusChange = (data) => {
+        setAstrologers((prev) => 
+          prev.map(astro => 
+            astro._id === data.astrologerId ? { ...astro, ...data } : astro
+          )
+        );
+      };
+      socket.on("astrologer_status_changed", handleStatusChange);
+      return () => {
+        socket.off("astrologer_status_changed", handleStatusChange);
+      };
+    }
+  }, [user, router, socket]);
+
+  useEffect(() => {
+    if (user && user.role !== 'astrologer') {
+      const pollInterval = setInterval(pollAstrologers, 15000);
+      
+      // Fetch following list
+      api.get("/users/following").then(res => {
+          if (res.data && res.data.success && res.data.following) {
+              setFollowingIds(res.data.following.map(a => a._id || a.id));
+          }
+      }).catch(err => console.error("Failed to fetch following", err));
+
+      // Fetch chat history for most interacted
+      api.get("/chat/history").then(res => {
+          if (res.data && res.data.success && res.data.sessions) {
+              const counts = {};
+              res.data.sessions.forEach(session => {
+                  const astroId = session.astrologerId?._id || session.astrologerId;
+                  if (astroId) {
+                      counts[astroId] = (counts[astroId] || 0) + 1;
+                  }
+              });
+              setSessionCounts(counts);
+          }
+      }).catch(err => console.error("Failed to fetch chat history", err));
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
@@ -74,8 +124,7 @@ export default function Home() {
       }
 
       if (!isAstro && astroRes.data && astroRes.data.data) {
-        // Take just the top 3
-        setAstrologers(astroRes.data.data.slice(0, 3));
+        setAstrologers(astroRes.data.data);
       }
 
       if (blogRes.data && blogRes.data.data) {
@@ -93,15 +142,51 @@ export default function Home() {
     try {
       const astroRes = await api.get("/astro/astrologers");
       if (astroRes.data && astroRes.data.data) {
-        setAstrologers(astroRes.data.data.slice(0, 3));
+        setAstrologers(astroRes.data.data);
       }
     } catch (error) {
       console.error("Silent polling error:", error);
     }
   };
 
+  const sortedAstrologers = useMemo(() => {
+      return [...astrologers].sort((a, b) => {
+          const isOnline = (astro) => astro.isChatOnline || astro.isVoiceOnline;
+          const isFollowing = (astro) => followingIds.includes(astro._id || astro.id);
+          const getSessionCount = (astro) => sessionCounts[astro._id || astro.id] || 0;
+          const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
+          const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
+
+          // Tier 1: Online
+          if (isOnline(a) && !isOnline(b)) return -1;
+          if (!isOnline(a) && isOnline(b)) return 1;
+          if (isOnline(a) && isOnline(b)) {
+              return getCreatedTime(b) - getCreatedTime(a);
+          }
+
+          // Tier 2: Following (Sorted by last following to oldest following - which means reverse following index)
+          if (isFollowing(a) && !isFollowing(b)) return -1;
+          if (!isFollowing(a) && isFollowing(b)) return 1;
+          if (isFollowing(a) && isFollowing(b)) {
+              return getFollowingIndex(b) - getFollowingIndex(a);
+          }
+
+          // Tier 3: Most interacted (session count)
+          const sessionsA = getSessionCount(a);
+          const sessionsB = getSessionCount(b);
+          if (sessionsA > 0 || sessionsB > 0) {
+              if (sessionsA !== sessionsB) {
+                  return sessionsB - sessionsA;
+              }
+          }
+
+          // Tier 4: Offline (Everyone else)
+          return getCreatedTime(b) - getCreatedTime(a);
+      });
+  }, [astrologers, followingIds, sessionCounts]);
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 overflow-x-hidden">
+    <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden">
 
       {/* Welcome Banner */}
       <div className="pt-2">
@@ -148,7 +233,6 @@ export default function Home() {
 
       {/* Quick Actions (Glass Pills) */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider pl-1">Quick Actions</h3>
         <div className="flex flex-wrap gap-2">
           {[
             { label: "Chat", route: "/explore", icon: MessageCircle, color: "text-blue-400", bg: "bg-blue-400/10", hideForAstro: true },
@@ -162,7 +246,6 @@ export default function Home() {
               color: "text-solar-gold",
               bg: "bg-solar-gold/10"
             },
-            { label: "Matching", route: "/matchmaking", icon: Heart, color: "text-rose-400", bg: "bg-rose-400/10" },
             { label: "Panchang", route: "/panchang", icon: Sun, color: "text-orange-400", bg: "bg-orange-400/10" }
           ].filter(action => !(user?.role === 'astrologer' && action.hideForAstro)).map((action, i) => (
             <motion.button
@@ -182,9 +265,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Recommended Astrologers Banner (Mini) */}
       {user?.role !== 'astrologer' && (
-        <CosmicCard delay={0.4} noHover>
+        <div className="pt-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-white flex items-center gap-2">
               <Sparkles size={16} className="text-solar-gold" />
@@ -198,14 +280,15 @@ export default function Home() {
               <div className="w-5 h-5 rounded-full border-t-2 border-electric-violet animate-spin" />
             </div>
           ) : astrologers.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar">
-              {astrologers.map((astro) => (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide px-2 -mx-2">
+              {sortedAstrologers.slice(0, 12).map((astro) => (
                 <div 
                   key={astro._id} 
                   onClick={() => router.push(`/astrologer?id=${astro._id}`)}
                   className="flex-shrink-0 w-28 glass-panel rounded-2xl p-3 flex flex-col items-center gap-2 relative active:scale-95 transition-all cursor-pointer border-white/5 bg-gradient-to-b from-white/5 to-transparent"
                 >
-                  <div className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-cosmic-indigo shadow-lg ${astro.isChatOnline || astro.isOnline ? 'bg-green-500' : 'bg-slate-500'
+                  <div className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-cosmic-indigo shadow-lg ${
+                    astro.isBusy ? 'bg-amber-500' : (astro.isChatOnline || astro.isVoiceOnline || astro.isVideoOnline) ? 'bg-green-500' : 'bg-slate-500'
                     }`} />
                   <div className="w-14 h-14 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden text-center p-0.5">
                     <img 
@@ -228,7 +311,7 @@ export default function Home() {
           ) : (
             <p className="text-xs text-slate-400 text-center py-2">No live astrologers right now.</p>
           )}
-        </CosmicCard>
+        </div>
       )}
 
       {/* Blog Carousel */}

@@ -5,13 +5,15 @@ import {
     User, Settings, Wallet, CreditCard, HelpCircle, LogOut, ChevronRight, 
     ShoppingBag, MessageCircle, History, Sparkles, BookOpen, FileText,
     Apple, Globe, Youtube, Facebook, Instagram, Linkedin, Heart,
-    Star, DollarSign, Phone, Video
+    Star, DollarSign, Phone, Video, RefreshCw, Edit3
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 import CosmicCard from "@/components/CosmicCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import api from "@/lib/api";
+import toast from 'react-hot-toast';
 
 const Toggle = ({ enabled, onChange, loading, color = "bg-green-500" }) => (
     <button 
@@ -32,13 +34,17 @@ const Toggle = ({ enabled, onChange, loading, color = "bg-green-500" }) => (
 );
 
 export default function Profile() {
-    const { user, setUser, logout } = useAuth();
+    const { user, setUser, logout, checkUser } = useAuth();
+    const { socket } = useSocket();
     const router = useRouter();
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const timerRef = useRef(null);
     
     const isAstrologer = user?.role === 'astrologer';
-    const displayName = user?.name?.split(' ')[0] || "Seeker";
+    const rawName = user?.displayName || user?.name || "Seeker";
+    const displayName = isAstrologer && !rawName.toLowerCase().startsWith('astro') 
+        ? `Astro ${rawName}` 
+        : rawName;
 
     const handleToggle = async (field, value) => {
         setUpdatingStatus(true);
@@ -56,6 +62,33 @@ export default function Profile() {
     };
 
     // 20-Second Auto-Off Rule: If Master is ON but NO services are enabled, turn OFF after 20s
+    const [refreshing, setRefreshing] = useState(false);
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        try {
+            if (checkUser) {
+                await checkUser(); // Re-fetch user profile from context
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
+        const getImageUrl = (path) => {
+        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        
+        // If it's a full URL, ensure localhost is rewritten to the real network IP
+        if (path.startsWith("http")) {
+            return path.replace('localhost:5000', '192.168.29.133:5000');
+        }
+        
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
+
     useEffect(() => {
         if (!isAstrologer) return;
 
@@ -73,18 +106,38 @@ export default function Profile() {
         };
     }, [user?.isOnline, user?.isChatOnline, user?.isVoiceOnline, user?.isVideoOnline]);
 
+    // Real-time follower count update
+    useEffect(() => {
+        if (!isAstrologer || !socket) return;
+
+        const handleFollowerUpdate = (data) => {
+            if (user?.astrologerId === data.astrologerId || (user?.role === 'astrologer' && !data.astrologerId)) {
+                // If astrologerId matches, update the follower count
+                setUser(prev => ({
+                    ...prev,
+                    followersCount: data.followersCount
+                }));
+            }
+        };
+
+        socket.on('astrologer_follower_update', handleFollowerUpdate);
+
+        return () => {
+            socket.off('astrologer_follower_update', handleFollowerUpdate);
+        };
+    }, [isAstrologer, socket, user?.astrologerId, setUser]);
+
     const userMenuItems = [
         { icon: Wallet, label: "Wallet Balance", value: `₹${user?.walletBalance || 0}`, color: "text-green-400", bg: "bg-green-400/10", route: "/wallet" },
-        { icon: ShoppingBag, label: "Book a Pooja", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/explore", badge: "New" },
-        { icon: MessageCircle, label: "Customer Support Chat", color: "text-purple-400", bg: "bg-purple-400/10", route: "/explore" },
+        { icon: MessageCircle, label: "Connect with Astrologer", color: "text-blue-400", bg: "bg-blue-400/10", route: "/explore" },
+        { icon: Heart, label: "My Following", color: "text-rose-400", bg: "bg-rose-400/10", route: "/following" },
         { icon: History, label: "Order History", color: "text-orange-400", bg: "bg-orange-400/10", route: "/wallet" },
-        { icon: Sparkles, label: "AstroRemedy", color: "text-indigo-400", bg: "bg-indigo-400/10", route: "/explore" },
-        { icon: BookOpen, label: "Astrology Blog", color: "text-electric-violet", bg: "bg-electric-violet/10", route: "/blog" },
-        { icon: MessageCircle, label: "Chat with Astrologers", color: "text-blue-400", bg: "bg-blue-400/10", route: "/explore" },
-        { icon: Heart, label: "My Following", color: "text-rose-400", bg: "bg-rose-400/10", route: "/explore" },
+        { icon: ShoppingBag, label: "Book a Pooja", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/explore", badge: "New" },
         { icon: FileText, label: "My Kundli", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/kundli" },
         { icon: Sparkles, label: "Free Services", color: "text-cyan-400", bg: "bg-cyan-400/10", route: "/panchang" },
-        { icon: Settings, label: "Settings", color: "text-slate-400", bg: "bg-white/5", route: "/profile" },
+        { icon: BookOpen, label: "Astrology Blog", color: "text-electric-violet", bg: "bg-electric-violet/10", route: "/blog" },
+        { icon: MessageCircle, label: "Customer Support", color: "text-purple-400", bg: "bg-purple-400/10", route: "/support" },
+        { icon: Settings, label: "Settings", color: "text-slate-400", bg: "bg-white/5", route: "/settings" },
     ];
 
     const [showPricingModal, setShowPricingModal] = useState(false);
@@ -141,73 +194,187 @@ export default function Profile() {
         { icon: Settings, label: "Pricing & Settings", color: "text-slate-400", bg: "bg-white/5", onClick: () => setShowPricingModal(true) },
     ];
 
+    const [todayStats, setTodayStats] = useState(null);
+    useEffect(() => {
+        if (!isAstrologer) return;
+        const fetchTodayStats = async () => {
+            try {
+                const { data } = await api.get('/activity/stats/dashboard');
+                if (data.success) {
+                    setTodayStats(data.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch today stats", err);
+            }
+        };
+        fetchTodayStats();
+        // Poll every 30 seconds for updates
+        const interval = setInterval(fetchTodayStats, 30000);
+        return () => clearInterval(interval);
+    }, [isAstrologer]);
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Profile Header */}
-            <CosmicCard className="text-center py-8 bg-gradient-to-tr from-cosmic-indigo to-electric-violet/10 border-white/10 relative overflow-hidden">
-                {isAstrologer && (
-                    <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                        <span className={`w-2 h-2 rounded-full ${user?.isOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-slate-500'}`} />
-                        <span className="text-[10px] font-black uppercase text-white tracking-widest">{user?.isOnline ? "Online" : "Offline"}</span>
-                        <Toggle 
-                            enabled={user?.isOnline} 
-                            onChange={(val) => handleToggle('status', val)} 
-                            loading={updatingStatus} 
-                        />
+            <CosmicCard className="p-4 bg-gradient-to-br from-[#1a1438] to-[#0b1026] border-white/10 relative overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+                {/* Clean background without decorative blurs */}
+
+                <div className="flex justify-between items-center mb-4 relative z-10">
+                    <button 
+                        onClick={handleRefresh}
+                        disabled={refreshing}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 active:scale-95 transition-all text-white hover:bg-white/10 shadow-lg"
+                    >
+                        <RefreshCw size={14} className={refreshing ? "animate-spin text-electric-violet" : "text-slate-300"} />
+                    </button>
+
+                    {isAstrologer && (
+                        <div className="flex items-center gap-2 bg-[#0b1026]/60 backdrop-blur-xl px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg">
+                            <span className={`relative flex h-2 w-2`}>
+                              {user?.isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+                              <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.isOnline ? 'bg-green-500' : 'bg-slate-500'}`}></span>
+                            </span>
+                            <span className="text-[10px] font-black uppercase text-white tracking-widest mr-1">{user?.isOnline ? "Online" : "Offline"}</span>
+                            <Toggle 
+                                enabled={user?.isOnline} 
+                                onChange={(val) => handleToggle('status', val)} 
+                                loading={updatingStatus} 
+                            />
+                        </div>
+                    )}
+                </div>
+
+                <div className="relative z-10 space-y-4">
+                    {/* Avatar & Info Horizontal Row */}
+                    <div className="flex items-center gap-4">
+                        <div className="relative group shrink-0">
+                            {/* Removed glowing ring */}
+                            <div className="relative w-16 h-16 rounded-full p-0.5 bg-[#0b1026] shadow-xl">
+                                <div className="w-full h-full rounded-full overflow-hidden border border-white/10 bg-cosmic-indigo flex items-center justify-center">
+                                    {user?.profileImage ? (
+                                        <img src={getImageUrl(user.profileImage)} alt={displayName} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={24} className="text-white/50" />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-xl font-black text-white mb-0.5 truncate tracking-tight">
+                                {displayName} ✨
+                            </h2>
+                            <p className="text-electric-violet text-[11px] font-bold tracking-wide truncate">{user?.phone || "+91 9948505111"}</p>
+                            
+                            {/* Inline Stats */}
+                            {isAstrologer && (
+                                <div className="flex items-center gap-3 mt-1.5">
+                                    <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                                        <Heart size={10} className="text-rose-400 fill-rose-400/50" />
+                                        <span className="text-[11px] font-bold text-white">{(user?.followersCount || 0) + (user?.fakeFollowers || 0)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                                        <Star size={10} className="text-solar-gold fill-solar-gold/50" />
+                                        <span className="text-[11px] font-bold text-white">{typeof user?.rating === 'number' ? Number(user.rating).toFixed(1) : "4.9"}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
-                
-                <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-electric-violet to-solar-gold p-1 mb-4 shadow-[0_0_20px_rgba(139,92,246,0.5)]">
-                    <div className="w-full h-full rounded-full bg-cosmic-indigo flex items-center justify-center overflow-hidden border-2 border-white/10">
-                        {user?.profileImage ? (
-                            <img src={user.profileImage} alt={displayName} className="w-full h-full object-cover rounded-full" />
-                        ) : (
-                            <User size={40} className="text-white/80" />
+
+                    {/* Action Buttons */}
+                    <div className="flex w-full gap-2">
+                        <button 
+                            onClick={() => router.push('/profile/edit')}
+                            className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-white transition-all active:scale-95 shadow-sm"
+                        >
+                            Edit Profile
+                        </button>
+                        {isAstrologer && (
+                            <button 
+                                onClick={() => setShowPricingModal(true)}
+                                className="flex-1 py-2 rounded-lg bg-gradient-to-r from-electric-violet to-fuchsia-600 text-[11px] font-black text-white shadow-md shadow-electric-violet/25 active:scale-95 transition-all"
+                            >
+                                ₹{user?.chatPrice || 15}/min
+                            </button>
                         )}
                     </div>
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-1">{isAstrologer ? `Astro ${displayName}` : displayName} ✨</h2>
-                <p className="text-slate-400 font-medium mb-4">{user?.phone || "+91 9948505111"}</p>
 
-                <div className="flex justify-center gap-3">
-                    <button className="px-6 py-2 rounded-full glass-pill text-sm font-bold text-white border-white/20 hover:bg-white/10 transition-colors">
-                        Edit Profile
-                    </button>
-                    {isAstrologer && (
-                         <button 
-                            onClick={() => setShowPricingModal(true)}
-                            className="px-6 py-2 rounded-full glass-pill text-sm font-bold text-electric-violet bg-electric-violet/10 border-electric-violet/20"
-                         >
-                            ₹{user?.chatPrice || 15}/min
-                        </button>
+                    {/* Astrologer Availability Toggles */}
+                    {isAstrologer && user?.isOnline && (
+                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+                            {[
+                                { label: "Chat", icon: MessageCircle, field: 'isChatOnline', enabled: user?.isChatOnline, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+                                { label: "Voice", icon: Phone, field: 'isVoiceOnline', enabled: user?.isVoiceOnline, color: 'text-green-400', bg: 'bg-green-400/10' },
+                                { label: "Video", icon: Video, field: 'isVideoOnline', enabled: user?.isVideoOnline, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+                            ].map((mode) => {
+                                const globalKey = mode.label === 'Chat' ? 'chatEnabled' : mode.label === 'Voice' ? 'voiceEnabled' : 'videoEnabled';
+                                const isDisabled = 
+                                    (user?.globalFeatures && user.globalFeatures[globalKey] === false) || 
+                                    (user?.astroFeatures && user.astroFeatures[globalKey] === false);
+
+                                return (
+                                    <div key={mode.label} className={`bg-[#0b1026]/50 p-2 rounded-xl flex flex-col gap-1.5 border border-white/5 shadow-inner ${isDisabled ? 'opacity-40 grayscale' : ''}`}>
+                                        <div className="flex items-center justify-between w-full">
+                                            <div className={`p-1.5 rounded-lg ${mode.bg} ${mode.color}`}>
+                                                <mode.icon size={12} />
+                                            </div>
+                                            <div onClick={isDisabled ? () => toast.error(`Admin has disabled the ${mode.label} feature.`) : undefined}>
+                                                <Toggle 
+                                                    enabled={mode.enabled && !isDisabled} 
+                                                    onChange={(val) => {
+                                                        if (isDisabled) return;
+                                                        handleToggle(mode.field, val);
+                                                    }} 
+                                                    loading={updatingStatus} 
+                                                    color={mode.label === 'Chat' ? 'bg-blue-500' : mode.label === 'Voice' ? 'bg-green-500' : 'bg-purple-500'}
+                                                />
+                                            </div>
+                                        </div>
+                                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tighter w-full text-left pl-0.5">{mode.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
             </CosmicCard>
 
-            {/* Astrologer Availability Toggles */}
-            {isAstrologer && user?.isOnline && (
-                <div className="grid grid-cols-3 gap-3">
-                    {[
-                        { label: "Chat", icon: MessageCircle, field: 'isChatOnline', enabled: user?.isChatOnline, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-                        { label: "Voice", icon: Phone, field: 'isVoiceOnline', enabled: user?.isVoiceOnline, color: 'text-green-400', bg: 'bg-green-400/10' },
-                        { label: "Video", icon: Video, field: 'isVideoOnline', enabled: user?.isVideoOnline, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-                    ].map((mode) => (
-                        <div key={mode.label} className="glass-panel p-3 rounded-2xl flex flex-col items-center gap-2 text-center border-white/5">
-                            <div className={`p-2 rounded-xl ${mode.bg} ${mode.color}`}>
-                                <mode.icon size={18} />
+            {/* Today's Stats for Astrologers */}
+            {isAstrologer && todayStats && (
+                <div className="grid grid-cols-1 gap-3 px-1">
+                    <div className="glass-panel p-5 rounded-2xl border-white/5 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden group">
+                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-electric-violet/10 rounded-full blur-2xl group-hover:bg-electric-violet/20 transition-all" />
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-white font-bold text-lg">Today's Activity</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Real-time Stats</p>
                             </div>
-                            <span className="text-[10px] font-bold text-white uppercase tracking-tighter">{mode.label}</span>
-                            <Toggle 
-                                enabled={mode.enabled} 
-                                onChange={(val) => handleToggle(mode.field, val)} 
-                                loading={updatingStatus} 
-                                color={mode.label === 'Chat' ? 'bg-blue-500' : mode.label === 'Voice' ? 'bg-green-500' : 'bg-purple-500'}
-                            />
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] text-slate-500 mt-1 italic">Updates every 60s</span>
+                            </div>
                         </div>
-                    ))}
+
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="text-center">
+                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-1">Duration</p>
+                                <p className="text-sm font-black text-white">{Math.floor((todayStats.totalOnlineSeconds || 0) / 60)}m {(todayStats.totalOnlineSeconds || 0) % 60}s</p>
+                            </div>
+                            <div className="text-center border-x border-white/5">
+                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-1">Sessions</p>
+                                <p className="text-sm font-black text-white">{todayStats.totalSessions || 0}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[9px] text-emerald-400 font-bold uppercase mb-1">Your Net</p>
+                                <p className="text-base font-black text-emerald-400">₹{todayStats.todayNet}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
+
+
 
             {/* Menu List */}
             <div className="space-y-3">
@@ -244,7 +411,7 @@ export default function Profile() {
             {/* Pricing Modal */}
             <AnimatePresence>
                 {showPricingModal && (
-                    <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-4">
+                    <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-32">
                         <motion.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}

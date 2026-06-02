@@ -14,6 +14,10 @@ const appConfigSchema = new mongoose.Schema({
         voiceEnabled: { type: Boolean, default: true },
         videoEnabled: { type: Boolean, default: true }
     },
+    showSessionEndedBy: {
+        toUser: { type: Boolean, default: true },
+        toAstrologer: { type: Boolean, default: true }
+    },
     disableNewSignups: { type: Boolean, default: false },
     forceUpdate: { type: Boolean, default: false },
     banners: [{

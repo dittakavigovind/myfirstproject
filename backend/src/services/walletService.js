@@ -31,13 +31,13 @@ class WalletService {
 
     /**
      * Check if user has sufficient balance for min required minutes
-     * Defaults to 5 minutes at pricePerMinute rate if not restricted by AppConfig
+     * Defaults to 3 minutes at pricePerMinute rate if not restricted by AppConfig
      */
     static async validatePreSessionBalance(userId, pricePerMinute) {
         const user = await User.findById(userId);
         const config = await AppConfig.findOne().sort({ createdAt: -1 });
         
-        const minReq = config ? config.minimumWalletBalance : (pricePerMinute * 5); // Fallback to 5 mins
+        const minReq = config ? config.minimumWalletBalance : (pricePerMinute * 3); // Fallback to 3 mins
 
         if (!user || user.walletBalance < minReq) {
             return {

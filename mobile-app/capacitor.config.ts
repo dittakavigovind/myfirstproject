@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'http',
-    hostname: 'localhost'
+    hostname: 'localhost',
+    cleartext: true
   },
   plugins: {
     PushNotifications: {

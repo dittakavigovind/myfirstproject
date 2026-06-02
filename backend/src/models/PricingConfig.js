@@ -16,6 +16,10 @@ const pricingConfigSchema = new mongoose.Schema({
         endTime: { type: String, default: "22:00" },
         multiplier: { type: Number, default: 1.5 } // 1.5x price during peak hours
     },
+    gst: {
+        enabled: { type: Boolean, default: false }, // Default to false based on user request for new app
+        percentage: { type: Number, default: 18 }
+    },
     astrologerOverrides: [{
         astrologer: {
             type: mongoose.Schema.Types.ObjectId,

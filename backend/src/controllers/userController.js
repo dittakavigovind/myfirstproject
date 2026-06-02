@@ -67,26 +67,74 @@ exports.toggleStatus = async (req, res) => {
 
         const user = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true });
 
+        // Ensure fallback to false if undefined in DB to prevent frontend UI toggles from resetting
+        const finalIsChatOnline = user.isChatOnline === true;
+        const finalIsVoiceOnline = user.isVoiceOnline === true;
+        const finalIsVideoOnline = user.isVideoOnline === true;
+
         if (user.role === 'astrologer') {
-            await Astrologer.findOneAndUpdate(
+            const updatedAstro = await Astrologer.findOneAndUpdate(
                 { userId: userId },
                 {
-                    isOnline: user.isOnline,
-                    isChatOnline: user.isChatOnline,
-                    isVoiceOnline: user.isVoiceOnline,
-                    isVideoOnline: user.isVideoOnline,
-                    lastOnlineAt: user.lastOnlineAt
+                    isOnline: user.isOnline === true,
+                    isChatOnline: finalIsChatOnline,
+                    isVoiceOnline: finalIsVoiceOnline,
+                    isVideoOnline: finalIsVideoOnline,
+                    lastOnlineAt: user.lastOnlineAt,
+                    'statusBackup.isChatOnline': finalIsChatOnline,
+                    'statusBackup.isVoiceOnline': finalIsVoiceOnline,
+                    'statusBackup.isVideoOnline': finalIsVideoOnline
                 }
             );
+
+            // Track Session Duration
+            if (updatedAstro && currentUser.isOnline !== (user.isOnline === true)) {
+                const AstrologerOnlineSession = require('../models/AstrologerOnlineSession');
+                const AstrologerDailyStat = require('../models/AstrologerDailyStat');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (user.isOnline === true) {
+                    await AstrologerOnlineSession.updateMany(
+                        { astrologerId: updatedAstro._id, status: 'active' },
+                        { $set: { status: 'auto_closed', logoutTime: new Date() } }
+                    );
+                    await AstrologerOnlineSession.create({
+                        astrologerId: updatedAstro._id,
+                        loginTime: new Date(),
+                        status: 'active',
+                        sessionDate: today
+                    });
+                } else {
+                    const activeSession = await AstrologerOnlineSession.findOne({ astrologerId: updatedAstro._id, status: 'active' });
+                    if (activeSession) {
+                        const logoutTime = new Date();
+                        const durationMs = logoutTime - activeSession.loginTime;
+                        const durationMinutes = Math.floor(durationMs / 60000);
+                        const durationSeconds = Math.floor(durationMs / 1000);
+
+                        activeSession.logoutTime = logoutTime;
+                        activeSession.totalOnlineMinutes = durationMinutes;
+                        activeSession.status = 'completed';
+                        await activeSession.save();
+
+                        await AstrologerDailyStat.findOneAndUpdate(
+                            { astrologerId: updatedAstro._id, date: today },
+                            { $inc: { onlineDurationMinutes: durationMinutes, onlineDurationSeconds: durationSeconds } },
+                            { upsert: true, new: true }
+                        );
+                    }
+                }
+            }
         }
 
         res.status(200).json({
             success: true,
             user: {
-                isOnline: user.isOnline,
-                isChatOnline: user.isChatOnline,
-                isVoiceOnline: user.isVoiceOnline,
-                isVideoOnline: user.isVideoOnline,
+                isOnline: user.isOnline === true,
+                isChatOnline: finalIsChatOnline,
+                isVoiceOnline: finalIsVoiceOnline,
+                isVideoOnline: finalIsVideoOnline,
                 lastOnlineAt: user.lastOnlineAt
             },
             message: `Status updated successfully`
@@ -106,17 +154,27 @@ exports.updateProfile = async (req, res) => {
         delete updates.walletBalance;
         delete updates.password;
 
+        if (updates.displayName && !updates.name) {
+            updates.name = updates.displayName;
+        }
+
         const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
         if (user.role === 'astrologer') {
+            const astrologerUpdates = {};
+            if (updates.name) astrologerUpdates.displayName = updates.name;
+            if (updates.displayName) astrologerUpdates.displayName = updates.displayName;
+            if (updates.bio) astrologerUpdates.bio = updates.bio;
+            if (updates.profileImage || user.profileImage) astrologerUpdates.image = updates.profileImage || user.profileImage;
+            
+            if (updates.chatPrice !== undefined) astrologerUpdates['charges.chatPerMinute'] = updates.chatPrice;
+            if (updates.callPrice !== undefined) astrologerUpdates['charges.callPerMinute'] = updates.callPrice;
+            if (updates.videoPrice !== undefined) astrologerUpdates['charges.videoPerMinute'] = updates.videoPrice;
+            
             await Astrologer.findOneAndUpdate(
                 { userId: userId },
-                {
-                    'charges.chatPerMinute': user.chatPrice,
-                    'charges.callPerMinute': user.callPrice,
-                    'charges.videoPerMinute': user.videoPrice
-                }
+                { $set: astrologerUpdates }
             );
         }
 
@@ -153,6 +211,61 @@ exports.saveFCMToken = async (req, res) => {
         res.status(200).json({ success: true, message: 'FCM Token registered successfully' });
     } catch (error) {
         console.error('Save FCM Token Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+exports.toggleFollow = async (req, res) => {
+    try {
+        const { astrologerId } = req.params;
+        const user = await User.findById(req.user.id);
+        
+        const Astrologer = require('../models/Astrologer');
+        const astrologer = await Astrologer.findById(astrologerId);
+        
+        if (!astrologer) {
+            return res.status(404).json({ success: false, message: 'Astrologer not found' });
+        }
+
+        const isFollowing = user.following.includes(astrologerId);
+
+        if (isFollowing) {
+            user.following = user.following.filter(id => id.toString() !== astrologerId);
+            astrologer.followersCount = Math.max(0, astrologer.followersCount - 1);
+        } else {
+            user.following.push(astrologerId);
+            astrologer.followersCount += 1;
+        }
+
+        await user.save();
+        await astrologer.save();
+
+        // Emit socket event so Astrologer Dashboard and User Profile pages update immediately
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('astrologer_follower_update', {
+                astrologerId: astrologer._id.toString(),
+                followersCount: astrologer.followersCount
+            });
+        }
+
+        res.status(200).json({ success: true, isFollowing: !isFollowing });
+    } catch (error) {
+        console.error('Toggle Follow Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+exports.getFollowing = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).populate({
+            path: 'following',
+            populate: { path: 'userId', select: 'name profileImage email' }
+        });
+        
+        res.status(200).json({ success: true, following: user.following });
+    } catch (error) {
+        console.error('Get Following Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const mongoose = require('mongoose');
+const { getDeviceInfo } = require('../utils/deviceUtils');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -189,6 +190,7 @@ exports.verifyWhatsappOtp = async (req, res) => {
             user = await User.create({
                 phone: `+${purePhone}`, // Store in E.164 format
                 name: 'User',
+                deviceInfo: getDeviceInfo(req)
             });
         } else {
             // Ensure phone is normalized to + format if it wasn't
@@ -202,6 +204,7 @@ exports.verifyWhatsappOtp = async (req, res) => {
         }
 
         user.lastLogin = new Date();
+        user.deviceInfo = getDeviceInfo(req);
         await user.save();
 
         // Check if profile is complete (Mandatory: name, gender, dob)

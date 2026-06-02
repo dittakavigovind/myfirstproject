@@ -33,7 +33,7 @@ class AnalyticsService {
                 };
             }
 
-            const durationMin = (session.duration || 0) / 60;
+            const durationMin = (session.totalDuration || 0) / 60;
             if (durationMin > 0) {
                 statsMap[aid].totalSessions += 1;
                 statsMap[aid].successfulSessions += 1;

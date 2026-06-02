@@ -31,4 +31,11 @@ router.put('/config/app', protect, admin, updateAppConfig);
 router.get('/config/pricing', protect, admin, getPricingConfig);
 router.put('/config/pricing', protect, admin, updatePricingConfig);
 
+// Recharge Plans
+const rechargePlanController = require('../controllers/rechargePlanController');
+router.get('/recharge-plans', protect, admin, rechargePlanController.getAllPlans);
+router.post('/recharge-plans', protect, admin, rechargePlanController.createPlan);
+router.put('/recharge-plans/:id', protect, admin, rechargePlanController.updatePlan);
+router.delete('/recharge-plans/:id', protect, admin, rechargePlanController.deletePlan);
+
 module.exports = router;

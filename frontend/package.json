@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev -p 3001",
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
@@ -23,6 +23,7 @@
         "axios": "^1.6.2",
         "colorthief": "^2.6.0",
         "date-fns": "^4.1.0",
+        "firebase": "^12.13.0",
         "framer-motion": "^10.16.5",
         "html-to-image": "^1.11.13",
         "jspdf": "^4.2.0",

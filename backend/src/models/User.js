@@ -63,12 +63,27 @@ const userSchema = new mongoose.Schema({
     fcmTokens: [{
         type: String // Stores device IDs for Push Notifications
     }],
+    following: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Astrologer'
+    }],
     lastLogin: {
         type: Date
     },
     totalOrders: {
         type: Number,
         default: 0
+    },
+    missedSessions: {
+        type: Number,
+        default: 0
+    },
+    deviceInfo: {
+        os: String, // e.g., Android, iOS, Windows, Mac
+        deviceModel: String,
+        deviceMake: String,
+        appVersion: String,
+        userAgent: String
     },
     // Application Specific Fields
     birthDetails: {

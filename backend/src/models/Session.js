@@ -42,11 +42,29 @@ const sessionSchema = new mongoose.Schema({
     endTime: {
         type: Date
     },
+    terminationReason: {
+        type: String
+    },
+    astrologerEndReason: {
+        type: String // Reason provided by astrologer when ending the session
+    },
+    endedBy: {
+        type: String,
+        enum: ['user', 'astrologer', 'system', 'admin']
+    },
     totalDuration: {
         type: Number, // in seconds
         default: 0
     },
     totalAmountDeducted: {
+        type: Number,
+        default: 0
+    },
+    platformShare: {
+        type: Number,
+        default: 0
+    },
+    astrologerShare: {
         type: Number,
         default: 0
     },

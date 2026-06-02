@@ -23,6 +23,11 @@ const astrologerSchema = new mongoose.Schema({
         type: String, // URL to image
         default: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
     },
+    badgeText: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     gallery: [{
         type: String // URLs for gallery images
     }],
@@ -45,6 +50,23 @@ const astrologerSchema = new mongoose.Schema({
     reviewCount: {
         type: Number,
         default: 0,
+    },
+    followersCount: {
+        type: Number,
+        default: 0,
+    },
+    fakeFollowers: {
+        type: Number,
+        default: 0,
+    },
+    features: {
+        chatEnabled: { type: Boolean, default: true },
+        voiceEnabled: { type: Boolean, default: true },
+        videoEnabled: { type: Boolean, default: true }
+    },
+    isTopChoice: {
+        type: Boolean,
+        default: false,
     },
     isOnline: {
         type: Boolean,
@@ -71,6 +93,15 @@ const astrologerSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    isBusy: {
+        type: Boolean,
+        default: false
+    },
+    statusBackup: {
+        isChatOnline: { type: Boolean, default: false },
+        isVoiceOnline: { type: Boolean, default: false },
+        isVideoOnline: { type: Boolean, default: false }
     }
 }, { timestamps: true });
 

@@ -13,14 +13,55 @@ const { Parser } = require('json2csv');
 // @access  Private/Admin
 exports.getDashboardStats = async (req, res) => {
     try {
-        const users = await User.countDocuments({ role: 'user' });
-        const astrologers = await User.countDocuments({ role: 'astrologer' });
-        
+        const { startDate, endDate } = req.query;
+        let dateFilter = {};
+        if (startDate && endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            dateFilter = { createdAt: { $gte: new Date(startDate), $lte: end } };
+        }
+
+        const users = await User.countDocuments({ role: 'user', ...dateFilter });
+        const astrologers = await User.countDocuments({ role: 'astrologer', ...dateFilter });
+
+        // Lifetime / Period Revenue
         const revenueAggregate = await Session.aggregate([
-            { $match: { status: 'completed' } },
+            { $match: { status: 'completed', ...dateFilter } },
             { $group: { _id: null, totalRevenue: { $sum: '$totalAmountDeducted' }, totalDuration: { $sum: '$totalDuration' } } }
         ]);
-        
+
+        // Today's / Period Revenue
+        let todayFilter = {};
+        if (startDate && endDate) {
+            todayFilter = dateFilter;
+        } else {
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            todayFilter = { createdAt: { $gte: startOfToday } };
+        }
+
+        // Fetch Global Commission Fallback for calculation of legacy sessions
+        const PricingConfig = require('../models/PricingConfig');
+        const pConfig = await PricingConfig.findOne();
+        const globalFee = pConfig?.globalRates?.globalPlatformFee || 40;
+
+        const todayRevenueAggregate = await Session.aggregate([
+            {
+                $match: {
+                    status: { $in: ['completed', 'active'] },
+                    ...todayFilter
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$totalAmountDeducted' },
+                    platformShare: { $sum: { $ifNull: ["$platformShare", { $multiply: ["$totalAmountDeducted", (globalFee / 100)] }] } },
+                    astrologerShare: { $sum: { $ifNull: ["$astrologerShare", { $multiply: ["$totalAmountDeducted", ((100 - globalFee) / 100)] }] } }
+                }
+            }
+        ]);
+
         const activeChats = await Session.countDocuments({ status: 'active' });
 
         // Calculate total locked liquidity across all user wallets
@@ -29,13 +70,34 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: null, totalBalance: { $sum: '$walletBalance' } } }
         ]);
 
+        const gstAggregate = await Transaction.aggregate([
+            { $match: { status: 'success', referenceModel: { $in: ['Recharge', 'WalletRecharge'] }, ...dateFilter } },
+            { $group: { _id: null, totalGst: { $sum: '$gstAmount' } } }
+        ]);
+
+        const todayGstAggregate = await Transaction.aggregate([
+            {
+                $match: {
+                    status: 'success',
+                    referenceModel: { $in: ['Recharge', 'WalletRecharge'] },
+                    ...todayFilter
+                }
+            },
+            { $group: { _id: null, todayGst: { $sum: '$gstAmount' } } }
+        ]);
+
         res.json({
             users,
             astrologers,
             revenue: revenueAggregate[0]?.totalRevenue || 0,
+            todayRevenue: todayRevenueAggregate[0]?.totalRevenue || 0,
+            todayPlatformShare: todayRevenueAggregate[0]?.platformShare || 0,
+            todayAstrologerShare: todayRevenueAggregate[0]?.astrologerShare || 0,
             activeChats,
             totalChatMinutes: Math.floor((revenueAggregate[0]?.totalDuration || 0) / 60),
-            totalUserWallets: walletAggregate[0]?.totalBalance || 0
+            totalUserWallets: walletAggregate[0]?.totalBalance || 0,
+            totalGst: gstAggregate[0]?.totalGst || 0,
+            todayGst: todayGstAggregate[0]?.todayGst || 0
         });
     } catch (error) {
         console.error(error);
@@ -53,11 +115,14 @@ exports.updateAstrologerSettings = async (req, res) => {
             return res.status(404).json({ message: 'Astrologer not found' });
         }
 
-        const { commissionRate, isVerified, verificationStatus } = req.body;
+        const { commissionRate, isVerified, verificationStatus, fakeFollowers, badgeText, features } = req.body;
 
         if (commissionRate !== undefined) astrologer.commissionRate = commissionRate;
         if (isVerified !== undefined) astrologer.isVerified = isVerified;
         if (verificationStatus !== undefined) astrologer.verificationStatus = verificationStatus;
+        if (fakeFollowers !== undefined) astrologer.fakeFollowers = Number(fakeFollowers);
+        if (badgeText !== undefined) astrologer.badgeText = badgeText;
+        if (features !== undefined) astrologer.features = { ...astrologer.features, ...features };
 
         await astrologer.save();
         res.json({ success: true, message: 'Astrologer settings updated', data: astrologer });
@@ -76,14 +141,19 @@ exports.getAllSessions = async (req, res) => {
         const limit = 50;
         const skip = (page - 1) * limit;
 
-        const sessions = await Session.find()
+        const query = {};
+        if (req.query.status) {
+            query.status = req.query.status;
+        }
+
+        const sessions = await Session.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .populate('userId', 'name email phone')
-            .populate('astrologerId', 'name email');
+            .populate('astrologerId', 'displayName email');
 
-        const total = await Session.countDocuments();
+        const total = await Session.countDocuments(query);
 
         res.json({
             success: true,

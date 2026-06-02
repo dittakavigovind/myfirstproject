@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Search, Edit, User } from "lucide-react";
+import { MessageCircle, Search, Edit, User, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import CosmicLoader from "@/components/CosmicLoader";
@@ -11,8 +11,10 @@ export default function Chat() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [conversations, setConversations] = useState([]);
+    const [allConversations, setAllConversations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [expandedPartnerId, setExpandedPartnerId] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -29,12 +31,14 @@ export default function Chat() {
                 const seenPartners = new Set();
 
                 for (const session of data.sessions) {
-                    const partnerId = session.astrologerId?._id || session.userId?._id;
+                    const partner = user?.role === 'astrologer' ? session.userId : session.astrologerId;
+                    const partnerId = partner?._id || partner;
                     if (partnerId && !seenPartners.has(partnerId)) {
                         seenPartners.add(partnerId);
                         uniqueConversations.push(session);
                     }
                 }
+                setAllConversations(data.sessions);
                 setConversations(uniqueConversations);
             } else {
                 setConversations([]);
@@ -48,18 +52,20 @@ export default function Chat() {
 
     const filteredConversations = useMemo(() => {
         return conversations.filter(session => {
-            const partner = session.astrologerId || session.userId || {};
-            const nameMatch = (partner.name || partner.displayName || "").toLowerCase().includes(searchQuery.toLowerCase());
+            const partner = user?.role === 'astrologer' ? session.userId : session.astrologerId;
+            const p = partner || {};
+            const nameMatch = (p.name || p.displayName || "").toLowerCase().includes(searchQuery.toLowerCase());
             return nameMatch;
         });
-    }, [conversations, searchQuery]);
+    }, [conversations, searchQuery, user]);
 
     const getChatPartner = (session) => {
-        const partner = session.astrologerId || session.userId || {};
+        const partner = user?.role === 'astrologer' ? session.userId : session.astrologerId;
+        const p = partner || {};
         return {
-            ...partner,
-            name: partner.displayName || partner.name || "Unknown User",
-            profileImage: partner.image || partner.profileImage
+            ...p,
+            name: p.displayName || p.name || p.phone || p.mobileNumber || "Unknown User",
+            profileImage: p.image || p.profileImage
         };
     };
 
@@ -73,11 +79,6 @@ export default function Chat() {
             {/* Header Actions */}
             <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold text-white tracking-wide">Messages</h2>
-                {!isAstrologer && (
-                    <button className="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-electric-violet">
-                        <Edit size={18} />
-                    </button>
-                )}
             </div>
 
             {/* Search */}
@@ -97,48 +98,106 @@ export default function Chat() {
                 {filteredConversations.map((chat) => {
                     const partner = getChatPartner(chat);
                     return (
-                        <div 
-                            key={chat._id} 
-                            onClick={() => router.push(`/chat/room?id=${chat.roomId}`)}
-                            className="glass-panel rounded-xl p-4 flex gap-4 items-center relative overflow-hidden group cursor-pointer"
-                        >
-                            {/* Highlight on touch/hover */}
-                            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div key={chat._id} className="flex flex-col">
+                            <div 
+                                onClick={() => setExpandedPartnerId(expandedPartnerId === partner._id ? null : partner._id)}
+                                className={`glass-panel rounded-xl p-4 flex gap-4 items-center relative overflow-hidden group cursor-pointer ${expandedPartnerId === partner._id ? 'border-electric-violet/50 bg-white/10' : 'border-white/10'}`}
+                            >
+                                {/* Highlight on touch/hover */}
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            <div className="relative">
-                                <div className="w-14 h-14 rounded-full overflow-hidden border border-white/20 bg-white/5 flex items-center justify-center">
-                                    {partner.profileImage ? (
-                                        <img src={partner.profileImage} alt={partner.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User size={24} className="text-slate-500" />
-                                    )}
+                                <div className="relative">
+                                    <div className="w-14 h-14 rounded-full overflow-hidden border border-white/20 bg-white/5 flex items-center justify-center">
+                                        {partner.profileImage ? (
+                                            <img src={partner.profileImage} alt={partner.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={24} className="text-slate-500" />
+                                        )}
+                                    </div>
                                 </div>
-                                {/* TODO: Implement real-time unread count indicator */}
-                            </div>
 
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center mb-1">
-                                    <h3 className="text-white font-bold text-base truncate">{partner.name}</h3>
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                                        {chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ""}
-                                    </span>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <h3 className="text-white font-bold text-base truncate">{partner.name}</h3>
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                            {chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ""}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm truncate font-medium text-slate-400">
+                                        {chat.status === 'active' ? (
+                                            <span className="text-emerald-400 flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                Live Session
+                                            </span>
+                                        ) : chat.status === 'initiated' ? (
+                                            <span className="text-amber-400 flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                                Connecting...
+                                            </span>
+                                        ) : (
+                                            <span className="capitalize text-slate-500 text-xs">Tap to view recent sessions</span>
+                                        )}
+                                    </p>
                                 </div>
-                                <p className="text-sm truncate font-medium text-slate-400">
-                                    {chat.status === 'active' ? (
-                                        <span className="text-emerald-400 flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                            Live Session
-                                        </span>
-                                    ) : chat.status === 'initiated' ? (
-                                        <span className="text-amber-400 flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                            Connecting...
-                                        </span>
-                                    ) : (
-                                        <span className="capitalize">{chat.status}</span>
-                                    )}
-                                </p>
                             </div>
+                            
+                            {/* Expanded 5 Recent Sessions */}
+                            {expandedPartnerId === partner._id && (
+                                <div className="mt-2 space-y-2 pl-6 pr-2 py-2 border-l-2 border-electric-violet/30 ml-7 animate-in slide-in-from-top-2 duration-200">
+                                    <h4 className="text-[10px] text-electric-violet font-black uppercase tracking-widest mb-2">Recent Sessions</h4>
+                                    {allConversations
+                                        .filter(s => {
+                                            const p = user?.role === 'astrologer' ? s.userId : s.astrologerId;
+                                            return (p?._id || p) === partner._id;
+                                        })
+                                        .slice(0, 5)
+                                        .map(s => {
+                                            const sDate = new Date(s.createdAt || s.startTime || Date.now());
+                                            const durationStr = s.totalDuration ? `${Math.floor(s.totalDuration / 60)}m ${s.totalDuration % 60}s` : '0m 0s';
+                                            const amountStr = user?.role === 'astrologer' 
+                                                ? (s.astrologerShare ? `₹${s.astrologerShare}` : '₹0')
+                                                : (s.totalAmountDeducted ? `₹${s.totalAmountDeducted}` : '₹0');
+
+                                            return (
+                                                <div 
+                                                    key={s._id} 
+                                                    onClick={() => s.sessionType !== 'audio' && router.push(`/chat/room?id=${s.roomId}`)}
+                                                    className={`p-3 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center transition-colors ${s.sessionType !== 'audio' ? 'active:bg-white/10 cursor-pointer' : ''}`}
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-slate-200">
+                                                            {s.sessionType ? s.sessionType.charAt(0).toUpperCase() + s.sessionType.slice(1) : 'Session'}
+                                                            <span className="text-slate-500 font-normal ml-1">
+                                                                • {sDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} {sDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </span>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                                                                s.status === 'completed' ? 'text-emerald-400' :
+                                                                s.status === 'active' ? 'text-blue-400 animate-pulse' :
+                                                                s.status === 'failed' || s.status === 'terminated' || s.status === 'missed' ? 'text-rose-400' :
+                                                                'text-amber-400'
+                                                            }`}>{s.status}</span>
+                                                            {s.status === 'completed' && (
+                                                                <>
+                                                                    <span className="text-slate-600 text-[10px]">•</span>
+                                                                    <span className="text-[10px] text-slate-400 font-medium">{durationStr}</span>
+                                                                    <span className="text-slate-600 text-[10px]">•</span>
+                                                                    <span className="text-[10px] text-amber-400 font-bold">{amountStr}</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {s.sessionType !== 'audio' && (
+                                                        <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-slate-400">
+                                                            <ChevronRight size={12} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            )}
                         </div>
                     );
                 })}

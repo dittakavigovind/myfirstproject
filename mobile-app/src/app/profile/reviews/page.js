@@ -136,7 +136,7 @@ export default function ReviewsPage() {
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-1">
                                         <h3 className="text-white font-bold text-sm">
-                                            {review.isAnonymous ? "Secret Seeker" : (review.userId?.name || "Anonymous User")}
+                                            {review.reviewerName || "Anonymous User"}
                                         </h3>
                                         <span className="text-[10px] text-slate-500 font-medium">
                                             {new Date(review.createdAt).toLocaleDateString()}
@@ -192,7 +192,7 @@ export default function ReviewsPage() {
                                     </div>
 
                                     <h2 className="text-lg font-bold text-white mb-1">
-                                        {selectedReview.isAnonymous ? "Secret Seeker" : (selectedReview.userId?.name || "Anonymous User")}
+                                        {selectedReview.reviewerName || "Anonymous User"}
                                     </h2>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">
                                         Published {new Date(selectedReview.createdAt).toLocaleDateString()}

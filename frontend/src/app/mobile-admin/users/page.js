@@ -9,6 +9,7 @@ export default function MobileUsersDashboard() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [osFilter, setOsFilter] = useState('All');
 
     useEffect(() => {
         fetchUsers();
@@ -50,12 +51,19 @@ export default function MobileUsersDashboard() {
         }
     };
 
-    const filteredUsers = users.filter(u => 
-        (u.name || '').toLowerCase().includes(search.toLowerCase()) || 
-        (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
-        (u.phone || '').includes(search) ||
-        (u.mobileNumber || '').includes(search)
-    );
+    const filteredUsers = users.filter(u => {
+        const matchesSearch = (u.name || '').toLowerCase().includes(search.toLowerCase()) || 
+            (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
+            (u.phone || '').includes(search) ||
+            (u.mobileNumber || '').includes(search);
+        
+        const userOs = u.deviceInfo?.os || 'Unknown';
+        const matchesOs = osFilter === 'All' || userOs === osFilter;
+        
+        return matchesSearch && matchesOs;
+    });
+
+    const uniqueOS = ['All', ...new Set(users.map(u => u.deviceInfo?.os || 'Unknown'))];
 
     if (loading) return <div className="flex items-center gap-3 text-slate-400"><Loader2 className="animate-spin" /> Fetching Master Roster...</div>;
 
@@ -71,15 +79,26 @@ export default function MobileUsersDashboard() {
                     <p className="text-slate-400 mt-2">Manage strict Role-Based Access Controls and explicitly block abusive users.</p>
                 </div>
                 
-                <div className="relative w-full md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Search by name, email, phone..." 
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 text-white pl-10 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition"
-                    />
+                <div className="flex gap-3 w-full md:w-auto">
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Search by name, email, phone..." 
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 text-white pl-10 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition"
+                        />
+                    </div>
+                    <select
+                        value={osFilter}
+                        onChange={(e) => setOsFilter(e.target.value)}
+                        className="bg-slate-900 border border-slate-800 text-slate-300 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition"
+                    >
+                        {uniqueOS.map(os => (
+                            <option key={os} value={os}>{os}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
@@ -90,6 +109,7 @@ export default function MobileUsersDashboard() {
                             <tr>
                                 <th className="px-6 py-4">Identity</th>
                                 <th className="px-6 py-4">Contact Logic</th>
+                                <th className="px-6 py-4">Device Info</th>
                                 <th className="px-6 py-4">Wallet Bal.</th>
                                 <th className="px-6 py-4">RBAC Role Assignment</th>
                                 <th className="px-6 py-4 text-right">Moderation Actions</th>
@@ -110,6 +130,17 @@ export default function MobileUsersDashboard() {
                                     <td className="px-6 py-5">
                                         <div className="text-blue-400 font-medium truncate max-w-[150px]">{user.email || 'No Email'}</div>
                                         <div className="text-xs text-slate-500 mt-1">{user.phone || 'No Phone'}</div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        {user.deviceInfo ? (
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-300">{user.deviceInfo.os || 'Unknown OS'}</div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[120px]">{user.deviceInfo.deviceMake ? `${user.deviceInfo.deviceMake} ` : ''}{user.deviceInfo.deviceModel || '-'}</div>
+                                                <div className="text-[10px] text-slate-600 mt-0.5">v{user.deviceInfo.appVersion || '-'}</div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-600">No Data</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="text-emerald-400 font-bold">₹ {user.walletBalance || 0}</div>

@@ -59,6 +59,9 @@ exports.createNotification = async (req, res) => {
                 });
 
                 if (tokens.length > 0) {
+                    // Deduplicate tokens to prevent multiple pushes to same device
+                    tokens = [...new Set(tokens)];
+                    
                     messagePayload.tokens = tokens;
                     // Chunk tokens if there are more than 500 (FCM limit)
                     if (tokens.length <= 500) {

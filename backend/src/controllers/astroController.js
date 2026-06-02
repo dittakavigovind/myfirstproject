@@ -173,8 +173,8 @@ exports.getAstrologers = async (req, res) => {
         }
 
         let astrologers = await Astrologer.find(query)
-            .populate('userId', 'role') // Populate role from User model
-            .select('userId displayName skills languages charges rating image experienceYears isOnline bio isActive slug location createdAt commissionRate');
+            .populate('userId', 'role missedSessions') // Populate role and missedSessions from User model
+            .select('userId displayName skills languages charges rating image experienceYears isOnline isChatOnline isVoiceOnline isVideoOnline isBusy bio isActive slug location createdAt commissionRate followersCount fakeFollowers gallery badgeText');
 
         // Filter out those where userId is null (User deleted) or role is NOT 'astrologer'
         astrologers = astrologers.filter(astro => astro.userId && astro.userId.role === 'astrologer');
@@ -321,6 +321,13 @@ exports.updateCurrentAstrologer = async (req, res) => {
 
         await astrologer.save();
 
+        // Sync Prices to User Record
+        await User.findByIdAndUpdate(req.user.id, {
+            chatPrice: chatC,
+            callPrice: callC,
+            videoPrice: videoC
+        });
+
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
 
@@ -348,8 +355,9 @@ exports.createAstrologer = async (req, res) => {
 
         const {
             name, email, password, // User fields
-            displayName, bio, skills, languages, experienceYears, charges, rating, image, location // Astro fields
+            displayName, bio, skills, languages, experienceYears, charges, rating, image, location, badgeText // Astro fields
         } = req.body;
+
 
         // 1. Create User
         let user = await User.findOne({ email });
@@ -410,7 +418,8 @@ exports.createAstrologer = async (req, res) => {
             isOnline: true,
             image: image || undefined,
             location: location,
-            slug: slug
+            slug: slug,
+            badgeText: badgeText || ''
         });
 
         // Ping search engines for sitemap update
@@ -433,7 +442,7 @@ exports.createAstrologer = async (req, res) => {
  */
 exports.updateAstrologer = async (req, res) => {
     try {
-        const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery, location } = req.body;
+        const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery, location, badgeText } = req.body;
 
         const astrologer = await Astrologer.findById(req.params.id);
         if (!astrologer) {
@@ -460,8 +469,9 @@ exports.updateAstrologer = async (req, res) => {
         if (rating) astrologer.rating = rating;
         if (isOnline !== undefined) astrologer.isOnline = isOnline;
         if (isActive !== undefined) astrologer.isActive = isActive;
-        if (isActive !== undefined) astrologer.isActive = isActive;
-        if (gallery) astrologer.gallery = gallery;
+        if (gallery !== undefined) astrologer.gallery = gallery;
+        if (location !== undefined) astrologer.location = location;
+        if (badgeText !== undefined) astrologer.badgeText = badgeText;
         if (image) {
             astrologer.image = image;
             // Sync image to User record as well so it shows in Navbar
@@ -470,6 +480,15 @@ exports.updateAstrologer = async (req, res) => {
         }
 
         await astrologer.save();
+
+        // Sync Prices to User Record
+        if (charges) {
+            await User.findByIdAndUpdate(astrologer.userId, {
+                chatPrice: parseFloat(charges.chatPerMinute) || 0,
+                callPrice: parseFloat(charges.callPerMinute) || 0,
+                videoPrice: parseFloat(charges.videoPerMinute) || 0
+            });
+        }
 
         // Ping search engines for sitemap update
         seoController.pingSearchEngines();
@@ -686,9 +705,18 @@ exports.toggleStatus = async (req, res) => {
         // 1. Update requested status
         const updates = req.body;
 
-        if (updates.isChatOnline !== undefined) astrologer.isChatOnline = updates.isChatOnline;
-        if (updates.isVoiceOnline !== undefined) astrologer.isVoiceOnline = updates.isVoiceOnline;
-        if (updates.isVideoOnline !== undefined) astrologer.isVideoOnline = updates.isVideoOnline;
+        if (updates.isChatOnline !== undefined) {
+            astrologer.isChatOnline = updates.isChatOnline;
+            astrologer.statusBackup.isChatOnline = updates.isChatOnline;
+        }
+        if (updates.isVoiceOnline !== undefined) {
+            astrologer.isVoiceOnline = updates.isVoiceOnline;
+            astrologer.statusBackup.isVoiceOnline = updates.isVoiceOnline;
+        }
+        if (updates.isVideoOnline !== undefined) {
+            astrologer.isVideoOnline = updates.isVideoOnline;
+            astrologer.statusBackup.isVideoOnline = updates.isVideoOnline;
+        }
 
 
         // 2. Determine Overall Status

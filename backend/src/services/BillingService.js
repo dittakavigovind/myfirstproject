@@ -66,7 +66,7 @@ class BillingService {
     /**
      * End Session and Process Payment using WalletService per-second accuracy
      */
-    static async endSession(agoraChannelId, reason = 'unknown') {
+    static async endSession(agoraChannelId, reason = 'unknown', endedBy = 'system') {
         const session = await Session.findOne({ agoraChannelId });
         if (!session || session.status === 'completed') {
             return null; // Already processed
@@ -75,6 +75,7 @@ class BillingService {
         const endTime = new Date();
         session.endTime = endTime;
         session.status = 'completed';
+        session.endedBy = endedBy;
 
         // Waitlist logic if Astro never joined
         if (!session.startTime) {
@@ -106,19 +107,22 @@ class BillingService {
         let platformFeePercentage = 40; // Hard default
         
         // Fetch Global Config
+        const PricingConfig = require('../models/PricingConfig');
         const pConfig = await PricingConfig.findOne();
         if (pConfig && pConfig.globalRates && pConfig.globalRates.globalPlatformFee !== undefined) {
             platformFeePercentage = pConfig.globalRates.globalPlatformFee;
         }
 
-        // Apply Astrologer Specific Override if differing from default 20/0
-        // If an astrologer has a specific negotiated rate stored, we override the global default
+        // Apply Astrologer Specific Override
         if (astro.commissionRate !== undefined && astro.commissionRate !== null) {
             platformFeePercentage = astro.commissionRate;
         }
 
         const platformFee = (netDeduction * platformFeePercentage) / 100;
         const netEarnings = netDeduction - platformFee;
+
+        session.platformShare = platformFee;
+        session.astrologerShare = netEarnings;
 
         // Save session final state
         await session.save();
@@ -144,6 +148,11 @@ class BillingService {
                         }
                     }
                 );
+
+                // Sync User record for astrologer
+                await User.findByIdAndUpdate(astro.userId, {
+                    $inc: { walletBalance: netEarnings }
+                });
                 
                 console.log(`[Billing] Completed Session ${session._id}. Duration: ${durationSeconds}s, Billed: ₹${netDeduction}`);
             } catch (error) {

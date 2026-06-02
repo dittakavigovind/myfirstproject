@@ -6,35 +6,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ModernHeader() {
     const { user, logout } = useAuth();
-    const { scrollY } = useScroll();
     const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Show only first name or Seeker
     const displayName = user?.name ? user.name.split(' ')[0] : "Seeker";
-
-    // Condense header slightly on scroll
-    const background = useTransform(
-        scrollY,
-        [0, 50],
-        ["rgba(11, 16, 38, 0)", "rgba(11, 16, 38, 0.8)"]
-    );
-
-    const backdropFilter = useTransform(
-        scrollY,
-        [0, 50],
-        ["blur(0px)", "blur(12px)"]
-    );
-
-    const borderBottom = useTransform(
-        scrollY,
-        [0, 50],
-        ["1px solid rgba(255,255,255,0)", "1px solid rgba(255,255,255,0.1)"]
-    );
 
     const menuItems = [
         { name: "Home", route: "/", icon: Home },
@@ -54,12 +41,9 @@ export default function ModernHeader() {
 
     return (
         <>
-            <motion.header
-                className="fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between transition-all"
+            <header
+                className={`fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between transition-all duration-300 ${isScrolled ? 'bg-[#0b1026]/90 backdrop-blur-md border-b border-white/10 header-scrolled' : 'bg-transparent border-b border-transparent'}`}
                 style={{ 
-                    background, 
-                    backdropFilter, 
-                    borderBottom,
                     paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)'
                 }}
             >
@@ -92,7 +76,7 @@ export default function ModernHeader() {
                         onClick={() => router.push('/wallet')}
                         className="h-10 px-3 rounded-full glass-panel flex items-center gap-2 text-white hover:bg-white/10 transition-colors border-white/5 bg-white/5"
                     >
-                        <Wallet size={16} className="text-solar-gold" />
+                        <Wallet size={16} className="text-rose-500" />
                         <span className="text-xs font-black">₹{user?.walletBalance || 0}</span>
                     </button>
                     <button 
@@ -105,7 +89,7 @@ export default function ModernHeader() {
                         )}
                     </button>
                 </div>
-            </motion.header>
+            </header>
 
             {/* Sidebar Drawer */}
             <AnimatePresence>

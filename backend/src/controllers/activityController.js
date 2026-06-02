@@ -137,9 +137,14 @@ exports.getDashboardStats = async (req, res) => {
         const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
         // 1. Get Today's Sessions (for history stats)
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+
         const sessions = await Session.find({
             astrologerId,
-            sessionDate: dateStr
+            createdAt: { $gte: startOfToday, $lte: endOfToday }
         });
 
         // 2. Get Active Session (Separate query to ensure we catch it even if date differs)
@@ -152,7 +157,7 @@ exports.getDashboardStats = async (req, res) => {
         // duration is stored in seconds in Session
         const historySeconds = sessions
             .filter(s => s.endTime) // Only completed ones
-            .reduce((acc, curr) => acc + (curr.duration || 0), 0);
+            .reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
 
         // 3. Calculate Current Session Duration
         let currentSessionSeconds = 0;
@@ -176,11 +181,11 @@ exports.getDashboardStats = async (req, res) => {
             let seconds = 0;
             // Completed sessions
             seconds += sessions
-                .filter(s => s.endTime && s.servicesUsed.includes(serviceName))
-                .reduce((acc, s) => acc + (s.duration || 0), 0);
+                .filter(s => s.endTime && (s.sessionType === serviceName || (serviceName === 'voice' && s.sessionType === 'audio')))
+                .reduce((acc, s) => acc + (s.totalDuration || 0), 0);
 
             // Active session
-            if (activeSession && activeSession.servicesUsed.includes(serviceName)) {
+            if (activeSession && (activeSession.sessionType === serviceName || (serviceName === 'voice' && activeSession.sessionType === 'audio'))) {
                 seconds += currentSessionSeconds;
             }
             return Math.floor(seconds / 60); // Minutes
@@ -190,31 +195,56 @@ exports.getDashboardStats = async (req, res) => {
         const voiceMinutes = calculateServiceDuration('voice');
         const videoMinutes = calculateServiceDuration('video');
 
-        const calculateEarnings = () => {
-            let totalEarnings = 0;
+        const calculateEarningsBreakdown = async () => {
+            let gross = 0;
+            let net = 0;
+            let platform = 0;
+
+            // Fetch Global Commission Fallback
+            const PricingConfig = require('../models/PricingConfig');
+            const pConfig = await PricingConfig.findOne();
+            const globalFee = pConfig?.globalRates?.globalPlatformFee || 40;
+            const commission = (astrologer.commissionRate !== undefined && astrologer.commissionRate !== null) ? astrologer.commissionRate : globalFee;
 
             // 1. Completed Sessions
             sessions.forEach(s => {
-                const durationMinutes = (s.duration || 0) / 60;
-                // If multiple services were used, we assume simultaneous availability? 
-                // Or max rate? Let's assume sum for now based on user request "session-based price... consistently".
-                // If it's availability, we sum up if they enabled multiple.
-                if (s.servicesUsed.includes('chat')) totalEarnings += durationMinutes * (s.chatRate || 0);
-                if (s.servicesUsed.includes('voice')) totalEarnings += durationMinutes * (s.voiceRate || 0);
-                if (s.servicesUsed.includes('video')) totalEarnings += durationMinutes * (s.videoRate || 0);
+                // Priority 1: Use explicitly saved shares (new logic)
+                // Priority 2: Recalculate based on current commission (legacy records)
+                const sessionGross = s.totalAmountDeducted || 0;
+                let sessionPlatform = s.platformShare || 0;
+                let sessionNet = s.astrologerShare || 0;
+
+                if (sessionGross > 0 && sessionPlatform === 0 && sessionNet === 0) {
+                    sessionPlatform = sessionGross * (commission / 100);
+                    sessionNet = sessionGross - sessionPlatform;
+                }
+                
+                gross += sessionGross;
+                net += sessionNet;
+                platform += sessionPlatform;
             });
 
             // 2. Active Session
             if (activeSession) {
                 const currentDurationMinutes = currentSessionSeconds / 60;
-                if (activeSession.servicesUsed.includes('chat')) totalEarnings += currentDurationMinutes * (activeSession.chatRate || 0);
-                if (activeSession.servicesUsed.includes('voice')) totalEarnings += currentDurationMinutes * (activeSession.voiceRate || 0);
-                if (activeSession.servicesUsed.includes('video')) totalEarnings += currentDurationMinutes * (activeSession.videoRate || 0);
+                const activeBilledMinutes = Math.ceil(currentDurationMinutes) || 1;
+                const activeGross = activeBilledMinutes * (activeSession.pricePerMinute || 0);
+                const activePlatform = activeGross * (commission / 100);
+                const activeNet = activeGross - activePlatform;
+
+                gross += activeGross;
+                net += activeNet;
+                platform += activePlatform;
             }
 
-            return Math.floor(totalEarnings * 100) / 100; // Round to 2 decimals
+            return {
+                gross: Math.floor(gross * 100) / 100,
+                net: Math.floor(net * 100) / 100,
+                platform: Math.floor(platform * 100) / 100
+            };
         };
 
+        const breakdown = await calculateEarningsBreakdown();
 
         res.json({
             success: true,
@@ -223,21 +253,19 @@ exports.getDashboardStats = async (req, res) => {
                 isChatOnline: astrologer.isChatOnline || false,
                 isVoiceOnline: astrologer.isVoiceOnline || false,
                 isVideoOnline: astrologer.isVideoOnline || false,
-                // Fallback to astrologer profile flags if needed, but session is truth
-
                 lastOnlineAt: activeSession?.startTime || null,
-
                 historyOnlineSeconds: historySeconds,
                 totalOnlineSeconds: totalOnlineSeconds,
-                totalOnlineMinutes: totalOnlineMinutes, // Backup
-
                 chatMinutes,
                 voiceMinutes,
                 videoMinutes,
-
-                earnings: calculateEarnings(),
-                callsCount: 0,
-                chatsCount: 0
+                earnings: breakdown.net,
+                todayGross: breakdown.gross,
+                todayPlatformShare: breakdown.platform,
+                todayNet: breakdown.net,
+                callsCount: sessions.filter(s => s.sessionType === 'audio' || s.sessionType === 'video').length,
+                chatsCount: sessions.filter(s => s.sessionType === 'chat').length,
+                totalSessions: sessions.length + (activeSession ? 1 : 0)
             }
         });
 

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import ChatRoomClient from './ChatRoomClient';
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function ChatRoomPage() {
-    return <ChatRoomClient />;
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Loading Chat Session...</div>}>
+            <ChatRoomClient />
+        </Suspense>
+    );
 }

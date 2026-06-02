@@ -184,6 +184,7 @@ app.get('/uploads/:name', (req, res, next) => {
 // Original static for other files (if any)
 app.use('/uploads', express.static(app.get('UPLOAD_ROOT'), { maxAge: '1y' }));
 app.use('/api/uploads', express.static(app.get('UPLOAD_ROOT'), { maxAge: '1y' }));
+app.use('/sounds', express.static(path.join(__dirname, 'public', 'sounds'), { maxAge: '1y' }));
 
 // Rate Limiting
 const authLimiter = rateLimit({
@@ -295,11 +296,13 @@ app.use('/api/agora', require('./src/routes/agoraRoutes'));
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/reviews', require('./src/routes/reviewRoutes'));
 app.use('/api/astro', astroRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/astro/earnings', earningsRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/activity', require('./src/routes/activityRoutes'));
 app.use('/api/admin/chats', require('./src/routes/adminChatRoutes'));
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', require('./src/routes/notificationRoutes'));

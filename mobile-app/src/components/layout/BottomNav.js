@@ -25,6 +25,11 @@ export default function BottomNav() {
     const pathname = usePathname();
     const { user } = useAuth();
     
+    // Don't show bottom nav in chat or call rooms
+    if (pathname.includes("/chat/") || pathname.includes("/call/")) {
+        return null;
+    }
+
     const items = user?.role === 'astrologer' ? astroItems : navItems;
 
     return (

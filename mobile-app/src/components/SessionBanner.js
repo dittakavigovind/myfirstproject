@@ -14,8 +14,8 @@ export default function SessionBanner() {
     const [activeSession, setActiveSession] = useState(null);
     const [duration, setDuration] = useState(0);
 
-    // Don't show on the chat page itself
-    const isChatPage = pathname.includes("/chat/");
+    // Don't show on the chat or call page itself
+    const isChatPage = pathname.includes("/chat/") || pathname.includes("/call/");
 
     useEffect(() => {
         if (user && !isChatPage) {
@@ -87,11 +87,6 @@ export default function SessionBanner() {
                             return;
                         }
                         router.push(`/chat/room?id=${activeSession.roomId}`);
-                        setTimeout(() => {
-                            if (!window.location.pathname.includes('/chat/room')) {
-                                window.location.href = `/chat/room?id=${activeSession.roomId}`;
-                            }
-                        }, 500);
                     }}
                 >
                     <div className="flex items-center gap-3">

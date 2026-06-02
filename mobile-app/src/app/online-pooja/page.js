@@ -13,11 +13,18 @@ function OnlinePoojaContent() {
     const [temples, setTemples] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const getImageUrl = (path) => {
-        if (!path) return "/placeholder-temple.jpg";
-        if (path.startsWith("http")) return path;
-        return `http://192.168.29.133:5000${path.startsWith("/") ? "" : "/"}${path}`;
+        const getImageUrl = (path) => {
+        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        
+        // If it's a full URL, ensure localhost is rewritten to the real network IP
+        if (path.startsWith("http")) {
+            return path.replace('localhost:5000', '192.168.29.133:5000');
+        }
+        
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
     };
+
 
     useEffect(() => {
         fetchTemples();

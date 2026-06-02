@@ -27,9 +27,11 @@ exports.generateAgoraToken = async (req, res) => {
         const appID = process.env.AGORA_APP_ID;
         const appCertificate = process.env.AGORA_APP_CERTIFICATE;
 
-        if (!appID || !appCertificate) {
+        if (!appID) {
             return res.status(500).json({ success: false, message: 'Agora credentials missing' });
         }
+        
+        const safeAppCertificate = appCertificate || "";
 
         const role = RtcRole.PUBLISHER;
         const expirationTimeInSeconds = 3600; // 1 hour
@@ -45,24 +47,29 @@ exports.generateAgoraToken = async (req, res) => {
         // For simplicity, we create a numeric UID or generate a random one for the FE to handle, 
         // OR we use the string user account method (buildTokenWithAccount).
 
-        // Using buildTokenWithAccount for String IDs (like Mongo IDs)
-        const rtcToken = RtcTokenBuilder.buildTokenWithAccount(
-            appID,
-            appCertificate,
-            channelName,
-            uid || req.user.id, // Account
-            role,
-            privilegeExpiredTs
-        );
+        let rtcToken = null;
+        let rtmToken = null;
 
-        // Generate RTM Token (Chat/Signaling)
-        const rtmToken = RtmTokenBuilder.buildToken(
-            appID,
-            appCertificate,
-            uid || req.user.id,
-            RtmRole.Rtm_User,
-            privilegeExpiredTs
-        );
+        if (safeAppCertificate) {
+            // Using buildTokenWithAccount for String IDs (like Mongo IDs)
+            rtcToken = RtcTokenBuilder.buildTokenWithAccount(
+                appID,
+                safeAppCertificate,
+                channelName,
+                uid || req.user.id, // Account
+                role,
+                privilegeExpiredTs
+            );
+
+            // Generate RTM Token (Chat/Signaling)
+            rtmToken = RtmTokenBuilder.buildToken(
+                appID,
+                safeAppCertificate,
+                uid || req.user.id,
+                RtmRole.Rtm_User,
+                privilegeExpiredTs
+            );
+        }
 
         res.status(200).json({
             success: true,

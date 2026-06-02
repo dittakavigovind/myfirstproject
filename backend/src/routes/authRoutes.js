@@ -13,6 +13,7 @@ const {
 } = require('../controllers/authController');
 const passport = require('../config/passport');
 const { protect } = require('../middleware/authMiddleware');
+const { getCustomToken } = require('../controllers/firebaseAuthController');
 
 // Diagnostic Test Route
 router.get('/test', (req, res) => {
@@ -28,6 +29,7 @@ router.get('/test', (req, res) => {
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.get('/me', protect, getMe);
+router.get('/firebase-token', protect, getCustomToken); // Firebase custom auth token
 router.post('/verify-email-otp', verifyEmailOtp); // New OTP route
 router.get('/verify-email/:token', verifyEmail); // Legacy Link route
 router.post('/resend-verification', resendVerification);

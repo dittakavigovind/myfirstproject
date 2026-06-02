@@ -18,18 +18,31 @@ export default function WalletPage() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+    const [showBreakdown, setShowBreakdown] = useState(false);
+    const [customAmount, setCustomAmount] = useState('');
+    const [gstConfig, setGstConfig] = useState({ enabled: true, percentage: 18 });
 
-    const plans = [
-        { id: 1, amount: 100, bonus: 0, label: "Starter" },
-        { id: 2, amount: 200, bonus: 20, label: "Popular", tag: "Hot" },
-        { id: 3, amount: 500, bonus: 75, label: "Best Value", tag: "Recommended" },
-        { id: 4, amount: 1000, bonus: 200, label: "Celestial" },
-    ];
+    const [plans, setPlans] = useState([]);
 
     useEffect(() => {
         fetchHistory();
+        fetchPlans();
         if (fetchProfile) fetchProfile();
     }, []);
+
+    const fetchPlans = async () => {
+        try {
+            const res = await API.get('/wallet/plans');
+            if (res.data.success) {
+                setPlans(res.data.data);
+                if (res.data.gst) setGstConfig(res.data.gst);
+            }
+        } catch (error) {
+            console.error('Failed to fetch wallet plans:', error);
+        }
+    };
+
+
 
     const fetchHistory = async () => {
         try {
@@ -44,16 +57,37 @@ export default function WalletPage() {
         }
     };
 
-    const handleRecharge = async () => {
-        if (!selectedPlan) return;
+    const getRechargeAmount = () => {
+        if (selectedPlan === 'custom') return parseFloat(customAmount) || 0;
+        return plans.find(p => p._id === selectedPlan)?.amount || 0;
+    };
+
+    const getBonusAmount = () => {
+        if (selectedPlan === 'custom') return 0;
+        return plans.find(p => p._id === selectedPlan)?.bonus || 0;
+    };
+
+    const handleRechargeClick = () => {
+        const amount = getRechargeAmount();
+        if (amount <= 0) return;
+        setShowBreakdown(true);
+    };
+
+    const handleConfirmRecharge = async () => {
+        const amount = getRechargeAmount();
+        if (amount <= 0) return;
+        
         setProcessing(true);
-        const planToBuy = plans.find(p => p.id === selectedPlan);
 
         try {
+            const payload = { amount };
+            if (selectedPlan !== 'custom') {
+                payload.planId = selectedPlan;
+            }
             // Initiate Razorpay Order on Backend
-            const res = await API.post('/wallet/recharge', { amount: planToBuy.amount });
+            const res = await API.post('/wallet/recharge', payload);
             if (res.data.success) {
-                const orderId = res.data.order.id;
+                const orderId = res.data.order_id;
                 // For Native Mobile Apps, you would typically pass this orderId to a Razorpay Capacitor/Cordova Plugin here.
                 // For now, we will alert to prove the API integration is physically connected to the node server.
                 alert(`Razorpay Order Created: ${orderId}\nReady for Native Checkout Plugin Integration.`);
@@ -112,26 +146,66 @@ export default function WalletPage() {
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                     {plans.map((plan) => (
-                        <div
-                            key={plan.id}
-                            onClick={() => setSelectedPlan(plan.id)}
-                            className={`relative glass-panel p-5 rounded-[2rem] border-white/5 cursor-pointer transition-all duration-300 ${selectedPlan === plan.id ? 'ring-2 ring-solar-gold bg-white/10' : 'bg-white/5 hover:bg-white/10'}`}
+                        <button
+                            key={plan._id}
+                            onClick={() => {
+                                setSelectedPlan(plan._id);
+                                setCustomAmount('');
+                            }}
+                            className={`relative p-4 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden ${
+                                selectedPlan === plan._id
+                                    ? 'border-solar-gold bg-solar-gold/10 scale-[1.02] shadow-[0_0_20px_rgba(255,215,0,0.15)]'
+                                    : 'border-white/5 bg-white/5 hover:bg-white/10'
+                            }`}
                         >
-                            {plan.tag && (
-                                <div className="absolute top-4 right-4 bg-solar-gold text-[8px] font-black text-astro-navy px-2 py-0.5 rounded-full uppercase tracking-widest">
-                                    {plan.tag}
-                                </div>
+                            {selectedPlan === plan._id && (
+                                <div className="absolute inset-0 bg-gradient-to-tr from-solar-gold/20 to-transparent" />
                             )}
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mb-1">{plan.label}</p>
-                            <h4 className="text-xl font-black text-white mb-2">₹{plan.amount}</h4>
-                            {plan.bonus > 0 && (
-                                <div className="flex items-center gap-1.5">
-                                    <Sparkles size={10} className="text-solar-gold" />
-                                    <span className="text-[10px] font-black text-solar-gold uppercase">+₹{plan.bonus} Extra</span>
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h4 className="text-white font-black text-xl">₹{plan.amount}</h4>
+                                    {plan.tag && (
+                                        <span className="px-2 py-1 rounded-full bg-gradient-to-r from-solar-gold to-amber-500 text-[10px] font-black text-black uppercase tracking-widest shadow-lg shadow-solar-gold/20">
+                                            {plan.tag}
+                                        </span>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                                <div className="flex justify-between items-end">
+                                    <p className={`text-sm font-bold ${selectedPlan === plan._id ? 'text-solar-gold' : 'text-slate-400'}`}>
+                                        {plan.label}
+                                    </p>
+                                    {plan.bonus > 0 && (
+                                        <div className="flex items-center gap-1 text-xs font-black text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg">
+                                            <Sparkles size={12} />
+                                            +₹{plan.bonus}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </button>
                     ))}
+                </div>
+
+                <div 
+                    onClick={() => setSelectedPlan('custom')}
+                    className={`mt-3 relative glass-panel p-5 rounded-[2rem] border-white/5 cursor-pointer transition-all duration-300 flex items-center justify-between ${selectedPlan === 'custom' ? 'ring-2 ring-solar-gold bg-solar-gold/10' : 'bg-white/5 hover:bg-white/10'}`}
+                >
+                    <div className="flex-1">
+                        <p className={`text-[10px] font-bold uppercase tracking-tighter mb-1 ${selectedPlan === 'custom' ? 'text-solar-gold/80' : 'text-slate-500'}`}>Custom Amount</p>
+                        <div className="flex items-center">
+                            <span className={`text-xl font-black mr-1 ${selectedPlan === 'custom' ? 'text-solar-gold' : 'text-white'}`}>₹</span>
+                            <input
+                                type="number"
+                                value={customAmount}
+                                onChange={(e) => {
+                                    setCustomAmount(e.target.value);
+                                    setSelectedPlan('custom');
+                                }}
+                                placeholder="Enter amount"
+                                className={`bg-transparent text-xl font-black outline-none w-full placeholder:text-white/20 ${selectedPlan === 'custom' ? 'text-solar-gold' : 'text-white'}`}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -156,9 +230,15 @@ export default function WalletPage() {
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                         {tx.type === 'credit' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
                                     </div>
-                                    <div>
-                                        <h4 className="text-xs font-black text-white capitalize">{tx.description || tx.type}</h4>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase">{new Date(tx.createdAt).toLocaleString()}</p>
+                                    <div className="flex-1 min-w-0 px-3">
+                                        <h4 className="text-xs font-black text-white capitalize truncate">
+                                            {tx.referenceId?.astrologerId?.displayName 
+                                                ? `${tx.referenceId.sessionType || 'Session'} with ${tx.referenceId.astrologerId.displayName}`
+                                                : (tx.description || tx.type).replace(/for session .*/i, '').trim()}
+                                        </h4>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
+                                            {new Date(tx.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className={`text-sm font-black ${tx.type === 'credit' ? 'text-emerald-400' : 'text-white'}`}>
@@ -173,14 +253,60 @@ export default function WalletPage() {
             {/* Bottom Button - Positioned above Bottom Nav */}
             <div className="fixed bottom-24 left-0 right-0 px-4 pointer-events-none">
                 <button
-                    disabled={!selectedPlan || processing}
-                    onClick={handleRecharge}
+                    disabled={getRechargeAmount() <= 0 || processing}
+                    onClick={handleRechargeClick}
                     className="w-full h-16 rounded-[2rem] bg-indigo-600 text-white font-black text-lg shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
                 >
                     <CreditCard size={20} />
                     {processing ? 'Processing...' : 'Confirm Recharge'}
                 </button>
             </div>
+            {/* GST Breakdown Modal */}
+            {showBreakdown && getRechargeAmount() > 0 && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-md bg-astro-dark border-t border-white/10 rounded-t-[2.5rem] p-6 pb-32 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-300 relative">
+                        <button 
+                            onClick={() => setShowBreakdown(false)}
+                            className="absolute top-4 right-4 p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10"
+                        >
+                            <span className="sr-only">Close</span>
+                            <Plus size={20} className="rotate-45" />
+                        </button>
+                        
+                        <h3 className="text-xl font-black text-white mb-6">Payment Breakdown</h3>
+                        
+                        <div className="space-y-4 mb-8">
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-sm font-bold text-slate-400">Recharge Amount</span>
+                                <span className="text-lg font-black text-white">₹{getRechargeAmount().toFixed(2)}</span>
+                            </div>
+                            {getBonusAmount() > 0 && (
+                                <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                    <span className="text-sm font-bold text-slate-400">Bonus Perks Added</span>
+                                    <span className="text-lg font-black text-emerald-400">+₹{getBonusAmount().toFixed(2)}</span>
+                                </div>
+                            )}
+                            {gstConfig.enabled && (
+                                <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                    <span className="text-sm font-bold text-slate-400">GST ({gstConfig.percentage}%)</span>
+                                    <span className="text-lg font-black text-white">₹{(getRechargeAmount() * (gstConfig.percentage / 100)).toFixed(2)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center pt-2">
+                                <span className="text-base font-black text-indigo-400 uppercase tracking-wider">Total Wallet Update</span>
+                                <span className="text-2xl font-black text-indigo-400">₹{(getRechargeAmount() + getBonusAmount()).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleConfirmRecharge}
+                            className="w-full h-14 rounded-[2rem] bg-gradient-to-r from-solar-gold to-orange-500 text-astro-navy font-black text-lg shadow-xl shadow-solar-gold/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                        >
+                            Proceed to Pay ₹{(getRechargeAmount() * (gstConfig.enabled ? (1 + gstConfig.percentage / 100) : 1)).toFixed(2)}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

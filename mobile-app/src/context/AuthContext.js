@@ -61,10 +61,9 @@ export function AuthProvider({ children }) {
 
             await PushNotifications.register();
 
-            // Create Android Notification Channels for Custom Sounds
             try {
                 await PushNotifications.createChannel({
-                    id: 'astro_chat_alerts',
+                    id: 'astro_chat_alerts_v3',
                     name: 'Chat Requests',
                     description: 'Alerts for incoming chat requests',
                     importance: 5,
@@ -145,7 +144,7 @@ export function AuthProvider({ children }) {
     }, [user, loading, pathname, router]);
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, setUser }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, setUser, checkUser }}>
             {!loading ? children : <div className="min-h-screen flex items-center justify-center bg-cosmic-indigo"><div className="w-8 h-8 rounded-full border-t-2 border-electric-violet animate-spin" /></div>}
         </AuthContext.Provider>
     );

@@ -10,6 +10,17 @@ const transactionSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    gstAmount: {
+        type: Number,
+        default: 0
+    },
+    totalAmount: {
+        type: Number
+    },
+    bonusAmount: {
+        type: Number,
+        default: 0
+    },
     type: {
         type: String,
         enum: ['credit', 'debit'],

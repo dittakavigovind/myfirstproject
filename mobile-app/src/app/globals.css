@@ -54,3 +54,53 @@ body {
 .pb-safe {
   padding-bottom: var(--safe-area-inset-bottom);
 }
+
+/* LIGHT THEME OVERRIDES */
+html.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --color-cosmic-indigo: #e2e8f0;
+  --color-glass: rgba(0, 0, 0, 0.05);
+  --color-glass-border: rgba(0, 0, 0, 0.1);
+}
+
+html.light body {
+  background-image: none;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Overriding hardcoded dark mode utility classes for light theme */
+html.light .bg-\[\#0b1026\] {
+  background-color: #f8fafc !important;
+}
+html.light .bg-\[\#111827\] {
+  background-color: #ffffff !important;
+}
+html.light .text-white {
+  color: #0f172a !important;
+}
+html.light .border-white\/5,
+html.light .border-white\/10 {
+  border-color: rgba(0,0,0,0.1) !important;
+}
+html.light .bg-white\/5,
+html.light .bg-white\/10 {
+  background-color: rgba(0,0,0,0.05) !important;
+}
+html.light .text-slate-50,
+html.light .text-slate-100,
+html.light .text-slate-200,
+html.light .text-slate-300,
+html.light .text-slate-400,
+html.light .text-slate-500 {
+  color: #475569 !important;
+}
+html.light .text-emerald-400 {
+  color: #059669 !important;
+}
+html.light .header-scrolled {
+  background-color: rgba(248, 250, 252, 0.9) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.1) !important;
+}
+

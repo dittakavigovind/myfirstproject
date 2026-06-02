@@ -4,6 +4,7 @@ const User = require('../models/User');
 const otpService = require('../services/otpService');
 const emailService = require('../services/emailService');
 const crypto = require('crypto');
+const { getDeviceInfo } = require('../utils/deviceUtils');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -115,6 +116,7 @@ exports.loginUser = async (req, res) => {
             }
             // Update lastLogin
             user.lastLogin = new Date();
+            user.deviceInfo = getDeviceInfo(req);
             await user.save();
 
             res.json({
@@ -128,6 +130,12 @@ exports.loginUser = async (req, res) => {
                 birthDetails: user.birthDetails,
                 profileImage: user.profileImage,
                 isOnline: user.isOnline,
+                isChatOnline: user.isChatOnline,
+                isVoiceOnline: user.isVoiceOnline,
+                isVideoOnline: user.isVideoOnline,
+                chatPrice: user.chatPrice,
+                callPrice: user.callPrice,
+                videoPrice: user.videoPrice,
                 lastLogin: user.lastLogin,
                 totalOrders: user.totalOrders || 0,
                 token: generateToken(user._id),
@@ -147,7 +155,29 @@ exports.loginUser = async (req, res) => {
  * @access  Private
  */
 exports.getMe = async (req, res) => {
-    res.status(200).json(req.user);
+    let userData = req.user.toObject ? req.user.toObject() : req.user;
+    
+    // Fetch global config
+    const AppConfig = require('../models/AppConfig');
+    const config = await AppConfig.findOne();
+    userData.globalFeatures = config?.features || { chatEnabled: true, voiceEnabled: true, videoEnabled: true };
+
+    if (userData.role === 'astrologer') {
+        const Astrologer = require('../models/Astrologer');
+        const astro = await Astrologer.findOne({ userId: userData._id });
+        if (astro) {
+            userData.charges = astro.charges;
+            userData.astrologerId = astro._id.toString();
+            userData.followersCount = astro.followersCount || 0;
+            userData.fakeFollowers = astro.fakeFollowers || 0;
+            userData.rating = astro.rating || 0;
+            userData.bio = astro.bio || '';
+            userData.displayName = astro.displayName || userData.name;
+            userData.profileImage = astro.image || userData.profileImage;
+            userData.astroFeatures = astro.features || { chatEnabled: true, voiceEnabled: true, videoEnabled: true };
+        }
+    }
+    res.status(200).json(userData);
 };
 
 /**
@@ -197,7 +227,13 @@ exports.verifyOtp = async (req, res) => {
             user = await User.create({
                 phone: normalizedPhone,
                 name: 'User', // Placeholder
+                lastLogin: new Date(),
+                deviceInfo: getDeviceInfo(req)
             });
+        } else {
+            user.lastLogin = new Date();
+            user.deviceInfo = getDeviceInfo(req);
+            await user.save();
         }
 
         if (user.isBlocked) {
@@ -214,6 +250,13 @@ exports.verifyOtp = async (req, res) => {
             walletBalance: user.walletBalance,
             profileImage: user.profileImage,
             birthDetails: user.birthDetails,
+            isOnline: user.isOnline,
+            isChatOnline: user.isChatOnline,
+            isVoiceOnline: user.isVoiceOnline,
+            isVideoOnline: user.isVideoOnline,
+            chatPrice: user.chatPrice,
+            callPrice: user.callPrice,
+            videoPrice: user.videoPrice,
             token: generateToken(user._id),
             isNewUser: user.name === 'User' // Flag to frontend
         });
@@ -261,6 +304,7 @@ exports.verifyEmailOtp = async (req, res) => {
         user.verificationToken = undefined;
         user.verificationTokenExpire = undefined;
         user.lastLogin = new Date();
+        user.deviceInfo = getDeviceInfo(req);
         await user.save();
 
         res.json({
@@ -274,6 +318,12 @@ exports.verifyEmailOtp = async (req, res) => {
             birthDetails: user.birthDetails,
             profileImage: user.profileImage,
             isOnline: user.isOnline,
+            isChatOnline: user.isChatOnline,
+            isVoiceOnline: user.isVoiceOnline,
+            isVideoOnline: user.isVideoOnline,
+            chatPrice: user.chatPrice,
+            callPrice: user.callPrice,
+            videoPrice: user.videoPrice,
             lastLogin: user.lastLogin,
             totalOrders: user.totalOrders || 0,
             token: generateToken(user._id),

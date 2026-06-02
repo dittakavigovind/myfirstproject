@@ -7,7 +7,7 @@ import API from '../../lib/api';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
     TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, Pencil, Trash2, CheckCircle, Sparkles, Phone, Monitor, Settings, Share2, LayoutGrid, X, Loader2,
-    Download, FileDown, Search
+    Download, FileDown, Search, Image as ImageIcon
 } from 'lucide-react';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import toast from 'react-hot-toast';
@@ -25,6 +25,7 @@ import PageDescriptionManager from '../../components/admin/PageDescriptionManage
 import FAQPageManager from '../../components/admin/FAQPageManager';
 import ExploreServicesSettings from '../../components/admin/ExploreServicesSettings';
 import HeroCarouselSettings from '../../components/admin/HeroCarouselSettings';
+import GalleryManagerModal from '../../components/admin/GalleryManagerModal';
 
 export default function AdminDashboard() {
     const { user, loading } = useAuth();
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
     const [userInteractions, setUserInteractions] = useState({});
     const [showAstroForm, setShowAstroForm] = useState(false);
     const [editingAstro, setEditingAstro] = useState(null);
+    const [selectedGalleryAstro, setSelectedGalleryAstro] = useState(null);
     const [selectedRequest, setSelectedRequest] = useState(null); // State for detailed view modal
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -77,6 +79,9 @@ export default function AdminDashboard() {
                 router.push('/dashboard');
             } else {
                 fetchData();
+                // Real-time polling every 30 seconds
+                const pollInterval = setInterval(fetchData, 30000);
+                return () => clearInterval(pollInterval);
             }
         }
     }, [user, loading, router]);
@@ -484,6 +489,18 @@ export default function AdminDashboard() {
 
                         <div className="block cursor-pointer transition hover:-translate-y-1" onClick={() => router.push('/admin/horoscope')}>
                             <StatCard label="Horoscope" value="Update" icon={Sparkles} color="bg-rose-500" />
+                        </div>
+
+                        <div className="block transition hover:-translate-y-1">
+                            <StatCard label="Live Sessions" value={stats?.activeChats || 0} icon={Activity} color="bg-emerald-500" />
+                        </div>
+
+                        <div className="block transition hover:-translate-y-1">
+                            <StatCard label="Total GST Collected" value={`₹${stats?.totalGst || 0}`} icon={DollarSign} color="bg-amber-500" />
+                        </div>
+
+                        <div className="block transition hover:-translate-y-1">
+                            <StatCard label="Today's GST" value={`₹${stats?.todayGst || 0}`} icon={DollarSign} color="bg-teal-500" />
                         </div>
                     </div>
 
@@ -1191,6 +1208,13 @@ export default function AdminDashboard() {
                                     {user.role === 'admin' && (
                                         <div className="absolute bottom-4 right-4 flex gap-2">
                                             <button
+                                                onClick={(e) => { e.stopPropagation(); setSelectedGalleryAstro(a); }}
+                                                className="border border-indigo-500 text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors"
+                                                title="Manage Gallery"
+                                            >
+                                                <ImageIcon size={14} />
+                                            </button>
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); setEditingAstro(a); }}
                                                 className="border border-blue-500 text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors"
                                                 title="Edit"
@@ -1216,6 +1240,17 @@ export default function AdminDashboard() {
                     </div>
                 )
             }
+
+            {selectedGalleryAstro && (
+                <GalleryManagerModal 
+                    astrologer={selectedGalleryAstro} 
+                    onClose={() => setSelectedGalleryAstro(null)}
+                    onSuccess={() => {
+                        setSelectedGalleryAstro(null);
+                        fetchData();
+                    }}
+                />
+            )}
 
             {
                 activeTab === 'logo-settings' && user.role === 'admin' && (
@@ -1439,7 +1474,7 @@ function AddAstrologerForm({ onSuccess, initialData }) {
     const [formData, setFormData] = useState({
         name: '', email: '', password: '',
         displayName: '', bio: '', image: '', skills: '', languages: '', location: '', rating: '4.5', experienceYears: '5',
-        chatCharge: '15', callCharge: '15', videoCharge: '15'
+        chatCharge: '15', callCharge: '15', videoCharge: '15', badgeText: ''
     });
     const [loading, setLoading] = useState(false);
 
@@ -1457,7 +1492,8 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                 experienceYears: initialData.experienceYears || '5',
                 chatCharge: initialData.charges?.chatPerMinute || '15',
                 callCharge: initialData.charges?.callPerMinute || '15',
-                videoCharge: initialData.charges?.videoPerMinute || '15'
+                videoCharge: initialData.charges?.videoPerMinute || '15',
+                badgeText: initialData.badgeText || ''
             });
         }
     }, [initialData]);
@@ -1515,7 +1551,8 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                     chatPerMinute: chatC,
                     callPerMinute: callC,
                     videoPerMinute: videoC
-                }
+                },
+                badgeText: formData.badgeText
             };
 
             if (initialData) {
@@ -1586,12 +1623,20 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                     <InputGroup label="Languages (Comma separate)" name="languages" value={formData.languages} placeholder="Hindi, English, Telugu..." onChange={handleChange} required />
                 </div>
                 <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Location / Google Place</label>
-                    <LocationSearch
-                        onLocationSelect={handleLocationSelect}
-                        defaultValue={formData.location}
-                        placeholder="e.g. New Delhi, India"
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                            <LocationSearch
+                                onLocationSelect={handleLocationSelect}
+                                defaultValue={formData.location}
+                                placeholder="e.g. New Delhi, India"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Badge Text (Optional)</label>
+                            <input type="text" name="badgeText" value={formData.badgeText} onChange={handleChange} placeholder="e.g. Celebrity" className="w-full px-4 py-2 border rounded-lg" />
+                        </div>
+                    </div>
                 </div>
 
                 <InputGroup label="Rating (0-5)" name="rating" value={formData.rating} type="number" step="0.1" max="5" placeholder="4.5" onChange={handleChange} required />
