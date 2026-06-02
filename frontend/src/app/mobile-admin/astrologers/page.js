@@ -334,6 +334,7 @@ function AstroStatsModal({ astro, onClose }) {
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [endedByFilter, setEndedByFilter] = useState("all");
+    const [typeFilter, setTypeFilter] = useState("all");
     const [newReview, setNewReview] = useState({ reviewerName: '', rating: 5, comment: '', reviewerGender: 'Female' });
     const [addingReview, setAddingReview] = useState(false);
 
@@ -481,6 +482,7 @@ function AstroStatsModal({ astro, onClose }) {
             if (!s.endedBy && endedByFilter !== 'system' && endedByFilter !== 'unknown') return false;
             if (s.endedBy && s.endedBy !== endedByFilter) return false;
         }
+        if (typeFilter !== "all" && (s.sessionType || 'chat') !== typeFilter) return false;
         return true;
     });
 
@@ -616,6 +618,17 @@ function AstroStatsModal({ astro, onClose }) {
                                     onChange={(e) => setToDate(e.target.value)}
                                     className="bg-slate-900 border border-slate-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:border-emerald-500"
                                 />
+                                <label className="text-xs font-bold text-slate-400 uppercase ml-2">Type:</label>
+                                <select
+                                    value={typeFilter}
+                                    onChange={(e) => setTypeFilter(e.target.value)}
+                                    className="bg-slate-900 border border-slate-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:border-emerald-500"
+                                >
+                                    <option value="all">All</option>
+                                    <option value="chat">Chat</option>
+                                    <option value="audio">Audio</option>
+                                    <option value="video">Video</option>
+                                </select>
                                 <label className="text-xs font-bold text-slate-400 uppercase ml-2">Ended By:</label>
                                 <select
                                     value={endedByFilter}
@@ -627,8 +640,8 @@ function AstroStatsModal({ astro, onClose }) {
                                     <option value="astrologer">Astrologer</option>
                                     <option value="system">System</option>
                                 </select>
-                                {(fromDate || toDate || endedByFilter !== 'all') && (
-                                    <button onClick={() => { setFromDate(""); setToDate(""); setEndedByFilter("all"); }} className="text-xs text-rose-400 hover:text-rose-300 px-2 font-bold">Clear</button>
+                                {(fromDate || toDate || endedByFilter !== 'all' || typeFilter !== 'all') && (
+                                    <button onClick={() => { setFromDate(""); setToDate(""); setEndedByFilter("all"); setTypeFilter("all"); }} className="text-xs text-rose-400 hover:text-rose-300 px-2 font-bold">Clear</button>
                                 )}
                                 <button onClick={handleExport} className="ml-4 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
                                     Export CSV
