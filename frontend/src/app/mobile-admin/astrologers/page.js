@@ -700,7 +700,15 @@ function AstroStatsModal({ astro, onClose }) {
                                     </thead>
                                     <tbody className="divide-y divide-slate-800/50">
                                         {filteredSessions.map(s => (
-                                            <tr key={s._id} className="hover:bg-slate-800/30 transition text-slate-300 cursor-pointer" onClick={() => openChatHistory(s.roomId)}>
+                                            <tr 
+                                                key={s._id} 
+                                                className={`hover:bg-slate-800/30 transition text-slate-300 ${(!s.sessionType || s.sessionType === 'chat') ? 'cursor-pointer' : ''}`} 
+                                                onClick={() => {
+                                                    if (!s.sessionType || s.sessionType === 'chat') {
+                                                        openChatHistory(s.roomId);
+                                                    }
+                                                }}
+                                            >
                                                 <td className="p-4 whitespace-nowrap">{formatDate(s.createdAt)}</td>
                                                 <td className="p-4 font-medium">{s.userId?.name || 'Unknown User'}</td>
                                                 <td className="p-4 text-xs font-bold uppercase tracking-wider text-blue-400">{s.sessionType || 'chat'}</td>
