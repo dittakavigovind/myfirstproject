@@ -4,14 +4,23 @@ const fs = require('fs');
 
 const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
 
-if (fs.existsSync(serviceAccountPath)) {
+let serviceAccount = null;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     try {
-        const serviceAccount = require('./firebase-service-account.json');
-        
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    } catch (e) {
+        console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
+    }
+} else if (fs.existsSync(serviceAccountPath)) {
+    serviceAccount = require('./firebase-service-account.json');
+}
+
+if (serviceAccount) {
+    try {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
-        
         console.log('🔥 Firebase Admin SDK Initialized Successfully.');
     } catch (error) {
         console.error('❌ Firebase Admin Initialization Error:', error);
