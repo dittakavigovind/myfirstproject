@@ -6,7 +6,14 @@ const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json')
 
 let serviceAccount = null;
 
-if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+    try {
+        const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
+        serviceAccount = JSON.parse(decoded);
+    } catch (e) {
+        console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64.');
+    }
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     try {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
     } catch (e) {
