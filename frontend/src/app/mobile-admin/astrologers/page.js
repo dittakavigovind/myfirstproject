@@ -519,10 +519,11 @@ function AstroStatsModal({ astro, onClose }) {
     };
 
     const handleExport = () => {
-        const headers = ["Date", "User", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share", "Total Deducted"];
+        const headers = ["Date", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share", "Total Deducted"];
         const rows = filteredSessions.map(s => [
             formatDate(s.createdAt),
             s.userId?.name || 'Unknown',
+            s.sessionType || 'chat',
             s.status,
             s.endedBy || 'system',
             s.astrologerEndReason ? `"${s.astrologerEndReason}"` : '',
@@ -687,6 +688,7 @@ function AstroStatsModal({ astro, onClose }) {
                                         <tr>
                                             <th className="p-4 font-medium text-slate-400">Date</th>
                                             <th className="p-4 font-medium text-slate-400">User</th>
+                                            <th className="p-4 font-medium text-slate-400">Type</th>
                                             <th className="p-4 font-medium text-slate-400">Status</th>
                                             <th className="p-4 font-medium text-slate-400">Ended By</th>
                                             <th className="p-4 font-medium text-slate-400">Reason</th>
@@ -701,6 +703,7 @@ function AstroStatsModal({ astro, onClose }) {
                                             <tr key={s._id} className="hover:bg-slate-800/30 transition text-slate-300 cursor-pointer" onClick={() => openChatHistory(s.roomId)}>
                                                 <td className="p-4 whitespace-nowrap">{formatDate(s.createdAt)}</td>
                                                 <td className="p-4 font-medium">{s.userId?.name || 'Unknown User'}</td>
+                                                <td className="p-4 text-xs font-bold uppercase tracking-wider text-blue-400">{s.sessionType || 'chat'}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${s.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                                         s.status === 'missed' || (s.status === 'initiated' && (!s.totalDuration || s.totalDuration === 0)) ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
