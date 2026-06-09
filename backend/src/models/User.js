@@ -92,7 +92,14 @@ const userSchema = new mongoose.Schema({
         deviceModel: String,
         deviceMake: String,
         appVersion: String,
-        userAgent: String
+        userAgent: String,
+        location: {
+            ip: String,
+            country: String,
+            region: String,
+            city: String,
+            ll: [Number]
+        }
     },
     // Application Specific Fields
     birthDetails: {

@@ -312,6 +312,31 @@ function UserDetails() {
                                         </div>
                                         <div className="text-slate-300"><CheckCircle size={16} /></div>
                                     </div>
+                                    {userData.deviceInfo?.location && (
+                                        <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Login Location</p>
+                                                <p className="font-bold text-slate-700">
+                                                    {[userData.deviceInfo.location.city, userData.deviceInfo.location.region, userData.deviceInfo.location.country].filter(Boolean).join(', ') || (userData.deviceInfo.location.ip === '127.0.0.1' ? 'Local Network (Localhost)' : 'Unknown Location')}
+                                                </p>
+                                                {userData.deviceInfo.location.ip && (
+                                                    <p className="text-xs text-slate-400 mt-1">IP: {userData.deviceInfo.location.ip}</p>
+                                                )}
+                                            </div>
+                                            <div className="text-slate-300"><Sparkles size={16} /></div>
+                                        </div>
+                                    )}
+                                    {userData.deviceInfo && (
+                                        <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Device</p>
+                                                <p className="font-bold text-slate-700">
+                                                    {[userData.deviceInfo.os, userData.deviceInfo.deviceModel].filter(Boolean).join(' - ') || 'Unknown Device'}
+                                                </p>
+                                            </div>
+                                            <div className="text-slate-300"><UserIcon size={16} /></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             {/* Activity Stats (For Astrologers) */}

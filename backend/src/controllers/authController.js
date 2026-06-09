@@ -62,6 +62,7 @@ exports.registerUser = async (req, res) => {
             emailVerified: false,
             verificationToken,
             verificationTokenExpire,
+            deviceInfo: getDeviceInfo(req)
         });
 
         if (user) {

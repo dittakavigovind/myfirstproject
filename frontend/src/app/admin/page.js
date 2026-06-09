@@ -604,6 +604,7 @@ export default function AdminDashboard() {
                                 <th className="p-4">Name</th>
                                 <th className="p-4">Email / Phone</th>
                                 <th className="p-4">Role</th>
+                                <th className="p-4">Location</th>
                                 <th className="p-4">Joined</th>
                                 <th className="p-4">Interactions</th>
                                 <th className="p-4">Actions</th>
@@ -616,6 +617,8 @@ export default function AdminDashboard() {
                                 u.phone?.includes(searchTerm) ||
                                 u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
+                                u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.deviceInfo?.location?.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (u.createdAt && (() => {
                                     const d = new Date(u.createdAt);
                                     return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
@@ -626,6 +629,8 @@ export default function AdminDashboard() {
                                 u.phone?.includes(searchTerm) ||
                                 u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
+                                u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                u.deviceInfo?.location?.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (u.createdAt && (() => {
                                     const d = new Date(u.createdAt);
                                     return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
@@ -651,6 +656,13 @@ export default function AdminDashboard() {
                                         {u.isBlocked && (
                                             <span className="ml-2 px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
                                         )}
+                                    </td>
+                                    <td className="p-4 text-slate-500 font-medium">
+                                        {(() => {
+                                            const loc = u.deviceInfo?.location;
+                                            if (!loc) return <span className="text-slate-300">-</span>;
+                                            return [loc.city, loc.country].filter(Boolean).join(', ') || (loc.ip === '127.0.0.1' ? 'Local' : loc.ip) || '-';
+                                        })()}
                                     </td>
                                     <td className="p-4 text-slate-400">
                                         {(() => {

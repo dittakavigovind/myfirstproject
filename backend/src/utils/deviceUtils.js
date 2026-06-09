@@ -1,3 +1,5 @@
+const geoip = require('geoip-lite');
+
 exports.getDeviceInfo = (req) => {
     const userAgent = req.headers['user-agent'] || '';
     
@@ -19,11 +21,32 @@ exports.getDeviceInfo = (req) => {
         else if (uaLower.includes('linux')) os = 'Linux';
     }
 
+    let ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.connection?.remoteAddress || req.ip || '';
+    if (ip && typeof ip === 'string' && ip.includes(',')) {
+        ip = ip.split(',')[0].trim();
+    }
+    // Handle localhost IPv6 loopback
+    if (ip === '::1' || ip.startsWith('::ffff:')) {
+        ip = ip.replace('::ffff:', '');
+    }
+
+    let location = { ip };
+    if (ip && ip !== '127.0.0.1' && ip !== '::1') {
+        const geo = geoip.lookup(ip);
+        if (geo) {
+            location.country = geo.country;
+            location.region = geo.region;
+            location.city = geo.city;
+            location.ll = geo.ll; // [latitude, longitude]
+        }
+    }
+
     return {
         os,
         deviceModel,
         deviceMake,
         appVersion,
-        userAgent
+        userAgent,
+        location
     };
 };

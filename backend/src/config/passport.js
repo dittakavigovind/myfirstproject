@@ -6,13 +6,16 @@ passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
     callbackURL: (process.env.BACKEND_URL || process.env.BASE_URL || "") + "/api/auth/google/callback",
-    proxy: true
-}, async (accessToken, refreshToken, profile, done) => {
+    proxy: true,
+    passReqToCallback: true
+}, async (req, accessToken, refreshToken, profile, done) => {
     try {
+        const { getDeviceInfo } = require('../utils/deviceUtils');
         const email = profile.emails[0].value;
         const googleId = profile.id;
         const name = profile.displayName;
         const profileImage = profile.photos[0]?.value;
+        const deviceInfo = getDeviceInfo(req);
 
         // Find or create user
         let user = await User.findOne({ $or: [{ googleId }, { email }] });
@@ -23,8 +26,10 @@ passport.use(new GoogleStrategy({
                 user.googleId = googleId;
                 user.authProvider = 'google';
                 user.emailVerified = true;
-                await user.save();
             }
+            user.lastLogin = new Date();
+            user.deviceInfo = deviceInfo;
+            await user.save();
             return done(null, user);
         }
 
@@ -35,7 +40,9 @@ passport.use(new GoogleStrategy({
             googleId,
             authProvider: 'google',
             emailVerified: true,
-            profileImage: profileImage || 'default-avatar.png'
+            profileImage: profileImage || 'default-avatar.png',
+            deviceInfo,
+            lastLogin: new Date()
         });
 
         return done(null, user);
