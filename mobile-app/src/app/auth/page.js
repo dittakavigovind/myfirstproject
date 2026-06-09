@@ -6,11 +6,14 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { TermsModal, PrivacyModal } from "./LegalModals";
 
 export default function AuthPage() {
     const [step, setStep] = useState(1);
     const [countryIso, setCountryIso] = useState("in");
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
+    const [showPrivacy, setShowPrivacy] = useState(false);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -135,7 +138,7 @@ export default function AuthPage() {
                                 className="space-y-5 mt-2"
                             >
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">WhatsApp Number</label>
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">SignUp/Login</label>
                                     <div className="flex group relative items-center">
                                         <div className="relative flex-shrink-0" ref={dropdownRef}>
                                             <button 
@@ -189,7 +192,7 @@ export default function AuthPage() {
                                                 setPhone(val);
                                             }}
                                             placeholder={`Enter WhatsApp number`}
-                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl px-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium h-[52px]"
+                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl px-4 text-white placeholder:text-slate-500 placeholder:text-[13px] focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium h-[52px]"
                                             disabled={loading}
                                             inputMode="numeric"
                                         />
@@ -212,13 +215,13 @@ export default function AuthPage() {
                                 <div className="mt-5 text-center px-4">
                                     <p className="text-[11px] text-slate-400/80 leading-relaxed font-medium">
                                         By continuing, you agree to our{" "}
-                                        <Link href="/terms" className="text-electric-violet/90 font-bold hover:underline transition-all">
+                                        <button type="button" onClick={() => setShowTerms(true)} className="text-electric-violet/90 font-bold hover:underline transition-all">
                                             Terms
-                                        </Link>{" "}
+                                        </button>{" "}
                                         and{" "}
-                                        <Link href="/privacy" className="text-electric-violet/90 font-bold hover:underline transition-all">
+                                        <button type="button" onClick={() => setShowPrivacy(true)} className="text-electric-violet/90 font-bold hover:underline transition-all">
                                             Privacy Policy
-                                        </Link>.
+                                        </button>.
                                     </p>
                                 </div>
                             </motion.form>
@@ -269,6 +272,10 @@ export default function AuthPage() {
                     </AnimatePresence>
                 </div>
             </motion.div>
+
+            {/* Legal Modals */}
+            <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+            <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
         </div>
     );
 }
