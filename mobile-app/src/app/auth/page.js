@@ -138,7 +138,7 @@ export default function AuthPage() {
                                 className="space-y-5 mt-2"
                             >
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">SignUp/Login</label>
+                                    <label className="block text-xs font-semibold text-slate-400 tracking-wider mb-2">SignUp/Login</label>
                                     <div className="flex group relative items-center">
                                         <div className="relative flex-shrink-0" ref={dropdownRef}>
                                             <button 
