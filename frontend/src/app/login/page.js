@@ -55,6 +55,7 @@ export default function LoginPage() {
         confirmPassword: ''
     });
     const [countryCode, setCountryCode] = useState('+91');
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
@@ -123,11 +124,11 @@ export default function LoginPage() {
 
 
     const countryCodes = [
-        { code: '+91', country: 'India', digits: 10, flag: '🇮🇳' },
-        { code: '+1', country: 'USA', digits: 10, flag: '🇺🇸' },
-        { code: '+44', country: 'UK', digits: 10, flag: '🇬🇧' },
-        { code: '+971', country: 'UAE', digits: 9, flag: '🇦🇪' },
-        { code: '+65', country: 'Singapore', digits: 8, flag: '🇸🇬' },
+        { code: '+91', iso: 'in', digits: 10 },
+        { code: '+1', iso: 'us', digits: 10 },
+        { code: '+44', iso: 'gb', digits: 10 },
+        { code: '+971', iso: 'ae', digits: 9 },
+        { code: '+65', iso: 'sg', digits: 8 },
     ];
 
     // Reset phone number when country code changes
@@ -408,18 +409,55 @@ export default function LoginPage() {
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">WhatsApp Number</label>
                                             <div className="flex group relative">
-                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10 group-focus-within:text-green-600 transition-colors">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-20 group-focus-within:text-green-600 transition-colors pointer-events-none">
                                                     <Smartphone className="w-4 h-4" />
                                                 </div>
-                                                <select
-                                                    value={countryCode}
-                                                    onChange={(e) => setCountryCode(e.target.value)}
-                                                    className="pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 h-[40px] transition-all cursor-pointer hover:bg-slate-100"
-                                                >
-                                                    {countryCodes.map(c => (
-                                                        <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
-                                                    ))}
-                                                </select>
+                                                <div className="relative">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                                                        className="flex items-center justify-between pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none h-[40px] transition-all hover:bg-slate-100 min-w-[85px] w-full"
+                                                    >
+                                                        <div className="flex items-center gap-1.5">
+                                                            <img 
+                                                                src={`https://flagcdn.com/w20/${countryCodes.find(c => c.code === countryCode)?.iso}.png`} 
+                                                                alt="flag" 
+                                                                className="w-4 h-3 object-cover rounded-sm shadow-sm" 
+                                                            />
+                                                            <span className="text-left leading-none">{countryCode}</span>
+                                                        </div>
+                                                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-slate-400 shrink-0 ml-1" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                                    </button>
+                                                    
+                                                    <AnimatePresence>
+                                                        {showCountryDropdown && (
+                                                            <>
+                                                                <div className="fixed inset-0 z-40" onClick={() => setShowCountryDropdown(false)}></div>
+                                                                <motion.div 
+                                                                    initial={{ opacity: 0, y: 5 }}
+                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                    exit={{ opacity: 0, y: 5 }}
+                                                                    className="absolute top-full left-0 mt-1 w-[120px] bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden py-1"
+                                                                >
+                                                                    {countryCodes.map(c => (
+                                                                        <button
+                                                                            key={c.code}
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setCountryCode(c.code);
+                                                                                setShowCountryDropdown(false);
+                                                                            }}
+                                                                            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-left transition-colors"
+                                                                        >
+                                                                            <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                                                                            <span className="text-sm font-bold text-slate-700">{c.code}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </motion.div>
+                                                            </>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
                                                 <input
                                                     type="tel"
                                                     required

@@ -9,6 +9,7 @@ import { Phone, Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
 export default function AuthPage() {
     const [step, setStep] = useState(1);
     const [countryCode, setCountryCode] = useState("+91");
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
@@ -16,11 +17,11 @@ export default function AuthPage() {
     const { login } = useAuth();
 
     const countryCodes = [
-        { code: '+91', country: 'India', digits: 10, flag: '🇮🇳' },
-        { code: '+1', country: 'USA', digits: 10, flag: '🇺🇸' },
-        { code: '+44', country: 'UK', digits: 10, flag: '🇬🇧' },
-        { code: '+971', country: 'UAE', digits: 9, flag: '🇦🇪' },
-        { code: '+65', country: 'Singapore', digits: 8, flag: '🇸🇬' },
+        { code: '+91', iso: 'in', digits: 10 },
+        { code: '+1', iso: 'us', digits: 10 },
+        { code: '+44', iso: 'gb', digits: 10 },
+        { code: '+971', iso: 'ae', digits: 9 },
+        { code: '+65', iso: 'sg', digits: 8 },
     ];
 
     const handleSendOtp = async (e) => {
@@ -114,23 +115,55 @@ export default function AuthPage() {
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Mobile Number</label>
                                     <div className="flex group relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-electric-violet z-10">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-electric-violet z-20 pointer-events-none">
                                             <Phone className="w-4 h-4" />
                                         </div>
-                                        <select
-                                            value={countryCode}
-                                            onChange={(e) => {
-                                                setCountryCode(e.target.value);
-                                                setPhone("");
-                                            }}
-                                            className="pl-9 pr-2 border border-r-0 border-white/10 rounded-l-xl bg-white/5 text-white font-bold text-sm focus:outline-none focus:border-electric-violet focus:ring-2 focus:ring-electric-violet/50 h-[50px] transition-all cursor-pointer appearance-none"
-                                        >
-                                            {countryCodes.map(c => (
-                                                <option key={c.code} value={c.code} className="bg-cosmic-indigo text-white">{c.flag} {c.code}</option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute left-[85px] top-1/2 -translate-y-1/2 text-white/50 pointer-events-none">
-                                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                        <div className="relative">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                                                className="flex items-center justify-between pl-9 pr-2 border border-r-0 border-white/10 rounded-l-xl bg-white/5 text-white font-bold text-sm focus:outline-none focus:border-electric-violet focus:ring-2 focus:ring-electric-violet/50 h-[50px] transition-all min-w-[85px] w-full"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <img 
+                                                        src={`https://flagcdn.com/w20/${countryCodes.find(c => c.code === countryCode)?.iso}.png`} 
+                                                        alt="flag" 
+                                                        className="w-4 h-3 object-cover rounded-sm shadow-sm" 
+                                                    />
+                                                    <span className="text-left leading-none">{countryCode}</span>
+                                                </div>
+                                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-white/50 shrink-0 ml-1" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                            </button>
+                                            
+                                            <AnimatePresence>
+                                                {showCountryDropdown && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-40" onClick={() => setShowCountryDropdown(false)}></div>
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: 5 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            exit={{ opacity: 0, y: 5 }}
+                                                            className="absolute top-full left-0 mt-1 w-[120px] bg-cosmic-indigo border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
+                                                        >
+                                                            {countryCodes.map(c => (
+                                                                <button
+                                                                    key={c.code}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setCountryCode(c.code);
+                                                                        setPhone("");
+                                                                        setShowCountryDropdown(false);
+                                                                    }}
+                                                                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-white/5 text-left transition-colors"
+                                                                >
+                                                                    <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                                                                    <span className="text-sm font-bold text-white">{c.code}</span>
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    </>
+                                                )}
+                                            </AnimatePresence>
                                         </div>
                                         <input
                                             type="tel"
@@ -141,7 +174,7 @@ export default function AuthPage() {
                                                 setPhone(val);
                                             }}
                                             placeholder={`Enter mobile number`}
-                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl py-3.5 pl-8 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium"
+                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl py-3.5 pl-4 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium"
                                             disabled={loading}
                                             inputMode="numeric"
                                         />
