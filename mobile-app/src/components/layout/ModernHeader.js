@@ -42,12 +42,12 @@ export default function ModernHeader() {
     return (
         <>
             <header
-                className={`fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between transition-all duration-300 ${isScrolled ? 'bg-[#0b1026]/90 backdrop-blur-md border-b border-white/10 header-scrolled' : 'bg-transparent border-b border-transparent'}`}
+                className={`fixed top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between transition-all duration-300 pointer-events-none ${isScrolled ? 'bg-[#0b1026]/90 backdrop-blur-md border-b border-white/10 header-scrolled' : 'bg-transparent border-b border-transparent'}`}
                 style={{ 
                     paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)'
                 }}
             >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 pointer-events-auto">
                     {/* Menu Toggle */}
                     <button 
                         onClick={() => setIsMenuOpen(true)}
@@ -71,7 +71,7 @@ export default function ModernHeader() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pointer-events-auto">
                     <button
                         onClick={() => router.push('/wallet')}
                         className="h-10 px-3 rounded-full glass-panel flex items-center gap-2 text-white hover:bg-white/10 transition-colors border-white/5 bg-white/5"

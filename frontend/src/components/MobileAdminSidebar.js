@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import {
-    LayoutDashboard, Settings, DollarSign, Activity, FileText, Smartphone, LogOut, Users
+    LayoutDashboard, Settings, DollarSign, Activity, FileText, Smartphone, LogOut, Users, AlertTriangle, Calendar
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -84,6 +84,16 @@ export default function MobileAdminSidebar() {
                     Astrologers
                 </Link>
 
+                <Link href="/mobile-admin/pinned-astrologers"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/pinned-astrologers')
+                        ? 'bg-amber-600/20 text-amber-400 border border-amber-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <Calendar size={18} />
+                    Pin Scheduler
+                </Link>
+
                 <Link href="/mobile-admin/pricing"
                     className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/pricing')
                         ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
@@ -104,6 +114,16 @@ export default function MobileAdminSidebar() {
                 >
                     <FileText size={18} />
                     Active Sessions & Records
+                </Link>
+
+                <Link href="/mobile-admin/warnings"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/warnings')
+                        ? 'bg-red-600/20 text-red-400 border border-red-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <AlertTriangle size={18} />
+                    Warnings & Violations
                 </Link>
             </nav>
 

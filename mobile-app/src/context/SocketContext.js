@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import { Preferences } from "@capacitor/preferences";
-import api from "@/lib/api";
+import api, { getApiToken } from "@/lib/api";
 import { Sparkles, X, Volume2 } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
@@ -58,12 +58,14 @@ export function SocketProvider({ children }) {
         let newSocket;
 
         const initSocket = async () => {
-            let token = "";
-            try {
-                const { value } = await Preferences.get({ key: "authToken" });
-                token = value;
-            } catch (e) {
-                token = localStorage.getItem("authToken");
+            let token = getApiToken();
+            if (!token) {
+                try {
+                    const { value } = await Preferences.get({ key: "authToken" });
+                    token = value;
+                } catch (e) {
+                    token = localStorage.getItem("authToken");
+                }
             }
 
             const BACKEND_URL = "http://192.168.29.133:5000";
@@ -87,7 +89,7 @@ export function SocketProvider({ children }) {
                         const callAlertSoundUrl = settingsRes.data?.settings?.callAlertSoundUrl || '/sounds/call_alert.mp3';
 
                         const relativeAudioUrl = (data.sessionType === 'call' || data.sessionType === 'audio') ? callAlertSoundUrl : chatAlertSoundUrl;
-                        const finalAudioUrl = relativeAudioUrl.startsWith('http') ? relativeAudioUrl : `${BACKEND_URL}${relativeAudioUrl}`;
+                        const finalAudioUrl = relativeAudioUrl;
 
                         setAlertSoundUrl(finalAudioUrl);
 
@@ -105,7 +107,21 @@ export function SocketProvider({ children }) {
                 }
             });
 
-            newSocket.on("disconnect", () => setSocket(null));
+            newSocket.on("session_ended", (data) => {
+                if (activeAlertRef.current === data.roomId) {
+                    stopAlertSound();
+                    setIncomingSession(null);
+                }
+            });
+
+            newSocket.on("session_declined", (data) => {
+                if (activeAlertRef.current === data.roomId) {
+                    stopAlertSound();
+                    setIncomingSession(null);
+                }
+            });
+
+            newSocket.on("connect", () => setSocket(newSocket));
             setSocket(newSocket);
         };
 
@@ -119,8 +135,7 @@ export function SocketProvider({ children }) {
 
     const playAlertManual = () => {
         if (!incomingSession) return;
-        const BACKEND_URL = "http://192.168.29.133:5000";
-        const urlToPlay = alertSoundUrl || `${BACKEND_URL}/sounds/chat_alert.mp3`;
+        const urlToPlay = alertSoundUrl || '/sounds/chat_alert.mp3';
         
         stopAlertSound();
         const audio = new Audio(urlToPlay);
@@ -130,7 +145,7 @@ export function SocketProvider({ children }) {
     };
 
     return (
-        <SocketContext.Provider value={{ socket }}>
+        <SocketContext.Provider value={{ socket, incomingSession, setIncomingSession }}>
             {children}
             
             {incomingSession && (

@@ -1503,6 +1503,26 @@ function AddAstrologerForm({ onSuccess, initialData }) {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleDisplayNameBlur = async (e) => {
+        const value = e.target.value.trim();
+        if (!value) return;
+        
+        if (initialData && value === initialData.displayName) return;
+
+        try {
+            const res = await API.get(`/astro/check-display-name?name=${encodeURIComponent(value)}${initialData ? `&excludeId=${initialData._id}` : ''}`);
+            if (res.data.isDuplicate) {
+                alert('This Display Name is already taken. Reverting to previous.');
+                setFormData(prev => ({
+                    ...prev,
+                    displayName: initialData ? (initialData.displayName || '') : ''
+                }));
+            }
+        } catch (error) {
+            console.error('Error checking display name', error);
+        }
+    };
+
     const handleLocationSelect = (loc) => {
         setFormData(prev => ({ ...prev, location: loc.formattedAddress }));
     };
@@ -1613,7 +1633,24 @@ function AddAstrologerForm({ onSuccess, initialData }) {
             </Section>
 
             <Section title="Professional Profile">
-                <InputGroup label="Display Name" name="displayName" value={formData.displayName} placeholder="e.g. Astro Raj" onChange={handleChange} required />
+                <InputGroup 
+                    label={
+                        <span className="flex items-center gap-2">
+                            Display Name
+                            {initialData?.userId?.name && (
+                                <span className="text-xs font-normal text-slate-500 ml-1 lowercase">
+                                    (original name: <a href={`/admin/users/details?username=${initialData.userId._id}`} target="_blank" className="text-blue-500 hover:underline cursor-pointer">{initialData.userId.name}</a>)
+                                </span>
+                            )}
+                        </span>
+                    } 
+                    name="displayName" 
+                    value={formData.displayName} 
+                    placeholder="e.g. Astro Raj" 
+                    onChange={handleChange} 
+                    onBlur={handleDisplayNameBlur}
+                    required 
+                />
                 <InputGroup label="Experience (Years)" name="experienceYears" value={formData.experienceYears} type="number" placeholder="e.g. 5" onChange={handleChange} required />
 
                 <div className="md:col-span-2">

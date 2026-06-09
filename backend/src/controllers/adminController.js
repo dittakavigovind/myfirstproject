@@ -115,7 +115,29 @@ exports.updateAstrologerSettings = async (req, res) => {
             return res.status(404).json({ message: 'Astrologer not found' });
         }
 
-        const { commissionRate, isVerified, verificationStatus, fakeFollowers, badgeText, features } = req.body;
+        const { commissionRate, isVerified, verificationStatus, fakeFollowers, badgeText, features, isPinned, pinOrder, pinStartTime, pinEndTime } = req.body;
+
+        if (isPinned === true) {
+            const start = pinStartTime ? new Date(pinStartTime) : (astrologer.pinStartTime || new Date());
+            const end = pinEndTime ? new Date(pinEndTime) : (astrologer.pinEndTime || new Date(Date.now() + 365*24*60*60*1000));
+            const targetOrder = pinOrder !== undefined ? Number(pinOrder) : (astrologer.pinOrder || 0);
+
+            // Validation: Ensure no overlap in the same pinOrder
+            const overlappingPin = await Astrologer.findOne({
+                _id: { $ne: astrologer._id },
+                isPinned: true,
+                pinOrder: targetOrder,
+                pinStartTime: { $lt: end },
+                pinEndTime: { $gt: start }
+            });
+
+            if (overlappingPin) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Conflict! '${overlappingPin.displayName || overlappingPin.name}' is already pinned at Order ${targetOrder} from ${new Date(overlappingPin.pinStartTime).toLocaleString()} to ${new Date(overlappingPin.pinEndTime).toLocaleString()}`
+                });
+            }
+        }
 
         if (commissionRate !== undefined) astrologer.commissionRate = commissionRate;
         if (isVerified !== undefined) astrologer.isVerified = isVerified;
@@ -123,6 +145,10 @@ exports.updateAstrologerSettings = async (req, res) => {
         if (fakeFollowers !== undefined) astrologer.fakeFollowers = Number(fakeFollowers);
         if (badgeText !== undefined) astrologer.badgeText = badgeText;
         if (features !== undefined) astrologer.features = { ...astrologer.features, ...features };
+        if (isPinned !== undefined) astrologer.isPinned = isPinned;
+        if (pinOrder !== undefined) astrologer.pinOrder = Number(pinOrder);
+        if (pinStartTime !== undefined) astrologer.pinStartTime = pinStartTime;
+        if (pinEndTime !== undefined) astrologer.pinEndTime = pinEndTime;
 
         await astrologer.save();
         res.json({ success: true, message: 'Astrologer settings updated', data: astrologer });

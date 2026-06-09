@@ -175,6 +175,7 @@ exports.getMe = async (req, res) => {
             userData.displayName = astro.displayName || userData.name;
             userData.profileImage = astro.image || userData.profileImage;
             userData.astroFeatures = astro.features || { chatEnabled: true, voiceEnabled: true, videoEnabled: true };
+            userData.isActive = astro.isActive;
         }
     }
     res.status(200).json(userData);

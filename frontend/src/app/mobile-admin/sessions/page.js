@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { FileText, Video, Phone, MessageSquare, PlayCircle, Loader2, ArrowRight } from 'lucide-react';
+import { FileText, Video, Phone, MessageSquare, PlayCircle, Loader2, ArrowRight, X } from 'lucide-react';
 
 export default function MobileSessionsDashboard() {
     const [sessions, setSessions] = useState([]);
@@ -12,10 +12,49 @@ export default function MobileSessionsDashboard() {
     // Bypass Form Logic
     const [bypassForm, setBypassForm] = useState({ astrologerId: '', userId: '', sessionType: 'chat' });
     const [bypassing, setBypassing] = useState(false);
+    
+    // Lookup Data
+    const [astrologers, setAstrologers] = useState([]);
+    const [users, setUsers] = useState([]);
+
+    // Chat Log Viewer
+    const [selectedChatSession, setSelectedChatSession] = useState(null);
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatLoading, setChatLoading] = useState(false);
 
     useEffect(() => {
         fetchSessions();
+        fetchAstrologersAndUsers();
     }, []);
+
+    const fetchAstrologersAndUsers = async () => {
+        try {
+            const [astroRes, userRes] = await Promise.all([
+                API.get('/admin/astrologers'),
+                API.get('/admin/users')
+            ]);
+            if (astroRes.data?.success) setAstrologers(astroRes.data.data);
+            if (userRes.data?.success) setUsers(userRes.data.data);
+        } catch(error) {
+            console.error("Failed to fetch lookup data", error);
+        }
+    };
+
+    const openChatHistory = async (roomId) => {
+        if (!roomId) return toast.error("No valid chat room ID found");
+        setSelectedChatSession(roomId);
+        setChatLoading(true);
+        try {
+            const res = await API.get(`/chat/session/${roomId}/messages`);
+            if (res.data?.success) {
+                setChatMessages(res.data.messages || []);
+            }
+        } catch (error) {
+            toast.error("Failed to load chat history");
+        } finally {
+            setChatLoading(false);
+        }
+    };
 
     const fetchSessions = async () => {
         try {
@@ -90,11 +129,17 @@ export default function MobileSessionsDashboard() {
                  <form onSubmit={handleTriggerBypass} className="flex flex-col md:flex-row gap-4 items-end relative z-10">
                      <div className="flex-1 w-full">
                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Astrologer ID</label>
-                         <input required type="text" value={bypassForm.astrologerId} onChange={e=>setBypassForm({...bypassForm, astrologerId: e.target.value})} className="w-full bg-slate-950 border border-slate-700 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500/50" placeholder="Paste Astro Mongo ID" />
+                         <select required value={bypassForm.astrologerId} onChange={e=>setBypassForm({...bypassForm, astrologerId: e.target.value})} className="w-full bg-slate-950 border border-slate-700 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500/50">
+                             <option value="">Select Astrologer...</option>
+                             {astrologers.map(a => <option key={a._id} value={a._id}>{a.displayName || a.name}</option>)}
+                         </select>
                      </div>
                      <div className="flex-1 w-full">
                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">User ID to Prioritize</label>
-                         <input required type="text" value={bypassForm.userId} onChange={e=>setBypassForm({...bypassForm, userId: e.target.value})} className="w-full bg-slate-950 border border-slate-700 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500/50" placeholder="Paste User Mongo ID" />
+                         <select required value={bypassForm.userId} onChange={e=>setBypassForm({...bypassForm, userId: e.target.value})} className="w-full bg-slate-950 border border-slate-700 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500/50">
+                             <option value="">Select User...</option>
+                             {users.map(u => <option key={u._id} value={u._id}>{u.name} ({u.phoneNumber || 'No phone'})</option>)}
+                         </select>
                      </div>
                      <div className="w-full md:w-48">
                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Session Type</label>
@@ -158,7 +203,7 @@ export default function MobileSessionsDashboard() {
                                                 <PlayCircle size={14} /> View S3 AWS
                                             </a>
                                         ) : session.sessionType === 'chat' ? (
-                                            <button className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                                            <button onClick={() => openChatHistory(session.roomId)} className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
                                                 <MessageSquare size={14} /> Read Log
                                             </button>
                                         ) : (
@@ -176,6 +221,51 @@ export default function MobileSessionsDashboard() {
                     </table>
                 </div>
             </div>
+
+            {/* Chat History Modal */}
+            {selectedChatSession && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col h-[80vh]">
+                        <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50 rounded-t-2xl">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                Chat Transcript
+                            </h2>
+                            <button onClick={() => setSelectedChatSession(null)} className="text-slate-400 hover:text-white transition">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            {chatLoading ? (
+                                <div className="h-full flex items-center justify-center text-slate-500 gap-2">
+                                    <Loader2 className="animate-spin" /> Loading Transcript...
+                                </div>
+                            ) : chatMessages.length === 0 ? (
+                                <div className="h-full flex items-center justify-center text-slate-500">
+                                    No messages in this session.
+                                </div>
+                            ) : (
+                                chatMessages.map((msg, i) => {
+                                    const timeStr = msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                                    return (
+                                        <div key={i} className={`flex flex-col ${msg.senderModel === 'Astrologer' ? 'items-end' : 'items-start'}`}>
+                                            <div className={`text-[10px] text-slate-500 mb-1 flex items-center gap-2`}>
+                                                {msg.senderModel === 'Astrologer' ? (
+                                                    <><span className="text-[9px] text-slate-600 font-medium">{timeStr}</span> <span>{msg.senderModel}</span></>
+                                                ) : (
+                                                    <><span>{msg.senderModel}</span> <span className="text-[9px] text-slate-600 font-medium">{timeStr}</span></>
+                                                )}
+                                            </div>
+                                            <div className={`px-4 py-2 text-sm rounded-2xl max-w-[80%] ${msg.senderModel === 'Astrologer' ? 'bg-sky-500/20 text-sky-100 border border-sky-500/30 rounded-tr-sm' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-sm'}`}>
+                                                {msg.content}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

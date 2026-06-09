@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Phone, PhoneMissed, PhoneOff, User, MessageCircle, MoreVertical } from "lucide-react";
 import CosmicCard from "@/components/CosmicCard";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
+import { maskUserName } from "@/utils/maskUtils";
 
 export default function HistoryPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('recent');
     const [historyData, setHistoryData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -43,7 +46,10 @@ export default function HistoryPage() {
                             partner = session.userId;
                         }
 
-                        const name = partner.displayName || partner.name || "Unknown User";
+                        let name = partner.displayName || partner.name || "Unknown User";
+                        if (user?.role === 'astrologer') {
+                            name = maskUserName(name);
+                        }
                         
                         let type = "recent";
                         let status = session.status;
@@ -81,8 +87,10 @@ export default function HistoryPage() {
             }
         };
 
-        fetchHistory();
-    }, []);
+        if (user) {
+            fetchHistory();
+        }
+    }, [user]);
 
     const filteredData = historyData.filter(item => activeTab === 'missed' ? item.type === 'missed' : true);
     
@@ -166,7 +174,7 @@ export default function HistoryPage() {
                                                 onClick={(e) => {
                                                     if (item.isAstrologerSession) {
                                                         e.stopPropagation();
-                                                        router.push(`/astrologer?id=${item.partnerId}`);
+                                                        router.push(`/astrologer?id=${item.partnerDetails?.slug || item.partnerId}`);
                                                     }
                                                 }}
                                             >

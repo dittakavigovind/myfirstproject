@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ActivityStats from '../../../components/astrologer/ActivityStats';
 import DatePicker from 'react-datepicker';
 import CustomDateInput from '../../../components/common/CustomDateInput';
+import { maskUserName } from '../../../utils/maskUtils';
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -277,7 +278,7 @@ export default function AstrologerDashboard() {
                                     {activeSessions.map((session) => (
                                         <div key={session._id} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 flex justify-between items-center">
                                             <div>
-                                                <p className="font-bold">{session.user?.displayName || 'Client'}</p>
+                                                <p className="font-bold">{maskUserName(session.user?.displayName || session.user?.name || 'Client')}</p>
                                                 <p className="text-xs text-indigo-100">Started: {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                             </div>
                                             <button
@@ -392,7 +393,7 @@ export default function AstrologerDashboard() {
                             </div>
                             <div>
                                 <p className="text-sm text-slate-500">Incoming {incomingCall.type} Call</p>
-                                <p className="font-bold text-slate-800 text-lg">{incomingCall.callerName}</p>
+                                <p className="font-bold text-slate-800 text-lg">{maskUserName(incomingCall.callerName || 'Client')}</p>
                             </div>
                         </div>
 

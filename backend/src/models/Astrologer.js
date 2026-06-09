@@ -59,11 +59,30 @@ const astrologerSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    warningCount: {
+        type: Number,
+        default: 0,
+    },
+    violationDetails: {
+        phone: { type: Number, default: 0 },
+        email: { type: Number, default: 0 },
+        abusive: { type: Number, default: 0 }
+    },
     features: {
         chatEnabled: { type: Boolean, default: true },
         voiceEnabled: { type: Boolean, default: true },
         videoEnabled: { type: Boolean, default: true }
     },
+    isPinned: {
+        type: Boolean,
+        default: false,
+    },
+    pinOrder: {
+        type: Number,
+        default: 0,
+    },
+    pinStartTime: Date,
+    pinEndTime: Date,
     isTopChoice: {
         type: Boolean,
         default: false,

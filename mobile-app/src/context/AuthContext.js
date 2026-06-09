@@ -5,7 +5,7 @@ import { Preferences } from "@capacitor/preferences";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
 import { useRouter, usePathname } from "next/navigation";
-import api from "@/lib/api";
+import api, { setApiToken, clearApiToken } from "@/lib/api";
 
 const AuthContext = createContext();
 
@@ -32,6 +32,7 @@ export function AuthProvider({ children }) {
             const { value: token } = await Preferences.get({ key: "authToken" });
 
             if (token) {
+                setApiToken(token);
                 // Fetch user details from the backend
                 const response = await api.get("/auth/me");
                 setUser(response.data);
@@ -71,14 +72,25 @@ export function AuthProvider({ children }) {
                     sound: 'chat_alert', // Must match the wav file name without extension in res/raw
                     vibration: true
                 });
+
+                await PushNotifications.createChannel({
+                    id: 'astro_call_alerts_v1',
+                    name: 'Call Requests',
+                    description: 'Alerts for incoming call requests',
+                    importance: 5,
+                    visibility: 1,
+                    sound: 'call_alert', // Must match the wav file name without extension in res/raw
+                    vibration: true
+                });
             } catch (err) {
-                console.log('Failed to create notification channel, possibly iOS or not supported:', err);
+                console.log('Failed to create notification channels, possibly iOS or not supported:', err);
             }
 
             // Set up listeners just once
             PushNotifications.addListener('registration', async (token) => {
                 console.log('Mobile Hardware FCM Token: ' + token.value);
                 try {
+                    await Preferences.set({ key: "fcmToken", value: token.value });
                     await api.put('/users/fcm-token', { fcmToken: token.value });
                     console.log('Device securely registered to Astro Platform for Push Notifications.');
                 } catch (e) {
@@ -111,6 +123,7 @@ export function AuthProvider({ children }) {
     };
 
     const login = async (token, userData) => {
+        setApiToken(token);
         await Preferences.set({ key: "authToken", value: token });
         setUser(userData);
         registerPushNotifications();
@@ -127,11 +140,24 @@ export function AuthProvider({ children }) {
         try {
             if (user) {
                 await api.post("/chat/end-all-sessions");
+                
+                if (Capacitor.isNativePlatform()) {
+                    try {
+                        const { value: fcmToken } = await Preferences.get({ key: "fcmToken" });
+                        if (fcmToken) {
+                            await api.delete('/users/fcm-token', { data: { fcmToken } });
+                        }
+                    } catch (err) {
+                        console.error('Error removing FCM token on logout', err);
+                    }
+                }
             }
         } catch (e) {
             console.error("Error ending sessions on logout", e);
         }
+        clearApiToken();
         await Preferences.remove({ key: "authToken" });
+        await Preferences.remove({ key: "fcmToken" });
         setUser(null);
         router.push("/auth");
     };

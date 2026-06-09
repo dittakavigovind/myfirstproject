@@ -173,8 +173,9 @@ exports.getAstrologers = async (req, res) => {
         }
 
         let astrologers = await Astrologer.find(query)
-            .populate('userId', 'role missedSessions') // Populate role and missedSessions from User model
-            .select('userId displayName skills languages charges rating image experienceYears isOnline isChatOnline isVoiceOnline isVideoOnline isBusy bio isActive slug location createdAt commissionRate followersCount fakeFollowers gallery badgeText');
+            .sort({ isPinned: -1, pinOrder: 1 })
+            .populate('userId', 'name role missedSessions') // Populate name, role and missedSessions from User model
+            .select('userId displayName skills languages charges rating image experienceYears isOnline isChatOnline isVoiceOnline isVideoOnline isBusy bio isActive slug location createdAt commissionRate followersCount fakeFollowers warningCount violationDetails gallery badgeText isPinned pinOrder pinStartTime pinEndTime');
 
         // Filter out those where userId is null (User deleted) or role is NOT 'astrologer'
         astrologers = astrologers.filter(astro => astro.userId && astro.userId.role === 'astrologer');
@@ -209,15 +210,14 @@ exports.getAstrologerById = async (req, res) => {
 
         // Self-Healing: Generate Slug if missing
         if (!astrologer.slug) {
-            const baseSlug = astrologer.displayName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-            let newSlug = baseSlug;
-            let counter = 1;
+            const newSlug = astrologer.displayName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
             // Check for collision
-            while (await Astrologer.findOne({ slug: newSlug })) {
-                newSlug = `${baseSlug}-${counter}`;
-                counter++;
+            if (await Astrologer.findOne({ slug: newSlug })) {
+                // If it really collides during self-healing, we'll append a unique ID to avoid breaking the system, but this shouldn't happen moving forward.
+                astrologer.slug = `${newSlug}-${astrologer._id.toString().slice(-4)}`;
+            } else {
+                astrologer.slug = newSlug;
             }
-            astrologer.slug = newSlug;
             await astrologer.save();
         }
 
@@ -277,15 +277,26 @@ exports.updateCurrentAstrologer = async (req, res) => {
         let astrologer = await Astrologer.findOne({ userId: req.user.id });
 
         if (!astrologer) {
+            const newSlug = (name || "Astrologer").toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+            if (await Astrologer.findOne({ $or: [{ slug: newSlug }, { displayName: name || "Astrologer" }] })) {
+                return res.status(400).json({ message: 'Display Name is already taken. Please choose a different one.' });
+            }
             astrologer = new Astrologer({
                 userId: req.user.id,
                 displayName: name || "Astrologer",
-                slug: (name || "astrologer").toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now().toString().slice(-4)
+                slug: newSlug
             });
         }
 
         // Map Frontend fields to Backend Model fields
-        if (name) astrologer.displayName = name; // Sync display name
+        if (name && name !== astrologer.displayName) {
+            const newSlug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+            if (await Astrologer.findOne({ $or: [{ slug: newSlug }, { displayName: { $regex: new RegExp(`^${name}$`, 'i') } }], userId: { $ne: req.user.id } })) {
+                return res.status(400).json({ message: 'Display Name is already taken. Please choose a different one.' });
+            }
+            astrologer.displayName = name; // Sync display name
+            astrologer.slug = newSlug;
+        }
 
         if (expertise !== undefined) {
             astrologer.skills = typeof expertise === 'string' ? expertise.split(',').map(s => s.trim()) : (Array.isArray(expertise) ? expertise : []);
@@ -382,13 +393,11 @@ exports.createAstrologer = async (req, res) => {
         });
 
         // 2. Generate Unique Slug
-        const baseSlug = displayName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-        let slug = baseSlug;
-        let counter = 1;
+        const slug = displayName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
-        while (await Astrologer.findOne({ slug })) {
-            slug = `${baseSlug}-${counter}`;
-            counter++;
+        if (await Astrologer.findOne({ $or: [{ slug }, { displayName: { $regex: new RegExp(`^${displayName}$`, 'i') } }] })) {
+            await User.findByIdAndDelete(user._id); // Rollback User creation
+            return res.status(400).json({ message: 'Display Name is already taken or too similar to an existing one. Please choose a different one.' });
         }
 
         const chatC = parseFloat(charges?.chatPerMinute) || 0;
@@ -432,7 +441,7 @@ exports.createAstrologer = async (req, res) => {
 
     } catch (error) {
         console.error('Create Astrologer Error:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        res.status(500).json({ message: 'Server Error: ' + error.message, error: error.message });
     }
 };
 
@@ -450,7 +459,14 @@ exports.updateAstrologer = async (req, res) => {
         }
 
         // Partial Update
-        if (displayName) astrologer.displayName = displayName;
+        if (displayName && displayName !== astrologer.displayName) {
+            const newSlug = displayName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+            if (await Astrologer.findOne({ $or: [{ slug: newSlug }, { displayName: { $regex: new RegExp(`^${displayName}$`, 'i') } }], _id: { $ne: astrologer._id } })) {
+                return res.status(400).json({ message: 'Display Name is already taken or too similar to an existing one. Please choose a different one.' });
+            }
+            astrologer.displayName = displayName;
+            astrologer.slug = newSlug;
+        }
         if (bio) astrologer.bio = bio;
         if (skills) astrologer.skills = skills;
         if (languages) astrologer.languages = languages;
@@ -468,7 +484,28 @@ exports.updateAstrologer = async (req, res) => {
         }
         if (rating) astrologer.rating = rating;
         if (isOnline !== undefined) astrologer.isOnline = isOnline;
-        if (isActive !== undefined) astrologer.isActive = isActive;
+        if (isActive !== undefined) {
+            astrologer.isActive = isActive;
+            if (isActive === false) {
+                astrologer.isOnline = false;
+                astrologer.isChatOnline = false;
+                astrologer.isVoiceOnline = false;
+                astrologer.isVideoOnline = false;
+
+                const Session = require('../models/Session');
+                const now = new Date();
+                let openSession = await Session.findOne({
+                    astrologerId: astrologer._id,
+                    endTime: { $exists: false }
+                }).sort({ startTime: -1 });
+
+                if (openSession) {
+                    openSession.endTime = now;
+                    openSession.duration = Math.floor((now - openSession.startTime) / 1000);
+                    await openSession.save();
+                }
+            }
+        }
         if (gallery !== undefined) astrologer.gallery = gallery;
         if (location !== undefined) astrologer.location = location;
         if (badgeText !== undefined) astrologer.badgeText = badgeText;
@@ -482,12 +519,20 @@ exports.updateAstrologer = async (req, res) => {
         await astrologer.save();
 
         // Sync Prices to User Record
+        const userUpdatePayload = {};
         if (charges) {
-            await User.findByIdAndUpdate(astrologer.userId, {
-                chatPrice: parseFloat(charges.chatPerMinute) || 0,
-                callPrice: parseFloat(charges.callPerMinute) || 0,
-                videoPrice: parseFloat(charges.videoPerMinute) || 0
-            });
+            userUpdatePayload.chatPrice = parseFloat(charges.chatPerMinute) || 0;
+            userUpdatePayload.callPrice = parseFloat(charges.callPerMinute) || 0;
+            userUpdatePayload.videoPrice = parseFloat(charges.videoPerMinute) || 0;
+        }
+        if (isActive === false) {
+            userUpdatePayload.isOnline = false;
+            userUpdatePayload.isChatOnline = false;
+            userUpdatePayload.isVoiceOnline = false;
+            userUpdatePayload.isVideoOnline = false;
+        }
+        if (Object.keys(userUpdatePayload).length > 0) {
+            await User.findByIdAndUpdate(astrologer.userId, userUpdatePayload);
         }
 
         // Ping search engines for sitemap update
@@ -499,6 +544,30 @@ exports.updateAstrologer = async (req, res) => {
         res.json({ success: true, data: astrologer });
     } catch (error) {
         console.error('Update Astrologer Error:', error);
+        res.status(500).json({ message: 'Server Error: ' + error.message });
+    }
+};
+
+/**
+ * Check Display Name Uniqueness (Admin Only)
+ * GET /api/astro/check-display-name?name=...&excludeId=...
+ */
+exports.checkDisplayName = async (req, res) => {
+    try {
+        const { name, excludeId } = req.query;
+        if (!name) return res.status(400).json({ message: 'Name is required' });
+
+        const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        const query = { $or: [{ slug }, { displayName: { $regex: new RegExp(`^${name}$`, 'i') } }] };
+        if (excludeId) {
+            query._id = { $ne: excludeId };
+        }
+
+        // We use Astrologer.findOne but Astrologer is already required at the top
+        const existing = await Astrologer.findOne(query);
+        res.json({ success: true, isDuplicate: !!existing });
+    } catch (error) {
+        console.error('Check Display Name Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -1190,6 +1259,45 @@ exports.getAshtakavarga = async (req, res) => {
     } catch (error) {
         console.error('Ashtakavarga Error:', error);
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};
+
+/**
+ * Increment Warning Count for Astrologer
+ * POST /api/astro/me/warning
+ */
+exports.incrementWarning = async (req, res) => {
+    try {
+        const astrologerId = req.user.astrologerId || req.user._id;
+
+        // Try finding by user ref first (most reliable if req.user has the User ID)
+        let astrologer = await Astrologer.findOne({ userId: req.user._id });
+
+        // Fallback if req.user directly holds the astrologer ID
+        if (!astrologer) {
+            astrologer = await Astrologer.findById(astrologerId);
+        }
+
+        if (!astrologer) {
+            return res.status(404).json({ success: false, message: 'Astrologer not found' });
+        }
+
+        const { type } = req.body;
+
+        astrologer.warningCount = (astrologer.warningCount || 0) + 1;
+
+        if (!astrologer.violationDetails) {
+            astrologer.violationDetails = { phone: 0, email: 0 };
+        }
+        if (type === 'phone') astrologer.violationDetails.phone += 1;
+        if (type === 'email') astrologer.violationDetails.email += 1;
+
+        await astrologer.save();
+
+        res.json({ success: true, warningCount: astrologer.warningCount, violationDetails: astrologer.violationDetails });
+    } catch (error) {
+        console.error('Increment Warning Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 

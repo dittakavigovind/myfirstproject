@@ -152,7 +152,7 @@ export default function AstrologerProfileClient() {
     const handleShare = () => {
         if (!astrologer) return;
         const shareText = `Check out ${astrologer.displayName || astrologer.name} on Way2Astro!`;
-        const shareUrl = window.location.href;
+        const shareUrl = `${window.location.origin}/astrologer?id=${astrologer.slug || astrologer._id}`;
 
         // WhatsApp Direct share earlier its like that
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;

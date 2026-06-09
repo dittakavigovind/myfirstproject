@@ -161,14 +161,14 @@ exports.startPaidChat = async (req, res) => {
                         },
                         android: {
                             notification: {
-                                channelId: 'astro_chat_alerts_v3',
-                                sound: 'chat_alert' // This requires chat_alert.mp3 in res/raw on Android
+                                channelId: sessionType === 'audio' ? 'astro_call_alerts_v1' : 'astro_chat_alerts_v3',
+                                sound: sessionType === 'audio' ? 'call_alert' : 'chat_alert'
                             }
                         },
                         apns: {
                             payload: {
                                 aps: {
-                                    sound: 'chat_alert.wav'
+                                    sound: sessionType === 'audio' ? 'call_alert.wav' : 'chat_alert.wav'
                                 }
                             }
                         },
@@ -389,13 +389,18 @@ exports.endSessionApi = async (req, res) => {
             }
 
             if (io) {
-                io.to(roomId).emit('session_ended', {
+                const payload = {
+                    roomId,
                     reason,
                     endedBy: req.user.role,
                     showSessionEndedBy,
                     totalDuration: updatedSession.totalDuration,
                     totalDeducted: updatedSession.totalAmountDeducted
-                });
+                };
+                io.to(roomId).emit('session_ended', payload);
+                io.to(`astro_${updatedSession.astrologerId}`).emit('session_ended', payload);
+                io.to(`user_${updatedSession.userId}`).emit('session_ended', payload);
+
                 const sockets = await io.in(roomId).fetchSockets();
                 sockets.forEach(s => s.leave(roomId));
             }
@@ -460,12 +465,15 @@ exports.declineSession = async (req, res) => {
 
         // Notify user
         if (io) {
-            io.to(roomId).emit('session_ended', {
+            const payload = {
+                roomId,
                 reason: 'Astrologer declined the session',
                 endedBy: 'astrologer',
-                totalDuration: 0,
-                totalDeducted: 0
-            });
+                sessionType: session.sessionType
+            };
+            io.to(roomId).emit('session_ended', payload);
+            io.to(`user_${session.userId}`).emit('session_declined', payload);
+            io.to(`astro_${session.astrologerId}`).emit('session_declined', payload);
             const sockets = await io.in(roomId).fetchSockets();
             sockets.forEach(s => s.leave(roomId));
         }

@@ -78,6 +78,15 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    warningCount: {
+        type: Number,
+        default: 0,
+    },
+    violationDetails: {
+        phone: { type: Number, default: 0 },
+        email: { type: Number, default: 0 },
+        abusive: { type: Number, default: 0 }
+    },
     deviceInfo: {
         os: String, // e.g., Android, iOS, Windows, Mac
         deviceModel: String,

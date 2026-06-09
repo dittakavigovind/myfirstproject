@@ -11,9 +11,11 @@ router.post('/match', optionalProtect, astroController.getMatchMaking);
 router.post('/dosha', optionalProtect, astroController.getDoshaAnalysis);
 router.post('/yogini-dasha', optionalProtect, astroController.getYoginiDasha);
 router.post('/arudha-lagna', optionalProtect, astroController.getArudhaLagna);
+router.get('/check-display-name', protect, authorize('admin', 'manager'), astroController.checkDisplayName);
 router.get('/astrologers', astroController.getAstrologers);
 router.get('/me', protect, astroController.getCurrentAstrologer);
 router.put('/me', protect, astroController.updateCurrentAstrologer);
+router.post('/me/warning', protect, astroController.incrementWarning);
 router.get('/astrologers/:id', astroController.getAstrologerById);
 
 // Admin/Manager only

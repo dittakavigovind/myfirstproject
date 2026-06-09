@@ -13,6 +13,7 @@ import { Sparkles, ArrowDownCircle, ChevronUp, ChevronDown, User, MapPin, Calend
 import CosmicLoader from '@/components/CosmicLoader';
 import KundliChart from '@/components/KundliChart'; // Missing Import
 import AshtakavargaTable from '@/components/AshtakavargaTable'; // Missing Import
+import { maskUserName } from '@/utils/maskUtils';
 
 // Helper for consistent date formatting (dd-MMM-yyyy)
 const formatDate = (date) => {
@@ -652,7 +653,7 @@ export default function AstrologySessionPage() {
                             </div>
                             <div>
                                 <h1 className="text-lg font-black text-slate-900 leading-none">
-                                    {birthDetails.name || "Guest Session"}
+                                    {birthDetails.name ? (user?.role === 'astrologer' ? maskUserName(birthDetails.name) : birthDetails.name) : "Guest Session"}
                                 </h1>
                                 <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                                     <span className="flex items-center gap-1">

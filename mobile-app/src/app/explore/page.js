@@ -137,6 +137,25 @@ export default function Explore() {
             const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
             const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
 
+            const now = new Date();
+            const isCurrentlyPinned = (astro) => {
+                if (!astro.isPinned) return false;
+                if (astro.pinStartTime && astro.pinEndTime) {
+                    return new Date(astro.pinStartTime) <= now && new Date(astro.pinEndTime) >= now;
+                }
+                return true;
+            };
+
+            const aPinned = isCurrentlyPinned(a);
+            const bPinned = isCurrentlyPinned(b);
+
+            // Tier 0: Pinned
+            if (aPinned && !bPinned) return -1;
+            if (!aPinned && bPinned) return 1;
+            if (aPinned && bPinned) {
+                return (a.pinOrder || 0) - (b.pinOrder || 0);
+            }
+
             // Tier 1: Online
             if (isOnline(a) && !isOnline(b)) return -1;
             if (!isOnline(a) && isOnline(b)) return 1;

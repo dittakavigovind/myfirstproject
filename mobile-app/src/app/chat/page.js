@@ -6,6 +6,7 @@ import { MessageCircle, Search, Edit, User, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import CosmicLoader from "@/components/CosmicLoader";
+import { maskUserName } from "@/utils/maskUtils";
 
 export default function Chat() {
     const { user, loading: authLoading } = useAuth();
@@ -62,9 +63,13 @@ export default function Chat() {
     const getChatPartner = (session) => {
         const partner = user?.role === 'astrologer' ? session.userId : session.astrologerId;
         const p = partner || {};
+        let name = p.displayName || p.name || p.phone || p.mobileNumber || "Unknown User";
+        if (user?.role === 'astrologer') {
+            name = maskUserName(name);
+        }
         return {
             ...p,
-            name: p.displayName || p.name || p.phone || p.mobileNumber || "Unknown User",
+            name,
             profileImage: p.image || p.profileImage
         };
     };

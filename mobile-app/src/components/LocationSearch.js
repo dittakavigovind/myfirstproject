@@ -180,6 +180,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                             handleManualSearch();
                         }
                     }}
+                    onFocus={(e) => e.target.select()}
                     placeholder={placeholder}
                     className={`${inputClasses} min-w-0 font-medium`}
                 />

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
     Send, ArrowLeft, Clock, Wallet,
     MoreVertical, Info, AlertCircle, X,
-    Calendar, User, Shield, Sparkles,
+    Calendar, User, Shield, Sparkles, Grid,
     Check, CheckCheck, Paperclip, Star
 } from "lucide-react";
 import { io } from "socket.io-client";
@@ -14,6 +14,8 @@ import { useSocket } from "@/context/SocketContext";
 import api from "@/lib/api";
 import CosmicLoader from "@/components/CosmicLoader";
 import UserKundliModal from "./UserKundliModal";
+import AIInsightsPanel from "@/components/AIInsightsPanel";
+import { maskUserName, containsContactInfo, getContactViolationType, containsAbusiveLanguage } from "@/utils/maskUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Keyboard } from '@capacitor/keyboard';
@@ -55,6 +57,7 @@ export default function ChatRoomClient() {
     const [astrologer, setAstrologer] = useState(null);
     const [chatUser, setChatUser] = useState(null);
     const [showKundli, setShowKundli] = useState(false);
+    const [showAIInsights, setShowAIInsights] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showLeavePrompt, setShowLeavePrompt] = useState(false);
     const [showEndedPopup, setShowEndedPopup] = useState(false);
@@ -484,6 +487,44 @@ export default function ChatRoomClient() {
         if (!newMessage.trim() || !firebaseReady) return;
 
         const content = newMessage;
+
+        // Check recent messages combined to prevent "govind at" ... "gmail" circumvention
+        const myRecentMessages = messages
+            .filter(m => m.senderId === (user.astrologerId || user._id))
+            .slice(-3)
+            .map(m => m.content)
+            .join(' ');
+            
+        const combinedContent = myRecentMessages + ' ' + content;
+
+        const sendWarning = (type) => {
+            const endpoint = user.role === 'astrologer' ? '/astro/me/warning' : '/users/warning';
+            try {
+                api.post(endpoint, { type }).catch(e => console.error("Warning log error", e));
+            } catch (e) {
+                console.error("Failed to log warning", e);
+            }
+        };
+
+        if (containsAbusiveLanguage(content) || containsAbusiveLanguage(combinedContent)) {
+            toast.error("Please refrain from using abusive language on this platform.", {
+                icon: '⚠️',
+                duration: 4000
+            });
+            sendWarning('abusive');
+            return;
+        }
+
+        if (containsContactInfo(content) || containsContactInfo(combinedContent)) {
+            toast.error("Sharing contact details like phone numbers or emails is strictly prohibited.", {
+                icon: '🛡️',
+                duration: 4000
+            });
+            const violationType = getContactViolationType(content) || getContactViolationType(combinedContent) || 'unknown';
+            sendWarning(violationType);
+            return;
+        }
+
         setNewMessage("");
 
         try {
@@ -693,7 +734,9 @@ export default function ChatRoomClient() {
                         onClick={handlePartnerClick}
                     >
                         <h2 className="text-white font-bold text-xs leading-tight truncate">
-                            {partner?.displayName || partner?.name || partner?.phone || partner?.mobileNumber || (user?.role === 'astrologer' ? "Seeker" : "Astrologer Guide")}
+                            {user?.role === 'astrologer' 
+                                ? maskUserName(partner?.displayName || partner?.name || partner?.phone || partner?.mobileNumber || "Seeker")
+                                : (partner?.displayName || partner?.name || partner?.phone || partner?.mobileNumber || "Astrologer Guide")}
                         </h2>
                         <div className="flex items-center gap-1 mt-0.5">
                             <span className={`w-1 h-1 rounded-full ${sessionActive ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`} />
@@ -706,10 +749,14 @@ export default function ChatRoomClient() {
 
                 <div className="flex items-center gap-1.5 shrink-0">
                     {user?.role === 'astrologer' && chatUser && (
-                        <button onClick={() => setShowKundli(true)} className="text-electric-violet bg-electric-violet/10 p-1.5 rounded-lg border border-electric-violet/30 flex items-center gap-1 active:scale-95 transition-transform">
-                            <Sparkles size={12} />
-                            <span className="text-[8px] font-black uppercase">Kundali</span>
-                        </button>
+                        <>
+                            <button onClick={() => setShowAIInsights(true)} className="text-electric-violet bg-electric-violet/10 p-2 rounded-lg border border-electric-violet/30 flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+                                <Sparkles size={18} />
+                            </button>
+                            <button onClick={() => setShowKundli(true)} className="text-electric-violet bg-electric-violet/10 p-2 rounded-lg border border-electric-violet/30 flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+                                <Grid size={18} />
+                            </button>
+                        </>
                     )}
                     
                     <div className="flex flex-col items-end mr-1">
@@ -1000,6 +1047,21 @@ export default function ChatRoomClient() {
                 isOpen={showKundli} 
                 onClose={() => setShowKundli(false)} 
                 chatUser={chatUser} 
+            />
+
+            {/* AI Insights Modal */}
+            <AIInsightsPanel
+                isOpen={showAIInsights}
+                onClose={() => setShowAIInsights(false)}
+                userId={chatUser}
+                onTipSelect={(tip) => {
+                    setNewMessage(tip);
+                    setShowAIInsights(false);
+                    // optionally, focus the input if possible
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+                    }
+                }}
             />
 
             {/* Low Balance Recharge Modal */}

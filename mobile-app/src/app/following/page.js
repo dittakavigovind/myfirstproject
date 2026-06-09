@@ -119,7 +119,7 @@ export default function Following() {
                             key={astro._id || i}
                             delay={0.1 + (i * 0.05)}
                             className="px-4 py-3.5 transition-transform active:scale-[0.98] border-white/5 hover:border-white/10"
-                            onClick={() => router.push(`/astrologer?id=${astro._id}`)}
+                            onClick={() => router.push(`/astrologer?id=${astro.slug || astro._id}`)}
                         >
                             <div className="flex gap-3 relative">
                                 {/* Left Column: Avatar & Stars */}

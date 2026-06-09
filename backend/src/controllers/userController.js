@@ -24,6 +24,19 @@ exports.toggleStatus = async (req, res) => {
         let updates = {};
         const { status, isChatOnline, isVoiceOnline, isVideoOnline } = req.body;
 
+        if (currentUser.role === 'astrologer') {
+            const turningAnyOn = (status === true || status === 'true') ||
+                                 (isChatOnline === true || isChatOnline === 'true') ||
+                                 (isVoiceOnline === true || isVoiceOnline === 'true') ||
+                                 (isVideoOnline === true || isVideoOnline === 'true');
+            if (turningAnyOn) {
+                const astro = await Astrologer.findOne({ userId });
+                if (astro && astro.isActive === false) {
+                    return res.status(403).json({ success: false, message: 'Your account has been deactivated by Admin.' });
+                }
+            }
+        }
+
         // 1. Handle Master Status Change
         if (status !== undefined) {
             const turningOnline = status === true || status === 'true';
@@ -215,6 +228,26 @@ exports.saveFCMToken = async (req, res) => {
     }
 };
 
+exports.removeFCMToken = async (req, res) => {
+    try {
+        const { fcmToken } = req.body;
+        if (!fcmToken) return res.status(400).json({ success: false, message: 'Token is required' });
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (user.fcmTokens && user.fcmTokens.includes(fcmToken)) {
+            user.fcmTokens = user.fcmTokens.filter(t => t !== fcmToken);
+            await user.save();
+        }
+
+        res.status(200).json({ success: true, message: 'FCM Token removed successfully' });
+    } catch (error) {
+        console.error('Remove FCM Token Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 exports.toggleFollow = async (req, res) => {
     try {
         const { astrologerId } = req.params;
@@ -266,6 +299,33 @@ exports.getFollowing = async (req, res) => {
         res.status(200).json({ success: true, following: user.following });
     } catch (error) {
         console.error('Get Following Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+exports.incrementWarning = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const { type } = req.body;
+
+        user.warningCount = (user.warningCount || 0) + 1;
+        
+        if (!user.violationDetails) {
+            user.violationDetails = { phone: 0, email: 0, abusive: 0 };
+        }
+        if (type === 'phone') user.violationDetails.phone = (user.violationDetails.phone || 0) + 1;
+        if (type === 'email') user.violationDetails.email = (user.violationDetails.email || 0) + 1;
+        if (type === 'abusive') user.violationDetails.abusive = (user.violationDetails.abusive || 0) + 1;
+
+        await user.save();
+
+        res.json({ success: true, warningCount: user.warningCount, violationDetails: user.violationDetails });
+    } catch (error) {
+        console.error('Increment User Warning Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

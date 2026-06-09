@@ -1,0 +1,1 @@
+const mongoose=require('mongoose'); require('dotenv').config(); mongoose.connect(process.env.MONGO_URI).then(async ()=>{ const Review=require('./src/models/Review'); await Review.updateMany({ reviewerGender: null }, { $set: { reviewerGender: 'Female' } }); console.log('Updated null genders to Female'); process.exit(); })

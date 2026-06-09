@@ -5,8 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import api from "@/lib/api";
-import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Loader2, Sparkles, AlertCircle, UserRound } from "lucide-react";
+import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Loader2, Sparkles, AlertCircle, UserRound, Grid } from "lucide-react";
 import toast from "react-hot-toast";
+import { AudioToggle } from '@anuradev/capacitor-audio-toggle';
+import AIInsightsPanel from "@/components/AIInsightsPanel";
+import UserKundliModal from "../../chat/room/UserKundliModal";
+import { maskUserName } from "@/utils/maskUtils";
 
 let AgoraRTC;
 if (typeof window !== "undefined") {
@@ -31,7 +35,9 @@ export default function CallRoomClient() {
     const [isSpeakerOn, setIsSpeakerOn] = useState(true);
     const [connectionState, setConnectionState] = useState("Connecting...");
     const [callData, setCallData] = useState(null); // astrologer or user details
-    
+    const [showAIInsights, setShowAIInsights] = useState(false);
+    const [showKundli, setShowKundli] = useState(false);
+
     const clientRef = useRef(null);
     const localAudioTrackRef = useRef(null);
     const remoteAudioTrackRef = useRef(null);
@@ -39,6 +45,7 @@ export default function CallRoomClient() {
     const isReadOnlyRef = useRef(false);
 
     const formatTime = (seconds) => {
+        if (seconds < 0) return "00:00";
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = Math.floor(seconds % 60);
@@ -58,7 +65,7 @@ export default function CallRoomClient() {
     useEffect(() => {
         if (!user || !roomId) return;
         fetchSessionData();
-        
+
         return () => {
             cleanupCall();
         };
@@ -72,7 +79,7 @@ export default function CallRoomClient() {
 
                 if (data.session.status === 'active' && data.session.startTime) {
                     const start = new Date(data.session.startTime).getTime();
-                    const elapsed = Math.floor((Date.now() - start) / 1000);
+                    const elapsed = Math.max(0, Math.floor((Date.now() - start) / 1000));
                     setDuration(elapsed);
                     localStartTimeRef.current = Date.now() - (elapsed * 1000);
                     setSessionActive(true);
@@ -137,7 +144,7 @@ export default function CallRoomClient() {
                     setConnectionState("Reconnecting...");
                 }
             });
-            
+
             client.on("user-left", () => {
                 setRemoteUserJoined(false);
                 setConnectionState("User left");
@@ -155,7 +162,7 @@ export default function CallRoomClient() {
                 toast.error("Microphone not found or in use. You can hear but cannot speak.");
                 // We don't return here so the call can still connect and start the timer!
             }
-            
+
             if (client.remoteUsers && client.remoteUsers.length > 0) {
                 // If there are already users in the channel when we join
                 setConnectionState("Connected");
@@ -198,7 +205,7 @@ export default function CallRoomClient() {
             cleanupCall();
             let msg = data?.reason || "Call Terminated";
             if (data?.reason === 'low_balance') msg = "Call ended due to low balance.";
-            toast(msg, { icon: 'ℹ️' });
+            toast(msg, { icon: 'ℹ️', id: 'session_ended_toast' });
 
             setTimeout(() => {
                 if (user?.role === 'astrologer') {
@@ -258,7 +265,7 @@ export default function CallRoomClient() {
         if (sessionActive && !isReadOnly) {
             interval = setInterval(() => {
                 if (localStartTimeRef.current && !isReadOnlyRef.current) {
-                    const elapsed = Math.floor((Date.now() - localStartTimeRef.current) / 1000);
+                    const elapsed = Math.max(0, Math.floor((Date.now() - localStartTimeRef.current) / 1000));
                     setDuration(elapsed);
                 }
             }, 1000);
@@ -283,11 +290,22 @@ export default function CallRoomClient() {
         }
     };
 
-    const toggleSpeaker = () => {
-        // Agora Web SDK handles playback device primarily. 
-        // We'll visually toggle speaker, but on mobile PWA, volume is controlled by OS.
-        setIsSpeakerOn(!isSpeakerOn);
-        toast("Speaker " + (!isSpeakerOn ? "On" : "Off"));
+    const toggleSpeaker = async () => {
+        try {
+            if (isSpeakerOn) {
+                // switch to earpiece
+                await AudioToggle.setSpeakerOn({ speakerOn: false });
+                setIsSpeakerOn(false);
+            } else {
+                // switch to speaker
+                await AudioToggle.setSpeakerOn({ speakerOn: true });
+                setIsSpeakerOn(true);
+            }
+        } catch (e) {
+            console.error("Audio toggle failed:", e);
+            // Even if native plugin fails (e.g. on web), toggle the UI state
+            setIsSpeakerOn(!isSpeakerOn);
+        }
     };
 
     const endCall = async () => {
@@ -319,6 +337,29 @@ export default function CallRoomClient() {
 
     return (
         <div className="fixed inset-0 bg-slate-900 flex flex-col z-[100] text-white">
+            {/* Top Bar for Astrologer Tools */}
+            {user?.role === 'astrologer' && (
+                <div
+                    className="absolute left-0 right-0 w-full flex justify-center z-[999] pointer-events-none"
+                    style={{ top: 'calc(var(--safe-area-inset-top, 0px) + 0.75rem)' }}
+                >
+                    <div className="flex gap-2 pointer-events-auto -translate-x-6">
+                        <button
+                            onClick={() => setShowKundli(true)}
+                            className="bg-electric-violet/20 border border-electric-violet/30 text-electric-violet w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg active:scale-95 transition-transform"
+                        >
+                            <Grid size={18} />
+                        </button>
+                        <button
+                            onClick={() => setShowAIInsights(true)}
+                            className="bg-electric-violet/20 border border-electric-violet/30 text-electric-violet w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg active:scale-95 transition-transform"
+                        >
+                            <Sparkles size={18} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Header / Info */}
             <div className="flex-1 flex flex-col items-center justify-center pt-10">
                 <div className="w-32 h-32 rounded-full bg-slate-800 shadow-2xl flex items-center justify-center mb-6 relative overflow-hidden border-4 border-slate-700">
@@ -327,11 +368,13 @@ export default function CallRoomClient() {
                         <div className="absolute inset-0 border-4 border-emerald-500 rounded-full animate-pulse" />
                     )}
                 </div>
-                
-                <h2 className="text-3xl font-bold mb-2">
-                    {user?.role === 'astrologer' ? 'User' : 'Astrologer'}
+
+                <h2 className="text-3xl font-bold mb-2 text-center px-4">
+                    {user?.role === 'astrologer'
+                        ? maskUserName(callData?.userId?.name || 'User')
+                        : (callData?.astrologerId?.displayName || 'Astrologer')}
                 </h2>
-                
+
                 <p className={`text-lg mb-8 ${sessionActive ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
                     {sessionActive ? formatTime(duration) : connectionState}
                 </p>
@@ -346,37 +389,28 @@ export default function CallRoomClient() {
 
             {/* Controls (WhatsApp Style) */}
             <div className="bg-slate-950 pb-safe pt-6 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-                <div className="max-w-md mx-auto px-8 pb-10">
+                <div className="max-w-md mx-auto px-12 pb-10">
                     <div className="flex items-center justify-between">
-                        
-                        <button 
+
+                        <button
                             onClick={toggleSpeaker}
                             disabled={isReadOnly}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isSpeakerOn ? 'bg-slate-800 text-white' : 'bg-slate-800/50 text-slate-400'}`}
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isSpeakerOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-800/50 text-slate-400'}`}
                         >
                             {isSpeakerOn ? <Volume2 size={24} /> : <VolumeX size={24} />}
                         </button>
-                        
-                        <button 
+
+                        <button
                             onClick={isReadOnly ? handleLeaveRoom : endCall}
                             className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${isReadOnly ? 'bg-slate-700 hover:bg-slate-600' : 'bg-rose-500 hover:bg-rose-600'}`}
                         >
                             <PhoneOff size={32} className="text-white" />
                         </button>
 
-                        {/* Force Play Audio Button (Debug) */}
                         <button
-                            onClick={forcePlayRemoteAudio}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all bg-slate-800 text-slate-300 hover:bg-slate-700`}
-                            title="Force Play Remote Audio"
-                        >
-                            <Volume2 size={24} />
-                        </button>
-
-                        <button 
                             onClick={toggleMute}
                             disabled={isReadOnly}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${!isMuted ? 'bg-slate-800 text-white' : 'bg-rose-500/20 text-rose-500'}`}
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${!isMuted ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-500/20 text-rose-500'}`}
                         >
                             {!isMuted ? <Mic size={24} /> : <MicOff size={24} />}
                         </button>
@@ -384,6 +418,20 @@ export default function CallRoomClient() {
                     </div>
                 </div>
             </div>
+
+            {/* AI Insights Modal */}
+            <AIInsightsPanel
+                isOpen={showAIInsights}
+                onClose={() => setShowAIInsights(false)}
+                userId={callData?.userId}
+            />
+            {user?.role === 'astrologer' && callData && (
+                <UserKundliModal
+                    isOpen={showKundli}
+                    onClose={() => setShowKundli(false)}
+                    chatUser={callData?.userId}
+                />
+            )}
         </div>
     );
 }

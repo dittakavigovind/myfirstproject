@@ -6,9 +6,12 @@ import { MessageCircle, Clock, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
+import { maskUserName } from "@/utils/maskUtils";
 
 export default function SessionBanner() {
     const { user } = useAuth();
+    const { setIncomingSession } = useSocket();
     const router = useRouter();
     const pathname = usePathname();
     const [activeSession, setActiveSession] = useState(null);
@@ -26,6 +29,27 @@ export default function SessionBanner() {
             setActiveSession(null);
         }
     }, [user, pathname]);
+
+    const { socket } = useSocket();
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleSessionEnded = (data) => {
+            setActiveSession((prev) => {
+                if (prev && prev.roomId === data.roomId) return null;
+                return prev;
+            });
+        };
+
+        socket.on("session_ended", handleSessionEnded);
+        socket.on("session_declined", handleSessionEnded);
+
+        return () => {
+            socket.off("session_ended", handleSessionEnded);
+            socket.off("session_declined", handleSessionEnded);
+        };
+    }, [socket]);
 
     // Internal timer for local UI update
     useEffect(() => {
@@ -68,7 +92,9 @@ export default function SessionBanner() {
 
     const isAstrologer = user?.role === 'astrologer';
     const partner = isAstrologer ? activeSession.userId : activeSession.astrologerId;
-    const partnerName = partner?.displayName || partner?.name || "Partner";
+    let partnerName = partner?.displayName || partner?.name || "Partner";
+    if (isAstrologer) partnerName = maskUserName(partnerName);
+    
     const partnerImage = partner?.image || partner?.profileImage || `https://ui-avatars.com/api/?name=${partnerName}&background=random`;
 
     return (
@@ -86,7 +112,19 @@ export default function SessionBanner() {
                             alert("Error: Room ID is missing from active session!");
                             return;
                         }
-                        router.push(`/chat/room?id=${activeSession.roomId}`);
+                        
+                        if (activeSession.status === 'initiated') {
+                            if (user?.role === 'astrologer') {
+                                setIncomingSession(activeSession);
+                                return;
+                            }
+                        }
+
+                        if (['audio', 'call', 'voice'].includes(activeSession.sessionType)) {
+                            router.push(`/call/room?id=${activeSession.roomId}`);
+                        } else {
+                            router.push(`/chat/room?id=${activeSession.roomId}`);
+                        }
                     }}
                 >
                     <div className="flex items-center gap-3">

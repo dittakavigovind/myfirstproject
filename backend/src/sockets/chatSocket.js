@@ -8,9 +8,11 @@ const Transaction = require('../models/Transaction');
 const Message = require('../models/Message');
 const QueueService = require('../services/QueueService');
 const CryptoUtil = require('../utils/cryptoUtil');
+const AiInsightService = require('../services/AiInsightService');
 
 const activeSessions = new Map(); // Store interval IDs by roomId
 const disconnectTimers = new Map(); // Store timeout IDs for auto-ending sessions
+const offlineTimers = new Map(); // Store timeout IDs for 10s grace period before marking offline
 module.exports = function (io) {
     // Middleware for Socket Authentication
     io.use(async (socket, next) => {
@@ -50,6 +52,13 @@ module.exports = function (io) {
                 clearTimeout(disconnectTimers.get(astrologerId));
                 disconnectTimers.delete(astrologerId);
                 console.log(`[Socket] Cleared disconnect timer for Astrologer ${astrologerId}`);
+            }
+
+            // Clear any pending offline timer
+            if (offlineTimers.has(astrologerId)) {
+                clearTimeout(offlineTimers.get(astrologerId));
+                offlineTimers.delete(astrologerId);
+                console.log(`[Socket] Cleared offline timer for Astrologer ${astrologerId}`);
             }
 
             // Restore availability from backup
@@ -292,30 +301,68 @@ module.exports = function (io) {
                 const activeAstroSockets = await io.in(`astro_${astrologerId}`).fetchSockets();
                 
                 if (activeAstroSockets.length === 0) {
-                    console.log(`[Socket] Astrologer ${astrologerId} disconnected. Going offline.`);
+                    console.log(`[Socket] Astrologer ${astrologerId} disconnected. Starting 10s offline timer.`);
                     
-                    // 1. Redis Status
-                    await QueueService.setAstrologerStatus(astrologerId, 'offline');
+                    const userId = socket.user.id;
+                    const offlineTimeoutId = setTimeout(async () => {
+                        console.log(`[Socket] 10s passed. Astrologer ${astrologerId} going offline.`);
+                        
+                        // 1. Redis Status
+                        await QueueService.setAstrologerStatus(astrologerId, 'offline');
+                        
+                        // 2. MongoDB Status (Real-time availability integrity)
+                        await Astrologer.findByIdAndUpdate(astrologerId, {
+                            isOnline: false,
+                            isChatOnline: false,
+                            isVoiceOnline: false,
+                            isVideoOnline: false,
+                            isBusy: false,
+                            'statusBackup.isChatOnline': false,
+                            'statusBackup.isVoiceOnline': false,
+                            'statusBackup.isVideoOnline': false
+                        });
+
+                        // Sync User model too
+                        await User.findByIdAndUpdate(userId, {
+                            isOnline: false,
+                            isChatOnline: false,
+                            isVoiceOnline: false,
+                            isVideoOnline: false
+                        });
+
+                        // 3. Global Notification
+                        io.emit('astrologer_status_changed', { astrologerId, status: 'offline' });
+
+                        // 5. Close AstrologerSession (Availability history)
+                        const now = new Date();
+                        const availabilitySession = await AstrologerSession.findOne({
+                            astrologerId,
+                            endTime: { $exists: false }
+                        }).sort({ startTime: -1 });
+
+                        if (availabilitySession) {
+                            availabilitySession.endTime = now;
+                            availabilitySession.duration = Math.floor((now - availabilitySession.startTime) / 1000);
+                            await availabilitySession.save();
+                        }
+
+                        // 6. Close AstrologerOnlineSession (Online duration tracking)
+                        const onlineSession = await AstrologerOnlineSession.findOne({
+                            astrologerId,
+                            status: 'active'
+                        }).sort({ createdAt: -1 });
+
+                        if (onlineSession) {
+                            onlineSession.logoutTime = now;
+                            onlineSession.status = 'completed';
+                            onlineSession.totalOnlineMinutes = Math.floor((now - onlineSession.loginTime) / 60000);
+                            await onlineSession.save();
+                        }
+
+                        offlineTimers.delete(astrologerId);
+                    }, 10000);
                     
-                    // 2. MongoDB Status (Real-time availability integrity)
-                    await Astrologer.findByIdAndUpdate(astrologerId, {
-                        isOnline: false,
-                        isChatOnline: false,
-                        isVoiceOnline: false,
-                        isVideoOnline: false,
-                        isBusy: false
-                    });
-
-                    // Sync User model too
-                    await User.findByIdAndUpdate(socket.user.id, {
-                        isOnline: false,
-                        isChatOnline: false,
-                        isVoiceOnline: false,
-                        isVideoOnline: false
-                    });
-
-                    // 3. Global Notification
-                    io.emit('astrologer_status_changed', { astrologerId, status: 'offline' });
+                    offlineTimers.set(astrologerId, offlineTimeoutId);
 
                     // 4. Force end active BILLED sessions (Chat/Call)
                     const activeBilledSessions = await Session.find({ 
@@ -338,32 +385,6 @@ module.exports = function (io) {
                     }, 30000);
                     
                     disconnectTimers.set(astrologerId, timeoutId);
-
-                    // 5. Close AstrologerSession (Availability history)
-                    const now = new Date();
-                    const availabilitySession = await AstrologerSession.findOne({
-                        astrologerId,
-                        endTime: { $exists: false }
-                    }).sort({ startTime: -1 });
-
-                    if (availabilitySession) {
-                        availabilitySession.endTime = now;
-                        availabilitySession.duration = Math.floor((now - availabilitySession.startTime) / 1000);
-                        await availabilitySession.save();
-                    }
-
-                    // 6. Close AstrologerOnlineSession (Online duration tracking)
-                    const onlineSession = await AstrologerOnlineSession.findOne({
-                        astrologerId,
-                        status: 'active'
-                    }).sort({ createdAt: -1 });
-
-                    if (onlineSession) {
-                        onlineSession.logoutTime = now;
-                        onlineSession.status = 'completed';
-                        onlineSession.totalOnlineMinutes = Math.floor((now - onlineSession.loginTime) / 60000);
-                        await onlineSession.save();
-                    }
                 }
             }
 
@@ -571,6 +592,11 @@ module.exports = function (io) {
                     showSessionEndedBy,
                     totalDuration: session.totalDuration,
                     totalDeducted: session.totalAmountDeducted
+                });
+
+                // Generate AI Insights (asynchronous, don't await so we don't block socket termination)
+                AiInsightService.generateSessionSummary(session._id).catch(err => {
+                    console.error("AI Insight Generation Error:", err);
                 });
 
                 // Make all sockets leave the room

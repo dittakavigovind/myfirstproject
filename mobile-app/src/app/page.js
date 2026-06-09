@@ -157,6 +157,25 @@ export default function Home() {
           const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
           const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
 
+          const now = new Date();
+          const isCurrentlyPinned = (astro) => {
+              if (!astro.isPinned) return false;
+              if (astro.pinStartTime && astro.pinEndTime) {
+                  return new Date(astro.pinStartTime) <= now && new Date(astro.pinEndTime) >= now;
+              }
+              return true;
+          };
+
+          const aPinned = isCurrentlyPinned(a);
+          const bPinned = isCurrentlyPinned(b);
+
+          // Tier 0: Pinned
+          if (aPinned && !bPinned) return -1;
+          if (!aPinned && bPinned) return 1;
+          if (aPinned && bPinned) {
+              return (a.pinOrder || 0) - (b.pinOrder || 0);
+          }
+
           // Tier 1: Online
           if (isOnline(a) && !isOnline(b)) return -1;
           if (!isOnline(a) && isOnline(b)) return 1;
@@ -284,7 +303,7 @@ export default function Home() {
               {sortedAstrologers.slice(0, 12).map((astro) => (
                 <div 
                   key={astro._id} 
-                  onClick={() => router.push(`/astrologer?id=${astro._id}`)}
+                  onClick={() => router.push(`/astrologer?id=${astro.slug || astro._id}`)}
                   className="flex-shrink-0 w-28 glass-panel rounded-2xl p-3 flex flex-col items-center gap-2 relative active:scale-95 transition-all cursor-pointer border-white/5 bg-gradient-to-b from-white/5 to-transparent"
                 >
                   <div className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-cosmic-indigo shadow-lg ${

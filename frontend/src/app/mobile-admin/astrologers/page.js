@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { Search, Loader2, Save, X, Edit, Percent, Heart, PhoneOff } from 'lucide-react';
+import { Search, Loader2, Save, X, Edit, Percent, Heart, PhoneOff, Pin } from 'lucide-react';
 
 export default function MobileAstroDashboard() {
     const [astros, setAstros] = useState([]);
@@ -138,6 +138,11 @@ export default function MobileAstroDashboard() {
                                                     {astro.displayName || astro.name}
                                                 </button>
                                                 <div className="flex items-center gap-2 mt-1">
+                                                    {astro.isPinned && (
+                                                        <div className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-md border border-amber-500/30 font-bold flex items-center gap-1">
+                                                            <Pin size={10} /> Pinned (Pri: {astro.pinOrder || 0})
+                                                        </div>
+                                                    )}
                                                     <div className="text-xs text-rose-400 font-semibold flex items-center gap-1">
                                                         <Heart size={12} className="fill-rose-400" /> {(astro.followersCount || 0) + (astro.fakeFollowers || 0)}
                                                     </div>
@@ -210,6 +215,7 @@ export default function MobileAstroDashboard() {
                         </div>
 
                         <div className="space-y-4 overflow-y-auto pr-2 -mr-2 flex-1 styled-scrollbar">
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-300 mb-1.5">Platform Cut Override (%)</label>
                                 <div className="relative">
@@ -335,6 +341,7 @@ function AstroStatsModal({ astro, onClose }) {
     const [toDate, setToDate] = useState("");
     const [endedByFilter, setEndedByFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
+    const [searchQuery, setSearchQuery] = useState("");
     const [newReview, setNewReview] = useState({ reviewerName: '', rating: 5, comment: '', reviewerGender: 'Female' });
     const [addingReview, setAddingReview] = useState(false);
 
@@ -483,6 +490,12 @@ function AstroStatsModal({ astro, onClose }) {
             if (s.endedBy && s.endedBy !== endedByFilter) return false;
         }
         if (typeFilter !== "all" && (s.sessionType || 'chat') !== typeFilter) return false;
+        
+        if (searchQuery) {
+            const userName = s.userId?.name || s.userId?.displayName || 'Unknown User';
+            if (!userName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        }
+
         return true;
     });
 
@@ -520,20 +533,34 @@ function AstroStatsModal({ astro, onClose }) {
         return new Date(dateString).toLocaleDateString('en-GB', options);
     };
 
+    const formatTime = (dateString) => {
+        if (!dateString) return '-';
+        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        return new Date(dateString).toLocaleTimeString('en-IN', options);
+    };
+
     const handleExport = () => {
-        const headers = ["Date", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share", "Total Deducted"];
-        const rows = filteredSessions.map(s => [
-            formatDate(s.createdAt),
-            s.userId?.name || 'Unknown',
-            s.sessionType || 'chat',
-            s.status,
-            s.endedBy || 'system',
-            s.astrologerEndReason ? `"${s.astrologerEndReason}"` : '',
-            s.totalDuration || 0,
-            s.pricePerMinute || 0,
-            s.astrologerShare || 0,
-            s.totalAmountDeducted || 0
-        ]);
+        const headers = ["Date", "Start Time", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share %", "Astro Share", "Total Deducted"];
+        const rows = filteredSessions.map(s => {
+            const sharePercentage = s.totalAmountDeducted > 0 
+                ? ((s.astrologerShare / s.totalAmountDeducted) * 100).toFixed(0) + '%' 
+                : '0%';
+            
+            return [
+                formatDate(s.createdAt),
+                formatTime(s.startTime || s.createdAt),
+                s.userId?.name || 'Unknown',
+                s.sessionType || 'chat',
+                s.status,
+                s.endedBy || 'system',
+                s.astrologerEndReason ? `"${s.astrologerEndReason}"` : '',
+                s.totalDuration || 0,
+                s.pricePerMinute || 0,
+                sharePercentage,
+                s.astrologerShare || 0,
+                s.totalAmountDeducted || 0
+            ];
+        });
 
         // Add Summary Stats at the bottom
         rows.push([]);
@@ -582,7 +609,12 @@ function AstroStatsModal({ astro, onClose }) {
                 </button>
 
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-2xl font-bold text-white mb-2">{astro.displayName || astro.name}</h3>
+                    <div className="flex items-baseline gap-4 mb-2">
+                        <h3 className="text-2xl font-bold text-white">{astro.displayName || astro.name}</h3>
+                        {activeTab === 'sessions' && (
+                            <p className="text-slate-400 text-sm">Showing session data for the last 3 months.</p>
+                        )}
+                    </div>
                     <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
                         <button
                             onClick={() => setActiveTab('sessions')}
@@ -601,8 +633,7 @@ function AstroStatsModal({ astro, onClose }) {
 
                 {activeTab === 'sessions' && (
                     <>
-                        <div className="flex justify-between items-center mb-6">
-                            <p className="text-slate-400 text-sm">Showing session data for the last 3 months.</p>
+                        <div className="flex justify-end items-center mb-6">
                             <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-lg border border-slate-700">
                                 <label className="text-xs font-bold text-slate-400 uppercase">From:</label>
                                 <input
@@ -640,8 +671,16 @@ function AstroStatsModal({ astro, onClose }) {
                                     <option value="astrologer">Astrologer</option>
                                     <option value="system">System</option>
                                 </select>
-                                {(fromDate || toDate || endedByFilter !== 'all' || typeFilter !== 'all') && (
-                                    <button onClick={() => { setFromDate(""); setToDate(""); setEndedByFilter("all"); setTypeFilter("all"); }} className="text-xs text-rose-400 hover:text-rose-300 px-2 font-bold">Clear</button>
+                                <label className="text-xs font-bold text-slate-400 uppercase ml-2">User:</label>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search..."
+                                    className="bg-slate-900 border border-slate-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:border-emerald-500 w-24"
+                                />
+                                {(fromDate || toDate || endedByFilter !== 'all' || typeFilter !== 'all' || searchQuery) && (
+                                    <button onClick={() => { setFromDate(""); setToDate(""); setEndedByFilter("all"); setTypeFilter("all"); setSearchQuery(""); }} className="text-xs text-rose-400 hover:text-rose-300 px-2 font-bold">Clear</button>
                                 )}
                                 <button onClick={handleExport} className="ml-4 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
                                     Export CSV

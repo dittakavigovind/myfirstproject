@@ -10,14 +10,15 @@ const poppins = Poppins({
 export const metadata = {
   title: "Way2Astro Mobile",
   description: "Your personalized cosmic guide.",
+};
+
+export const viewport = {
   themeColor: "#0b1026",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 import MobileLayout from "@/components/layout/MobileLayout";
@@ -25,6 +26,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { BirthDetailsProvider } from "@/context/BirthDetailsContext";
 import { SocketProvider } from "@/context/SocketContext";
 import SessionBanner from "@/components/SessionBanner";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }) {
   return (
@@ -40,6 +42,7 @@ export default function RootLayout({ children }) {
             </BirthDetailsProvider>
           </SocketProvider>
         </AuthProvider>
+        <Toaster position="top-center" reverseOrder={false} />
       </body>
     </html>
   );

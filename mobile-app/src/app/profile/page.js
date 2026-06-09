@@ -46,6 +46,20 @@ export default function Profile() {
         ? `Astro ${rawName}` 
         : rawName;
 
+    const centerToastConfig = {
+        position: 'top-center',
+        style: {
+            marginTop: '40vh',
+            padding: '16px',
+            borderRadius: '16px',
+            background: '#0b1026',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            textAlign: 'center'
+        }
+    };
+
     const handleToggle = async (field, value) => {
         setUpdatingStatus(true);
         try {
@@ -56,6 +70,11 @@ export default function Profile() {
             }
         } catch (error) {
             console.error("Status update failed:", error);
+            if (error.response?.status === 403) {
+                toast.error(error.response?.data?.message || "Failed to update status", centerToastConfig);
+            } else {
+                toast.error("Failed to update status");
+            }
         } finally {
             setUpdatingStatus(false);
         }
@@ -237,8 +256,14 @@ export default function Profile() {
                             </span>
                             <span className="text-[10px] font-black uppercase text-white tracking-widest mr-1">{user?.isOnline ? "Online" : "Offline"}</span>
                             <Toggle 
-                                enabled={user?.isOnline} 
-                                onChange={(val) => handleToggle('status', val)} 
+                                enabled={user?.isOnline && user?.isActive !== false} 
+                                onChange={(val) => {
+                                    if (user?.isActive === false) {
+                                        toast.error("Your account has been deactivated by Admin.", centerToastConfig);
+                                        return;
+                                    }
+                                    handleToggle('status', val);
+                                }} 
                                 loading={updatingStatus} 
                             />
                         </div>
@@ -312,7 +337,8 @@ export default function Profile() {
                                 const globalKey = mode.label === 'Chat' ? 'chatEnabled' : mode.label === 'Voice' ? 'voiceEnabled' : 'videoEnabled';
                                 const isDisabled = 
                                     (user?.globalFeatures && user.globalFeatures[globalKey] === false) || 
-                                    (user?.astroFeatures && user.astroFeatures[globalKey] === false);
+                                    (user?.astroFeatures && user.astroFeatures[globalKey] === false) ||
+                                    user?.isActive === false;
 
                                 return (
                                     <div key={mode.label} className={`bg-[#0b1026]/50 p-2 rounded-xl flex flex-col gap-1.5 border border-white/5 shadow-inner ${isDisabled ? 'opacity-40 grayscale' : ''}`}>
@@ -320,11 +346,14 @@ export default function Profile() {
                                             <div className={`p-1.5 rounded-lg ${mode.bg} ${mode.color}`}>
                                                 <mode.icon size={12} />
                                             </div>
-                                            <div onClick={isDisabled ? () => toast.error(`Admin has disabled the ${mode.label} feature.`) : undefined}>
+                                            <div onClick={isDisabled ? () => toast.error(user?.isActive === false ? "Your account has been deactivated." : `Admin has disabled the ${mode.label} feature.`, user?.isActive === false ? centerToastConfig : undefined) : undefined}>
                                                 <Toggle 
                                                     enabled={mode.enabled && !isDisabled} 
                                                     onChange={(val) => {
-                                                        if (isDisabled) return;
+                                                        if (isDisabled) {
+                                                            toast.error(user?.isActive === false ? "Your account has been deactivated." : `Admin has disabled the ${mode.label} feature.`, user?.isActive === false ? centerToastConfig : undefined);
+                                                            return;
+                                                        }
                                                         handleToggle(mode.field, val);
                                                     }} 
                                                     loading={updatingStatus} 
