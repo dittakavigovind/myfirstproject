@@ -135,15 +135,15 @@ export default function LoginPage() {
 
 
     const countryCodes = [
-        { code: '+91', iso: 'in', digits: 10 },
-        { code: '+1', iso: 'us', digits: 10 },
-        { code: '+1', iso: 'ca', digits: 10 },
-        { code: '+44', iso: 'gb', digits: 10 },
-        { code: '+81', iso: 'jp', digits: 10 },
-        { code: '+61', iso: 'au', digits: 9 },
-        { code: '+60', iso: 'my', digits: 9 },
-        { code: '+971', iso: 'ae', digits: 9 },
-        { code: '+65', iso: 'sg', digits: 8 },
+        { code: '+91', iso: 'in', minLength: 10, maxLength: 10 },
+        { code: '+1', iso: 'us', minLength: 10, maxLength: 10 },
+        { code: '+1', iso: 'ca', minLength: 10, maxLength: 10 },
+        { code: '+44', iso: 'gb', minLength: 10, maxLength: 10 },
+        { code: '+81', iso: 'jp', minLength: 10, maxLength: 10 },
+        { code: '+61', iso: 'au', minLength: 9, maxLength: 9 },
+        { code: '+60', iso: 'my', minLength: 9, maxLength: 10 },
+        { code: '+971', iso: 'ae', minLength: 9, maxLength: 9 },
+        { code: '+65', iso: 'sg', minLength: 8, maxLength: 8 },
     ];
     
     const currentCountry = countryCodes.find(c => c.iso === countryIso) || countryCodes[0];
@@ -157,13 +157,14 @@ export default function LoginPage() {
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
-        const requiredDigits = currentCountry.digits;
-
-        if (formData.phone.length !== requiredDigits) {
-            setError(`Please enter a valid ${requiredDigits}-digit mobile number`);
+        if (formData.phone.length < currentCountry.minLength || formData.phone.length > currentCountry.maxLength) {
+            const digitStr = currentCountry.minLength === currentCountry.maxLength 
+                ? currentCountry.minLength 
+                : `${currentCountry.minLength}-${currentCountry.maxLength}`;
+            setError(`Please enter a valid ${digitStr}-digit mobile number`);
+            setLoading(false);
             return;
-        }
-        setLoading(true);
+        }setLoading(true);
         setError('');
         const fullPhone = countryCode + formData.phone;
         const res = await sendOtp(fullPhone);
@@ -479,8 +480,7 @@ export default function LoginPage() {
                                                     value={formData.phone}
                                                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
                                                     onChange={(e) => {
-                                                        const digits = currentCountry.digits;
-                                                        setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, digits) });
+                                                        setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, currentCountry.maxLength) });
                                                     }}
                                                 />
                                             </div>
@@ -492,7 +492,7 @@ export default function LoginPage() {
                                         </div>
                                         <button
                                             type="submit"
-                                            disabled={loading || formData.phone.length !== currentCountry.digits}
+                                            disabled={loading || formData.phone.length < currentCountry.minLength || formData.phone.length > currentCountry.maxLength}
                                             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-2.5 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                         >
                                             {loading ? (

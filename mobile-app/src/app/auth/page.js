@@ -28,15 +28,15 @@ export default function AuthPage() {
     const { login } = useAuth();
 
     const countryCodes = [
-        { code: '+91', iso: 'in', digits: 10 },
-        { code: '+1', iso: 'us', digits: 10 },
-        { code: '+1', iso: 'ca', digits: 10 },
-        { code: '+44', iso: 'gb', digits: 10 },
-        { code: '+81', iso: 'jp', digits: 10 },
-        { code: '+61', iso: 'au', digits: 9 },
-        { code: '+60', iso: 'my', digits: 9 },
-        { code: '+971', iso: 'ae', digits: 9 },
-        { code: '+65', iso: 'sg', digits: 8 },
+        { code: '+91', iso: 'in', minLength: 10, maxLength: 10 },
+        { code: '+1', iso: 'us', minLength: 10, maxLength: 10 },
+        { code: '+1', iso: 'ca', minLength: 10, maxLength: 10 },
+        { code: '+44', iso: 'gb', minLength: 10, maxLength: 10 },
+        { code: '+81', iso: 'jp', minLength: 10, maxLength: 10 },
+        { code: '+61', iso: 'au', minLength: 9, maxLength: 9 },
+        { code: '+60', iso: 'my', minLength: 9, maxLength: 10 },
+        { code: '+971', iso: 'ae', minLength: 9, maxLength: 9 },
+        { code: '+65', iso: 'sg', minLength: 8, maxLength: 8 },
     ];
 
     const currentCountry = countryCodes.find(c => c.iso === countryIso) || countryCodes[0];
@@ -44,8 +44,11 @@ export default function AuthPage() {
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
-        if (phone.length < 10) {
-            setError("Please enter a valid 10-digit phone number");
+        if (phone.length < currentCountry.minLength || phone.length > currentCountry.maxLength) {
+            const digitStr = currentCountry.minLength === currentCountry.maxLength 
+                ? currentCountry.minLength 
+                : `${currentCountry.minLength}-${currentCountry.maxLength}`;
+            setError(`Please enter a valid ${digitStr}-digit mobile number`);
             return;
         }
 
@@ -184,8 +187,7 @@ export default function AuthPage() {
                                             type="tel"
                                             value={phone}
                                             onChange={(e) => {
-                                                const digits = currentCountry.digits;
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, digits);
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, currentCountry.maxLength);
                                                 setPhone(val);
                                             }}
                                             placeholder={`Enter mobile number`}
@@ -199,7 +201,7 @@ export default function AuthPage() {
 
                                 <button
                                     type="submit"
-                                    disabled={loading}
+                                    disabled={loading || phone.length < currentCountry.minLength || phone.length > currentCountry.maxLength}
                                     className="w-full py-4 rounded-xl bg-gradient-to-r from-electric-violet to-indigo-600 text-white font-bold tracking-wide shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_4px_25px_rgba(139,92,246,0.6)] transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {loading ? <Loader2 size={20} className="animate-spin" /> : (
