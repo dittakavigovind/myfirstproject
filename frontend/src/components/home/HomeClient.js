@@ -10,6 +10,7 @@ import CosmicLoader from '../CosmicLoader';
 import PageContentSection from '../common/PageContentSection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { resolveImageUrl } from '../../lib/urlHelper';
+import toast from 'react-hot-toast';
 
 // Specific icon imports for better performance
 import {
@@ -552,6 +553,8 @@ export default function HomeClient() {
 }
 
 function ServiceCard({ icon: Icon, title, desc, color, href, delay, badges }) {
+  const { user } = useAuth();
+
   const colors = {
     blue: 'group-hover:text-blue-600 group-hover:bg-blue-50',
     green: 'group-hover:text-emerald-600 group-hover:bg-emerald-50',
@@ -565,8 +568,23 @@ function ServiceCard({ icon: Icon, title, desc, color, href, delay, badges }) {
   const normalize = (p) => p?.replace(/^\/+|\/+$/g, '') || '';
   const badge = badges?.find(b => normalize(b.path) === normalize(href) && b.enabled);
 
+  const handleFeatureClick = () => {
+    if (!user && href && !href.startsWith('/login') && href !== '/' && href !== '/blog') {
+        toast('Login / Sign Up to get full access!', {
+            icon: '🔒',
+            duration: 4000,
+            style: {
+                borderRadius: '10px',
+                background: '#0b1c3d',
+                color: '#fff',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+            },
+        });
+    }
+  };
+
   return (
-    <Link href={href}>
+    <Link href={href} onClick={handleFeatureClick}>
       <motion.div
         whileHover={{ y: -5 }}
         className="group cursor-pointer relative"

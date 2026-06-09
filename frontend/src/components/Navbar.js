@@ -66,6 +66,22 @@ export default function Navbar() {
         setShowLogoutModal(false);
     };
 
+    const handleFeatureClick = (path) => {
+        // Exclude Home and Blog from the prompt, prompt for features
+        if (!user && path && !path.startsWith('/login') && path !== '/' && path !== '/blog') {
+            toast('Login / Sign Up to get full access!', {
+                icon: '🔒',
+                duration: 4000,
+                style: {
+                    borderRadius: '10px',
+                    background: '#0b1c3d',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                },
+            });
+        }
+    };
+
     return (
         <>
             <ConfirmationModal
@@ -259,6 +275,7 @@ export default function Navbar() {
                                                             <Link
                                                                 key={subItem.name}
                                                                 href={subItem.path}
+                                                                onClick={() => handleFeatureClick(subItem.path)}
                                                                 className="block px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-astro-navy hover:bg-astro-yellow/10 transition-colors border-b border-slate-50 last:border-0"
                                                             >
                                                                 {subItem.name}
@@ -269,6 +286,7 @@ export default function Navbar() {
                                             ) : (
                                                 <Link
                                                     href={item.path}
+                                                    onClick={() => handleFeatureClick(item.path)}
                                                     className={`text-[12px] font-bold uppercase tracking-wide transition-colors hover:text-white ${pathname === item.path ? 'text-astro-navy' : 'text-astro-navy'
                                                         }`}
                                                 >
@@ -356,7 +374,10 @@ export default function Navbar() {
                                     <Link
                                         key={item.name}
                                         href={item.path}
-                                        onClick={() => setIsMenuOpen(false)}
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            handleFeatureClick(item.path);
+                                        }}
                                         className="relative block px-4 py-3 rounded-lg text-sm font-semibold text-slate-700 hover:text-astro-navy hover:bg-astro-yellow/20 transition-colors"
                                     >
                                         {item.name}
