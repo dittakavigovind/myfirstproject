@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
-import { Phone, Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export default function AuthPage() {
     const [step, setStep] = useState(1);
@@ -95,7 +96,7 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col justify-center px-6 relative overflow-hidden bg-cosmic-indigo">
+        <div className="min-h-[100dvh] flex flex-col justify-center px-6 relative overflow-hidden bg-cosmic-indigo">
             {/* Ambient background glow */}
             <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-electric-violet/20 blur-[120px]" />
             <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-solar-gold/10 blur-[120px]" />
@@ -207,6 +208,19 @@ export default function AuthPage() {
                                         </>
                                     )}
                                 </button>
+
+                                <div className="mt-5 text-center px-4">
+                                    <p className="text-[11px] text-slate-400/80 leading-relaxed font-medium">
+                                        By continuing, you agree to our{" "}
+                                        <Link href="/terms" className="text-electric-violet/90 font-bold hover:underline transition-all">
+                                            Terms
+                                        </Link>{" "}
+                                        and{" "}
+                                        <Link href="/privacy" className="text-electric-violet/90 font-bold hover:underline transition-all">
+                                            Privacy Policy
+                                        </Link>.
+                                    </p>
+                                </div>
                             </motion.form>
                         ) : (
                             <motion.form
