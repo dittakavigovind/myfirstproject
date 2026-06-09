@@ -618,7 +618,7 @@ export default function AdminDashboard() {
                                 u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
                                 u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.deviceInfo?.location?.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
                                 (u.createdAt && (() => {
                                     const d = new Date(u.createdAt);
                                     return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
@@ -630,7 +630,7 @@ export default function AdminDashboard() {
                                 u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
                                 u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.deviceInfo?.location?.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
                                 (u.createdAt && (() => {
                                     const d = new Date(u.createdAt);
                                     return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
@@ -747,6 +747,8 @@ export default function AdminDashboard() {
                                 u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 u.phone?.includes(searchTerm) ||
+                                u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
                                 (u.createdAt && (() => {
                                     const d = new Date(u.createdAt);
                                     return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
