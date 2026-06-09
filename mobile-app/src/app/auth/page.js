@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
@@ -8,8 +8,19 @@ import { Phone, Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
 
 export default function AuthPage() {
     const [step, setStep] = useState(1);
-    const [countryCode, setCountryCode] = useState("+91");
+    const [countryIso, setCountryIso] = useState("in");
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowCountryDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
@@ -19,10 +30,17 @@ export default function AuthPage() {
     const countryCodes = [
         { code: '+91', iso: 'in', digits: 10 },
         { code: '+1', iso: 'us', digits: 10 },
+        { code: '+1', iso: 'ca', digits: 10 },
         { code: '+44', iso: 'gb', digits: 10 },
+        { code: '+81', iso: 'jp', digits: 10 },
+        { code: '+61', iso: 'au', digits: 9 },
+        { code: '+60', iso: 'my', digits: 9 },
         { code: '+971', iso: 'ae', digits: 9 },
         { code: '+65', iso: 'sg', digits: 8 },
     ];
+
+    const currentCountry = countryCodes.find(c => c.iso === countryIso) || countryCodes[0];
+    const countryCode = currentCountry.code;
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
@@ -118,7 +136,7 @@ export default function AuthPage() {
                                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-electric-violet z-20 pointer-events-none">
                                             <Phone className="w-4 h-4" />
                                         </div>
-                                        <div className="relative">
+                                        <div className="relative" ref={dropdownRef}>
                                             <button 
                                                 type="button"
                                                 onClick={() => setShowCountryDropdown(!showCountryDropdown)}
@@ -126,7 +144,7 @@ export default function AuthPage() {
                                             >
                                                 <div className="flex items-center gap-1.5">
                                                     <img 
-                                                        src={`https://flagcdn.com/w20/${countryCodes.find(c => c.code === countryCode)?.iso}.png`} 
+                                                        src={`https://flagcdn.com/w20/${currentCountry.iso}.png`} 
                                                         alt="flag" 
                                                         className="w-4 h-3 object-cover rounded-sm shadow-sm" 
                                                     />
@@ -137,31 +155,28 @@ export default function AuthPage() {
                                             
                                             <AnimatePresence>
                                                 {showCountryDropdown && (
-                                                    <>
-                                                        <div className="fixed inset-0 z-40" onClick={() => setShowCountryDropdown(false)}></div>
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: 5 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            exit={{ opacity: 0, y: 5 }}
-                                                            className="absolute top-full left-0 mt-1 w-[120px] bg-cosmic-indigo border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
-                                                        >
-                                                            {countryCodes.map(c => (
-                                                                <button
-                                                                    key={c.code}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setCountryCode(c.code);
-                                                                        setPhone("");
-                                                                        setShowCountryDropdown(false);
-                                                                    }}
-                                                                    className="w-full flex items-center gap-3 px-3 py-3 hover:bg-white/5 text-left transition-colors"
-                                                                >
-                                                                    <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
-                                                                    <span className="text-sm font-bold text-white">{c.code}</span>
-                                                                </button>
-                                                            ))}
-                                                        </motion.div>
-                                                    </>
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, y: 5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: 5 }}
+                                                        className="absolute top-full left-0 mt-1 w-[120px] max-h-[200px] overflow-y-auto bg-cosmic-indigo border border-white/10 rounded-xl shadow-2xl z-50 py-1"
+                                                    >
+                                                        {countryCodes.map(c => (
+                                                            <button
+                                                                key={`${c.iso}-${c.code}`}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setCountryIso(c.iso);
+                                                                    setPhone("");
+                                                                    setShowCountryDropdown(false);
+                                                                }}
+                                                                className="w-full flex items-center gap-3 px-3 py-3 hover:bg-white/5 text-left transition-colors"
+                                                            >
+                                                                <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                                                                <span className="text-sm font-bold text-white">{c.code}</span>
+                                                            </button>
+                                                        ))}
+                                                    </motion.div>
                                                 )}
                                             </AnimatePresence>
                                         </div>
@@ -169,7 +184,7 @@ export default function AuthPage() {
                                             type="tel"
                                             value={phone}
                                             onChange={(e) => {
-                                                const digits = countryCodes.find(c => c.code === countryCode)?.digits || 10;
+                                                const digits = currentCountry.digits;
                                                 const val = e.target.value.replace(/\D/g, '').slice(0, digits);
                                                 setPhone(val);
                                             }}

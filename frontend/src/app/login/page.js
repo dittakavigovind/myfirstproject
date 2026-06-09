@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
@@ -54,8 +54,19 @@ export default function LoginPage() {
         password: '',
         confirmPassword: ''
     });
-    const [countryCode, setCountryCode] = useState('+91');
+    const [countryIso, setCountryIso] = useState('in');
     const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowCountryDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
@@ -126,21 +137,27 @@ export default function LoginPage() {
     const countryCodes = [
         { code: '+91', iso: 'in', digits: 10 },
         { code: '+1', iso: 'us', digits: 10 },
+        { code: '+1', iso: 'ca', digits: 10 },
         { code: '+44', iso: 'gb', digits: 10 },
+        { code: '+81', iso: 'jp', digits: 10 },
+        { code: '+61', iso: 'au', digits: 9 },
+        { code: '+60', iso: 'my', digits: 9 },
         { code: '+971', iso: 'ae', digits: 9 },
         { code: '+65', iso: 'sg', digits: 8 },
     ];
+    
+    const currentCountry = countryCodes.find(c => c.iso === countryIso) || countryCodes[0];
+    const countryCode = currentCountry.code;
 
-    // Reset phone number when country code changes
+    // Reset phone number when country changes
     useEffect(() => {
         setFormData(prev => ({ ...prev, phone: '' }));
-    }, [countryCode]);
+    }, [countryIso]);
 
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
-        const currentCountry = countryCodes.find(c => c.code === countryCode);
-        const requiredDigits = currentCountry?.digits || 10;
+        const requiredDigits = currentCountry.digits;
 
         if (formData.phone.length !== requiredDigits) {
             setError(`Please enter a valid ${requiredDigits}-digit mobile number`);
@@ -412,7 +429,7 @@ export default function LoginPage() {
                                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-20 group-focus-within:text-green-600 transition-colors pointer-events-none">
                                                     <Smartphone className="w-4 h-4" />
                                                 </div>
-                                                <div className="relative">
+                                                <div className="relative" ref={dropdownRef}>
                                                     <button 
                                                         type="button"
                                                         onClick={() => setShowCountryDropdown(!showCountryDropdown)}
@@ -420,7 +437,7 @@ export default function LoginPage() {
                                                     >
                                                         <div className="flex items-center gap-1.5">
                                                             <img 
-                                                                src={`https://flagcdn.com/w20/${countryCodes.find(c => c.code === countryCode)?.iso}.png`} 
+                                                                src={`https://flagcdn.com/w20/${currentCountry.iso}.png`} 
                                                                 alt="flag" 
                                                                 className="w-4 h-3 object-cover rounded-sm shadow-sm" 
                                                             />
@@ -431,30 +448,27 @@ export default function LoginPage() {
                                                     
                                                     <AnimatePresence>
                                                         {showCountryDropdown && (
-                                                            <>
-                                                                <div className="fixed inset-0 z-40" onClick={() => setShowCountryDropdown(false)}></div>
-                                                                <motion.div 
-                                                                    initial={{ opacity: 0, y: 5 }}
-                                                                    animate={{ opacity: 1, y: 0 }}
-                                                                    exit={{ opacity: 0, y: 5 }}
-                                                                    className="absolute top-full left-0 mt-1 w-[120px] bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden py-1"
-                                                                >
-                                                                    {countryCodes.map(c => (
-                                                                        <button
-                                                                            key={c.code}
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setCountryCode(c.code);
-                                                                                setShowCountryDropdown(false);
-                                                                            }}
-                                                                            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-left transition-colors"
-                                                                        >
-                                                                            <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
-                                                                            <span className="text-sm font-bold text-slate-700">{c.code}</span>
-                                                                        </button>
-                                                                    ))}
-                                                                </motion.div>
-                                                            </>
+                                                            <motion.div 
+                                                                initial={{ opacity: 0, y: 5 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                exit={{ opacity: 0, y: 5 }}
+                                                                className="absolute top-full left-0 mt-1 w-[120px] max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1"
+                                                            >
+                                                                {countryCodes.map(c => (
+                                                                    <button
+                                                                        key={`${c.iso}-${c.code}`}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setCountryIso(c.iso);
+                                                                            setShowCountryDropdown(false);
+                                                                        }}
+                                                                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-left transition-colors"
+                                                                    >
+                                                                        <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                                                                        <span className="text-sm font-bold text-slate-700">{c.code}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </motion.div>
                                                         )}
                                                     </AnimatePresence>
                                                 </div>
@@ -465,8 +479,7 @@ export default function LoginPage() {
                                                     value={formData.phone}
                                                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2 px-4 focus:ring-2 focus:ring-green-500/10 focus:border-green-500 focus:outline-none transition-all placeholder:font-normal text-sm"
                                                     onChange={(e) => {
-                                                        const currentCountry = countryCodes.find(c => c.code === countryCode);
-                                                        const digits = currentCountry?.digits || 10;
+                                                        const digits = currentCountry.digits;
                                                         setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, digits) });
                                                     }}
                                                 />
@@ -479,7 +492,7 @@ export default function LoginPage() {
                                         </div>
                                         <button
                                             type="submit"
-                                            disabled={loading || formData.phone.length !== (countryCodes.find(c => c.code === countryCode)?.digits || 10)}
+                                            disabled={loading || formData.phone.length !== currentCountry.digits}
                                             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm font-bold py-2.5 rounded-xl shadow-lg shadow-green-500/20 transform transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
                                         >
                                             {loading ? (
