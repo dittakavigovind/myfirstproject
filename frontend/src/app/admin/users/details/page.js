@@ -317,7 +317,12 @@ function UserDetails() {
                                             <div>
                                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Login Location</p>
                                                 <p className="font-bold text-slate-700">
-                                                    {[userData.deviceInfo.location.city, userData.deviceInfo.location.region, userData.deviceInfo.location.country].filter(Boolean).join(', ') || (userData.deviceInfo.location.ip === '127.0.0.1' ? 'Local Network (Localhost)' : 'Unknown Location')}
+                                                    {(() => {
+                                                        const loc = userData.deviceInfo.location;
+                                                        if (loc.ip === '127.0.0.1') return 'Local Network (Localhost)';
+                                                        const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
+                                                        return [loc.city, loc.region, countryName].filter(Boolean).join(', ') || 'Unknown Location';
+                                                    })()}
                                                 </p>
                                                 {userData.deviceInfo.location.ip && (
                                                     <p className="text-xs text-slate-400 mt-1">IP: {userData.deviceInfo.location.ip}</p>

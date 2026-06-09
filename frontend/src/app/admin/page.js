@@ -661,7 +661,9 @@ export default function AdminDashboard() {
                                         {(() => {
                                             const loc = u.deviceInfo?.location;
                                             if (!loc) return <span className="text-slate-300">-</span>;
-                                            return [loc.city, loc.country].filter(Boolean).join(', ') || (loc.ip === '127.0.0.1' ? 'Local' : loc.ip) || '-';
+                                            if (loc.ip === '127.0.0.1') return 'Local';
+                                            const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
+                                            return [loc.city, countryName].filter(Boolean).join(', ') || loc.ip || '-';
                                         })()}
                                     </td>
                                     <td className="p-4 text-slate-400">
