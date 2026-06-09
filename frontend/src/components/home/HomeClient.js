@@ -11,6 +11,7 @@ import PageContentSection from '../common/PageContentSection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { resolveImageUrl } from '../../lib/urlHelper';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 // Specific icon imports for better performance
 import {
@@ -554,6 +555,7 @@ export default function HomeClient() {
 
 function ServiceCard({ icon: Icon, title, desc, color, href, delay, badges }) {
   const { user } = useAuth();
+  const router = useRouter();
 
   const colors = {
     blue: 'group-hover:text-blue-600 group-hover:bg-blue-50',
@@ -568,18 +570,10 @@ function ServiceCard({ icon: Icon, title, desc, color, href, delay, badges }) {
   const normalize = (p) => p?.replace(/^\/+|\/+$/g, '') || '';
   const badge = badges?.find(b => normalize(b.path) === normalize(href) && b.enabled);
 
-  const handleFeatureClick = () => {
+  const handleFeatureClick = (e) => {
     if (!user && href && !href.startsWith('/login') && href !== '/' && href !== '/blog') {
-        toast('Login / Sign Up to get full access!', {
-            icon: '🔒',
-            duration: 4000,
-            style: {
-                borderRadius: '10px',
-                background: '#0b1c3d',
-                color: '#fff',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-            },
-        });
+        e.preventDefault();
+        router.push(href + '?loginPrompt=true');
     }
   };
 

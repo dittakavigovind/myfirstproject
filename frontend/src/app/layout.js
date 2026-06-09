@@ -16,6 +16,7 @@ import { Toaster } from 'react-hot-toast';
 const ProfileSetupModal = dynamic(() => import('../components/ProfileSetupModal'), { ssr: false });
 const ScrollToTop = dynamic(() => import('../components/ScrollToTop'), { ssr: false });
 const PromotionalPopup = dynamic(() => import('../components/PromotionalPopup'), { ssr: false });
+const LoginPromptModal = dynamic(() => import('../components/LoginPromptModal'), { ssr: false });
 
 const poppins = Poppins({
     subsets: ['latin'],
@@ -181,6 +182,7 @@ export default async function RootLayout({ children }) {
                                     <ProfileSetupModal />
                                     <ScrollToTop />
                                     <PromotionalPopup />
+                                    <LoginPromptModal />
                                     
                                     {/* --- CUSTOM RAW SCRIPTS (Cloudflare, Meta Pixel, Google Tags etc) --- */}
                                     {customHeadScripts && (
