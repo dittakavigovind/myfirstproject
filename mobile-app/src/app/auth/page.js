@@ -134,26 +134,23 @@ export default function AuthPage() {
                                 className="space-y-5 mt-2"
                             >
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Mobile Number</label>
-                                    <div className="flex group relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-electric-violet z-20 pointer-events-none">
-                                            <Phone className="w-4 h-4" />
-                                        </div>
-                                        <div className="relative" ref={dropdownRef}>
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">WhatsApp Number</label>
+                                    <div className="flex group relative items-center">
+                                        <div className="relative flex-shrink-0" ref={dropdownRef}>
                                             <button 
                                                 type="button"
                                                 onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                                                className="flex items-center justify-between pl-9 pr-2 border border-r-0 border-white/10 rounded-l-xl bg-white/5 text-white font-bold text-sm focus:outline-none focus:border-electric-violet focus:ring-2 focus:ring-electric-violet/50 h-[50px] transition-all min-w-[85px] w-full"
+                                                className="flex items-center justify-between pl-4 pr-3 border border-r-0 border-white/10 rounded-l-xl bg-white/5 text-white font-bold text-sm focus:outline-none focus:border-electric-violet focus:ring-2 focus:ring-electric-violet/50 h-[52px] transition-all min-w-[95px]"
                                             >
-                                                <div className="flex items-center gap-1.5">
+                                                <div className="flex items-center gap-2">
                                                     <img 
                                                         src={`https://flagcdn.com/w20/${currentCountry.iso}.png`} 
                                                         alt="flag" 
-                                                        className="w-4 h-3 object-cover rounded-sm shadow-sm" 
+                                                        className="w-5 h-3.5 object-cover rounded-sm shadow-sm" 
                                                     />
                                                     <span className="text-left leading-none">{countryCode}</span>
                                                 </div>
-                                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-white/50 shrink-0 ml-1" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-white/50 shrink-0 ml-2" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                                             </button>
                                             
                                             <AnimatePresence>
@@ -190,8 +187,8 @@ export default function AuthPage() {
                                                 const val = e.target.value.replace(/\D/g, '').slice(0, currentCountry.maxLength);
                                                 setPhone(val);
                                             }}
-                                            placeholder={`Enter mobile number`}
-                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl py-3.5 pl-4 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium"
+                                            placeholder={`Enter WhatsApp number`}
+                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl px-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium h-[52px]"
                                             disabled={loading}
                                             inputMode="numeric"
                                         />
