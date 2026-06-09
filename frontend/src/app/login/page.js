@@ -123,11 +123,11 @@ export default function LoginPage() {
 
 
     const countryCodes = [
-        { code: '+91', country: 'India', digits: 10 },
-        { code: '+1', country: 'USA', digits: 10 },
-        { code: '+44', country: 'UK', digits: 10 },
-        { code: '+971', country: 'UAE', digits: 9 },
-        { code: '+65', country: 'Singapore', digits: 8 },
+        { code: '+91', country: 'India', digits: 10, flag: '🇮🇳' },
+        { code: '+1', country: 'USA', digits: 10, flag: '🇺🇸' },
+        { code: '+44', country: 'UK', digits: 10, flag: '🇬🇧' },
+        { code: '+971', country: 'UAE', digits: 9, flag: '🇦🇪' },
+        { code: '+65', country: 'Singapore', digits: 8, flag: '🇸🇬' },
     ];
 
     // Reset phone number when country code changes
@@ -417,7 +417,7 @@ export default function LoginPage() {
                                                     className="pl-9 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/10 h-[40px] transition-all cursor-pointer hover:bg-slate-100"
                                                 >
                                                     {countryCodes.map(c => (
-                                                        <option key={c.code} value={c.code}>{c.code}</option>
+                                                        <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
                                                     ))}
                                                 </select>
                                                 <input

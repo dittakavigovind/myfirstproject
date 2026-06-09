@@ -8,11 +8,20 @@ import { Phone, Lock, ArrowRight, Loader2, Sparkles } from "lucide-react";
 
 export default function AuthPage() {
     const [step, setStep] = useState(1);
+    const [countryCode, setCountryCode] = useState("+91");
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const { login } = useAuth();
+
+    const countryCodes = [
+        { code: '+91', country: 'India', digits: 10, flag: '🇮🇳' },
+        { code: '+1', country: 'USA', digits: 10, flag: '🇺🇸' },
+        { code: '+44', country: 'UK', digits: 10, flag: '🇬🇧' },
+        { code: '+971', country: 'UAE', digits: 9, flag: '🇦🇪' },
+        { code: '+65', country: 'Singapore', digits: 8, flag: '🇸🇬' },
+    ];
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
@@ -25,8 +34,7 @@ export default function AuthPage() {
         setError("");
 
         try {
-            // Ensure country code is present (assuming India for now)
-            const formattedPhone = phone.startsWith("+") ? phone : `+91${phone}`;
+            const formattedPhone = countryCode + phone;
             await api.post("/auth/send-whatsapp-otp", { mobile_number: formattedPhone });
             setStep(2);
         } catch (err) {
@@ -47,7 +55,7 @@ export default function AuthPage() {
         setError("");
 
         try {
-            const formattedPhone = phone.startsWith("+") ? phone : `+91${phone}`;
+            const formattedPhone = countryCode + phone;
             const response = await api.post("/auth/verify-whatsapp-otp", {
                 mobile_number: formattedPhone,
                 otp
@@ -105,21 +113,36 @@ export default function AuthPage() {
                             >
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Mobile Number</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <Phone size={18} className="text-electric-violet" />
+                                    <div className="flex group relative">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-electric-violet z-10">
+                                            <Phone className="w-4 h-4" />
+                                        </div>
+                                        <select
+                                            value={countryCode}
+                                            onChange={(e) => {
+                                                setCountryCode(e.target.value);
+                                                setPhone("");
+                                            }}
+                                            className="pl-9 pr-2 border border-r-0 border-white/10 rounded-l-xl bg-white/5 text-white font-bold text-sm focus:outline-none focus:border-electric-violet focus:ring-2 focus:ring-electric-violet/50 h-[50px] transition-all cursor-pointer appearance-none"
+                                        >
+                                            {countryCodes.map(c => (
+                                                <option key={c.code} value={c.code} className="bg-cosmic-indigo text-white">{c.flag} {c.code}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute left-[85px] top-1/2 -translate-y-1/2 text-white/50 pointer-events-none">
+                                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                                         </div>
                                         <input
                                             type="tel"
                                             value={phone}
                                             onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                const digits = countryCodes.find(c => c.code === countryCode)?.digits || 10;
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, digits);
                                                 setPhone(val);
                                             }}
-                                            placeholder="Enter 10-digit number"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium"
+                                            placeholder={`Enter mobile number`}
+                                            className="w-full bg-white/5 border border-white/10 rounded-r-xl py-3.5 pl-8 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-electric-violet/50 transition-all font-medium"
                                             disabled={loading}
-                                            maxLength={10}
                                             inputMode="numeric"
                                         />
                                     </div>
@@ -170,7 +193,7 @@ export default function AuthPage() {
                                             inputMode="numeric"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-slate-500 mt-2 text-center">OTP sent to {phone.startsWith('+') ? phone : `+91 ${phone}`}</p>
+                                    <p className="text-[10px] text-slate-500 mt-2 text-center">OTP sent to {countryCode} {phone}</p>
                                 </div>
 
                                 <button
