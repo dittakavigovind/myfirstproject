@@ -397,31 +397,7 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    {/* Login Method Tabs */}
-                    <div className="flex bg-slate-100 p-1 rounded-2xl mb-4">
-                        <button
-                            onClick={() => { setLoginMethod('mobile'); setError(''); }}
-                            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${loginMethod === 'mobile' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <Smartphone size={14} /> WhatsApp
-                        </button>
-                        <button
-                            onClick={() => { setLoginMethod('email'); setError(''); }}
-                            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${loginMethod === 'email' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <Mail size={14} /> Email
-                        </button>
-                    </div>
-
-                    <AnimatePresence mode="wait">
-                        {loginMethod === 'mobile' ? (
-                            <motion.div
-                                key="mobile-form"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
-                                transition={{ duration: 0.2 }}
-                            >
+                                <div>
                                 {step === 1 ? (
                                     <form onSubmit={handleSendOtp} className="space-y-4">
                                         <div className="space-y-1">
@@ -546,182 +522,7 @@ export default function LoginPage() {
                                         <OtpTimer onResend={handleSendOtp} />
                                     </form>
                                 )}
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="email-form"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.2 }}
-                                className="space-y-4"
-                            >
-                                <div className="text-center mb-4">
-                                    <h2 className="text-lg font-black text-slate-900">
-                                        {authMode === 'login' ? 'Sign In' : 'Create Account'}
-                                    </h2>
-                                    <p className="text-xs text-slate-500 font-medium">
-                                        {authMode === 'login' ? 'Welcome back to your cosmic journey' : 'Start your celestial path with us'}
-                                    </p>
                                 </div>
-
-                                {showEmailOtpStep ? (
-                                    <form onSubmit={handleEmailOtpVerify} className="space-y-4 pt-2">
-                                        <div className="text-center bg-indigo-50/50 rounded-xl p-3 border border-indigo-100 mb-4">
-                                            <p className="text-xs text-slate-600 font-medium">Verification Code sent to</p>
-                                            <p className="text-sm font-black text-slate-900 mb-1">{formData.email}</p>
-                                            <button type="button" onClick={() => setShowEmailOtpStep(false)} className="text-[10px] text-indigo-600 font-bold hover:text-indigo-800 transition-colors bg-white px-2 py-0.5 rounded-full border border-indigo-100 shadow-sm">
-                                                Change Email
-                                            </button>
-                                        </div>
-
-                                        <div className="flex justify-center mb-4">
-                                            <input
-                                                type="text"
-                                                required
-                                                maxLength="6"
-                                                placeholder="000000"
-                                                value={emailOtp}
-                                                autoFocus
-                                                className="w-full text-center text-3xl font-black tracking-[0.5em] px-4 py-3 border-b-2 border-slate-200 focus:border-indigo-600 focus:outline-none bg-transparent transition-all placeholder:text-slate-200"
-                                                onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={loading || emailOtp.length < 6}
-                                            className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-black py-3 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
-                                        >
-                                            {loading ? (
-                                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                            ) : (
-                                                <>Verify & Login <ArrowRight className="w-4 h-4" /></>
-                                            )}
-                                        </button>
-
-                                        <div className="text-center pt-2">
-                                            <button
-                                                type="button"
-                                                onClick={async () => {
-                                                    setResendLoading(true);
-                                                    const res = await resendVerification(formData.email);
-                                                    setResendLoading(false);
-                                                    if (res.success) {
-                                                        setSuccessMsg('A new verification code has been sent!');
-                                                    } else {
-                                                        setError(res.message);
-                                                    }
-                                                }}
-                                                disabled={resendLoading}
-                                                className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-wider"
-                                            >
-                                                {resendLoading ? 'Sending...' : 'Resend Code'}
-                                            </button>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    <>
-                                        <form onSubmit={handleEmailAuth} className="space-y-3">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
-                                                <div className="relative group">
-                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                        <Mail size={16} />
-                                                    </div>
-                                                    <input
-                                                        type="email"
-                                                        required
-                                                        placeholder="you@example.com"
-                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                        value={formData.email}
-                                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
-                                                <div className="relative group">
-                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                        <Lock size={16} />
-                                                    </div>
-                                                    <input
-                                                        type={showPassword ? "text" : "password"}
-                                                        required
-                                                        placeholder="Enter password"
-                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                        value={formData.password}
-                                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                                                    >
-                                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {authMode === 'signup' && (
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Password</label>
-                                                    <div className="relative group">
-                                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                                            <Lock size={16} />
-                                                        </div>
-                                                        <input
-                                                            type={showConfirmPassword ? "text" : "password"}
-                                                            required
-                                                            placeholder="Confirm password"
-                                                            className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-bold rounded-xl py-2 pl-10 pr-12 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal text-sm"
-                                                            value={formData.confirmPassword}
-                                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                                                        >
-                                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="py-2 px-1 text-center">
-                                                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-                                                    By continuing, you agree to our <Link href="/terms" className="text-indigo-600 font-bold hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-indigo-600 font-bold hover:underline">Privacy Policy</Link>.
-                                                </p>
-                                            </div>
-
-                                            <button
-                                                type="submit"
-                                                disabled={loading || !formData.email || !formData.password || (authMode === 'signup' && formData.password !== formData.confirmPassword)}
-                                                className="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-700 hover:to-violet-800 text-white text-sm font-bold py-2.5 rounded-xl shadow-lg shadow-indigo-500/20 transform transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:grayscale disabled:cursor-not-allowed"
-                                            >
-                                                {loading ? (
-                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                                ) : (
-                                                    <>{authMode === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight className="w-4 h-4" /></>
-                                                )}
-                                            </button>
-                                        </form>
-                                        <div className="text-center pt-1 pb-1">
-                                            <button
-                                                onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setError(''); setSuccessMsg(''); setShowEmailOtpStep(false); }}
-                                                className="text-xs font-bold text-indigo-600 hover:underline"
-                                            >
-                                                {authMode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
 
                 </motion.div>
             </div>
@@ -737,7 +538,7 @@ export default function LoginPage() {
                     >
                         <CosmicLoader
                             size="md"
-                            message={loginMethod === 'mobile' && step === 1 ? "Sending OTP..." : "Accessing Dashboard..."}
+                            message={step === 1 ? "Sending OTP..." : "Accessing Dashboard..."}
                             fullscreen={false}
                             transparent={true}
                         />
