@@ -52,10 +52,18 @@ export default function MobileUsersDashboard() {
     };
 
     const filteredUsers = users.filter(u => {
-        const matchesSearch = (u.name || '').toLowerCase().includes(search.toLowerCase()) || 
-            (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
+        const searchLower = search.toLowerCase();
+        const countryName = u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '';
+        
+        const matchesSearch = (u.name || '').toLowerCase().includes(searchLower) || 
+            (u.email || '').toLowerCase().includes(searchLower) ||
             (u.phone || '').includes(search) ||
-            (u.mobileNumber || '').includes(search);
+            (u.mobileNumber || '').includes(search) ||
+            (u.deviceInfo?.os || '').toLowerCase().includes(searchLower) ||
+            (u.deviceInfo?.deviceMake || '').toLowerCase().includes(searchLower) ||
+            (u.deviceInfo?.deviceModel || '').toLowerCase().includes(searchLower) ||
+            (u.deviceInfo?.location?.city || '').toLowerCase().includes(searchLower) ||
+            countryName.includes(searchLower);
         
         const userOs = u.deviceInfo?.os || 'Unknown';
         const matchesOs = osFilter === 'All' || userOs === osFilter;
@@ -136,7 +144,19 @@ export default function MobileUsersDashboard() {
                                             <div>
                                                 <div className="text-xs font-bold text-slate-300">{user.deviceInfo.os || 'Unknown OS'}</div>
                                                 <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[120px]">{user.deviceInfo.deviceMake ? `${user.deviceInfo.deviceMake} ` : ''}{user.deviceInfo.deviceModel || '-'}</div>
-                                                <div className="text-[10px] text-slate-600 mt-0.5">v{user.deviceInfo.appVersion || '-'}</div>
+                                                <div className="text-[10px] text-slate-600 mt-0.5 flex justify-between">
+                                                    <span>v{user.deviceInfo.appVersion || '-'}</span>
+                                                </div>
+                                                {user.deviceInfo.location && (
+                                                    <div className="text-[10px] text-emerald-500 mt-1 truncate max-w-[150px] font-medium" title={user.deviceInfo.location.ip}>
+                                                        📍 {(() => {
+                                                            const loc = user.deviceInfo.location;
+                                                            if (loc.ip === '127.0.0.1') return 'Local';
+                                                            const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
+                                                            return [loc.city, countryName].filter(Boolean).join(', ') || loc.ip;
+                                                        })()}
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <span className="text-xs text-slate-600">No Data</span>
