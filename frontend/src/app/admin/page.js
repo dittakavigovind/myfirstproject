@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import API from '../../lib/api';
@@ -141,6 +141,17 @@ export default function AdminDashboard() {
             console.error("Admin Access Error", error);
         }
     };
+
+    // Listen for editAstro query parameter to automatically open the astrologer edit modal
+    useEffect(() => {
+        const editId = searchParams.get('editAstro');
+        if (editId && astroList.length > 0 && !editingAstro) {
+            const astroToEdit = astroList.find(a => a._id === editId || a.userId?._id === editId);
+            if (astroToEdit) {
+                setEditingAstro(astroToEdit);
+            }
+        }
+    }, [searchParams, astroList]);
 
     if (loading || !user || !['admin', 'manager'].includes(user.role)) return <div className="p-10 text-center">Checking Privileges...</div>;
 
@@ -1113,6 +1124,8 @@ export default function AdminDashboard() {
                                 <h3 className="font-bold text-xl text-slate-800 mb-6 border-b border-slate-100 pb-4">{editingAstro ? 'Edit Astrologer Profile' : 'Add New Astrologer'}</h3>
                                 <AddAstrologerForm
                                     initialData={editingAstro}
+                                    allMembers={allMembers}
+                                    astroList={astroList}
                                     onSuccess={() => {
                                         setShowAstroForm(false);
                                         setEditingAstro(null);
@@ -1486,18 +1499,52 @@ const InteractionDetailModal = ({ isOpen, onClose, data, loading, title, filters
     );
 };
 
-function AddAstrologerForm({ onSuccess, initialData }) {
+function AddAstrologerForm({ onSuccess, initialData, allMembers = [], astroList = [] }) {
+    const [galleryModalOpen, setGalleryModalOpen] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', email: '', password: '',
-        displayName: '', bio: '', image: '', skills: '', languages: '', location: '', rating: '4.5', experienceYears: '5',
+        userId: '', phone: '',
+        displayName: '', bio: '', image: '', skills: '', languages: '', location: '', rating: '4.5', experienceYears: '5', gender: '',
         chatCharge: '15', callCharge: '15', videoCharge: '15', badgeText: ''
     });
+
+    const [countryIso, setCountryIso] = useState('in');
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowCountryDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const countryCodes = [
+        { code: '+91', iso: 'in', minLength: 10, maxLength: 10 },
+        { code: '+1', iso: 'us', minLength: 10, maxLength: 10 },
+        { code: '+1', iso: 'ca', minLength: 10, maxLength: 10 },
+        { code: '+44', iso: 'gb', minLength: 10, maxLength: 10 },
+        { code: '+81', iso: 'jp', minLength: 10, maxLength: 10 },
+        { code: '+61', iso: 'au', minLength: 9, maxLength: 9 },
+        { code: '+60', iso: 'my', minLength: 9, maxLength: 10 },
+        { code: '+971', iso: 'ae', minLength: 9, maxLength: 9 },
+        { code: '+65', iso: 'sg', minLength: 8, maxLength: 8 },
+    ];
+    
+    const currentCountry = countryCodes.find(c => c.iso === countryIso) || countryCodes[0];
+    const countryCode = currentCountry.code;
+
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, phone: '' }));
+    }, [countryIso]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
             setFormData({
-                name: '', email: '', password: '',
+                userId: initialData.userId?._id || initialData.userId || '',
                 displayName: initialData.displayName || '',
                 bio: initialData.bio || '',
                 image: initialData.image || '',
@@ -1506,6 +1553,7 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                 location: initialData.location || '',
                 rating: initialData.rating || '4.5',
                 experienceYears: initialData.experienceYears || '5',
+                gender: initialData.gender || '',
                 chatCharge: initialData.charges?.chatPerMinute || '15',
                 callCharge: initialData.charges?.callPerMinute || '15',
                 videoCharge: initialData.charges?.videoPerMinute || '15',
@@ -1571,9 +1619,8 @@ function AddAstrologerForm({ onSuccess, initialData }) {
         try {
             const payload = {
                 ...(!initialData && {
-                    name: formData.name,
-                    email: formData.email,
-                    password: formData.password,
+                    userId: formData.userId,
+                    phone: formData.phone ? countryCode + formData.phone : ''
                 }),
                 displayName: formData.displayName,
                 image: formData.image,
@@ -1583,6 +1630,7 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                 location: formData.location,
                 rating: parseFloat(formData.rating),
                 experienceYears: parseInt(formData.experienceYears),
+                gender: formData.gender,
                 charges: {
                     chatPerMinute: chatC,
                     callPerMinute: callC,
@@ -1635,66 +1683,170 @@ function AddAstrologerForm({ onSuccess, initialData }) {
         }
     };
 
+    // Find users with 'astrologer' role who don't already have a profile in astroList
+    const existingAstroUserIds = astroList.map(a => a.userId?._id || a.userId).filter(Boolean);
+    const eligibleUsers = allMembers.filter(u => u.role === 'astrologer' && !existingAstroUserIds.includes(u._id));
+    const selectedUser = eligibleUsers.find(u => u._id === formData.userId);
+
     return (
         <form onSubmit={handleSubmit} className="mx-auto">
             <Section title="Account Information">
                 {!initialData && (
-                    <>
-                        <InputGroup label="Full Name" name="name" value={formData.name} placeholder="John Doe" onChange={handleChange} required />
-                        <InputGroup label="Email ID" name="email" value={formData.email} type="email" placeholder="john@example.com" onChange={handleChange} required />
-                        <InputGroup label="Password" name="password" value={formData.password} type="password" placeholder="••••••••" onChange={handleChange} required />
-                    </>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Select User (Astrologer Role) <span className="text-red-500">*</span></label>
+                            <select 
+                                name="userId" 
+                                value={formData.userId} 
+                                onChange={handleChange} 
+                                required 
+                                className="w-full border border-slate-200 bg-slate-50/50 p-3 rounded-xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:border-blue-200 transition-all shadow-sm"
+                            >
+                                <option value="">-- Select User --</option>
+                                {eligibleUsers.map(u => (
+                                    <option key={u._id} value={u._id}>{u.name || u.username || 'Unnamed'} ({u.email || u.phone || u.mobileNumber})</option>
+                                ))}
+                            </select>
+                            {eligibleUsers.length === 0 && (
+                                <p className="text-xs text-amber-600 mt-2">No users found with 'Astrologer' role. Please promote a user first.</p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Registered Email / Mobile</label>
+                            {selectedUser ? (
+                                (selectedUser.phone || selectedUser.mobileNumber) ? (
+                                    <div className="w-full border border-slate-200 bg-slate-100 p-3 rounded-xl text-sm text-slate-500">
+                                        {selectedUser.phone || selectedUser.mobileNumber}
+                                        {selectedUser.email && ` (${selectedUser.email})`}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-2">
+                                        {selectedUser.email && (
+                                            <div className="w-full border border-slate-200 bg-slate-100 p-3 rounded-xl text-sm text-slate-500">
+                                                Email: {selectedUser.email}
+                                            </div>
+                                        )}
+                                        <div className="flex group relative w-full">
+                                            <div className="relative" ref={dropdownRef}>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                                                    className="flex items-center justify-between pl-3 pr-2 border border-r-0 border-slate-200 rounded-l-xl bg-slate-50 text-slate-700 font-bold text-sm focus:outline-none h-[46px] transition-all hover:bg-slate-100 min-w-[85px] w-full"
+                                                >
+                                                    <div className="flex items-center gap-1.5">
+                                                        <img 
+                                                            src={`https://flagcdn.com/w20/${currentCountry.iso}.png`} 
+                                                            alt="flag" 
+                                                            className="w-4 h-3 object-cover rounded-sm shadow-sm" 
+                                                        />
+                                                        <span className="text-left leading-none">{countryCode}</span>
+                                                    </div>
+                                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" className="text-slate-400 shrink-0 ml-1" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                                </button>
+                                                
+                                                {showCountryDropdown && (
+                                                    <div className="absolute top-full left-0 mt-1 w-[120px] max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1">
+                                                        {countryCodes.map(c => (
+                                                            <button
+                                                                key={`${c.iso}-${c.code}`}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setCountryIso(c.iso);
+                                                                    setShowCountryDropdown(false);
+                                                                }}
+                                                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-left transition-colors"
+                                                            >
+                                                                <img src={`https://flagcdn.com/w20/${c.iso}.png`} alt={c.iso} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                                                                <span className="text-sm font-bold text-slate-700">{c.code}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="tel"
+                                                required
+                                                placeholder="Enter mobile number"
+                                                value={formData.phone}
+                                                className="w-full bg-white border border-slate-200 text-slate-900 font-bold rounded-r-xl py-2 px-4 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-200 focus:outline-none transition-all placeholder:font-normal text-sm h-[46px]"
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, currentCountry.maxLength) });
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">This user signed up with Email. Please provide a WhatsApp number for Astrologer login.</p>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="w-full border border-slate-200 bg-slate-100 p-3 rounded-xl text-sm text-slate-500">
+                                    Select a user first
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 )}
-                {initialData && <div className="md:col-span-2 text-sm text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-slate-100">Account credentials (email/password) cannot be changed here. Contact support for resets.</div>}
+                {initialData && <div className="md:col-span-2 text-sm text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-slate-100">User account is linked.</div>}
             </Section>
 
             <Section title="Professional Profile">
-                <InputGroup 
-                    label={
-                        <span className="flex items-center gap-2">
-                            Display Name
-                            {initialData?.userId?.name && (
-                                <span className="text-xs font-normal text-slate-500 ml-1 lowercase">
-                                    (original name: <a href={`/admin/users/details?username=${initialData.userId._id}`} target="_blank" className="text-blue-500 hover:underline cursor-pointer">{initialData.userId.name}</a>)
-                                </span>
-                            )}
-                        </span>
-                    } 
-                    name="displayName" 
-                    value={formData.displayName} 
-                    placeholder="e.g. Astro Raj" 
-                    onChange={handleChange} 
-                    onBlur={handleDisplayNameBlur}
-                    required 
-                />
-                <InputGroup label="Experience (Years)" name="experienceYears" value={formData.experienceYears} type="number" placeholder="e.g. 5" onChange={handleChange} required />
+                {/* Row 1: Display Name */}
+                <div className="md:col-span-2">
+                    <InputGroup 
+                        label={
+                            <span className="inline-flex items-center gap-2">
+                                Display Name
+                                {initialData?.userId?.name && (
+                                    <span className="text-xs font-normal text-slate-500 ml-1 lowercase">
+                                        (original name: <a href={`/admin/users/details?username=${initialData.userId._id}`} target="_blank" className="text-blue-500 hover:underline cursor-pointer">{initialData.userId.name}</a>)
+                                    </span>
+                                )}
+                            </span>
+                        } 
+                        name="displayName" 
+                        value={formData.displayName} 
+                        placeholder="e.g. Astro Raj" 
+                        onChange={handleChange} 
+                        onBlur={handleDisplayNameBlur}
+                        required 
+                    />
+                </div>
 
-                <div className="md:col-span-2">
-                    <InputGroup label="Skills (Comma separate)" name="skills" value={formData.skills} placeholder="Vedic, Tarot, Numerology..." onChange={handleChange} required />
+                {/* Row 2: Gender, Experience, Rating */}
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="w-full">
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Gender <span className="text-red-500">*</span></label>
+                        <select required name="gender" value={formData.gender} onChange={handleChange} className="w-full border border-slate-200 bg-slate-50/50 p-3 rounded-xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:border-blue-200 transition-all shadow-sm">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <InputGroup label="Experience (Years)" name="experienceYears" value={formData.experienceYears} type="number" placeholder="e.g. 5" onChange={handleChange} required />
+                    <InputGroup label="Rating (0-5)" name="rating" value={formData.rating} type="number" step="0.1" max="5" placeholder="4.5" onChange={handleChange} required />
                 </div>
-                <div className="md:col-span-2">
-                    <InputGroup label="Languages (Comma separate)" name="languages" value={formData.languages} placeholder="Hindi, English, Telugu..." onChange={handleChange} required />
-                </div>
-                <div className="md:col-span-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
-                            <LocationSearch
-                                onLocationSelect={handleLocationSelect}
-                                defaultValue={formData.location}
-                                placeholder="e.g. New Delhi, India"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Badge Text (Optional)</label>
-                            <input type="text" name="badgeText" value={formData.badgeText} onChange={handleChange} placeholder="e.g. Celebrity" className="w-full px-4 py-2 border rounded-lg" />
-                        </div>
+
+                {/* Row 3: Skills & Languages */}
+                <InputGroup label="Skills (Comma separate)" name="skills" value={formData.skills} placeholder="Vedic, Tarot, Numerology..." onChange={handleChange} required />
+                <InputGroup label="Languages (Comma separate)" name="languages" value={formData.languages} placeholder="Hindi, English, Telugu..." onChange={handleChange} required />
+
+                {/* Row 4: Location & Badge Text */}
+                <div className="w-full">
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Location</label>
+                    <div className="relative w-full">
+                        <LocationSearch
+                            onLocationSelect={handleLocationSelect}
+                            defaultValue={formData.location}
+                            placeholder="e.g. New Delhi, India"
+                        />
                     </div>
                 </div>
+                <div className="w-full">
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Badge Text (Optional)</label>
+                    <input type="text" name="badgeText" value={formData.badgeText} onChange={handleChange} placeholder="e.g. Celebrity" className="w-full border border-slate-200 bg-slate-50/50 p-3 rounded-xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:border-blue-200 transition-all shadow-sm" />
+                </div>
 
-                <InputGroup label="Rating (0-5)" name="rating" value={formData.rating} type="number" step="0.1" max="5" placeholder="4.5" onChange={handleChange} required />
-
-                {/* Pricing Fields */}
+                {/* Row 5: Pricing Fields */}
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <InputGroup label="Chat Charge (Min ₹15)" name="chatCharge" value={formData.chatCharge} type="number" placeholder="Min 15" onChange={handleChange} required />
                     <InputGroup label="Voice Call (Min ₹15)" name="callCharge" value={formData.callCharge} type="number" placeholder="Min 15" onChange={handleChange} />
@@ -1704,25 +1856,58 @@ function AddAstrologerForm({ onSuccess, initialData }) {
 
             <Section title="Profile Media & Bio">
                 <div className="md:col-span-2 mb-4">
-                    <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Profile Photo <span className="text-red-500">*</span></label>
-                    <div className="flex items-center gap-6 p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition">
-                        <div className="relative group cursor-pointer w-20 h-20 flex-shrink-0">
-                            {formData.image ? (
-                                <img src={formData.image} alt="Preview" className="w-full h-full rounded-full object-cover shadow-sm border border-slate-200" />
-                            ) : (
-                                <div className="w-full h-full rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
-                                    <PenTool size={24} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Profile Photo <span className="text-red-500">*</span></label>
+                            <div className="flex items-center gap-6 p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition">
+                                <div className="relative group cursor-pointer w-20 h-20 flex-shrink-0">
+                                    {formData.image ? (
+                                        <img src={formData.image} alt="Preview" className="w-full h-full rounded-full object-cover shadow-sm border border-slate-200" />
+                                    ) : (
+                                        <div className="w-full h-full rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
+                                            <PenTool size={24} />
+                                        </div>
+                                    )}
+                                    <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                                 </div>
-                            )}
-                            <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                <div className="flex-1">
+                                    <h5 className="font-medium text-slate-700 mb-1">Upload Photo</h5>
+                                    <p className="text-xs text-slate-400">Allowed *.jpeg, *.png, *.webp</p>
+                                    <label className="mt-3 inline-block bg-white border border-slate-200 text-slate-600 text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-50 shadow-sm transition">
+                                        Choose File
+                                        <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <h5 className="font-medium text-slate-700 mb-1">Upload Photo</h5>
-                            <p className="text-xs text-slate-400">Allowed *.jpeg, *.jpg, *.png, *.webp</p>
-                            <label className="mt-3 inline-block bg-white border border-slate-200 text-slate-600 text-xs font-bold px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-50 shadow-sm transition">
-                                Choose File
-                                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                            </label>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Secret Gallery</label>
+                            <div className="flex items-center gap-6 p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition h-[116px]">
+                                {initialData ? (
+                                    <div className="flex items-center gap-4 w-full">
+                                        <div className="w-16 h-16 rounded-xl bg-indigo-50 flex flex-col items-center justify-center text-indigo-500">
+                                            <ImageIcon size={24} />
+                                            <span className="text-[10px] font-bold mt-1">{initialData.gallery?.length || 0}/4</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h5 className="font-medium text-slate-700 mb-1">Manage Gallery</h5>
+                                            <p className="text-xs text-slate-400 mb-2">Upload multiple images (workspace, certificates)</p>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setGalleryModalOpen(true)}
+                                                className="bg-indigo-50 text-indigo-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-indigo-100 transition shadow-sm border border-indigo-100"
+                                            >
+                                                Open Gallery Manager
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center w-full">
+                                        <p className="text-sm text-slate-500 italic">Please create the profile first to upload gallery images.</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1739,6 +1924,17 @@ function AddAstrologerForm({ onSuccess, initialData }) {
                     {loading ? 'Saving...' : (initialData ? 'Update Profile' : 'Create Profile')}
                 </button>
             </div>
+
+            {galleryModalOpen && initialData && (
+                <GalleryManagerModal
+                    astrologer={initialData}
+                    onClose={() => setGalleryModalOpen(false)}
+                    onSuccess={() => {
+                        setGalleryModalOpen(false);
+                        if (onSuccess) onSuccess(); // Refresh data to show correct count
+                    }}
+                />
+            )}
         </form>
     );
 }

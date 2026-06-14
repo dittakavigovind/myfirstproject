@@ -251,7 +251,16 @@ exports.getUserById = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json(user);
+        
+        // Check if there is an astrologer profile associated with this user
+        const astrologerProfile = await Astrologer.findOne({ userId: user._id });
+        
+        const userData = user.toObject();
+        if (astrologerProfile) {
+            userData.astrologerProfile = astrologerProfile;
+        }
+
+        res.json(userData);
     } catch (error) {
         console.error("getUserById ERROR:", error);
         res.status(500).json({ message: 'Server Error' });

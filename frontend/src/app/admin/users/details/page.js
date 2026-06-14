@@ -286,7 +286,14 @@ function UserDetails() {
                                     <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                                         <div>
                                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Astrologer Profile</p>
-                                            <p className="font-bold text-slate-700">{userData.astrologerProfile ? 'Active' : 'Not Setup'}</p>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <p className="font-bold text-slate-700">{userData.astrologerProfile ? 'Active' : 'Not Setup'}</p>
+                                                {userData.astrologerProfile && (
+                                                    <Link href={`/admin?tab=astrologers&editAstro=${userData.astrologerProfile._id}`} className="text-[10px] bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200 font-bold transition">
+                                                        Edit Profile
+                                                    </Link>
+                                                )}
+                                            </div>
                                         </div>
                                         {userData.astrologerProfile && <div className="w-2 h-2 rounded-full bg-green-500"></div>}
                                     </div>
@@ -296,6 +303,9 @@ function UserDetails() {
                                             <p className="font-bold text-slate-700">
                                                 {userData.lastLogin
                                                     ? new Date(userData.lastLogin).toLocaleString(undefined, {
+                                                        month: 'short',
+                                                        day: '2-digit',
+                                                        year: 'numeric',
                                                         weekday: 'short',
                                                         hour: '2-digit',
                                                         minute: '2-digit'

@@ -17,6 +17,15 @@ export default function SessionBanner() {
     const [activeSession, setActiveSession] = useState(null);
     const [duration, setDuration] = useState(0);
 
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
+        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
     // Don't show on the chat or call page itself
     const isChatPage = pathname.includes("/chat/") || pathname.includes("/call/");
 
@@ -95,7 +104,7 @@ export default function SessionBanner() {
     let partnerName = partner?.displayName || partner?.name || "Partner";
     if (isAstrologer) partnerName = maskUserName(partnerName);
     
-    const partnerImage = partner?.image || partner?.profileImage || `https://ui-avatars.com/api/?name=${partnerName}&background=random`;
+    const partnerImage = getImageUrl(partner?.image || partner?.profileImage, partner?.gender);
 
     return (
         <AnimatePresence>

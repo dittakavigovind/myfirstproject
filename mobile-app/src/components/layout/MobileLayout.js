@@ -16,7 +16,7 @@ export default function MobileLayout({ children }) {
 
     return (
         <div 
-            className={`relative min-h-screen max-w-md mx-auto overflow-hidden shadow-2xl shadow-electric-violet/5 ${isSpecialPage ? '' : 'pb-24'}`}
+            className={`relative h-[100dvh] flex flex-col max-w-md mx-auto overflow-hidden shadow-2xl shadow-electric-violet/5`}
             style={{ paddingTop: isProfile || isSpecialPage ? 'var(--safe-area-inset-top)' : 'calc(var(--safe-area-inset-top) + 4rem)' }}
         >
             {/* Background glow effects */}
@@ -25,7 +25,10 @@ export default function MobileLayout({ children }) {
 
             {!isSpecialPage && !isProfile && <ModernHeader />}
 
-            <main className={`relative z-10 h-full ${isSpecialPage ? '' : 'px-4'}`}>
+            <main 
+                id="main-scroll-container"
+                className={`relative z-10 flex-1 overflow-y-auto overflow-x-hidden ${isSpecialPage ? '' : 'px-4 pb-24'}`}
+            >
                 {children}
             </main>
 

@@ -19,6 +19,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 import MobileLayout from "@/components/layout/MobileLayout";
@@ -26,6 +27,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { BirthDetailsProvider } from "@/context/BirthDetailsContext";
 import { SocketProvider } from "@/context/SocketContext";
 import SessionBanner from "@/components/SessionBanner";
+import ProfileSetupModal from "@/components/ProfileSetupModal";
 import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }) {
@@ -36,6 +38,7 @@ export default function RootLayout({ children }) {
           <SocketProvider>
             <BirthDetailsProvider>
               <SessionBanner />
+              <ProfileSetupModal />
               <MobileLayout>
                 {children}
               </MobileLayout>

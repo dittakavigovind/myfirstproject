@@ -34,8 +34,10 @@ export default function EditProfile() {
         }
     }, [user]);
 
-        const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
         
         // If it's a full URL, ensure localhost is rewritten to the real network IP
         if (path.startsWith("http")) {
@@ -105,6 +107,7 @@ export default function EditProfile() {
     if (loading) return <CosmicLoader />;
 
     const isAstrologer = user?.role === 'astrologer';
+    const isAdmin = user?.role === 'admin';
 
     return (
         <div className="min-h-screen bg-[#0b1026] pb-40">
@@ -132,18 +135,16 @@ export default function EditProfile() {
                             <div className="w-full h-full rounded-full overflow-hidden bg-cosmic-indigo border-2 border-[#0b1026] relative">
                                 {formData.profileImage ? (
                                     <img 
-                                        src={getImageUrl(formData.profileImage)} 
+                                        src={getImageUrl(formData.profileImage, user?.gender)} 
                                         alt="Profile" 
                                         className={`w-full h-full object-cover transition-opacity ${uploading ? 'opacity-50' : 'opacity-100'}`}
                                         onError={(e) => {
                                             e.target.onerror = null;
-                                            e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                                            e.target.src = getImageUrl(null, user?.gender);
                                         }}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-white/5">
-                                        <User size={32} className="text-white/30" />
-                                    </div>
+                                    <img src={getImageUrl(null, user?.gender)} alt="Profile" className="w-full h-full object-cover p-1 opacity-90" />
                                 )}
                                 
                                 {uploading && (
@@ -182,12 +183,12 @@ export default function EditProfile() {
                             name="displayName"
                             value={formData.displayName}
                             onChange={handleChange}
-                            disabled={isAstrologer}
-                            className={`w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-4 font-medium focus:outline-none focus:border-electric-violet focus:ring-1 focus:ring-electric-violet/50 transition-all ${isAstrologer ? 'text-slate-400 opacity-60 cursor-not-allowed' : 'text-white'}`}
+                            disabled={!isAdmin}
+                            className={`w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-4 font-medium focus:outline-none focus:border-electric-violet focus:ring-1 focus:ring-electric-violet/50 transition-all ${!isAdmin ? 'text-slate-400 opacity-60 cursor-not-allowed' : 'text-white'}`}
                             placeholder="Enter your name"
                             required
                         />
-                        {isAstrologer && <p className="text-[10px] text-slate-500 mt-1 ml-1 font-medium">Display name cannot be changed.</p>}
+                        {!isAdmin && <p className="text-[10px] text-slate-500 mt-1 ml-1 font-medium">Display name cannot be changed.</p>}
                     </div>
 
                     {isAstrologer && (

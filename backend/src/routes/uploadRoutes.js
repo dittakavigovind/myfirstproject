@@ -165,4 +165,50 @@ router.post('/audio', uploadAudioMiddleware, (req, res) => {
     });
 });
 
+// File Filter (Raw Asset Image only - no webp conversion)
+const rawAssetFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Not an image file! Please upload a png, jpg, or svg.'), false);
+    }
+};
+
+const uploadRawAsset = multer({
+    storage: storage,
+    fileFilter: rawAssetFilter,
+    limits: { fileSize: 1024 * 1024 * 50 } // 50MB limit
+});
+
+const uploadAssetMiddleware = (req, res, next) => {
+    uploadRawAsset.single('file')(req, res, (err) => {
+        if (err) {
+            console.error("Asset Upload Middleware Error:", err);
+            return res.status(400).json({ message: 'Asset upload failed', error: err.message });
+        }
+        next();
+    });
+};
+
+/**
+ * @route POST /api/upload/asset
+ * @desc Upload a raw asset file (no compression/resizing)
+ * @access Public (or protected if needed)
+ */
+router.post('/asset', uploadAssetMiddleware, (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No asset file uploaded' });
+    }
+
+    // Construct accessible URL
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const filePath = `${baseUrl}/api/uploads/${req.file.filename}`;
+
+    res.json({
+        success: true,
+        filePath: filePath,
+        message: 'Asset uploaded successfully'
+    });
+});
+
 module.exports = router;

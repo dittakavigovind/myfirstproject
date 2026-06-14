@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import API from '../../lib/api';
-import { Plus, Edit2, Trash2, CheckCircle, XCircle, Tag, IndianRupee } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle, Tag, IndianRupee, GripVertical } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ConfirmationModal from '../ConfirmationModal';
 
@@ -34,6 +35,19 @@ export default function RechargePlanManager() {
             toast.error('Failed to load recharge plans');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleReorder = async (newOrder) => {
+        setPlans(newOrder);
+        try {
+            await API.put('/admin/recharge-plans/reorder', {
+                planIds: newOrder.map(p => p._id)
+            });
+            toast.success('Order saved', { id: 'reorder-toast' });
+        } catch (error) {
+            console.error('Reorder Error:', error);
+            toast.error('Failed to save order');
         }
     };
 
@@ -218,54 +232,59 @@ export default function RechargePlanManager() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {plans.length > 0 ? plans.map(plan => (
-                    <div key={plan._id} className={`p-5 rounded-xl border ${plan.isActive ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50 opacity-70'} flex flex-col justify-between`}>
-                        <div>
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <h4 className="font-bold text-lg text-slate-800 flex items-center gap-1">
-                                        <IndianRupee size={16} className="text-slate-500" />
-                                        {plan.amount}
-                                    </h4>
-                                    <p className="text-sm text-slate-500">{plan.label}</p>
+            {plans.length > 0 ? (
+                <Reorder.Group axis="y" values={plans} onReorder={handleReorder} className="flex flex-col gap-4">
+                    {plans.map(plan => (
+                        <Reorder.Item key={plan._id} value={plan} className={`relative p-5 rounded-xl border ${plan.isActive ? 'border-slate-200 bg-white' : 'border-slate-200 bg-slate-50 opacity-70'} flex flex-col justify-between shadow-sm cursor-grab active:cursor-grabbing`}>
+                            <div className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center opacity-30 hover:opacity-100 transition border-r border-slate-100">
+                                <GripVertical size={16} />
+                            </div>
+                            <div className="pl-6">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h4 className="font-bold text-lg text-slate-800 flex items-center gap-1">
+                                            <IndianRupee size={16} className="text-slate-500" />
+                                            {plan.amount}
+                                        </h4>
+                                        <p className="text-sm text-slate-500">{plan.label}</p>
+                                    </div>
+                                    <div className="flex gap-2 text-slate-400">
+                                        <button onClick={() => handleEdit(plan)} className="hover:text-indigo-600 transition" title="Edit"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDelete(plan._id)} className="hover:text-red-500 transition" title="Delete"><Trash2 size={16} /></button>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2 text-slate-400">
-                                    <button onClick={() => handleEdit(plan)} className="hover:text-indigo-600 transition" title="Edit"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete(plan._id)} className="hover:text-red-500 transition" title="Delete"><Trash2 size={16} /></button>
+                                
+                                <div className="space-y-2 mb-4">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Bonus Perks:</span>
+                                        <span className="font-semibold text-green-600">+₹{plan.bonus}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Total Wallet:</span>
+                                        <span className="font-semibold text-indigo-600">₹{plan.amount + plan.bonus}</span>
+                                    </div>
+                                    {plan.tag && (
+                                        <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded w-fit">
+                                            <Tag size={12} /> {plan.tag}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             
-                            <div className="space-y-2 mb-4">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Bonus Perks:</span>
-                                    <span className="font-semibold text-green-600">+₹{plan.bonus}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">Total Wallet:</span>
-                                    <span className="font-semibold text-indigo-600">₹{plan.amount + plan.bonus}</span>
-                                </div>
-                                {plan.tag && (
-                                    <div className="flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded w-fit">
-                                        <Tag size={12} /> {plan.tag}
-                                    </div>
-                                )}
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between pl-6">
+                                <span className={`text-xs font-bold flex items-center gap-1 ${plan.isActive ? 'text-green-600' : 'text-slate-400'}`}>
+                                    {plan.isActive ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                                    {plan.isActive ? 'Active' : 'Inactive'}
+                                </span>
                             </div>
-                        </div>
-                        
-                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span className={`text-xs font-bold flex items-center gap-1 ${plan.isActive ? 'text-green-600' : 'text-slate-400'}`}>
-                                {plan.isActive ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                                {plan.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                        </div>
-                    </div>
-                )) : (
-                    <div className="col-span-full py-8 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
-                        No recharge plans found. Create one to get started!
-                    </div>
-                )}
-            </div>
+                        </Reorder.Item>
+                    ))}
+                </Reorder.Group>
+            ) : (
+                <div className="py-8 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                    No recharge plans found. Create one to get started!
+                </div>
+            )}
         </div>
     );
 }

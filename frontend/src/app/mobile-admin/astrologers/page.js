@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
 import { Search, Loader2, Save, X, Edit, Percent, Heart, PhoneOff, Pin } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { SERVER_BASE } from '../../../lib/urlHelper';
 
 export default function MobileAstroDashboard() {
     const [astros, setAstros] = useState([]);
@@ -20,6 +22,51 @@ export default function MobileAstroDashboard() {
 
     useEffect(() => {
         fetchAstrologers();
+
+        // Socket setup for real-time status updates
+        let token = '';
+        if (typeof window !== 'undefined') {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
+                try {
+                    const user = JSON.parse(storedUser);
+                    token = user.token;
+                } catch (error) {}
+            }
+        }
+
+        const socket = io(SERVER_BASE, {
+            auth: { token }
+        });
+
+        socket.on('connect', () => {
+            console.log('Socket connected successfully in Astrologers Admin');
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Socket connection error in Astrologers Admin:', err.message);
+        });
+        
+        socket.on('astrologer_status_changed', (data) => {
+            setAstros(prev => prev.map(a => {
+                const astroUserId = a.userId?._id || a.userId;
+                if (astroUserId === data.astrologerId || a._id === data.astrologerId) {
+                    return {
+                        ...a,
+                        isOnline: data.isOnline !== undefined ? data.isOnline : a.isOnline,
+                        isChatOnline: data.isChatOnline !== undefined ? data.isChatOnline : a.isChatOnline,
+                        isVoiceOnline: data.isVoiceOnline !== undefined ? data.isVoiceOnline : a.isVoiceOnline,
+                        isVideoOnline: data.isVideoOnline !== undefined ? data.isVideoOnline : a.isVideoOnline,
+                        isBusy: data.isBusy !== undefined ? data.isBusy : a.isBusy
+                    };
+                }
+                return a;
+            }));
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchAstrologers = async () => {
@@ -76,9 +123,23 @@ export default function MobileAstroDashboard() {
         setSaving(false);
     };
 
-    const filtered = astros.filter(a =>
-        (a.displayName || a.name || '').toLowerCase().includes(search.toLowerCase())
-    );
+    const searchLower = search.toLowerCase();
+    const filtered = astros.filter(a => {
+        if ((a.displayName || a.name || '').toLowerCase().includes(searchLower)) return true;
+        if (searchLower === 'online' && a.isOnline) return true;
+        if (searchLower === 'offline' && !a.isOnline) return true;
+        if (searchLower === 'chat' && a.isChatOnline) return true;
+        if (searchLower === 'call' && a.isVoiceOnline) return true;
+        if (searchLower === 'video' && a.isVideoOnline) return true;
+        return false;
+    });
+
+    const totalAstros = astros.length;
+    const onlineAstros = astros.filter(a => a.isOnline).length;
+    const offlineAstros = totalAstros - onlineAstros;
+    const chatOnline = astros.filter(a => a.isChatOnline).length;
+    const callOnline = astros.filter(a => a.isVoiceOnline).length;
+    const videoOnline = astros.filter(a => a.isVideoOnline).length;
 
     if (loading) return <div className="flex items-center gap-3 text-emerald-400"><Loader2 className="animate-spin" /> Gathering Astrologer Network...</div>;
 
@@ -91,11 +152,61 @@ export default function MobileAstroDashboard() {
                 </div>
             </div>
 
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-2">
+                <div 
+                    onClick={() => setSearch('')}
+                    className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-slate-800 transition"
+                >
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Nodes</p>
+                    <p className="text-2xl font-bold text-white mt-1">{totalAstros}</p>
+                </div>
+                <div 
+                    onClick={() => setSearch('online')}
+                    className="bg-slate-900 border border-emerald-500/30 p-4 rounded-2xl shadow-lg relative overflow-hidden cursor-pointer hover:bg-emerald-900/20 transition"
+                >
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full"></div>
+                    <p className="text-xs text-emerald-400 font-medium uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Online
+                    </p>
+                    <p className="text-2xl font-bold text-white mt-1">{onlineAstros}</p>
+                </div>
+                <div 
+                    onClick={() => setSearch('offline')}
+                    className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-slate-800 transition"
+                >
+                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-slate-600"></span> Offline
+                    </p>
+                    <p className="text-2xl font-bold text-white mt-1">{offlineAstros}</p>
+                </div>
+                <div 
+                    onClick={() => setSearch('chat')}
+                    className="bg-slate-900 border border-blue-500/20 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-blue-900/20 transition"
+                >
+                    <p className="text-xs text-blue-400 font-medium uppercase tracking-wider">Chat</p>
+                    <p className="text-2xl font-bold text-white mt-1">{chatOnline}</p>
+                </div>
+                <div 
+                    onClick={() => setSearch('call')}
+                    className="bg-slate-900 border border-amber-500/20 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-amber-900/20 transition"
+                >
+                    <p className="text-xs text-amber-400 font-medium uppercase tracking-wider">Call</p>
+                    <p className="text-2xl font-bold text-white mt-1">{callOnline}</p>
+                </div>
+                <div 
+                    onClick={() => setSearch('video')}
+                    className="bg-slate-900 border border-violet-500/20 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-violet-900/20 transition"
+                >
+                    <p className="text-xs text-violet-400 font-medium uppercase tracking-wider">Video</p>
+                    <p className="text-2xl font-bold text-white mt-1">{videoOnline}</p>
+                </div>
+            </div>
+
             <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                 <input
                     type="text"
-                    placeholder="Search by Public Name..."
+                    placeholder="Search by Name or Status (online, offline, chat, call, video)..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50"
@@ -131,12 +242,19 @@ export default function MobileAstroDashboard() {
                                                 )}
                                             </div>
                                             <div>
-                                                <button
-                                                    onClick={() => setViewingStatsAstro(astro)}
-                                                    className="font-bold text-white hover:text-emerald-400 transition underline decoration-dashed underline-offset-4 text-left"
-                                                >
-                                                    {astro.displayName || astro.name}
-                                                </button>
+                                                <div className="flex items-center flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => setViewingStatsAstro(astro)}
+                                                        className="font-bold text-white hover:text-emerald-400 transition underline decoration-dashed underline-offset-4 text-left"
+                                                    >
+                                                        {astro.displayName || astro.name}
+                                                    </button>
+                                                    {astro.userId?.name && (
+                                                        <span className="text-xs font-normal text-slate-500">
+                                                            (original name: <a href={`/admin/users/details?username=${astro.userId._id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{astro.userId.name}</a>)
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     {astro.isPinned && (
                                                         <div className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-md border border-amber-500/30 font-bold flex items-center gap-1">
@@ -150,6 +268,19 @@ export default function MobileAstroDashboard() {
                                                     {astro.userId?.missedSessions > 0 && (
                                                         <div className="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded-md border border-rose-500/20 font-bold ml-1 flex items-center gap-1">
                                                             <PhoneOff size={10} /> {astro.userId.missedSessions} Missed
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <div className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${astro.isOnline ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-500 border-slate-700'}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${astro.isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
+                                                        {astro.isOnline ? 'ONLINE' : 'OFFLINE'}
+                                                    </div>
+                                                    {astro.isOnline && (
+                                                        <div className="flex gap-1">
+                                                            {astro.isChatOnline && <span className="bg-blue-500/20 text-blue-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Chat</span>}
+                                                            {astro.isVoiceOnline && <span className="bg-amber-500/20 text-amber-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Call</span>}
+                                                            {astro.isVideoOnline && <span className="bg-violet-500/20 text-violet-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Video</span>}
                                                         </div>
                                                     )}
                                                 </div>

@@ -17,6 +17,10 @@ const rechargePlanSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    sortOrder: {
+        type: Number,
+        default: 0
+    },
     isActive: {
         type: Boolean,
         default: true

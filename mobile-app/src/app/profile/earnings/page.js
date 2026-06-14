@@ -117,7 +117,7 @@ export default function EarningsPage() {
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Enter Amount to Withdraw</label>
                 <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-bold text-xl">₹</span>
-                    <input 
+                    <input
                         type="number"
                         value={withdrawAmount}
                         onChange={(e) => {
@@ -137,14 +137,13 @@ export default function EarningsPage() {
             </div>
 
             {/* Payout Button */}
-            <button 
+            <button
                 onClick={handleRequestPayout}
                 disabled={loading || stats.total < 500}
-                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${
-                    stats.total >= 500 
-                    ? 'bg-solar-gold text-cosmic-indigo shadow-solar-gold/20' 
-                    : 'bg-white/5 text-slate-500 cursor-not-allowed'
-                }`}
+                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${stats.total >= 500
+                        ? 'bg-solar-gold text-cosmic-indigo shadow-solar-gold/20'
+                        : 'bg-white/5 text-slate-500 cursor-not-allowed'
+                    }`}
             >
                 {loading ? "Processing..." : "Request payout"}
             </button>

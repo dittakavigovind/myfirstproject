@@ -335,6 +335,18 @@ export default function CallRoomClient() {
         );
     }
 
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
+        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
+    const partner = user?.role === 'astrologer' ? callData?.userId : callData?.astrologerId;
+    const partnerImage = getImageUrl(partner?.image || partner?.profileImage, partner?.gender);
+
     return (
         <div className="fixed inset-0 bg-slate-900 flex flex-col z-[100] text-white">
             {/* Top Bar for Astrologer Tools */}
@@ -363,7 +375,7 @@ export default function CallRoomClient() {
             {/* Header / Info */}
             <div className="flex-1 flex flex-col items-center justify-center pt-10">
                 <div className="w-32 h-32 rounded-full bg-slate-800 shadow-2xl flex items-center justify-center mb-6 relative overflow-hidden border-4 border-slate-700">
-                    <Sparkles className="w-12 h-12 text-slate-500" />
+                    <img src={partnerImage} alt="Avatar" className="w-full h-full object-cover" />
                     {sessionActive && remoteUserJoined && (
                         <div className="absolute inset-0 border-4 border-emerald-500 rounded-full animate-pulse" />
                     )}

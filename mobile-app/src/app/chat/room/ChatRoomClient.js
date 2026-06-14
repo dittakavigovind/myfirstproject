@@ -193,7 +193,7 @@ export default function ChatRoomClient() {
 
     const fetchSessionData = async () => {
         try {
-            const { data } = await api.get(`/chat/session/${roomId}/messages`);
+            const { data } = await api.get(`/chat/session/${roomId}/metadata`);
             if (data.success) {
                 if (data.session) {
                     setAstrologer(data.session.astrologerId || data.session.astrologer);
@@ -620,6 +620,15 @@ export default function ChatRoomClient() {
 
     const partner = user?.role === 'astrologer' ? chatUser : astrologer;
 
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
+        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
     const handlePartnerClick = () => {
         if (user?.role !== 'astrologer' && partner) {
             const partnerId = partner._id || partner.id;
@@ -680,7 +689,7 @@ export default function ChatRoomClient() {
                             </button>
                             <div className="flex flex-col items-center mb-6">
                                 <div className="w-16 h-16 rounded-full overflow-hidden mb-4 border border-white/10">
-                                    <img src={partner?.image || partner?.profileImage || "https://i.pravatar.cc/100?u=astro"} alt="Astrologer" className="w-full h-full object-cover" />
+                                    <img src={getImageUrl(partner?.image || partner?.profileImage, partner?.gender)} alt="Astrologer" className="w-full h-full object-cover" />
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-1">Rate your session</h3>
                                 <p className="text-sm text-slate-400">with {partner?.displayName || partner?.name || "Astrologer"}</p>
@@ -727,7 +736,7 @@ export default function ChatRoomClient() {
                         className={`w-9 h-9 rounded-full bg-electric-violet/20 border border-electric-violet/30 flex items-center justify-center overflow-hidden shrink-0 ${user?.role !== 'astrologer' ? 'cursor-pointer hover:opacity-80' : ''}`}
                         onClick={handlePartnerClick}
                     >
-                        <img src={partner?.image || partner?.profileImage || "https://i.pravatar.cc/100?u=astro"} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={getImageUrl(partner?.image || partner?.profileImage, partner?.gender)} alt="Avatar" className="w-full h-full object-cover" />
                     </div>
                     <div 
                         className={`min-w-0 flex flex-col justify-center ${user?.role !== 'astrologer' ? 'cursor-pointer hover:opacity-80' : ''}`}

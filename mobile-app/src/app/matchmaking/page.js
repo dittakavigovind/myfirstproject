@@ -127,12 +127,12 @@ export default function MatchmakingPage() {
 
             <form onSubmit={handleSubmit} className="px-4 mt-8 space-y-8">
                 {/* Boy's Section */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <h2 className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Boy's Details
                     </h2>
 
-                    <div className="glass-panel p-5 rounded-[2.5rem] border-white/5 space-y-4">
+                    <div className="space-y-3 pl-3 border-l border-blue-500/20 py-1">
                         <InputGroup
                             label="Full Name"
                             icon={User}
@@ -140,7 +140,7 @@ export default function MatchmakingPage() {
                             onChange={v => setBoy({ ...boy, name: v })}
                             placeholder="Enter Boy's Name"
                         />
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                             <InputGroup
                                 label="Birth Date"
                                 icon={Calendar}
@@ -156,37 +156,45 @@ export default function MatchmakingPage() {
                                 onChange={v => setBoy({ ...boy, time: v })}
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">Place of Birth</label>
-                            <LocationSearch
-                                onLocationSelect={loc => setBoy({ ...boy, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
-                                defaultValue={boy.place}
-                            />
+                        <div className="flex-1">
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Place of Birth</label>
+                            <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-blue-400 transition-colors">
+                                <MapPin className="text-slate-500 group-focus-within:text-blue-400 mr-2 mb-1" size={16} />
+                                <div className="flex-1 -mb-1">
+                                    <LocationSearch
+                                        onLocationSelect={loc => setBoy({ ...boy, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
+                                        defaultValue={boy.place}
+                                        variant="underline"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Girl's Section */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <h2 className="text-xs font-black text-rose-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Girl's Details
                     </h2>
 
-                    <div className="glass-panel p-5 rounded-[2.5rem] border-white/5 space-y-4">
+                    <div className="space-y-3 pl-3 border-l border-rose-500/20 py-1">
                         <InputGroup
                             label="Full Name"
                             icon={User}
                             value={girl.name}
                             onChange={v => setGirl({ ...girl, name: v })}
                             placeholder="Enter Girl's Name"
+                            color="rose"
                         />
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                             <InputGroup
                                 label="Birth Date"
                                 icon={Calendar}
                                 type="date"
                                 value={girl.date}
                                 onChange={v => setGirl({ ...girl, date: v })}
+                                color="rose"
                             />
                             <InputGroup
                                 label="Birth Time"
@@ -194,14 +202,21 @@ export default function MatchmakingPage() {
                                 type="time"
                                 value={girl.time}
                                 onChange={v => setGirl({ ...girl, time: v })}
+                                color="rose"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">Place of Birth</label>
-                            <LocationSearch
-                                onLocationSelect={loc => setGirl({ ...girl, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
-                                defaultValue={girl.place}
-                            />
+                        <div className="flex-1">
+                            <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Place of Birth</label>
+                            <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-rose-400 transition-colors">
+                                <MapPin className="text-slate-500 group-focus-within:text-rose-400 mr-2 mb-1" size={16} />
+                                <div className="flex-1 -mb-1">
+                                    <LocationSearch
+                                        onLocationSelect={loc => setGirl({ ...girl, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
+                                        defaultValue={girl.place}
+                                        variant="underline"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -210,14 +225,14 @@ export default function MatchmakingPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="glass-panel p-5 rounded-3xl border-rose-500/10 bg-rose-500/5 flex gap-4"
+                    className="glass-panel p-4 rounded-2xl border-rose-500/10 bg-rose-500/5 flex gap-3 mt-4"
                 >
-                    <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400 flex-shrink-0">
-                        <Heart size={20} className="fill-rose-400/20" />
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 flex-shrink-0">
+                        <Heart size={16} className="fill-rose-400/20" />
                     </div>
                     <div>
-                        <h4 className="text-white text-sm font-bold mb-1">Celestial Compatibility</h4>
-                        <p className="text-slate-400 text-xs leading-relaxed">
+                        <h4 className="text-white text-[13px] font-bold mb-0.5">Celestial Compatibility</h4>
+                        <p className="text-slate-400 text-[11px] leading-tight">
                             Ashtakoot Guna Milan analyzes 8 key aspects including temperament, intimacy, and health.
                         </p>
                     </div>
@@ -226,29 +241,34 @@ export default function MatchmakingPage() {
                 {/* Submit */}
                 <button
                     type="submit"
-                    className="w-full h-16 rounded-[2rem] bg-gradient-to-r from-rose-500 to-red-600 text-white font-black text-lg shadow-xl shadow-rose-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-lg shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all mt-6"
                 >
                     Check Compatibility
-                    <ChevronRight size={20} />
+                    <ChevronRight size={18} />
                 </button>
             </form>
         </div>
     );
 }
 
-function InputGroup({ label, icon: Icon, type = "text", value, onChange, placeholder }) {
+function InputGroup({ label, icon: Icon, type = "text", value, onChange, placeholder, color = "blue" }) {
+    const focusColorClass = color === 'rose' ? 'group-focus-within:text-rose-400' : 'group-focus-within:text-blue-400';
+    const borderColorClass = color === 'rose' ? 'focus-within:border-rose-400' : 'focus-within:border-blue-400';
+
     return (
-        <div className="space-y-1.5 flex-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">{label}</label>
-            <div className="relative group">
-                <Icon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-rose-400 transition-colors" size={16} />
-                <input
-                    type={type}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-rose-400/20 focus:border-rose-400/40 transition-all font-medium"
-                />
+        <div className="relative group flex-1">
+            <div className={`flex items-end border-b border-white/10 pb-1 ${borderColorClass} transition-colors`}>
+                <Icon className={`text-slate-500 ${focusColorClass} mr-2 mb-1`} size={16} />
+                <div className="flex-1">
+                    <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-0.5">{label}</label>
+                    <input
+                        type={type}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full bg-transparent text-white placeholder:text-white/20 focus:outline-none font-medium text-[13px] py-1"
+                    />
+                </div>
             </div>
         </div>
     );

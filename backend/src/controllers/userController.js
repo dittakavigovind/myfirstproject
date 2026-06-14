@@ -260,14 +260,16 @@ exports.toggleFollow = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Astrologer not found' });
         }
 
-        const isFollowing = user.following.includes(astrologerId);
+        const isFollowing = user.following.some(id => id.toString() === astrologerId.toString());
 
         if (isFollowing) {
-            user.following = user.following.filter(id => id.toString() !== astrologerId);
+            user.following = user.following.filter(id => id.toString() !== astrologerId.toString());
             astrologer.followersCount = Math.max(0, astrologer.followersCount - 1);
         } else {
-            user.following.push(astrologerId);
-            astrologer.followersCount += 1;
+            if (!user.following.some(id => id.toString() === astrologerId.toString())) {
+                user.following.push(astrologerId);
+                astrologer.followersCount += 1;
+            }
         }
 
         await user.save();

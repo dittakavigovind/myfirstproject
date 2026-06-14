@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import {
-    LayoutDashboard, Settings, DollarSign, Activity, FileText, Smartphone, LogOut, Users, AlertTriangle, Calendar
+    LayoutDashboard, Settings, DollarSign, Activity, FileText, Smartphone, LogOut, Users, AlertTriangle, Calendar, Sparkles
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -62,6 +62,16 @@ export default function MobileAdminSidebar() {
                 >
                     <Smartphone size={18} />
                     App Toggles
+                </Link>
+
+                <Link href="/mobile-admin/branding"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/branding')
+                        ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <Sparkles size={18} />
+                    App Branding & Assets
                 </Link>
 
                 <Link href="/mobile-admin/notifications"

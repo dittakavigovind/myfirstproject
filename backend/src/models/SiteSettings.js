@@ -128,6 +128,36 @@ const siteSettingsSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    // --- APP BRANDING ---
+    mobileAppIconUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    mobileAppSplashUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    mobileAppLogoUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    mobilePromoBannerUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    mobilePromoLink: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    mobilePromoEnabled: {
+        type: Boolean,
+        default: false
+    },
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

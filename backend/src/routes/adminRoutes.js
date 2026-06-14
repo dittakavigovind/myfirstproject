@@ -35,6 +35,7 @@ router.put('/config/pricing', protect, admin, updatePricingConfig);
 const rechargePlanController = require('../controllers/rechargePlanController');
 router.get('/recharge-plans', protect, admin, rechargePlanController.getAllPlans);
 router.post('/recharge-plans', protect, admin, rechargePlanController.createPlan);
+router.put('/recharge-plans/reorder', protect, admin, rechargePlanController.reorderPlans);
 router.put('/recharge-plans/:id', protect, admin, rechargePlanController.updatePlan);
 router.delete('/recharge-plans/:id', protect, admin, rechargePlanController.deletePlan);
 

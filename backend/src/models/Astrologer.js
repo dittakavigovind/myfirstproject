@@ -37,6 +37,11 @@ const astrologerSchema = new mongoose.Schema({
     }],
     languages: [String],
     location: String,
+    gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        default: 'Other'
+    },
     experienceYears: Number,
     charges: {
         chatPerMinute: Number,

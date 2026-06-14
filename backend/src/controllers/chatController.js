@@ -188,6 +188,33 @@ exports.startPaidChat = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+// @desc Get session details without messages (Fast)
+// @route GET /api/chat/session/:roomId/metadata
+exports.getSessionMetadata = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const session = await Session.findOne({ roomId })
+            .populate({
+                path: 'astrologerId',
+                select: 'displayName image charges'
+            })
+            .populate({
+                path: 'userId',
+                select: 'name birthDetails profileImage gender phone mobileNumber'
+            });
+        if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
+
+        res.json({
+            success: true,
+            session,
+            showSessionEndedBy: session.endedBy || null
+        });
+    } catch (error) {
+        console.error('getSessionMetadata Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 // @desc Get messages for a specific session
 // @route GET /api/chat/session/:roomId/messages
 exports.getSessionMessages = async (req, res) => {

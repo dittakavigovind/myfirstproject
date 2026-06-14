@@ -1,7 +1,7 @@
 "use client";
 
 import CosmicCard from "@/components/CosmicCard";
-import { Sparkles, Moon, Sun, Star, MessageCircle, Phone, FileText, ArrowRight, Heart, BookOpen } from "lucide-react";
+import { Sparkles, Moon, Sun, Star, MessageCircle, Phone, FileText, ArrowRight, Heart, BookOpen, Scroll, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
@@ -21,6 +21,7 @@ export default function Home() {
   const [astrologers, setAstrologers] = useState([]);
   const [followingIds, setFollowingIds] = useState([]);
   const [sessionCounts, setSessionCounts] = useState({});
+  const [siteSettings, setSiteSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Determine user's sign or default to Aries
@@ -34,17 +35,19 @@ export default function Home() {
     sagittarius: "♐", capricorn: "♑", aquarius: "♒", pisces: "♓"
   };
 
-      const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        
-        // If it's a full URL, ensure localhost is rewritten to the real network IP
-        if (path.startsWith("http")) {
-            return path.replace('localhost:5000', '192.168.29.133:5000');
-        }
-        
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+  const getImageUrl = (path, gender = null) => {
+    if (!path || path.includes('default-avatar.png')) {
+        return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    }
+
+    // If it's a full URL, ensure localhost is rewritten to the real network IP
+    if (path.startsWith("http")) {
+      return path.replace('localhost:5000', '192.168.29.133:5000');
+    }
+
+    const normalizedPath = path.replace(/\\/g, "/");
+    return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+  };
 
 
   useEffect(() => {
@@ -52,13 +55,13 @@ export default function Home() {
       router.replace('/profile');
       return;
     }
-    
+
     fetchDashboardData();
 
     if (socket) {
       const handleStatusChange = (data) => {
-        setAstrologers((prev) => 
-          prev.map(astro => 
+        setAstrologers((prev) =>
+          prev.map(astro =>
             astro._id === data.astrologerId ? { ...astro, ...data } : astro
           )
         );
@@ -73,26 +76,26 @@ export default function Home() {
   useEffect(() => {
     if (user && user.role !== 'astrologer') {
       const pollInterval = setInterval(pollAstrologers, 15000);
-      
+
       // Fetch following list
       api.get("/users/following").then(res => {
-          if (res.data && res.data.success && res.data.following) {
-              setFollowingIds(res.data.following.map(a => a._id || a.id));
-          }
+        if (res.data && res.data.success && res.data.following) {
+          setFollowingIds(res.data.following.map(a => a._id || a.id));
+        }
       }).catch(err => console.error("Failed to fetch following", err));
 
       // Fetch chat history for most interacted
       api.get("/chat/history").then(res => {
-          if (res.data && res.data.success && res.data.sessions) {
-              const counts = {};
-              res.data.sessions.forEach(session => {
-                  const astroId = session.astrologerId?._id || session.astrologerId;
-                  if (astroId) {
-                      counts[astroId] = (counts[astroId] || 0) + 1;
-                  }
-              });
-              setSessionCounts(counts);
-          }
+        if (res.data && res.data.success && res.data.sessions) {
+          const counts = {};
+          res.data.sessions.forEach(session => {
+            const astroId = session.astrologerId?._id || session.astrologerId;
+            if (astroId) {
+              counts[astroId] = (counts[astroId] || 0) + 1;
+            }
+          });
+          setSessionCounts(counts);
+        }
       }).catch(err => console.error("Failed to fetch chat history", err));
 
       return () => clearInterval(pollInterval);
@@ -102,11 +105,12 @@ export default function Home() {
   const fetchDashboardData = async () => {
     try {
       const isAstro = user?.role === 'astrologer';
-      
+
       // Fetch horoscope, astrologers (if applicable), and blogs in parallel
       const fetchPromises = [
         api.get("/horoscope-manager/daily").catch(() => ({ data: { data: null } })),
-        api.get("/blog/posts?limit=5").catch(() => ({ data: { data: [] } }))
+        api.get("/blog/posts?limit=5").catch(() => ({ data: { data: [] } })),
+        api.get("/site-settings").catch(() => ({ data: { settings: null } }))
       ];
 
       // Only fetch live astrologers if the user is NOT an astrologer
@@ -117,10 +121,15 @@ export default function Home() {
       const results = await Promise.all(fetchPromises);
       const horoscopeRes = results[0];
       const blogRes = results[1];
-      const astroRes = !isAstro ? results[2] : { data: { data: [] } };
+      const settingsRes = results[2];
+      const astroRes = !isAstro ? results[3] : { data: { data: [] } };
 
       if (horoscopeRes.data && horoscopeRes.data.data) {
         setHoroscope(horoscopeRes.data.data);
+      }
+
+      if (settingsRes.data && settingsRes.data.settings) {
+        setSiteSettings(settingsRes.data.settings);
       }
 
       if (!isAstro && astroRes.data && astroRes.data.data) {
@@ -150,146 +159,161 @@ export default function Home() {
   };
 
   const sortedAstrologers = useMemo(() => {
-      return [...astrologers].sort((a, b) => {
-          const isOnline = (astro) => astro.isChatOnline || astro.isVoiceOnline;
-          const isFollowing = (astro) => followingIds.includes(astro._id || astro.id);
-          const getSessionCount = (astro) => sessionCounts[astro._id || astro.id] || 0;
-          const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
-          const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
+    return [...astrologers].sort((a, b) => {
+      const isOnline = (astro) => astro.isChatOnline || astro.isVoiceOnline;
+      const isFollowing = (astro) => followingIds.includes(astro._id || astro.id);
+      const getSessionCount = (astro) => sessionCounts[astro._id || astro.id] || 0;
+      const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
+      const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
 
-          const now = new Date();
-          const isCurrentlyPinned = (astro) => {
-              if (!astro.isPinned) return false;
-              if (astro.pinStartTime && astro.pinEndTime) {
-                  return new Date(astro.pinStartTime) <= now && new Date(astro.pinEndTime) >= now;
-              }
-              return true;
-          };
+      const now = new Date();
+      const isCurrentlyPinned = (astro) => {
+        if (!astro.isPinned) return false;
+        if (astro.pinStartTime && astro.pinEndTime) {
+          return new Date(astro.pinStartTime) <= now && new Date(astro.pinEndTime) >= now;
+        }
+        return true;
+      };
 
-          const aPinned = isCurrentlyPinned(a);
-          const bPinned = isCurrentlyPinned(b);
+      const aPinned = isCurrentlyPinned(a);
+      const bPinned = isCurrentlyPinned(b);
 
-          // Tier 0: Pinned
-          if (aPinned && !bPinned) return -1;
-          if (!aPinned && bPinned) return 1;
-          if (aPinned && bPinned) {
-              return (a.pinOrder || 0) - (b.pinOrder || 0);
-          }
+      // Tier 0: Pinned
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      if (aPinned && bPinned) {
+        return (a.pinOrder || 0) - (b.pinOrder || 0);
+      }
 
-          // Tier 1: Online
-          if (isOnline(a) && !isOnline(b)) return -1;
-          if (!isOnline(a) && isOnline(b)) return 1;
-          if (isOnline(a) && isOnline(b)) {
-              return getCreatedTime(b) - getCreatedTime(a);
-          }
+      // Tier 1: Online
+      if (isOnline(a) && !isOnline(b)) return -1;
+      if (!isOnline(a) && isOnline(b)) return 1;
+      if (isOnline(a) && isOnline(b)) {
+        return getCreatedTime(b) - getCreatedTime(a);
+      }
 
-          // Tier 2: Following (Sorted by last following to oldest following - which means reverse following index)
-          if (isFollowing(a) && !isFollowing(b)) return -1;
-          if (!isFollowing(a) && isFollowing(b)) return 1;
-          if (isFollowing(a) && isFollowing(b)) {
-              return getFollowingIndex(b) - getFollowingIndex(a);
-          }
+      // Tier 2: Following (Sorted by last following to oldest following - which means reverse following index)
+      if (isFollowing(a) && !isFollowing(b)) return -1;
+      if (!isFollowing(a) && isFollowing(b)) return 1;
+      if (isFollowing(a) && isFollowing(b)) {
+        return getFollowingIndex(b) - getFollowingIndex(a);
+      }
 
-          // Tier 3: Most interacted (session count)
-          const sessionsA = getSessionCount(a);
-          const sessionsB = getSessionCount(b);
-          if (sessionsA > 0 || sessionsB > 0) {
-              if (sessionsA !== sessionsB) {
-                  return sessionsB - sessionsA;
-              }
-          }
+      // Tier 3: Most interacted (session count)
+      const sessionsA = getSessionCount(a);
+      const sessionsB = getSessionCount(b);
+      if (sessionsA > 0 || sessionsB > 0) {
+        if (sessionsA !== sessionsB) {
+          return sessionsB - sessionsA;
+        }
+      }
 
-          // Tier 4: Offline (Everyone else)
-          return getCreatedTime(b) - getCreatedTime(a);
-      });
+      // Tier 4: Offline (Everyone else)
+      return getCreatedTime(b) - getCreatedTime(a);
+    });
   }, [astrologers, followingIds, sessionCounts]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden">
 
-      {/* Welcome Banner */}
-      <div className="pt-2">
-        <h1 className="text-2xl font-bold text-white">Hello, {user?.name?.split(' ')[0] || "Seeker"} ✨</h1>
-        <p className="text-sm text-slate-400">Your cosmic journey continues.</p>
-      </div>
-
-      {/* Daily Horoscope Highlight Widget */}
-      <CosmicCard className="mt-4 bg-gradient-to-br from-electric-violet/20 to-cosmic-indigo border-electric-violet/30" delay={0.1}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="p-2 bg-electric-violet/20 rounded-xl text-electric-violet">
-              <Sun size={20} />
-            </span>
-            <h2 className="text-lg font-bold">Today's Insight</h2>
-          </div>
-          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-white/10 text-slate-300">
-            {displaySign} {zodiacSymbols[userSign] || "✨"}
-          </span>
+      {/* Welcome & Compact Horoscope Ticker */}
+      <div className="pt-2 flex flex-col gap-3">
+        <div>
+          <h1 className="text-[23px] font-bold text-white leading-tight">Hello, {user?.name?.split(' ')[0] || "Seeker"} ✨</h1>
+          <p className="text-sm text-slate-400">Your cosmic journey continues.</p>
         </div>
 
+        {/* Ultra-compact Horoscope Ticker */}
         {loading ? (
-          <div className="flex justify-center py-4">
-            <div className="w-5 h-5 rounded-full border-t-2 border-electric-violet animate-spin" />
-          </div>
+          <div className="h-10 w-full rounded-xl bg-white/5 animate-pulse" />
         ) : horoscope && horoscope.signs && horoscope.signs[userSign] ? (
-          <>
-            <p className="text-sm text-slate-200 leading-relaxed mb-4 line-clamp-3">
-              {horoscope.signs[userSign].prediction || "Cosmic energies are flowing. Read your full sign for details."}
-            </p>
-            <button
-              onClick={() => router.push(`/horoscope?sign=${userSign}`)}
-              className="w-full py-2.5 rounded-xl bg-electric-violet/20 hover:bg-electric-violet/30 transition-colors text-electric-violet font-semibold text-sm flex items-center justify-center gap-2"
-            >
-              Read Full Horoscope <ArrowRight size={16} />
-            </button>
-          </>
-        ) : (
-          <p className="text-sm text-slate-400 italic mb-4">
-            Your cosmic insight is currently aligning. Please check back later.
-          </p>
-        )}
-      </CosmicCard>
+          <motion.div
+            initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+            onClick={() => router.push(`/horoscope?sign=${userSign}`)}
+            className="glass-panel border-electric-violet/30 bg-electric-violet/10 rounded-xl px-3 py-2 flex items-center gap-2 cursor-pointer active:scale-95 transition-all overflow-hidden relative"
+          >
+            {/* Subtle background glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-electric-violet/10 to-transparent pointer-events-none" />
 
-      {/* Quick Actions (Glass Pills) */}
-      <div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { label: "Chat", route: "/explore", icon: MessageCircle, color: "text-blue-400", bg: "bg-blue-400/10", hideForAstro: true },
-            { label: "Call", route: "/explore", icon: Phone, color: "text-green-400", bg: "bg-green-400/10", hideForAstro: true },
-            {
-              label: "Kundli",
-              route: (birthDetails && birthDetails.date)
-                ? `/kundli/result?name=${encodeURIComponent(birthDetails.name)}&date=${birthDetails.date}&time=${birthDetails.time}&lat=${birthDetails.lat}&lng=${birthDetails.lng}&tz=${birthDetails.timezone}&place=${encodeURIComponent(birthDetails.place)}`
-                : "/kundli",
-              icon: FileText,
-              color: "text-solar-gold",
-              bg: "bg-solar-gold/10"
-            },
-            { label: "Panchang", route: "/panchang", icon: Sun, color: "text-orange-400", bg: "bg-orange-400/10" }
-          ].filter(action => !(user?.role === 'astrologer' && action.hideForAstro)).map((action, i) => (
-            <motion.button
-              key={action.label}
-              onClick={() => router.push(action.route)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + (i * 0.1) }}
-              className="flex-1 min-w-[70px] flex flex-col items-center gap-2 p-3 rounded-[2rem] glass-panel border-white/5 bg-gradient-to-b from-white/5 to-transparent active:scale-95 transition-all"
-            >
-              <div className={`p-2 rounded-xl ${action.bg} ${action.color}`}>
-                <action.icon size={18} />
-              </div>
-              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">{action.label}</span>
-            </motion.button>
-          ))}
-        </div>
+            <span className="text-solar-gold animate-pulse shrink-0"><Sparkles size={16} /></span>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-[13px] leading-snug text-white line-clamp-2">
+                <span className="font-bold">{displaySign} Insight:</span> <span className="font-normal text-slate-300 ml-1">{horoscope.signs[userSign].prediction}</span>
+              </p>
+            </div>
+            <ArrowRight size={14} className="text-electric-violet shrink-0 ml-1" />
+          </motion.div>
+        ) : null}
       </div>
+
+      {/* Quick Actions (Floating Neon Circles) */}
+      <div className="flex justify-between items-start px-1 py-2 mt-1">
+        {[
+          { label: "Chat", route: "/explore", icon: MessageCircle, color: "text-blue-400", bg: "bg-blue-500/20 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]", hideForAstro: true },
+          { label: "Call", route: "/explore", icon: Phone, color: "text-green-400", bg: "bg-green-500/20 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.15)]", hideForAstro: true },
+          {
+            label: "Kundli",
+            route: (birthDetails && birthDetails.date)
+              ? `/kundli/result?name=${encodeURIComponent(birthDetails.name)}&date=${birthDetails.date}&time=${birthDetails.time}&lat=${birthDetails.lat}&lng=${birthDetails.lng}&tz=${birthDetails.timezone}&place=${encodeURIComponent(birthDetails.place)}`
+              : "/kundli",
+            icon: Scroll,
+            color: "text-solar-gold",
+            bg: "bg-solar-gold/20 border border-solar-gold/30 shadow-[0_0_15px_rgba(251,191,36,0.15)]"
+          },
+          { label: "Panchang", route: "/panchang", icon: Calendar, color: "text-orange-400", bg: "bg-orange-500/20 border border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.15)]" },
+          { label: "Match", route: "/matchmaking", icon: Heart, color: "text-pink-400", bg: "bg-pink-500/20 border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)]" }
+        ].filter(action => !(user?.role === 'astrologer' && action.hideForAstro)).map((action, i) => (
+          <motion.button
+            key={action.label}
+            onClick={() => router.push(action.route)}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 + (i * 0.05), type: "spring", stiffness: 200 }}
+            className="flex flex-col items-center gap-1.5 active:scale-90 transition-all group w-[60px]"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${action.bg} ${action.color} backdrop-blur-md relative overflow-hidden`}>
+              {/* Glossy reflection */}
+              <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-full pointer-events-none" />
+              <action.icon size={20} strokeWidth={2} />
+            </div>
+            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{action.label}</span>
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Promotional Banner */}
+      {siteSettings?.mobilePromoEnabled && siteSettings?.mobilePromoBannerUrl && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-4"
+          onClick={() => {
+            if (siteSettings.mobilePromoLink) {
+              if (siteSettings.mobilePromoLink.startsWith('http')) {
+                window.open(siteSettings.mobilePromoLink, '_blank');
+              } else {
+                router.push(siteSettings.mobilePromoLink);
+              }
+            }
+          }}
+        >
+          <div className="w-full rounded-2xl overflow-hidden cursor-pointer shadow-lg border border-white/10 relative flex items-center justify-center bg-black/20">
+            <img
+              src={getImageUrl(siteSettings.mobilePromoBannerUrl)}
+              alt="Promotion"
+              className="w-full h-auto object-contain"
+            />
+          </div>
+        </motion.div>
+      )}
 
       {user?.role !== 'astrologer' && (
         <div className="pt-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-white flex items-center gap-2">
               <Sparkles size={16} className="text-solar-gold" />
-              Live Astrologers
+              Astrologers
             </h3>
             <button onClick={() => router.push("/explore")} className="text-xs text-electric-violet font-semibold active:scale-95 transition-all">View All</button>
           </div>
@@ -299,30 +323,36 @@ export default function Home() {
               <div className="w-5 h-5 rounded-full border-t-2 border-electric-violet animate-spin" />
             </div>
           ) : astrologers.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide px-2 -mx-2">
+            <div className="flex gap-3 overflow-x-auto pt-2 pb-2 scrollbar-hide px-2 -mx-2">
               {sortedAstrologers.slice(0, 12).map((astro) => (
-                <div 
-                  key={astro._id} 
+                <div
+                  key={astro._id}
                   onClick={() => router.push(`/astrologer?id=${astro.slug || astro._id}`)}
-                  className="flex-shrink-0 w-28 glass-panel rounded-2xl p-3 flex flex-col items-center gap-2 relative active:scale-95 transition-all cursor-pointer border-white/5 bg-gradient-to-b from-white/5 to-transparent"
+                  className="flex-shrink-0 w-20 flex flex-col items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                 >
-                  <div className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-cosmic-indigo shadow-lg ${
-                    astro.isBusy ? 'bg-amber-500' : (astro.isChatOnline || astro.isVoiceOnline || astro.isVideoOnline) ? 'bg-green-500' : 'bg-slate-500'
-                    }`} />
-                  <div className="w-14 h-14 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden text-center p-0.5">
-                    <img 
-                      src={getImageUrl(astro.image || astro.profileImage)} 
-                      alt={astro.displayName || astro.name} 
-                      className="w-full h-full rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-                      }}
-                    />
+                  <div className="relative">
+                    {astro.badgeText && (
+                      <div className="absolute -top-1.5 -right-2 bg-solar-gold text-black text-[7px] font-black uppercase px-1.5 py-[2px] rounded-full z-20 shadow-md border border-[#0F172A] whitespace-nowrap">
+                        {astro.badgeText}
+                      </div>
+                    )}
+                    <div className={`absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[#0F172A] shadow-sm z-10 ${astro.isBusy ? 'bg-amber-500' : (astro.isChatOnline || astro.isVoiceOnline || astro.isVideoOnline) ? 'bg-green-500' : 'bg-slate-500'
+                      }`} />
+                    <div className="w-16 h-16 rounded-full bg-slate-800/50 border-[2.5px] border-electric-violet/40 overflow-hidden shadow-lg p-[2px]">
+                        <img
+                        src={getImageUrl(astro.image || astro.profileImage, astro.gender)}
+                        alt={astro.displayName || astro.name}
+                        className="w-full h-full rounded-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = getImageUrl(null, astro.gender);
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="text-center w-full">
-                    <p className="text-[11px] font-bold text-white break-words w-full px-1">{astro.displayName || astro.name}</p>
-                    <p className="text-[10px] text-solar-gold font-bold">₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min</p>
+                  <div className="text-center w-full px-0.5">
+                    <p className="text-[10px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">{astro.displayName || astro.name}</p>
+                    <p className="text-[9px] text-solar-gold font-bold">₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min</p>
                   </div>
                 </div>
               ))}
@@ -341,25 +371,25 @@ export default function Home() {
               <BookOpen size={16} className="text-electric-violet" />
               Latest Wisdom
             </h3>
-            <button 
+            <button
               onClick={() => router.push('/blog')}
               className="text-xs text-electric-violet font-semibold active:scale-95 transition-all"
             >
               Read Blogs
             </button>
           </div>
-          
+
           <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
             {blogs.map((blog, i) => (
-              <motion.div 
+              <motion.div
                 key={blog._id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 + (i * 0.1) }}
                 className="flex-shrink-0 w-64"
               >
-                <CosmicCard 
-                  className="p-0 overflow-hidden border-white/5 h-full flex flex-col" 
+                <CosmicCard
+                  className="p-0 overflow-hidden border-white/5 h-full flex flex-col"
                   onClick={() => router.push(`/blog/detail?slug=${blog.slug}`)}
                 >
                   <div className="h-32 w-full bg-slate-800 relative overflow-hidden">

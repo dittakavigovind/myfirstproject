@@ -13,14 +13,16 @@ function OnlinePoojaContent() {
     const [temples, setTemples] = useState([]);
     const [loading, setLoading] = useState(true);
 
-        const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
+
         // If it's a full URL, ensure localhost is rewritten to the real network IP
         if (path.startsWith("http")) {
             return path.replace('localhost:5000', '192.168.29.133:5000');
         }
-        
+
         const normalizedPath = path.replace(/\\/g, "/");
         return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
     };
@@ -34,7 +36,35 @@ function OnlinePoojaContent() {
         try {
             const response = await api.get("/pooja/temples");
             if (response.data && response.data.success) {
-                setTemples(response.data.data);
+                const now = new Date();
+
+                const sortedTemples = response.data.data.sort((a, b) => {
+                    const getNearestClosingDate = (temple) => {
+                        if (!temple.sevas || !Array.isArray(temple.sevas) || temple.sevas.length === 0) return Infinity;
+
+                        let nearest = Infinity;
+                        for (const seva of temple.sevas) {
+                            if (seva.registrationEndDate) {
+                                const endDate = new Date(seva.registrationEndDate).getTime();
+                                if (endDate > now.getTime() && endDate < nearest) {
+                                    nearest = endDate;
+                                }
+                            }
+                        }
+                        return nearest;
+                    };
+
+                    const dateA = getNearestClosingDate(a);
+                    const dateB = getNearestClosingDate(b);
+
+                    if (dateA === dateB) {
+                        return (a.name || "").localeCompare(b.name || "");
+                    }
+
+                    return dateA - dateB;
+                });
+
+                setTemples(sortedTemples);
             }
         } catch (error) {
             console.error("Failed to fetch temples:", error);
@@ -49,7 +79,7 @@ function OnlinePoojaContent() {
         <div className="min-h-screen bg-[#0b1026] text-slate-100 pb-24 overflow-x-hidden">
             {/* Transparent Header */}
             <div className="sticky top-0 z-40 bg-transparent px-4 py-4 flex items-center gap-4 pt-[calc(var(--safe-area-inset-top)+1rem)]">
-                <button 
+                <button
                     onClick={() => router.back()}
                     className="w-10 h-10 rounded-full bg-slate-900/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white active:scale-95 transition-all"
                 >
@@ -65,63 +95,81 @@ function OnlinePoojaContent() {
                 {/* Intro Banner removed as per user request */}
 
                 {/* Temples List */}
-                <div className="grid gap-6">
+                <div className="grid grid-cols-2 gap-3">
                     {temples.length > 0 ? (
-                        temples.map((temple, idx) => (
-                            <motion.div
-                                key={temple._id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                                onClick={() => router.push(`/online-pooja/details?slug=${temple.slug}`)}
-                                className="group relative overflow-hidden rounded-[2.5rem] bg-slate-900/40 border border-white/5 hover:border-electric-violet/30 transition-all active:scale-[0.98] cursor-pointer"
-                            >
-                                <div className="aspect-[16/11] relative overflow-hidden">
-                                    <img 
-                                        src={getImageUrl(temple.images?.[0] || temple.coverImage || temple.profileImage)} 
-                                        alt={temple.name}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = "/placeholder-temple.jpg";
-                                        }}
-                                    />
-                                    {/* Subtler overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                                    
-                                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-bold text-solar-gold uppercase tracking-widest">
-                                        Verified
-                                    </div>
-                                </div>
-                                
-                                <div className="p-6">
-                                    <div className="mb-4">
-                                        <div className="flex items-center gap-1.5 text-solar-gold mb-1">
-                                            <Sparkles size={12} className="fill-solar-gold/20" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Divine Seva</span>
+                        temples.map((temple, idx) => {
+                            // Find the nearest closing date to optionally show it
+                            let nearestDate = null;
+                            if (temple.sevas && Array.isArray(temple.sevas)) {
+                                const now = new Date();
+                                const validDates = temple.sevas
+                                    .filter(s => s.registrationEndDate && new Date(s.registrationEndDate) > now)
+                                    .map(s => new Date(s.registrationEndDate).getTime());
+                                if (validDates.length > 0) nearestDate = new Date(Math.min(...validDates));
+                            }
+
+                            return (
+                                <motion.div
+                                    key={temple._id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    onClick={() => router.push(`/online-pooja/details?slug=${temple.slug}`)}
+                                    className="group relative overflow-hidden rounded-2xl bg-slate-900/40 border border-white/5 hover:border-electric-violet/30 transition-all active:scale-[0.98] cursor-pointer flex flex-col"
+                                >
+                                    <div className="aspect-square relative overflow-hidden">
+                                        <img
+                                            src={getImageUrl(temple.images?.[0] || temple.coverImage || temple.profileImage)}
+                                            alt={temple.name}
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "/placeholder-temple.jpg";
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+
+                                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                                            <div className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[8px] font-bold text-solar-gold uppercase tracking-widest self-start">
+                                                Verified
+                                            </div>
+                                            {nearestDate && (
+                                                <div className="px-2 py-0.5 rounded-full bg-red-500/80 backdrop-blur-md border border-red-500/20 text-[8px] font-bold text-white uppercase tracking-widest self-start flex items-center gap-1">
+                                                    Closes {nearestDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                                </div>
+                                            )}
                                         </div>
-                                        <h3 className="text-lg font-black text-white group-hover:text-electric-violet transition-colors leading-tight">
-                                            {temple.name}
-                                        </h3>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 text-slate-400 text-[10px] mb-6 font-bold uppercase tracking-wider">
-                                        <MapPin size={12} className="text-orange-400" />
-                                        <span>{temple.location || "Various Locations"}</span>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-5 border-t border-white/5">
-                                        <div>
-                                            <p className="text-[9px] text-slate-500 uppercase tracking-widest font-black">Offerings from</p>
-                                            <p className="text-xl font-black text-white">₹{temple.sevas?.[0]?.price || "501"}</p>
+                                    <div className="p-3 flex flex-col flex-grow">
+                                        <div className="mb-2 flex flex-col flex-grow">
+                                            <div className="flex items-center gap-1 text-solar-gold mb-1">
+                                                <Sparkles size={10} className="fill-solar-gold/20" />
+                                                <span className="text-[8px] font-black uppercase tracking-[0.15em]">Divine Seva</span>
+                                            </div>
+                                            <h3 className="text-xs font-black text-white group-hover:text-electric-violet transition-colors leading-snug line-clamp-2">
+                                                {temple.name}
+                                            </h3>
+
+                                            <div className="flex items-center gap-1 text-slate-400 text-[9px] mt-1.5 font-bold uppercase tracking-wider truncate">
+                                                <MapPin size={10} className="text-orange-400 flex-shrink-0" />
+                                                <span className="truncate">{temple.location || "Various Locations"}</span>
+                                            </div>
                                         </div>
-                                        <div className="w-10 h-10 rounded-2xl bg-electric-violet/10 flex items-center justify-center text-electric-violet group-hover:bg-electric-violet group-hover:text-white transition-all shadow-lg shadow-electric-violet/5">
-                                            <ChevronRight size={20} />
+
+                                        <div className="flex items-end justify-between pt-2 border-t border-white/5 mt-auto">
+                                            <div>
+                                                <p className="text-[8px] text-slate-500 uppercase tracking-widest font-black">From</p>
+                                                <p className="text-sm font-black text-white">₹{temple.sevas?.[0]?.price || "501"}</p>
+                                            </div>
+                                            <div className="w-6 h-6 rounded-lg bg-electric-violet/10 flex items-center justify-center text-electric-violet group-hover:bg-electric-violet group-hover:text-white transition-all shadow-lg shadow-electric-violet/5">
+                                                <ChevronRight size={14} />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        ))
+                                </motion.div>
+                            );
+                        })
                     ) : (
                         <div className="text-center py-20">
                             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 text-slate-500">

@@ -164,10 +164,10 @@ exports.getTransactions = async (req, res) => {
             .limit(limit)
             .populate({
                 path: 'referenceId',
-                populate: {
-                    path: 'astrologerId',
-                    select: 'displayName'
-                }
+                populate: [
+                    { path: 'astrologerId', select: 'displayName' },
+                    { path: 'userId', select: 'name displayName' }
+                ]
             });
 
         const total = await Transaction.countDocuments({ user: req.user.id });

@@ -149,7 +149,7 @@ export default function ChatRoomClient() {
         if (!roomId) return;
         const checkSessionStatus = async () => {
             try {
-                const { data } = await api.get(`/chat/session/${roomId}/messages`);
+                const { data } = await api.get(`/chat/session/${roomId}/metadata`);
                 if (data.success && data.session) {
                     if (['completed', 'terminated', 'failed', 'missed'].includes(data.session.status)) {
                         setIsReadOnly(true);

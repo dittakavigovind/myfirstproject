@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { getChats, getMessages, createChat, startPaidChat, getSessionMessages, getSessions, getActiveSession, endAllSessions, endSessionApi, getHistory, getAdminAstrologerSessions, deleteOldChatData, declineSession } = require('../controllers/chatController');
+const { getChats, getMessages, createChat, startPaidChat, getSessionMetadata, getSessionMessages, getSessions, getActiveSession, endAllSessions, endSessionApi, getHistory, getAdminAstrologerSessions, deleteOldChatData, declineSession } = require('../controllers/chatController');
 
 router.get('/', protect, getChats);
 router.get('/history', protect, getHistory);
+router.get('/session/:roomId/metadata', protect, getSessionMetadata);
 router.get('/session/:roomId/messages', protect, getSessionMessages);
 router.get('/astrologer/sessions', protect, getSessions);
 router.get('/active-session', protect, getActiveSession);

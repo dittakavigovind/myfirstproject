@@ -110,26 +110,32 @@ export default function PanchangPage() {
             </div>
 
             {/* Inputs Section */}
-            <div className="px-4 mt-6 space-y-3">
-                <div className="glass-panel p-4 rounded-3xl space-y-4">
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">Location</label>
-                        <LocationSearch
-                            onLocationSelect={handleLocationSelect}
-                            defaultValue={place}
-                            placeholder="Search City..."
-                        />
+            <div className="px-4 mt-6">
+                <div className="flex flex-col gap-4 pl-3 border-l border-solar-gold/20 py-1">
+                    <div className="flex-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Location</label>
+                        <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-solar-gold transition-colors">
+                            <MapPin className="text-slate-500 group-focus-within:text-solar-gold mr-2 mb-1" size={16} />
+                            <div className="flex-1 -mb-1">
+                                <LocationSearch
+                                    onLocationSelect={handleLocationSelect}
+                                    defaultValue={place}
+                                    placeholder="Search City..."
+                                    variant="underline"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">Date</label>
-                        <div className="relative">
-                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4 pointer-events-none" />
+                    <div className="flex-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Date</label>
+                        <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-solar-gold transition-colors">
+                            <Calendar className="text-slate-500 group-focus-within:text-solar-gold mr-2 mb-1" size={16} />
                             <input
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-electric-violet/20 font-medium"
+                                className="w-full bg-transparent text-white placeholder:text-white/20 focus:outline-none transition-colors text-[13px] font-medium py-1"
                             />
                         </div>
                     </div>
@@ -186,26 +192,12 @@ export default function PanchangPage() {
                                 <div className="space-y-3">
                                     <ElementCard
                                         label="Tithi"
-                                        value={data.tithi.name}
-                                        sub={data.tithi.paksha}
-                                        period={`${formatTime(data.tithi.start)} - ${formatTime(data.tithi.end)}`}
+                                        value={data.tithi?.name || data.tithi}
+                                        sub={data.tithi?.paksha}
+                                        start={formatTime(data.tithi?.start)}
+                                        end={formatTime(data.tithi?.end)}
                                         icon={Clock}
                                         color="text-blue-400"
-                                    />
-                                    <ElementCard
-                                        label="Nakshatra"
-                                        value={data.nakshatra.name}
-                                        sub={`Pada ${data.nakshatra.padha}`}
-                                        period={`${formatTime(data.nakshatra.start)} - ${formatTime(data.nakshatra.end)}`}
-                                        icon={Sparkles}
-                                        color="text-solar-gold"
-                                    />
-                                    <ElementCard
-                                        label="Yoga"
-                                        value={data.yoga.name}
-                                        period={`${formatTime(data.yoga.start)} - ${formatTime(data.yoga.end)}`}
-                                        icon={Sparkles}
-                                        color="text-purple-400"
                                     />
                                     <ElementCard
                                         label="Vara"
@@ -213,6 +205,33 @@ export default function PanchangPage() {
                                         icon={Calendar}
                                         color="text-green-400"
                                     />
+                                    <ElementCard
+                                        label="Nakshatra"
+                                        value={data.nakshatra?.name || data.nakshatra}
+                                        sub={data.nakshatra?.padha ? `Pada ${data.nakshatra.padha}` : null}
+                                        start={formatTime(data.nakshatra?.start)}
+                                        end={formatTime(data.nakshatra?.end)}
+                                        icon={Sparkles}
+                                        color="text-solar-gold"
+                                    />
+                                    <ElementCard
+                                        label="Yoga"
+                                        value={data.yoga?.name || data.yoga}
+                                        start={formatTime(data.yoga?.start)}
+                                        end={formatTime(data.yoga?.end)}
+                                        icon={Sparkles}
+                                        color="text-purple-400"
+                                    />
+                                    {data.karana && (
+                                        <ElementCard
+                                            label="Karana"
+                                            value={data.karana?.name || data.karana}
+                                            start={formatTime(data.karana?.start)}
+                                            end={formatTime(data.karana?.end)}
+                                            icon={Sparkles}
+                                            color="text-orange-400"
+                                        />
+                                    )}
                                 </div>
                             </div>
 
@@ -223,7 +242,6 @@ export default function PanchangPage() {
                                         <CheckCircle2 size={14} /> Abhijit Muhurta
                                     </h3>
                                     <WideMuhurta
-                                        label="Auspicious Window"
                                         start={data.abhijitMuhurta.start}
                                         end={data.abhijitMuhurta.end}
                                         type="good"
@@ -263,55 +281,53 @@ export default function PanchangPage() {
 
 function SunCard({ label, val, icon: Icon, color, bg }) {
     return (
-        <div className="glass-panel p-4 rounded-3xl flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${bg} ${color}`}>
-                <Icon size={18} />
+        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${bg} ${color} shrink-0`}>
+                <Icon size={16} />
             </div>
             <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</p>
-                <p className="text-sm font-black text-white">{val || "--:--"}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+                <p className="text-[13px] font-black text-white leading-tight">{val || "--:--"}</p>
             </div>
         </div>
     );
 }
 
-function ElementCard({ label, value, sub, period, icon: Icon, color }) {
+function ElementCard({ label, value, sub, start, end, icon: Icon, color }) {
     return (
-        <CosmicCard className="bg-white/5 border-white/5" noHover>
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl bg-white/5 ${color}`}>
-                        <Icon size={20} />
-                    </div>
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</h4>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg font-black text-white">{value}</span>
-                            {sub && <span className="text-[10px] px-2 py-0.5 bg-white/10 rounded-md text-slate-400 font-bold">{sub}</span>}
-                        </div>
+        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className={`p-1.5 rounded-lg bg-white/5 ${color}`}>
+                    <Icon size={16} />
+                </div>
+                <div>
+                    <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{label}</h4>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[13px] font-black text-white">{value}</span>
+                        {sub && <span className="text-[9px] px-1.5 py-0.5 bg-white/10 rounded text-slate-400 font-bold">{sub}</span>}
                     </div>
                 </div>
             </div>
-            {period && (
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Calculated Window</span>
-                    <span className="text-xs font-black text-indigo-300">{period}</span>
+            {(start && end) && (
+                <div className="text-right">
+                    <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">From {start}</div>
+                    <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">To {end}</div>
                 </div>
             )}
-        </CosmicCard>
+        </div>
     );
 }
 
 function WideMuhurta({ label, start, end, type }) {
     const isGood = type === "good";
     return (
-        <div className={`glass-panel p-4 rounded-3xl flex items-center justify-between border-l-4 ${isGood ? 'border-l-emerald-500' : 'border-l-red-500'}`}>
+        <div className={`bg-white/5 p-3 rounded-2xl flex items-center justify-between border-l-[3px] ${isGood ? 'border-l-emerald-500' : 'border-l-red-500'}`}>
             <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>
-                <h4 className="text-base font-black text-white">{isGood ? "Auspicious" : "Avoid Working"}</h4>
+                {label && <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>}
+                <h4 className="text-[13px] font-black text-white">{isGood ? "Auspicious" : "Avoid Working"}</h4>
             </div>
-            <div className={`px-4 py-2 rounded-2xl ${isGood ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'} border ${isGood ? 'border-emerald-500/20' : 'border-red-500/20'}`}>
-                <span className="text-xs font-black tabular-nums">{start} - {end}</span>
+            <div className={`px-3 py-1.5 rounded-xl ${isGood ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'} border ${isGood ? 'border-emerald-500/20' : 'border-red-500/20'}`}>
+                <span className="text-[11px] font-black tabular-nums">{start} - {end}</span>
             </div>
         </div>
     );

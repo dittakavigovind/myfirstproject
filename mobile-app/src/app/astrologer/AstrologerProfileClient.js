@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
     ChevronLeft,
     Share2,
@@ -30,31 +30,49 @@ export default function AstrologerProfileClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const astrologerId = searchParams.get("id");
-    const { user } = useAuth();
+    const { user, loading: authLoading, setUser, checkUser } = useAuth();
     const { socket } = useSocket();
     const { startChat, startCall, loading: initiating, error: consultError } = useConsultation();
     const { scrollY } = useScroll();
 
     const [isScrolled, setIsScrolled] = useState(false);
     useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        const scrollContainer = document.getElementById('main-scroll-container');
+        if (!scrollContainer) {
+            const handleScroll = () => setIsScrolled(window.scrollY > 20);
+            window.addEventListener('scroll', handleScroll);
+            return () => window.removeEventListener('scroll', handleScroll);
+        }
+
+        const handleScroll = () => setIsScrolled(scrollContainer.scrollTop > 20);
+        scrollContainer.addEventListener('scroll', handleScroll);
+        return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }, []);
 
     const [astrologer, setAstrologer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [reviews, setReviews] = useState([]);
-    const [isFollowing, setIsFollowing] = useState(false);
     const [followLoading, setFollowLoading] = useState(false);
     const [isBioExpanded, setIsBioExpanded] = useState(false);
+
+    const isFollowing = useMemo(() => {
+        if (!user || !user.following || !astrologer?._id) return false;
+        return user.following.some(f => {
+            const fId = typeof f === 'object' ? f._id : f;
+            return fId === astrologer._id;
+        });
+    }, [user, astrologer?._id]);
 
     const [refreshing, setRefreshing] = useState(false);
 
     const handleManualRefresh = async () => {
         setRefreshing(true);
-        await Promise.all([fetchAstrologer(), fetchReviews()]);
+        await Promise.all([
+            fetchAstrologer(),
+            astrologer?._id ? fetchReviews(astrologer._id) : Promise.resolve(),
+            checkUser ? checkUser() : Promise.resolve()
+        ]);
         setRefreshing(false);
     };
 
@@ -65,20 +83,23 @@ export default function AstrologerProfileClient() {
         }
         if (astrologerId) {
             fetchAstrologer();
-            fetchReviews();
-            if (user && user.role === 'user') {
-                checkIfFollowing();
-            }
         }
+    }, [astrologerId, user]);
 
-        if (socket && astrologerId) {
+    useEffect(() => {
+        const actualId = astrologer?._id;
+        if (!actualId) return;
+
+        fetchReviews(actualId);
+
+        if (socket) {
             const handleStatusChange = (data) => {
-                if (data.astrologerId === astrologerId) {
+                if (data.astrologerId === actualId) {
                     setAstrologer((prev) => prev ? { ...prev, ...data } : null);
                 }
             };
             const handleFollowerUpdate = (data) => {
-                if (data.astrologerId === astrologerId) {
+                if (data.astrologerId === actualId) {
                     setAstrologer((prev) => prev ? { ...prev, followersCount: data.followersCount } : null);
                 }
             };
@@ -91,7 +112,7 @@ export default function AstrologerProfileClient() {
                 socket.off("astrologer_follower_update", handleFollowerUpdate);
             };
         }
-    }, [astrologerId, user, socket]);
+    }, [astrologer?._id, user, socket]);
 
     const fetchAstrologer = async () => {
         try {
@@ -104,9 +125,10 @@ export default function AstrologerProfileClient() {
         }
     };
 
-    const fetchReviews = async () => {
+    const fetchReviews = async (actualId = astrologer?._id) => {
+        if (!actualId) return;
         try {
-            const { data } = await api.get(`/reviews/astrologer/${astrologerId}`);
+            const { data } = await api.get(`/reviews/astrologer/${actualId}`);
             if (data.success) {
                 setReviews(data.data);
             }
@@ -115,28 +137,33 @@ export default function AstrologerProfileClient() {
         }
     };
 
-    const checkIfFollowing = async () => {
-        try {
-            const { data } = await api.get('/users/following');
-            if (data.success && data.following) {
-                const followingIds = data.following.map(f => typeof f === 'object' && f._id ? f._id : f);
-                setIsFollowing(followingIds.includes(astrologerId));
-            }
-        } catch (e) {
-            console.error("Failed to fetch following status", e);
-        }
-    };
-
     const handleFollowToggle = async () => {
         if (!user) {
             alert("Please login to follow this astrologer.");
             return;
         }
+        const actualId = astrologer?._id;
+        if (!actualId) return;
+
         setFollowLoading(true);
         try {
-            const { data } = await api.post(`/users/follow/${astrologerId}`);
+            const { data } = await api.post(`/users/follow/${actualId}`);
             if (data.success) {
-                setIsFollowing(data.isFollowing);
+                if (setUser) {
+                    setUser(prev => {
+                        if (!prev) return prev;
+                        const following = prev.following || [];
+                        return {
+                            ...prev,
+                            following: data.isFollowing
+                                ? [...following, actualId]
+                                : following.filter(id => {
+                                    const fId = typeof id === 'object' ? id._id : id;
+                                    return fId !== actualId;
+                                })
+                        };
+                    });
+                }
                 setAstrologer(prev => ({
                     ...prev,
                     followersCount: data.isFollowing ? (prev.followersCount || 0) + 1 : Math.max(0, (prev.followersCount || 0) - 1)
@@ -171,8 +198,10 @@ export default function AstrologerProfileClient() {
         }
     };
 
-    const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
 
         // If it's a full URL, ensure localhost is rewritten to the real network IP
         if (path.startsWith("http")) {
@@ -218,7 +247,7 @@ export default function AstrologerProfileClient() {
                             className="max-w-full max-h-[85vh] rounded-[2.5rem] object-contain shadow-2xl shadow-electric-violet/30"
                             onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                                e.target.src = getImageUrl(null, astrologer?.gender);
                             }}
                         />
                     </motion.div>
@@ -286,7 +315,7 @@ export default function AstrologerProfileClient() {
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
                                         e.target.onerror = null;
-                                        e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                                        e.target.src = getImageUrl(null, astrologer?.gender);
                                     }}
                                 />
                             </div>
@@ -424,7 +453,7 @@ export default function AstrologerProfileClient() {
                                         className="w-full h-full object-cover transition-transform group-hover:scale-110"
                                         onError={(e) => {
                                             e.target.onerror = null;
-                                            e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                                            e.target.src = getImageUrl(null, astrologer?.gender);
                                         }}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">

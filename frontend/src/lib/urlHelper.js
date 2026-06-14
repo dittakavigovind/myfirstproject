@@ -10,7 +10,7 @@ const envApiUrl = process.env.NEXT_PUBLIC_API_URL; // e.g., 'http://192.168.29.1
 // Fallback logic for development vs production
 const fallbackServer = process.env.NODE_ENV === 'production'
     ? "https://api.way2astro.com"
-    : "http://localhost:5000";
+    : (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:5000` : "http://localhost:5000");
 
 let computedApiBase = envApiUrl || `${fallbackServer}/api`;
 let computedServerBase = computedApiBase.replace(/\/api$/, '');

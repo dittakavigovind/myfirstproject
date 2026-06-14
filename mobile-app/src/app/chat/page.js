@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Search, Edit, User, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import CosmicLoader from "@/components/CosmicLoader";
@@ -16,6 +17,7 @@ export default function Chat() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedPartnerId, setExpandedPartnerId] = useState(null);
+    const [toastMessage, setToastMessage] = useState("");
 
     useEffect(() => {
         if (user) {
@@ -166,8 +168,15 @@ export default function Chat() {
                                             return (
                                                 <div 
                                                     key={s._id} 
-                                                    onClick={() => s.sessionType !== 'audio' && router.push(`/chat/room?id=${s.roomId}`)}
-                                                    className={`p-3 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center transition-colors ${s.sessionType !== 'audio' ? 'active:bg-white/10 cursor-pointer' : ''}`}
+                                                    onClick={() => {
+                                                        if (s.sessionType !== 'audio') {
+                                                            router.push(`/chat/room?id=${s.roomId}`);
+                                                        } else {
+                                                            setToastMessage("Audio call history cannot be replayed.");
+                                                            setTimeout(() => setToastMessage(""), 3000);
+                                                        }
+                                                    }}
+                                                    className={`p-3 bg-white/5 border border-white/5 rounded-xl flex justify-between items-center transition-colors cursor-pointer ${s.sessionType !== 'audio' ? 'active:bg-white/10' : ''}`}
                                                 >
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-bold text-slate-200">
@@ -218,6 +227,20 @@ export default function Chat() {
             </div>
 
             <div className="h-10" />
+
+            {/* Custom Toast */}
+            <AnimatePresence>
+                {toastMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+                        animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                        exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+                        className="fixed top-1/2 left-1/2 z-50 px-6 py-4 bg-[#1e2337] border border-solar-gold/30 rounded-2xl shadow-2xl shadow-black flex items-center justify-center min-w-[280px]"
+                    >
+                        <span className="text-sm font-medium text-white text-center">{toastMessage}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -142,6 +142,14 @@ exports.updateSiteSettings = async (req, res) => {
             settings.useCustomColors = req.body.useCustomColors;
         }
 
+        // --- NEW APP BRANDING FIELDS ---
+        if (req.body.mobileAppIconUrl !== undefined) settings.mobileAppIconUrl = req.body.mobileAppIconUrl;
+        if (req.body.mobileAppSplashUrl !== undefined) settings.mobileAppSplashUrl = req.body.mobileAppSplashUrl;
+        if (req.body.mobileAppLogoUrl !== undefined) settings.mobileAppLogoUrl = req.body.mobileAppLogoUrl;
+        if (req.body.mobilePromoBannerUrl !== undefined) settings.mobilePromoBannerUrl = req.body.mobilePromoBannerUrl;
+        if (req.body.mobilePromoLink !== undefined) settings.mobilePromoLink = req.body.mobilePromoLink;
+        if (req.body.mobilePromoEnabled !== undefined) settings.mobilePromoEnabled = req.body.mobilePromoEnabled;
+
         if (req.body.customColors) {
             settings.customColors = { ...settings.customColors, ...req.body.customColors };
         }

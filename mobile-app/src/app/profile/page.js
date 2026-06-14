@@ -95,8 +95,10 @@ export default function Profile() {
         }
     };
 
-        const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
         
         // If it's a full URL, ensure localhost is rewritten to the real network IP
         if (path.startsWith("http")) {
@@ -151,7 +153,7 @@ export default function Profile() {
         { icon: MessageCircle, label: "Connect with Astrologer", color: "text-blue-400", bg: "bg-blue-400/10", route: "/explore" },
         { icon: Heart, label: "My Following", color: "text-rose-400", bg: "bg-rose-400/10", route: "/following" },
         { icon: History, label: "Order History", color: "text-orange-400", bg: "bg-orange-400/10", route: "/wallet" },
-        { icon: ShoppingBag, label: "Book a Pooja", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/explore", badge: "New" },
+        { icon: ShoppingBag, label: "Book a Pooja", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/online-pooja", badge: "New" },
         { icon: FileText, label: "My Kundli", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/kundli" },
         { icon: Sparkles, label: "Free Services", color: "text-cyan-400", bg: "bg-cyan-400/10", route: "/panchang" },
         { icon: BookOpen, label: "Astrology Blog", color: "text-electric-violet", bg: "bg-electric-violet/10", route: "/blog" },
@@ -278,9 +280,9 @@ export default function Profile() {
                             <div className="relative w-16 h-16 rounded-full p-0.5 bg-[#0b1026] shadow-xl">
                                 <div className="w-full h-full rounded-full overflow-hidden border border-white/10 bg-cosmic-indigo flex items-center justify-center">
                                     {user?.profileImage ? (
-                                        <img src={getImageUrl(user.profileImage)} alt={displayName} className="w-full h-full object-cover" />
+                                        <img src={getImageUrl(user.profileImage, user.gender)} alt={displayName} className="w-full h-full object-cover" />
                                     ) : (
-                                        <User size={24} className="text-white/50" />
+                                        <img src={getImageUrl(null, user?.gender)} alt={displayName} className="w-full h-full object-cover p-1 opacity-90" />
                                     )}
                                 </div>
                             </div>

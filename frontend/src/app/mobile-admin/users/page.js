@@ -11,6 +11,15 @@ export default function MobileUsersDashboard() {
     const [search, setSearch] = useState('');
     const [osFilter, setOsFilter] = useState('All');
 
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
+        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -128,7 +137,7 @@ export default function MobileUsersDashboard() {
                                 <tr key={user._id} className="hover:bg-slate-800/50 transition duration-150">
                                     <td className="px-6 py-5">
                                         <div className="flex items-center gap-3">
-                                            <img src={user.profileImage?.startsWith('http') ? user.profileImage : '/default-avatar.png'} alt="PFP" className="w-10 h-10 rounded-full bg-slate-800 object-cover" />
+                                            <img src={getImageUrl(user.profileImage, user.gender)} alt="PFP" className="w-10 h-10 rounded-full bg-slate-800 object-cover" />
                                             <div>
                                                 <div className="font-bold text-white capitalize">{user.name || 'Anonymous User'}</div>
                                                 <div className="text-[10px] text-slate-500 font-mono mt-0.5" title={user._id}>ID: {...user._id.substring(user._id.length-6)}</div>

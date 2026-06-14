@@ -175,7 +175,7 @@ exports.getAstrologers = async (req, res) => {
         let astrologers = await Astrologer.find(query)
             .sort({ isPinned: -1, pinOrder: 1 })
             .populate('userId', 'name role missedSessions') // Populate name, role and missedSessions from User model
-            .select('userId displayName skills languages charges rating image experienceYears isOnline isChatOnline isVoiceOnline isVideoOnline isBusy bio isActive slug location createdAt commissionRate followersCount fakeFollowers warningCount violationDetails gallery badgeText isPinned pinOrder pinStartTime pinEndTime');
+            .select('userId displayName bio isVerified verificationStatus skills languages charges rating image experienceYears gender gallery isOnline isChatOnline isVoiceOnline isVideoOnline isBusy isActive slug location createdAt badgeText isPinned pinOrder pinStartTime pinEndTime features followersCount fakeFollowers commissionRate warningCount violationDetails');
 
         // Filter out those where userId is null (User deleted) or role is NOT 'astrologer'
         astrologers = astrologers.filter(astro => astro.userId && astro.userId.role === 'astrologer');
@@ -365,38 +365,41 @@ exports.createAstrologer = async (req, res) => {
         // Let's assume the admin sends { name, email, password, ...astrologerDetails }
 
         const {
-            name, email, password, // User fields
-            displayName, bio, skills, languages, experienceYears, charges, rating, image, location, badgeText // Astro fields
+            userId, phone, // Existing User ID and optional phone for email-only users
+            displayName, bio, skills, languages, experienceYears, charges, rating, image, location, badgeText, gender // Astro fields
         } = req.body;
 
-
-        // 1. Create User
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ message: 'User with this email already exists' });
+        if (!userId) {
+            return res.status(400).json({ message: 'User ID is required to create an astrologer profile.' });
         }
 
-        // Hash password (if we had auth controller logic here, but we can rely on User model pre-save if it existed, 
-        // OR just use bcrypt here. 
-        // Wait, User model doesn't have pre-save hash logic shown in previous view. 
-        // AuthController did hashing manually.
-        const bcrypt = require('bcryptjs');
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // 1. Verify User
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-        user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role: 'astrologer', // Set specific role for astrologers
-            profileImage: image // Sync profile image from Astro details
-        });
+        // Check if user already has an astrologer profile
+        const existingProfile = await Astrologer.findOne({ userId });
+        if (existingProfile) {
+            return res.status(400).json({ message: 'An astrologer profile already exists for this user.' });
+        }
+
+        // 1.5 Update User Phone if provided (for email-only users)
+        if (phone && !(user.phone || user.mobileNumber)) {
+            // Check if phone is already used by someone else
+            const phoneExists = await User.findOne({ $or: [{ phone }, { mobileNumber: phone }] });
+            if (phoneExists) {
+                return res.status(400).json({ message: 'This mobile number is already registered to another user.' });
+            }
+            user.phone = phone;
+            await user.save();
+        }
 
         // 2. Generate Unique Slug
         const slug = displayName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
         if (await Astrologer.findOne({ $or: [{ slug }, { displayName: { $regex: new RegExp(`^${displayName}$`, 'i') } }] })) {
-            await User.findByIdAndDelete(user._id); // Rollback User creation
             return res.status(400).json({ message: 'Display Name is already taken or too similar to an existing one. Please choose a different one.' });
         }
 
@@ -405,8 +408,6 @@ exports.createAstrologer = async (req, res) => {
         const videoC = parseFloat(charges?.videoPerMinute) || 0;
 
         if ((chatC > 0 && chatC < 15) || (callC > 0 && callC < 15) || (videoC > 0 && videoC < 15)) {
-            // Rollback User creation if validation fails
-            await User.findByIdAndDelete(user._id);
             return res.status(400).json({ message: 'Charges must be at least 15' });
         }
 
@@ -418,6 +419,7 @@ exports.createAstrologer = async (req, res) => {
             skills,
             languages,
             experienceYears,
+            gender,
             charges: {
                 chatPerMinute: chatC,
                 callPerMinute: callC,
@@ -451,7 +453,7 @@ exports.createAstrologer = async (req, res) => {
  */
 exports.updateAstrologer = async (req, res) => {
     try {
-        const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery, location, badgeText } = req.body;
+        const { displayName, bio, skills, languages, experienceYears, charges, rating, isOnline, image, isActive, gallery, location, badgeText, gender } = req.body;
 
         const astrologer = await Astrologer.findById(req.params.id);
         if (!astrologer) {
@@ -471,7 +473,8 @@ exports.updateAstrologer = async (req, res) => {
         if (skills) astrologer.skills = skills;
         if (languages) astrologer.languages = languages;
         if (location) astrologer.location = location;
-        if (experienceYears) astrologer.experienceYears = experienceYears;
+        if (experienceYears !== undefined) astrologer.experienceYears = experienceYears;
+        if (gender) astrologer.gender = gender;
         if (charges) {
             const chatC = parseFloat(charges.chatPerMinute) || 0;
             const callC = parseFloat(charges.callPerMinute) || 0;
@@ -540,6 +543,18 @@ exports.updateAstrologer = async (req, res) => {
 
         // Trigger Cloudflare deployment to reflect astrologer update in static frontend
         triggerDeployment(`Update Astrologer (Admin): ${astrologer.displayName}`);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('astrologer_status_changed', {
+                astrologerId: astrologer._id.toString(),
+                isOnline: astrologer.isOnline,
+                isChatOnline: astrologer.isChatOnline,
+                isVoiceOnline: astrologer.isVoiceOnline,
+                isVideoOnline: astrologer.isVideoOnline,
+                isBusy: false 
+            });
+        }
 
         res.json({ success: true, data: astrologer });
     } catch (error) {
@@ -883,6 +898,18 @@ exports.toggleStatus = async (req, res) => {
             isVoiceOnline: astrologer.isVoiceOnline,
             isVideoOnline: astrologer.isVideoOnline
         });
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('astrologer_status_changed', {
+                astrologerId: astrologer._id.toString(),
+                isOnline: astrologer.isOnline,
+                isChatOnline: astrologer.isChatOnline,
+                isVoiceOnline: astrologer.isVoiceOnline,
+                isVideoOnline: astrologer.isVideoOnline,
+                isBusy: false 
+            });
+        }
 
         res.json({ success: true, data: astrologer });
 

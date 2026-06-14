@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, MapPin, Sparkles, Phone, MessageCircle, Calendar, ShieldCheck, CheckCircle2, ChevronRight, Info } from "lucide-react";
+import { ArrowLeft, MapPin, Sparkles, Phone, MessageCircle, Calendar, ShieldCheck, CheckCircle2, ChevronRight, Info, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/lib/api";
 import CosmicCard from "@/components/CosmicCard";
@@ -15,9 +15,16 @@ function PoojaDetailContent() {
     
     const [temple, setTemple] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [currentTime, setCurrentTime] = useState(null);
 
-        const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    useEffect(() => {
+        setCurrentTime(new Date());
+    }, []);
+
+        const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
         
         // If it's a full URL, ensure localhost is rewritten to the real network IP
         if (path.startsWith("http")) {
@@ -58,7 +65,7 @@ function PoojaDetailContent() {
     const displayImage = temple.images?.[0] || temple.coverImage || temple.profileImage;
 
     return (
-        <div className="min-h-screen bg-[#0b1026] text-slate-100 pb-32 overflow-x-hidden">
+        <div className="min-h-screen bg-[#0b1026] text-slate-100 pb-10 overflow-x-hidden">
             {/* Immersive Header */}
             <div className="relative h-72 w-full overflow-hidden">
                 <img 
@@ -78,6 +85,25 @@ function PoojaDetailContent() {
                 >
                     <ArrowLeft size={20} />
                 </button>
+                <button 
+                    onClick={() => {
+                        const shareDomain = 'https://way2astro.com';
+                        const url = `${shareDomain}/online-pooja/details/${temple.slug}/`;
+                        const text = `Check out this Online Pooja: ${temple.name} at Way2Astro\n\n${url}`;
+                        if (navigator.share) {
+                            navigator.share({
+                                title: temple.name,
+                                text: text,
+                                url: url
+                            }).catch(console.error);
+                        } else {
+                            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                        }
+                    }}
+                    className="absolute top-[calc(var(--safe-area-inset-top)+1rem)] right-4 w-10 h-10 rounded-full bg-slate-900/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white z-20 active:scale-95 transition-all"
+                >
+                    <Share2 size={18} />
+                </button>
             </div>
 
             <div className="px-6 -mt-10 relative z-10 space-y-8">
@@ -88,9 +114,25 @@ function PoojaDetailContent() {
                         Sacred Temple
                     </div>
                     <h1 className="text-2xl font-black text-white leading-tight">{temple.name}</h1>
-                    <div className="flex items-center gap-2 text-slate-400 text-xs">
-                        <MapPin size={14} className="text-orange-400" />
-                        <span className="font-medium tracking-wide">{temple.location || "Various Locations"}</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-slate-400 text-xs">
+                            <MapPin size={14} className="text-orange-400" />
+                            <span className="font-medium tracking-wide">{temple.location || "Various Locations"}</span>
+                        </div>
+                        {temple.sevas && temple.sevas.length > 0 && temple.sevas.every(seva => currentTime && seva.registrationEndDate && currentTime > new Date(seva.registrationEndDate)) ? (
+                            <div className="px-5 py-2.5 rounded-xl bg-red-500/20 text-red-400 text-[11px] font-black uppercase tracking-[0.1em] border border-red-500/30">
+                                Closed
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={() => {
+                                    document.getElementById('sevas-section')?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="px-5 py-2.5 rounded-xl bg-electric-violet text-white text-[11px] font-black uppercase tracking-[0.1em] shadow-lg shadow-electric-violet/20 active:scale-95 transition-all"
+                            >
+                                Book
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -129,7 +171,7 @@ function PoojaDetailContent() {
                 </section>
 
                 {/* Available Sevas List */}
-                <section className="space-y-4 pb-10">
+                <section id="sevas-section" className="space-y-4 pb-10">
                     <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                         <Calendar size={14} className="text-electric-violet" />
                         Available Poojas
@@ -161,12 +203,18 @@ function PoojaDetailContent() {
                                                         <span className="text-[10px] text-slate-500 line-through">₹{seva.originalPrice}</span>
                                                     )}
                                                 </div>
-                                                <button 
-                                                    onClick={() => handleBooking(seva)}
-                                                    className="px-5 py-2.5 rounded-xl bg-electric-violet text-white text-[11px] font-black uppercase tracking-[0.1em] shadow-lg shadow-electric-violet/20 active:scale-95 transition-all"
-                                                >
-                                                    Book Now
-                                                </button>
+                                                {currentTime && seva.registrationEndDate && currentTime > new Date(seva.registrationEndDate) ? (
+                                                    <div className="px-5 py-2.5 rounded-xl bg-red-500/20 text-red-400 text-[11px] font-black uppercase tracking-[0.1em] border border-red-500/30">
+                                                        Closed
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => handleBooking(seva)}
+                                                        className="px-5 py-2.5 rounded-xl bg-electric-violet text-white text-[11px] font-black uppercase tracking-[0.1em] shadow-lg shadow-electric-violet/20 active:scale-95 transition-all"
+                                                    >
+                                                        Book Now
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </CosmicCard>
@@ -181,25 +229,7 @@ function PoojaDetailContent() {
                 </section>
             </div>
 
-            {/* Bottom Contact Sticky */}
-             <div className="fixed bottom-0 left-0 right-0 p-6 z-40 bg-gradient-to-t from-[#0b1026] via-[#0b1026]/95 to-transparent pointer-events-none pb-[calc(var(--safe-area-inset-bottom)+1.5rem)]">
-                <div className="flex gap-3 pointer-events-auto max-w-lg mx-auto">
-                    <button 
-                        onClick={() => window.open("tel:+918074902166", "_self")}
-                        className="flex-1 flex items-center justify-center gap-2 h-14 rounded-2xl glass-panel border-white/10 bg-white/5 text-white active:scale-95 transition-all text-sm font-bold shadow-xl backdrop-blur-xl"
-                    >
-                        <Phone size={18} className="text-blue-400" />
-                        Enquire
-                    </button>
-                    <button 
-                        onClick={() => window.open("https://wa.me/918074902166", "_blank")}
-                        className="flex-[2] flex items-center justify-center gap-2 h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white active:scale-95 transition-all text-sm font-black uppercase tracking-wider shadow-xl shadow-emerald-500/20"
-                    >
-                        <MessageCircle size={18} />
-                        WhatsApp Concierge
-                    </button>
-                </div>
-            </div>
+
         </div>
     );
 }

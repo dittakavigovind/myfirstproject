@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import CosmicCard from "@/components/CosmicCard";
+import FilterModal from "@/components/FilterModal";
 import { Search, Filter, Award, MessageCircle, Phone, X, Star, Check } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -20,9 +21,18 @@ export default function Explore() {
     const [selectedFilter, setSelectedFilter] = useState("All");
     const [followingIds, setFollowingIds] = useState([]);
     const [sessionCounts, setSessionCounts] = useState({});
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [advancedFilters, setAdvancedFilters] = useState({
+        sortBy: "Popularity",
+        skills: [],
+        languages: [],
+        genders: []
+    });
 
-        const getImageUrl = (path) => {
-        if (!path) return "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
         
         // If it's a full URL, ensure localhost is rewritten to the real network IP
         if (path.startsWith("http")) {
@@ -107,8 +117,33 @@ export default function Explore() {
         }
     };
 
+    const availableSkills = useMemo(() => {
+        const skills = new Set();
+        astrologers.forEach(astro => {
+            if (Array.isArray(astro.skills)) {
+                astro.skills.forEach(s => skills.add(s));
+            } else if (astro.skills) {
+                skills.add(astro.skills);
+            }
+        });
+        return Array.from(skills).sort();
+    }, [astrologers]);
+
+    const availableLanguages = useMemo(() => {
+        const langs = new Set();
+        astrologers.forEach(astro => {
+            if (Array.isArray(astro.languages)) {
+                astro.languages.forEach(l => langs.add(l));
+            } else if (astro.languages) {
+                langs.add(astro.languages);
+            }
+        });
+        return Array.from(langs).sort();
+    }, [astrologers]);
+
     const filteredAstrologers = useMemo(() => {
         return astrologers.filter(astro => {
+            // Search Query
             const nameMatch = (astro.displayName || astro.name || "").toLowerCase().includes(searchQuery.toLowerCase());
             const skillsMatch = Array.isArray(astro.skills) 
                 ? astro.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -118,71 +153,130 @@ export default function Explore() {
                 : (astro.languages || "").toLowerCase().includes(searchQuery.toLowerCase());
 
             const matchesSearch = nameMatch || skillsMatch || languageMatch;
+            if (!matchesSearch) return false;
 
-            if (selectedFilter === "All") return matchesSearch;
+            // Specialty Pills (selectedFilter)
+            if (selectedFilter !== "All") {
+                const matchesPill = Array.isArray(astro.skills)
+                    ? astro.skills.some(s => s.toLowerCase() === selectedFilter.toLowerCase())
+                    : (astro.skills || "").toLowerCase() === selectedFilter.toLowerCase();
+                if (!matchesPill) return false;
+            }
             
-            const matchesFilter = Array.isArray(astro.skills)
-                ? astro.skills.some(s => s.toLowerCase() === selectedFilter.toLowerCase())
-                : (astro.skills || "").toLowerCase() === selectedFilter.toLowerCase();
+            // Advanced Filters
+            if (advancedFilters.skills && advancedFilters.skills.length > 0) {
+                const astroSkills = Array.isArray(astro.skills) ? astro.skills : [astro.skills].filter(Boolean);
+                const hasSkill = advancedFilters.skills.some(skill => astroSkills.includes(skill));
+                if (!hasSkill) return false;
+            }
             
-            return matchesSearch && matchesFilter;
+            if (advancedFilters.languages && advancedFilters.languages.length > 0) {
+                const astroLangs = Array.isArray(astro.languages) ? astro.languages : [astro.languages].filter(Boolean);
+                const hasLang = advancedFilters.languages.some(lang => astroLangs.includes(lang));
+                if (!hasLang) return false;
+            }
+            
+            if (advancedFilters.genders && advancedFilters.genders.length > 0) {
+                const astroGender = astro.gender || "Other";
+                if (!advancedFilters.genders.includes(astroGender)) return false;
+            }
+
+            return true;
         });
-    }, [astrologers, searchQuery, selectedFilter]);
+    }, [astrologers, searchQuery, selectedFilter, advancedFilters]);
 
     const sortedAstrologers = useMemo(() => {
-        return [...filteredAstrologers].sort((a, b) => {
-            const isOnline = (astro) => astro.isChatOnline || astro.isVoiceOnline;
-            const isFollowing = (astro) => followingIds.includes(astro._id || astro.id);
-            const getSessionCount = (astro) => sessionCounts[astro._id || astro.id] || 0;
-            const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
-            const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
+        let sorted = [...filteredAstrologers];
+        
+        if (advancedFilters.sortBy === "Popularity") {
+            sorted.sort((a, b) => {
+                const isOnline = (astro) => astro.isChatOnline || astro.isVoiceOnline;
+                const isFollowing = (astro) => followingIds.includes(astro._id || astro.id);
+                const getSessionCount = (astro) => sessionCounts[astro._id || astro.id] || 0;
+                const getCreatedTime = (astro) => astro.createdAt ? new Date(astro.createdAt).getTime() : 0;
+                const getFollowingIndex = (astro) => followingIds.indexOf(astro._id || astro.id);
 
-            const now = new Date();
-            const isCurrentlyPinned = (astro) => {
-                if (!astro.isPinned) return false;
-                if (astro.pinStartTime && astro.pinEndTime) {
-                    return new Date(astro.pinStartTime) <= now && new Date(astro.pinEndTime) >= now;
+                const now = new Date();
+                const isCurrentlyPinned = (astro) => {
+                    if (!astro.isPinned) return false;
+                    if (astro.pinStartTime && astro.pinEndTime) {
+                        return new Date(astro.pinStartTime) <= now && new Date(astro.pinEndTime) >= now;
+                    }
+                    return true;
+                };
+
+                const aPinned = isCurrentlyPinned(a);
+                const bPinned = isCurrentlyPinned(b);
+
+                // Tier 0: Pinned
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                if (aPinned && bPinned) {
+                    return (a.pinOrder || 0) - (b.pinOrder || 0);
                 }
-                return true;
-            };
 
-            const aPinned = isCurrentlyPinned(a);
-            const bPinned = isCurrentlyPinned(b);
+                // Tier 1: Online
+                if (isOnline(a) && !isOnline(b)) return -1;
+                if (!isOnline(a) && isOnline(b)) return 1;
+                if (isOnline(a) && isOnline(b)) {
+                    return getCreatedTime(b) - getCreatedTime(a);
+                }
 
-            // Tier 0: Pinned
-            if (aPinned && !bPinned) return -1;
-            if (!aPinned && bPinned) return 1;
-            if (aPinned && bPinned) {
-                return (a.pinOrder || 0) - (b.pinOrder || 0);
-            }
+                // Tier 2: Following
+                if (isFollowing(a) && !isFollowing(b)) return -1;
+                if (!isFollowing(a) && isFollowing(b)) return 1;
+                if (isFollowing(a) && isFollowing(b)) {
+                    return getFollowingIndex(b) - getFollowingIndex(a);
+                }
 
-            // Tier 1: Online
-            if (isOnline(a) && !isOnline(b)) return -1;
-            if (!isOnline(a) && isOnline(b)) return 1;
-            if (isOnline(a) && isOnline(b)) {
+                // Tier 3: Most interacted
+                const sessionsA = getSessionCount(a);
+                const sessionsB = getSessionCount(b);
+                if (sessionsA > 0 || sessionsB > 0) {
+                    if (sessionsA !== sessionsB) {
+                        return sessionsB - sessionsA;
+                    }
+                }
+
+                // Tier 4: Offline
                 return getCreatedTime(b) - getCreatedTime(a);
-            }
+            });
+        } else {
+            sorted.sort((a, b) => {
+                const getPrice = (astro) => astro.charges?.chatPerMinute || astro.chatRate || 25;
+                const getExp = (astro) => astro.experienceYears || astro.experience || 0;
+                const getOrders = (astro) => {
+                    if (typeof astro.orders === 'number') return astro.orders;
+                    if (typeof astro.orders === 'string') {
+                        const num = parseInt(astro.orders.replace(/[^0-9]/g, ''));
+                        return isNaN(num) ? 0 : num;
+                    }
+                    return 0;
+                };
+                const getRating = (astro) => astro.rating || 4.5;
 
-            // Tier 2: Following (Sorted by last following to oldest following - which means reverse following index)
-            if (isFollowing(a) && !isFollowing(b)) return -1;
-            if (!isFollowing(a) && isFollowing(b)) return 1;
-            if (isFollowing(a) && isFollowing(b)) {
-                return getFollowingIndex(b) - getFollowingIndex(a);
-            }
-
-            // Tier 3: Most interacted (session count)
-            const sessionsA = getSessionCount(a);
-            const sessionsB = getSessionCount(b);
-            if (sessionsA > 0 || sessionsB > 0) {
-                if (sessionsA !== sessionsB) {
-                    return sessionsB - sessionsA;
+                switch (advancedFilters.sortBy) {
+                    case "Experience: High to Low":
+                        return getExp(b) - getExp(a);
+                    case "Experience: Low to High":
+                        return getExp(a) - getExp(b);
+                    case "Orders: High to Low":
+                        return getOrders(b) - getOrders(a);
+                    case "Orders: Low to High":
+                        return getOrders(a) - getOrders(b);
+                    case "Price: High to Low":
+                        return getPrice(b) - getPrice(a);
+                    case "Price: Low to High":
+                        return getPrice(a) - getPrice(b);
+                    case "Rating: High to Low":
+                        return getRating(b) - getRating(a);
+                    default:
+                        return 0;
                 }
-            }
-
-            // Tier 4: Offline (Everyone else)
-            return getCreatedTime(b) - getCreatedTime(a);
-        });
-    }, [filteredAstrologers, followingIds, sessionCounts]);
+            });
+        }
+        return sorted;
+    }, [filteredAstrologers, followingIds, sessionCounts, advancedFilters.sortBy]);
 
     return (
         <>
@@ -214,10 +308,13 @@ export default function Explore() {
                     )}
                 </div>
                 <button 
-                    onClick={() => {}} // Could open a more detailed filter modal
-                    className="glass-panel rounded-xl px-4 flex items-center justify-center text-electric-violet border border-white/5"
+                    onClick={() => setIsFilterModalOpen(true)}
+                    className="glass-panel rounded-xl px-4 flex items-center justify-center text-electric-violet border border-white/5 relative"
                 >
                     <Filter size={18} />
+                    {(advancedFilters.skills.length > 0 || advancedFilters.languages.length > 0 || advancedFilters.genders.length > 0 || advancedFilters.sortBy !== "Popularity") && (
+                        <div className="absolute top-2 right-3 w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
+                    )}
                 </button>
             </div>
 
@@ -239,7 +336,7 @@ export default function Explore() {
             </div>
 
             {/* Astrologer List */}
-            <div className="space-y-5">
+            <div className="space-y-3">
                 {loading ? (
                     <div className="text-center py-20 text-slate-400 flex flex-col items-center gap-4">
                         <div className="w-10 h-10 rounded-full border-2 border-slate-800 border-t-electric-violet animate-spin" />
@@ -250,7 +347,7 @@ export default function Explore() {
                         <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 text-slate-600">
                             <Search size={32} />
                         </div>
-                        <p className="text-sm font-bold text-slate-300 tracking-wide">No results for "{searchQuery}"</p>
+                        <p className="text-sm font-bold text-slate-300 tracking-wide">No results found</p>
                         <p className="text-xs text-slate-500 mt-2">Try adjusting your search or filters.</p>
                     </div>
                 ) : (
@@ -258,7 +355,7 @@ export default function Explore() {
                         <CosmicCard
                             key={astro._id || i}
                             delay={0.1 + (i * 0.05)}
-                            className="px-4 py-3.5 transition-transform active:scale-[0.98] border-white/5 hover:border-white/10 relative overflow-hidden"
+                            className="p-3 transition-transform active:scale-[0.98] border-white/5 hover:border-white/10 relative overflow-hidden"
                             onClick={() => router.push(`/astrologer?id=${astro._id || astro.id || i}`)}
                         >
                             {astro.badgeText && (
@@ -266,15 +363,15 @@ export default function Explore() {
                                     className="bg-solar-gold text-black shadow-md border-y border-black/10 flex items-center justify-center font-bold tracking-wide z-20 pointer-events-none"
                                     style={{
                                         position: 'absolute',
-                                        top: '16px',
-                                        left: '-32px',
-                                        width: '120px',
+                                        top: '10px',
+                                        left: '-34px',
+                                        width: '100px',
                                         transform: 'rotate(-45deg)',
                                         padding: '2px 0'
                                     }}
                                 >
                                     <span style={{ 
-                                        fontSize: '10px',
+                                        fontSize: '8px',
                                         transform: astro.badgeText.length > 8 ? 'scale(0.75)' : 'scale(0.9)',
                                         lineHeight: 1,
                                         whiteSpace: 'nowrap'
@@ -283,90 +380,91 @@ export default function Explore() {
                                     </span>
                                 </div>
                             )}
-                            <div className="flex gap-3 relative z-0">
+                            <div className="flex gap-2.5 relative z-0 items-center">
                                 {/* Left Column: Avatar & Stars */}
-                                <div className="flex flex-col items-center flex-shrink-0 w-20">
-                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 p-0.5 relative">
+                                <div className="flex flex-col items-center flex-shrink-0 w-[60px]">
+                                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 p-0.5 relative">
                                         <img 
-                                            src={getImageUrl(astro.image || astro.profileImage)} 
+                                            src={getImageUrl(astro.image || astro.profileImage, astro.gender)} 
                                             alt={astro.displayName || astro.name} 
                                             className="w-full h-full rounded-full object-cover"
                                             onError={(e) => {
                                                 e.target.onerror = null;
-                                                e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                                                e.target.src = getImageUrl(null, astro.gender);
                                             }}
                                         />
                                     </div>
-                                    <div className="flex items-center mt-2 gap-[1px]">
+                                    <div className="flex items-center mt-1.5 gap-[1px]">
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} size={10} className={i < Math.floor(astro.rating || 4.5) ? "text-solar-gold fill-solar-gold" : "text-slate-600 fill-slate-600"} />
+                                            <Star key={i} size={8} className={i < Math.floor(astro.rating || 4.5) ? "text-solar-gold fill-solar-gold" : "text-slate-600 fill-slate-600"} />
                                         ))}
                                     </div>
-                                    <p className="text-[9px] text-slate-500 mt-1 font-medium">{astro.orders || '5k+'} orders</p>
+                                    <p className="text-[8px] text-slate-500 mt-0.5 font-medium">{astro.orders || '5k+'} orders</p>
                                 </div>
 
-                                {/* Info */}
-                                <div className="flex-1 min-w-0 pr-1 flex flex-col justify-center py-1">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="text-white font-bold text-base truncate">{astro.displayName || astro.name}</h3>
-                                        <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg flex-shrink-0 mt-0.5">
-                                            <Check size={10} strokeWidth={3} className="text-white" />
+                                {/* Center Info */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                    <div className="flex justify-start items-center gap-1.5">
+                                        <h3 className="text-white font-bold text-[13px] truncate">{astro.displayName || astro.name}</h3>
+                                        <div className="w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                                            <Check size={8} strokeWidth={3} className="text-white" />
                                         </div>
                                     </div>
-                                    <p className="text-[11px] text-slate-400 mt-1 truncate">
+                                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
                                         {Array.isArray(astro.skills) ? astro.skills.slice(0, 3).join(", ") : (astro.skills || "Expert")}
                                     </p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
                                         {Array.isArray(astro.languages) ? astro.languages.join(", ") : "English, Hindi, Telugu"}
                                     </p>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">Exp- {astro.experienceYears || astro.experience || "5"} Years</p>
-                                    <div className="mt-1.5 flex items-center gap-1.5">
-                                        <span className="text-slate-500 line-through text-[11px]">₹{Math.floor((astro.charges?.chatPerMinute || astro.chatRate || 25) * 1.5)}</span>
-                                        <span className="text-rose-400 font-bold text-[13px]">₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min</span>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">Exp: {astro.experienceYears || astro.experience || "5"} Yrs</p>
+                                    
+                                    <div className="mt-1 flex items-baseline gap-1.5">
+                                        <span className="text-slate-500 line-through text-[10px]">₹{Math.floor((astro.charges?.chatPerMinute || astro.chatRate || 25) * 1.5)}</span>
+                                        <span className="text-rose-400 font-bold text-[12px]">₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min</span>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Bottom Actions */}
-                            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/5">
-                                {user?.globalFeatures?.chatEnabled !== false && astro?.features?.chatEnabled !== false && (
-                                    <button 
-                                        disabled={initiating || !astro.isChatOnline || astro.isBusy}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            startChat(astro._id, astro.charges?.chatPerMinute || astro.chatRate || 25);
-                                        }}
-                                        className={`w-full py-2 rounded-lg border flex flex-row items-center justify-center gap-1.5 transition-all ${
-                                            (astro.isChatOnline && !astro.isBusy) 
-                                                ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10 active:scale-95' 
-                                                : 'border-white/10 text-slate-400 bg-white/5'
-                                        }`}
-                                    >
-                                        <span className="text-[11px] font-bold">Chat</span>
-                                        <span className={`text-[10px] font-medium ${astro.isBusy ? 'text-amber-400' : (!astro.isChatOnline ? 'text-slate-400' : '')}`}>
-                                            • {astro.isBusy ? 'Busy' : (!astro.isChatOnline ? 'Offline' : 'Available')}
-                                        </span>
-                                    </button>
-                                )}
-                                {user?.globalFeatures?.voiceEnabled !== false && astro?.features?.voiceEnabled !== false && (
-                                    <button 
-                                        disabled={initiating || !astro.isVoiceOnline || astro.isBusy}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            startCall(astro._id, astro.charges?.callPerMinute || astro.callRate || 25);
-                                        }}
-                                        className={`w-full py-2 rounded-lg border flex flex-row items-center justify-center gap-1.5 transition-all ${
-                                            (astro.isVoiceOnline && !astro.isBusy) 
-                                                ? 'border-blue-500/50 text-blue-400 bg-blue-500/10 active:scale-95' 
-                                                : 'border-white/10 text-slate-400 bg-white/5'
-                                        }`}
-                                    >
-                                        <span className="text-[11px] font-bold">Call</span>
-                                        <span className={`text-[10px] font-medium ${astro.isBusy ? 'text-amber-400' : (!astro.isVoiceOnline ? 'text-slate-400' : '')}`}>
-                                            • {astro.isBusy ? 'Busy' : (!astro.isVoiceOnline ? 'Offline' : 'Available')}
-                                        </span>
-                                    </button>
-                                )}
+                                {/* Right Side Actions */}
+                                <div className="flex flex-col items-end justify-center flex-shrink-0 gap-2">
+                                    {user?.globalFeatures?.chatEnabled !== false && astro?.features?.chatEnabled !== false && (
+                                        <button 
+                                            disabled={initiating || !astro.isChatOnline || astro.isBusy}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                startChat(astro._id, astro.charges?.chatPerMinute || astro.chatRate || 25);
+                                            }}
+                                            className={`w-[68px] py-1.5 rounded-lg border flex flex-col items-center justify-center transition-all ${
+                                                (astro.isChatOnline && !astro.isBusy) 
+                                                    ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10 active:scale-95' 
+                                                    : 'border-white/10 text-slate-400 bg-white/5'
+                                            }`}
+                                        >
+                                            <span className="text-[10px] font-bold leading-none mb-1">Chat</span>
+                                            <span className={`text-[8px] leading-none ${astro.isBusy ? 'text-amber-400' : (!astro.isChatOnline ? 'text-slate-400' : '')}`}>
+                                                {astro.isBusy ? 'Busy' : (!astro.isChatOnline ? 'Offline' : 'Online')}
+                                            </span>
+                                        </button>
+                                    )}
+                                    {user?.globalFeatures?.voiceEnabled !== false && astro?.features?.voiceEnabled !== false && (
+                                        <button 
+                                            disabled={initiating || !astro.isVoiceOnline || astro.isBusy}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                startCall(astro._id, astro.charges?.callPerMinute || astro.callRate || 25);
+                                            }}
+                                            className={`w-[68px] py-1.5 rounded-lg border flex flex-col items-center justify-center transition-all ${
+                                                (astro.isVoiceOnline && !astro.isBusy) 
+                                                    ? 'border-blue-500/50 text-blue-400 bg-blue-500/10 active:scale-95' 
+                                                    : 'border-white/10 text-slate-400 bg-white/5'
+                                            }`}
+                                        >
+                                            <span className="text-[10px] font-bold leading-none mb-1">Call</span>
+                                            <span className={`text-[8px] leading-none ${astro.isBusy ? 'text-amber-400' : (!astro.isVoiceOnline ? 'text-slate-400' : '')}`}>
+                                                {astro.isBusy ? 'Busy' : (!astro.isVoiceOnline ? 'Offline' : 'Online')}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </CosmicCard>
                     ))
@@ -375,6 +473,18 @@ export default function Explore() {
 
             <div className="h-20" />
         </div>
+
+        <FilterModal 
+            isOpen={isFilterModalOpen}
+            onClose={() => setIsFilterModalOpen(false)}
+            onApply={(newFilters) => {
+                setAdvancedFilters(newFilters);
+                setIsFilterModalOpen(false);
+            }}
+            initialFilters={advancedFilters}
+            availableSkills={availableSkills}
+            availableLanguages={availableLanguages}
+        />
         </>
     );
 }

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.way2astro.mobile',
-  appName: 'way2astro-mobile',
+  appName: 'Way2Astro',
   webDir: 'out',
   server: {
     androidScheme: 'http',
@@ -16,6 +16,16 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: "native",
       style: "dark",
+    },
+    SplashScreen: {
+      launchShowDuration: 500,
+      launchAutoHide: true,
+      backgroundColor: "#ffffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
     },
   },
 };

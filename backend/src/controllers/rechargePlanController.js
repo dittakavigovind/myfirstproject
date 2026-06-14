@@ -6,7 +6,7 @@ const PricingConfig = require('../models/PricingConfig');
 // @access  Public
 exports.getActivePlans = async (req, res) => {
     try {
-        const plans = await RechargePlan.find({ isActive: true }).sort({ amount: 1 });
+        const plans = await RechargePlan.find({ isActive: true }).sort({ sortOrder: 1, amount: 1 });
         const config = await PricingConfig.findOne() || {};
         const gst = config.gst || { enabled: false, percentage: 18 };
         res.json({ success: true, data: plans, gst });
@@ -21,7 +21,7 @@ exports.getActivePlans = async (req, res) => {
 // @access  Private/Admin
 exports.getAllPlans = async (req, res) => {
     try {
-        const plans = await RechargePlan.find().sort({ amount: 1 });
+        const plans = await RechargePlan.find().sort({ sortOrder: 1, amount: 1 });
         res.json({ success: true, data: plans });
     } catch (error) {
         console.error('Get All Plans Error:', error);
@@ -75,6 +75,29 @@ exports.deletePlan = async (req, res) => {
         res.json({ success: true, message: 'Plan deleted successfully' });
     } catch (error) {
         console.error('Delete Plan Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Reorder recharge plans
+// @route   PUT /api/admin/recharge-plans/reorder
+// @access  Private/Admin
+exports.reorderPlans = async (req, res) => {
+    try {
+        const { planIds } = req.body;
+        if (!planIds || !Array.isArray(planIds)) {
+            return res.status(400).json({ success: false, message: 'Invalid payload' });
+        }
+        
+        // Update each plan with its new index
+        const updatePromises = planIds.map((id, index) => {
+            return RechargePlan.findByIdAndUpdate(id, { sortOrder: index });
+        });
+        
+        await Promise.all(updatePromises);
+        res.json({ success: true, message: 'Plans reordered successfully' });
+    } catch (error) {
+        console.error('Reorder Plans Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

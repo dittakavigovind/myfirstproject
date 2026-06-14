@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 import api from '../lib/api';
 
-export default function LocationSearch({ onLocationSelect, placeholder = "Search City...", darkMode = true, showIcon = true, showLeftIcon = false, defaultValue = "", restrictCountry = null }) {
+export default function LocationSearch({ onLocationSelect, placeholder = "Search City...", darkMode = true, showIcon = true, showLeftIcon = false, defaultValue = "", restrictCountry = null, variant = "default" }) {
     const [query, setQuery] = useState(defaultValue);
     const [suggestions, setSuggestions] = useState([]);
     const [searching, setSearching] = useState(false);
@@ -144,11 +144,13 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     };
 
     // Adjusted for mobile app's dark theme by default
-    const inputBaseHeader = darkMode
+    const inputBaseHeader = variant === "underline" 
+        ? `w-full ${showIcon ? 'pr-8' : 'pr-0'} py-1 bg-transparent text-white placeholder:text-white/20 focus:outline-none transition-colors text-[13px]`
+        : darkMode
         ? `w-full ${showIcon ? 'pr-12' : 'pr-3'} py-3.5 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-electric-violet/20 text-white placeholder-slate-500 focus:outline-none transition-all duration-300 backdrop-blur-sm`
         : `w-full ${showIcon ? 'pr-12' : 'pr-3'} py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-solar-gold/10 focus:bg-white focus:border-solar-gold outline-none transition-all font-bold text-[#0E1A2B] placeholder-slate-400 shadow-sm`;
 
-    const inputClasses = `${inputBaseHeader} ${showLeftIcon ? 'pl-11' : 'pl-3'}`;
+    const inputClasses = `${inputBaseHeader} ${showLeftIcon ? (variant === 'underline' ? 'pl-8' : 'pl-11') : 'pl-0'}`;
 
     const dropdownClasses = darkMode
         ? "absolute top-full left-0 z-[100] w-full bg-slate-900 border border-white/10 mt-2 rounded-[1.5rem] shadow-2xl max-h-60 overflow-y-auto backdrop-blur-xl p-2"

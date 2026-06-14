@@ -11,6 +11,15 @@ export default function MobileAstroWarningsDashboard() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
+    const getImageUrl = (path, gender = null) => {
+        if (!path || path.includes('default-avatar.png')) {
+            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+        }
+        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
+        const normalizedPath = path.replace(/\\/g, "/");
+        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
+    };
+
     useEffect(() => {
         fetchViolators();
     }, []);
@@ -91,12 +100,12 @@ export default function MobileAstroWarningsDashboard() {
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-4">
                                         <div className="relative">
-                                            <Image
-                                                src={person.image || '/default-avatar.png'}
+                                            <img
+                                                src={getImageUrl(person.image || person.profileImage, person.gender)}
                                                 alt={person.displayName}
                                                 width={56}
                                                 height={56}
-                                                className="rounded-xl object-cover"
+                                                className="rounded-xl object-cover w-14 h-14"
                                             />
                                         </div>
                                         <div>

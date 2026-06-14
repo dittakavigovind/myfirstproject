@@ -7,9 +7,10 @@ import {
     History, CreditCard, Sparkles, ShieldCheck,
     TrendingUp, ArrowUpRight, ArrowDownLeft
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import API from "@/lib/api";
+import { maskUserName } from "@/utils/maskUtils";
 
 export default function WalletPage() {
     const router = useRouter();
@@ -18,6 +19,7 @@ export default function WalletPage() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
     const [showBreakdown, setShowBreakdown] = useState(false);
     const [customAmount, setCustomAmount] = useState('');
     const [gstConfig, setGstConfig] = useState({ enabled: true, percentage: 18 });
@@ -225,7 +227,20 @@ export default function WalletPage() {
                         <div className="text-center text-slate-500 text-sm py-8">No transactions found.</div>
                     ) : (
                         history.map((tx) => (
-                            <div key={tx._id} className="glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/5">
+                            <div 
+                                key={tx._id} 
+                                onClick={() => {
+                                    if (tx.referenceId?.roomId) {
+                                        if (tx.referenceId?.sessionType !== 'audio') {
+                                            router.push(`/chat/room?id=${tx.referenceId.roomId}`);
+                                        } else {
+                                            setToastMessage("Audio call history cannot be replayed.");
+                                            setTimeout(() => setToastMessage(''), 3000);
+                                        }
+                                    }
+                                }}
+                                className={`glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/5 ${tx.referenceId?.roomId ? 'cursor-pointer hover:bg-white/10 active:scale-[0.98] transition-all' : ''}`}
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                         {tx.type === 'credit' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
@@ -233,7 +248,7 @@ export default function WalletPage() {
                                     <div className="flex-1 min-w-0 px-3">
                                         <h4 className="text-xs font-black text-white capitalize truncate">
                                             {tx.referenceId?.astrologerId?.displayName 
-                                                ? `${tx.referenceId.sessionType || 'Session'} with ${tx.referenceId.astrologerId.displayName}`
+                                                ? `${tx.referenceId.sessionType || 'Session'} with ${user?.role === 'astrologer' ? maskUserName(tx.referenceId.userId?.name || tx.referenceId.userId?.displayName || 'User') : tx.referenceId.astrologerId.displayName}`
                                                 : (tx.description || tx.type).replace(/for session .*/i, '').trim()}
                                         </h4>
                                         <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
@@ -307,6 +322,20 @@ export default function WalletPage() {
                     </div>
                 </div>
             )}
+
+            {/* Custom Toast */}
+            <AnimatePresence>
+                {toastMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+                        animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                        exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+                        className="fixed top-1/2 left-1/2 z-50 px-6 py-4 bg-[#1e2337] border border-solar-gold/30 rounded-2xl shadow-2xl shadow-black flex items-center justify-center min-w-[280px]"
+                    >
+                        <span className="text-sm font-medium text-white text-center">{toastMessage}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
