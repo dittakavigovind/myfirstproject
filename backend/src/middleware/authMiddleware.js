@@ -23,6 +23,10 @@ const protect = async (req, res, next) => {
                     return res.status(401).json({ message: 'User not found' });
                 }
 
+                if (req.user.sessionVersion && decoded.sessionVersion !== req.user.sessionVersion) {
+                    return res.status(401).json({ message: 'Session expired. You have logged in from another device.', code: 'SESSION_EXPIRED' });
+                }
+
                 next();
             } catch (error) {
                 res.status(401).json({ message: `Not authorized: ${error.message}` });
@@ -69,6 +73,10 @@ const optionalProtect = async (req, res, next) => {
             // console.log("[OPT-AUTH] Token found:", token.substring(0, 10) + "...");
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = await User.findById(decoded.id).select('-password');
+            if (req.user && req.user.sessionVersion && decoded.sessionVersion !== req.user.sessionVersion) {
+                // Ignore the user if session is expired
+                req.user = null;
+            }
             // console.log("[OPT-AUTH] User resolved:", req.user ? req.user.email : "None");
         } catch (error) {
             console.error("[OPT-AUTH] Error:", error.message);

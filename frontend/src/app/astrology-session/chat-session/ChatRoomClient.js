@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { SERVER_BASE } from '../../../lib/urlHelper';
 import api from '../../../lib/api';
 import toast from 'react-hot-toast';
+import { X } from 'lucide-react';
 
 import { auth, db } from '../../../lib/firebase';
 import { signInWithCustomToken } from "firebase/auth";
@@ -23,6 +24,7 @@ export default function ChatRoomClient() {
     const [duration, setDuration] = useState(0);
     const [remainingBalance, setRemainingBalance] = useState(null);
     const [isAstroTyping, setIsAstroTyping] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
     const [firebaseReady, setFirebaseReady] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
 
@@ -381,7 +383,12 @@ export default function ChatRoomClient() {
                                 {msg.mediaUrl && (
                                     <div className="mb-2">
                                         {msg.mediaType?.startsWith('image/') ? (
-                                            <img src={msg.mediaUrl} alt="attachment" className="max-h-48 rounded" />
+                                            <img 
+                                                src={msg.mediaUrl} 
+                                                alt="attachment" 
+                                                className="max-h-48 rounded cursor-pointer hover:opacity-90 transition-opacity" 
+                                                onClick={() => setSelectedImage(msg.mediaUrl)}
+                                            />
                                         ) : (
                                             <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="underline">Download File</a>
                                         )}
@@ -434,6 +441,27 @@ export default function ChatRoomClient() {
                     </form>
                 )}
             </div>
+
+            {/* Image Viewer Modal */}
+            {selectedImage && (
+                <div 
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button 
+                        className="absolute top-6 right-6 p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+                    >
+                        <X size={24} />
+                    </button>
+                    <img 
+                        src={selectedImage} 
+                        alt="Zoomed attachment" 
+                        className="max-w-full max-h-full object-contain rounded-lg cursor-default"
+                        onClick={(e) => e.stopPropagation()} 
+                    />
+                </div>
+            )}
         </div>
     );
 }

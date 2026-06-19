@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Star, Calendar, Clock, MapPin, Search, Edit2, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Star, Calendar, Clock, MapPin, Search, Edit2, ChevronDown, ChevronUp, Share2 } from "lucide-react";
 import api from "@/lib/api";
 import CosmicLoader from "@/components/CosmicLoader";
 import KundliChart from "@/components/KundliChart";
@@ -90,7 +90,7 @@ const DashaNode = ({ dasha, level = 0 }) => {
     );
 };
 
-export default function UserKundliModal({ isOpen, onClose, chatUser }) {
+export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChart, isLive }) {
     const { user } = useAuth();
     const [kundliData, setKundliData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -306,7 +306,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser }) {
                                         <>
                                             {/* Chart */}
                                             <div className="glass-panel p-4 rounded-[2.5rem] border-white/5 bg-gradient-to-br from-white/5 to-transparent mb-6 relative">
-                                                <div className="aspect-square w-full max-w-[300px] mx-auto">
+                                                <div id="kundli-chart-container" className="aspect-square w-full max-w-[300px] mx-auto">
                                                     <KundliChart 
                                                         planets={activeTab === 'kundali' ? kundliData.planets : kundliData.charts?.[activeTab] || kundliData.planets} 
                                                         ascendantSign={Math.floor(kundliData.houses.ascendant / 30) + 1} 
@@ -317,6 +317,23 @@ export default function UserKundliModal({ isOpen, onClose, chatUser }) {
                                                     <button onClick={() => setChartStyle('north')} className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${chartStyle === 'north' ? 'bg-solar-gold text-slate-900' : 'text-slate-300'}`}>North</button>
                                                     <button onClick={() => setChartStyle('south')} className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${chartStyle === 'south' ? 'bg-solar-gold text-slate-900' : 'text-slate-300'}`}>South</button>
                                                 </div>
+                                                {isLive && (
+                                                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md rounded-full p-1 border border-white/10 flex">
+                                                        <button 
+                                                            onClick={() => {
+                                                                const svgElement = document.querySelector('#kundli-chart-container svg');
+                                                                if (svgElement && onShareChart) {
+                                                                    const svgString = new XMLSerializer().serializeToString(svgElement);
+                                                                    const chartName = activeTab === 'kundali' ? 'Birth' : activeTab;
+                                                                    onShareChart(svgString, `Astrologer shared a ${chartName} chart.`);
+                                                                }
+                                                            }} 
+                                                            className="px-3 py-1 rounded-full text-[9px] font-bold uppercase bg-electric-violet text-white flex items-center gap-1 hover:bg-electric-violet/80 transition-colors"
+                                                        >
+                                                            <Share2 size={10} /> Share
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Quick Info */}

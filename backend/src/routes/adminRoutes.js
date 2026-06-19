@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, toggleUserBlock, updateAstrologerSettings, getAllSessions, bypassWaitlist } = require('../controllers/adminController');
+const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, toggleUserBlock, updateAstrologerSettings, getAllSessions, bypassWaitlist, getSocketMonitorStats } = require('../controllers/adminController');
 const { protect, admin, authorize } = require('../middleware/authMiddleware');
 const { getAppConfig, updateAppConfig, getPricingConfig, updatePricingConfig } = require('../controllers/adminConfigController');
 
@@ -23,6 +23,7 @@ router.delete('/users/:id', protect, admin, authorize('super_admin', 'admin'), d
 router.get('/activity', protect, admin, getAstrologerActivity);
 router.get('/sessions', protect, admin, getAllSessions);
 router.post('/queue/bypass', protect, admin, authorize('super_admin', 'support_admin', 'manager', 'admin'), bypassWaitlist);
+router.get('/socket-monitor', protect, admin, getSocketMonitorStats);
 
 // Configurations
 router.get('/config/app', protect, admin, getAppConfig);

@@ -26,6 +26,7 @@ module.exports = function (io) {
             if (!user) return next(new Error('User not found'));
             
             socket.user = user;
+            socket.data.user = user;
 
             // Validate user exists
             if (socket.user.role === 'astrologer') {

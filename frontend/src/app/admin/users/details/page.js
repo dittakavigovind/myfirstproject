@@ -164,7 +164,12 @@ function UserDetails() {
 
                             <div className="flex-1 text-center md:text-left space-y-4 pt-4">
                                 <div>
-                                    <h2 className="text-4xl font-black text-slate-800 mb-2 tracking-tight">{userData.astrologerProfile?.displayName || userData.name}</h2>
+                                    <h2 className="text-4xl font-black text-slate-800 mb-2 tracking-tight">{userData.name}</h2>
+                                    {userData.astrologerProfile && (
+                                        <p className="text-lg text-indigo-600 font-bold mb-3">
+                                            {userData.astrologerProfile.displayName}
+                                        </p>
+                                    )}
                                     <div className="flex flex-col gap-2 items-center md:items-start">
                                         {userData.email && (
                                             <p className="text-lg text-slate-500 font-medium flex items-center justify-center md:justify-start gap-2 bg-slate-50 w-fit px-4 py-1.5 rounded-full mx-auto md:mx-0 border border-slate-100">

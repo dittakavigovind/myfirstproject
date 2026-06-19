@@ -58,6 +58,7 @@ export default function ChatRoomClient() {
     const [chatUser, setChatUser] = useState(null);
     const [showKundli, setShowKundli] = useState(false);
     const [showAIInsights, setShowAIInsights] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showLeavePrompt, setShowLeavePrompt] = useState(false);
     const [showEndedPopup, setShowEndedPopup] = useState(false);
@@ -616,6 +617,30 @@ export default function ChatRoomClient() {
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
+    const handleShareChart = async (svgNodeString, messageContent = "Astrologer shared a Birth chart.") => {
+        if (!firebaseReady || !roomId) return;
+        try {
+            const base64SVG = btoa(unescape(encodeURIComponent(svgNodeString)));
+            const mediaUrl = `data:image/svg+xml;base64,${base64SVG}`;
+            
+            const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
+            await addDoc(messagesRef, {
+                content: messageContent,
+                mediaUrl: mediaUrl,
+                mediaType: 'image/svg+xml',
+                senderId: user.astrologerId || user._id,
+                senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
+                status: 'sent',
+                createdAt: Date.now()
+            });
+            toast.success("Kundali chart shared!");
+            setShowKundli(false); // Optionally close modal
+        } catch (error) {
+            console.error("Error sharing chart:", error);
+            toast.error("Failed to share chart");
+        }
+    };
+
     if (loading || authLoading) return <CosmicLoader message="Opening the cosmic portal..." />;
 
     const partner = user?.role === 'astrologer' ? chatUser : astrologer;
@@ -936,7 +961,12 @@ export default function ChatRoomClient() {
                                 {msg.mediaUrl && (
                                     <div className="mb-2 rounded-xl overflow-hidden">
                                         {msg.mediaType?.startsWith('image/') ? (
-                                            <img src={msg.mediaUrl} alt="attachment" className="w-full h-auto max-h-48 object-cover rounded-lg" />
+                                            <img 
+                                                src={msg.mediaUrl} 
+                                                alt="attachment" 
+                                                className="w-full h-auto max-h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity" 
+                                                onClick={() => setSelectedImage(msg.mediaUrl)}
+                                            />
                                         ) : (
                                             <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="text-sm underline flex items-center gap-1">
                                                 <Paperclip size={14} /> Download File
@@ -1056,6 +1086,8 @@ export default function ChatRoomClient() {
                 isOpen={showKundli} 
                 onClose={() => setShowKundli(false)} 
                 chatUser={chatUser} 
+                onShareChart={handleShareChart}
+                isLive={sessionActive}
             />
 
             {/* AI Insights Modal */}
@@ -1130,6 +1162,35 @@ export default function ChatRoomClient() {
                                 </button>
                             </div>
                         </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Image Viewer Modal */}
+            <AnimatePresence>
+                {selectedImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        <button 
+                            className="absolute top-4 right-4 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+                        >
+                            <X size={24} />
+                        </button>
+                        <motion.img 
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            src={selectedImage} 
+                            alt="Zoomed attachment" 
+                            className="max-w-full max-h-full object-contain rounded-xl cursor-default"
+                            onClick={(e) => e.stopPropagation()} 
+                        />
                     </motion.div>
                 )}
             </AnimatePresence>

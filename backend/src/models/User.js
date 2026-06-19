@@ -141,6 +141,8 @@ const userSchema = new mongoose.Schema({
     isChatEnabled: { type: Boolean, default: false },
     isCallEnabled: { type: Boolean, default: false },
     isVideoEnabled: { type: Boolean, default: false },
+    tdsPercentage: { type: Number, default: 10 },
+    pgPercentage: { type: Number, default: 2.5 },
 
     // Status Logic
     isOnline: { type: Boolean, default: false }, // Master Status
@@ -148,7 +150,10 @@ const userSchema = new mongoose.Schema({
     isVoiceOnline: { type: Boolean, default: false },
     isVideoOnline: { type: Boolean, default: false },
     lastOnlineAt: { type: Date }, // Timestamp when they went online
-    isBlocked: { type: Boolean, default: false }
+    isBlocked: { type: Boolean, default: false },
+    
+    // Session tracking to restrict multi-device login
+    sessionVersion: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // Pre-validate hook to lowercase gender

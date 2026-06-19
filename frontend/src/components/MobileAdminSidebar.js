@@ -114,6 +114,16 @@ export default function MobileAdminSidebar() {
                     Pricing Models
                 </Link>
 
+                <Link href="/mobile-admin/payouts"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/payouts')
+                        ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <DollarSign size={18} />
+                    Payouts & Billing
+                </Link>
+
                 <div className="px-3 mt-8 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Monitors</div>
 
                 <Link href="/mobile-admin/sessions"

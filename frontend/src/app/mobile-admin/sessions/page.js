@@ -177,7 +177,17 @@ export default function MobileSessionsDashboard() {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white capitalize">{session.sessionType} Session</div>
-                                                <div className="text-xs text-slate-500 font-mono mt-0.5" title={session._id}>ID: {...session._id.substring(0, 8)}</div>
+                                                <div 
+                                                    className="text-xs text-slate-500 font-mono mt-0.5 cursor-pointer hover:text-slate-300 transition" 
+                                                    title="Click to copy full ID"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigator.clipboard.writeText(session._id);
+                                                        toast.success("Session ID copied!");
+                                                    }}
+                                                >
+                                                    ID: {session._id.substring(0, 8)}...
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -185,7 +195,7 @@ export default function MobileSessionsDashboard() {
                                         <div className="flex items-center gap-2">
                                             <span className="font-medium text-blue-400 truncate max-w-[120px]" title={session.userId?.name || 'Unknown User'}>{session.userId?.name || 'User'}</span>
                                             <ArrowRight size={14} className="text-slate-600" />
-                                            <span className="font-bold text-purple-400 truncate max-w-[120px]" title={session.astrologerId?.name || 'Unknown Astro'}>{session.astrologerId?.name || 'Astro'}</span>
+                                            <span className="font-bold text-purple-400 truncate max-w-[120px]" title={session.astrologerId?.displayName || session.astrologerId?.name || 'Unknown Astro'}>{session.astrologerId?.displayName || session.astrologerId?.name || 'Astro'}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">

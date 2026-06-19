@@ -7,8 +7,8 @@ const crypto = require('crypto');
 const { getDeviceInfo } = require('../utils/deviceUtils');
 
 // Generate JWT
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id, sessionVersion = 0) => {
+    return jwt.sign({ id, sessionVersion }, process.env.JWT_SECRET, {
         expiresIn: '30d',
     });
 };
@@ -99,6 +99,14 @@ exports.loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
+        if (user.role === 'astrologer') {
+            const Astrologer = require('../models/Astrologer');
+            const astro = await Astrologer.findOne({ userId: user._id });
+            if (astro && astro.isBusy) {
+                return res.status(403).json({ message: 'You cannot log in from a new device while an active consultation is in progress.' });
+            }
+        }
+
 
         const isMatch = await bcrypt.compare(password, user.password);
 
@@ -115,7 +123,8 @@ exports.loginUser = async (req, res) => {
                     email: user.email
                 });
             }
-            // Update lastLogin
+            // Update sessionVersion and lastLogin
+            user.sessionVersion = (user.sessionVersion || 0) + 1;
             user.lastLogin = new Date();
             user.deviceInfo = getDeviceInfo(req);
             await user.save();
@@ -139,7 +148,7 @@ exports.loginUser = async (req, res) => {
                 videoPrice: user.videoPrice,
                 lastLogin: user.lastLogin,
                 totalOrders: user.totalOrders || 0,
-                token: generateToken(user._id),
+                token: generateToken(user._id, user.sessionVersion),
             });
         } else {
             res.status(400).json({ message: 'Invalid credentials' });
@@ -233,9 +242,18 @@ exports.verifyOtp = async (req, res) => {
                 deviceInfo: getDeviceInfo(req)
             });
         } else {
+            user.sessionVersion = (user.sessionVersion || 0) + 1;
             user.lastLogin = new Date();
             user.deviceInfo = getDeviceInfo(req);
             await user.save();
+        }
+
+        if (user.role === 'astrologer') {
+            const Astrologer = require('../models/Astrologer');
+            const astro = await Astrologer.findOne({ userId: user._id });
+            if (astro && astro.isBusy) {
+                return res.status(403).json({ message: 'You cannot log in from a new device while an active consultation is in progress.' });
+            }
         }
 
         if (user.isBlocked) {
@@ -259,7 +277,7 @@ exports.verifyOtp = async (req, res) => {
             chatPrice: user.chatPrice,
             callPrice: user.callPrice,
             videoPrice: user.videoPrice,
-            token: generateToken(user._id),
+            token: generateToken(user._id, user.sessionVersion),
             isNewUser: user.name === 'User' // Flag to frontend
         });
 
@@ -298,10 +316,19 @@ exports.verifyEmailOtp = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
+        if (user.role === 'astrologer') {
+            const Astrologer = require('../models/Astrologer');
+            const astro = await Astrologer.findOne({ userId: user._id });
+            if (astro && astro.isBusy) {
+                return res.status(403).json({ message: 'You cannot log in from a new device while an active consultation is in progress.' });
+            }
+        }
+
         if (user.isBlocked) {
             return res.status(403).json({ message: 'Your account has been disabled. Please contact support.' });
         }
 
+        user.sessionVersion = (user.sessionVersion || 0) + 1;
         user.emailVerified = true;
         user.verificationToken = undefined;
         user.verificationTokenExpire = undefined;
@@ -328,7 +355,7 @@ exports.verifyEmailOtp = async (req, res) => {
             videoPrice: user.videoPrice,
             lastLogin: user.lastLogin,
             totalOrders: user.totalOrders || 0,
-            token: generateToken(user._id),
+            token: generateToken(user._id, user.sessionVersion),
             message: 'Email verified successfully'
         });
     } catch (error) {

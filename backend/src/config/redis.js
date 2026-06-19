@@ -62,6 +62,14 @@ if (process.env.REDIS_URL) {
             const arr = db.get(key) || [];
             // Assuming simple count
             return arr.length;
+        },
+        keys: async (pattern) => {
+            const prefix = pattern.replace('*', '');
+            return Array.from(db.keys()).filter(k => k.startsWith(prefix));
+        },
+        zcard: async (key) => {
+            const arr = db.get(key) || [];
+            return arr.length;
         }
     };
 }

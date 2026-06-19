@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function NotificationsPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, setUser } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -25,6 +25,9 @@ export default function NotificationsPage() {
             if (res.data.success) {
                 setNotifications(res.data.notifications || []);
                 setUnreadCount(res.data.unreadCount || 0);
+                if (setUser) {
+                    setUser(prev => prev ? { ...prev, unreadNotifications: res.data.unreadCount || 0 } : prev);
+                }
             }
         } catch (error) {
             console.error("Failed to fetch notifications:", error);
@@ -37,10 +40,16 @@ export default function NotificationsPage() {
         try {
             const res = await api.put(`/notifications/${id}/read`);
             if (res.data.success) {
-                setNotifications(prev => 
+                setNotifications(prev =>
                     prev.map(n => n._id === id ? { ...n, readBy: [...(n.readBy || []), user?._id] } : n)
                 );
-                setUnreadCount(prev => Math.max(0, prev - 1));
+                setUnreadCount(prev => {
+                    const newCount = Math.max(0, prev - 1);
+                    if (setUser) {
+                        setUser(prevUser => prevUser ? { ...prevUser, unreadNotifications: newCount } : prevUser);
+                    }
+                    return newCount;
+                });
             }
         } catch (error) {
             console.error("Error marking notification as read:", error);
@@ -60,7 +69,7 @@ export default function NotificationsPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8 pt-4">
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={() => router.back()}
                         className="p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10 active:scale-95 transition-all"
                     >
@@ -71,7 +80,7 @@ export default function NotificationsPage() {
                         {unreadCount > 0 && <p className="text-[10px] text-solar-gold font-bold uppercase tracking-widest">{unreadCount} New Messages</p>}
                     </div>
                 </div>
-                <button 
+                <button
                     onClick={fetchNotifications}
                     className="text-[10px] font-black text-electric-violet uppercase tracking-widest px-3 py-1.5 bg-electric-violet/10 rounded-full"
                 >
@@ -105,18 +114,16 @@ export default function NotificationsPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
                                     onClick={() => !isRead && markAsRead(n._id)}
-                                    className={`relative glass-panel rounded-3xl p-5 border-white/5 transition-all active:scale-[0.98] ${
-                                        !isRead ? "bg-white/10 border-electric-violet/30" : "bg-white/5 opacity-80"
-                                    }`}
+                                    className={`relative glass-panel rounded-3xl p-5 border-white/5 transition-all active:scale-[0.98] ${!isRead ? "bg-white/10 border-electric-violet/30" : "bg-white/5 opacity-80"
+                                        }`}
                                 >
                                     {!isRead && (
                                         <div className="absolute top-5 right-5 w-2 h-2 bg-solar-gold rounded-full shadow-[0_0_10px_rgba(251,191,36,0.5)]" />
                                     )}
-                                    
+
                                     <div className="flex gap-4">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                                            !isRead ? "bg-electric-violet/20" : "bg-slate-800"
-                                        }`}>
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${!isRead ? "bg-electric-violet/20" : "bg-slate-800"
+                                            }`}>
                                             {getIcon(n.targetAudience)}
                                         </div>
                                         <div className="flex-1 min-w-0">

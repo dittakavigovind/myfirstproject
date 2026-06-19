@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Activity, Users, DollarSign, Clock, Receipt, X } from 'lucide-react';
+import { Activity, Users, DollarSign, Clock, Receipt, X, Video, Phone, List, Radio } from 'lucide-react';
 import API from '../../lib/api';
 
 export default function MobileAdminDashboard() {
@@ -12,6 +12,14 @@ export default function MobileAdminDashboard() {
     const [showActiveSessions, setShowActiveSessions] = useState(false);
     const [activeSessionsList, setActiveSessionsList] = useState([]);
     const [loadingActiveSessions, setLoadingActiveSessions] = useState(false);
+    const [socketStats, setSocketStats] = useState({
+        totalConnections: 0,
+        userConnections: 0,
+        astrologerConnections: 0,
+        totalWaitlistLength: 0,
+        activeVideoSessions: 0,
+        activeAudioSessions: 0
+    });
 
     const handleActiveSessionsClick = async () => {
         setShowActiveSessions(true);
@@ -47,6 +55,25 @@ export default function MobileAdminDashboard() {
         };
         fetchDashboardStats();
     }, [startDate, endDate]);
+
+    useEffect(() => {
+        let intervalId;
+        const fetchSocketStats = async () => {
+            try {
+                const res = await API.get('/admin/socket-monitor');
+                if (res.data.success) {
+                    setSocketStats(res.data.data);
+                }
+            } catch (err) {
+                console.error("Error fetching socket stats:", err);
+            }
+        };
+
+        fetchSocketStats(); // Initial fetch
+        intervalId = setInterval(fetchSocketStats, 5000); // Poll every 5s
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     const isFiltered = Boolean(startDate && endDate);
 
@@ -187,12 +214,52 @@ export default function MobileAdminDashboard() {
                 </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-lg mt-8 flex flex-col items-center justify-center text-center py-16">
-                <Activity size={48} className="text-slate-700 mb-4" />
-                <h3 className="text-xl font-bold text-slate-300">Live Socket Monitor (Coming Soon)</h3>
-                <p className="text-slate-500 max-w-md mt-2">
-                    Visualizing active WebSocket connections, Waitlist lengths, and Agora Server states across all devices.
-                </p>
+            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-lg mt-8">
+                <div className="flex items-center gap-3 mb-6">
+                    <Radio size={28} className="text-blue-500 animate-pulse" />
+                    <h3 className="text-2xl font-bold text-white">Live Socket Monitor</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Total Connections */}
+                    <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col">
+                        <div className="text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                            <Activity size={16} /> Total WS Connections
+                        </div>
+                        <h4 className="text-4xl font-black text-white">{socketStats.totalConnections}</h4>
+                        <div className="flex gap-4 mt-4 text-sm text-slate-500">
+                            <span className="flex items-center gap-1"><Users size={14} className="text-blue-400"/> {socketStats.userConnections} Users</span>
+                            <span className="flex items-center gap-1"><Users size={14} className="text-purple-400"/> {socketStats.astrologerConnections} Astros</span>
+                        </div>
+                    </div>
+
+                    {/* Waitlist */}
+                    <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col">
+                        <div className="text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                            <List size={16} /> Global Waitlist
+                        </div>
+                        <h4 className="text-4xl font-black text-amber-400">{socketStats.totalWaitlistLength}</h4>
+                        <p className="text-sm text-slate-500 mt-4">Users waiting for Astrologers across all queues.</p>
+                    </div>
+
+                    {/* Video Sessions */}
+                    <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col">
+                        <div className="text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                            <Video size={16} /> Active Video (Agora)
+                        </div>
+                        <h4 className="text-4xl font-black text-emerald-400">{socketStats.activeVideoSessions}</h4>
+                        <p className="text-sm text-slate-500 mt-4">Ongoing face-to-face sessions.</p>
+                    </div>
+
+                    {/* Audio Sessions */}
+                    <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col">
+                        <div className="text-slate-400 text-sm font-medium mb-2 flex items-center gap-2">
+                            <Phone size={16} /> Active Audio (Agora)
+                        </div>
+                        <h4 className="text-4xl font-black text-orange-400">{socketStats.activeAudioSessions}</h4>
+                        <p className="text-sm text-slate-500 mt-4">Ongoing voice call sessions.</p>
+                    </div>
+                </div>
             </div>
 
             {showActiveSessions && (

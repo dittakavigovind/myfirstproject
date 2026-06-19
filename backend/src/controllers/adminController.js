@@ -115,7 +115,7 @@ exports.updateAstrologerSettings = async (req, res) => {
             return res.status(404).json({ message: 'Astrologer not found' });
         }
 
-        const { commissionRate, isVerified, verificationStatus, fakeFollowers, badgeText, features, isPinned, pinOrder, pinStartTime, pinEndTime } = req.body;
+        const { commissionRate, isVerified, verificationStatus, fakeFollowers, badgeText, features, isPinned, pinOrder, pinStartTime, pinEndTime, tdsPercentage, pgPercentage } = req.body;
 
         if (isPinned === true) {
             const start = pinStartTime ? new Date(pinStartTime) : (astrologer.pinStartTime || new Date());
@@ -151,6 +151,16 @@ exports.updateAstrologerSettings = async (req, res) => {
         if (pinEndTime !== undefined) astrologer.pinEndTime = pinEndTime;
 
         await astrologer.save();
+
+        if (tdsPercentage !== undefined || pgPercentage !== undefined) {
+            const user = await User.findById(req.params.id);
+            if (user) {
+                if (tdsPercentage !== undefined) user.tdsPercentage = Number(tdsPercentage);
+                if (pgPercentage !== undefined) user.pgPercentage = Number(pgPercentage);
+                await user.save();
+            }
+        }
+
         res.json({ success: true, message: 'Astrologer settings updated', data: astrologer });
     } catch (error) {
         console.error('Update Astrologer Settings Error:', error);
@@ -379,5 +389,59 @@ exports.toggleUserBlock = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get Socket Monitor Stats
+// @route   GET /api/admin/socket-monitor
+// @access  Private/Admin
+exports.getSocketMonitorStats = async (req, res) => {
+    try {
+        const io = req.app.get('io');
+        let totalConnections = 0;
+        let userConnections = 0;
+        let astrologerConnections = 0;
+
+        if (io) {
+            totalConnections = io.engine.clientsCount;
+            const sockets = await io.fetchSockets();
+            sockets.forEach(socket => {
+                const user = socket.user || (socket.data && socket.data.user);
+                if (user) {
+                    if (user.role === 'astrologer') astrologerConnections++;
+                    else if (user.role === 'user') userConnections++;
+                }
+            });
+        }
+
+        // Waitlist Lengths
+        const redis = require('../config/redis');
+        let totalWaitlistLength = 0;
+        if (redis) {
+            const keys = await redis.keys('astro:queue:*');
+            for (const key of keys) {
+                const length = await redis.zcard(key);
+                totalWaitlistLength += length;
+            }
+        }
+
+        // Agora Server States (Active video/audio sessions)
+        const activeVideoSessions = await Session.countDocuments({ status: 'active', sessionType: 'video' });
+        const activeAudioSessions = await Session.countDocuments({ status: 'active', sessionType: 'call' });
+
+        res.json({
+            success: true,
+            data: {
+                totalConnections,
+                userConnections,
+                astrologerConnections,
+                totalWaitlistLength,
+                activeVideoSessions,
+                activeAudioSessions
+            }
+        });
+    } catch (error) {
+        console.error('Socket Monitor Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

@@ -179,10 +179,11 @@ export default function AstrologerProfileClient() {
     const handleShare = () => {
         if (!astrologer) return;
         const shareText = `Check out ${astrologer.displayName || astrologer.name} on Way2Astro!`;
-        const shareUrl = `${window.location.origin}/astrologer?id=${astrologer.slug || astrologer._id}`;
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+        const shareUrl = `${baseUrl}/astrologer?id=${astrologer.slug || astrologer._id}`;
 
-        // WhatsApp Direct share earlier its like that
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+        // WhatsApp Direct share with newline for better linkification
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
 
         if (navigator.share) {
             navigator.share({

@@ -13,7 +13,7 @@ export default function MobileAstroDashboard() {
     const [search, setSearch] = useState('');
 
     const [editingAstro, setEditingAstro] = useState(null);
-    const [editForm, setEditForm] = useState({ commissionRate: 20, features: { chatEnabled: true, voiceEnabled: true, videoEnabled: true } });
+    const [editForm, setEditForm] = useState({ commissionRate: 20, features: { chatEnabled: true, voiceEnabled: true, videoEnabled: true }, tdsPercentage: 10, pgPercentage: 2.5 });
     const [saving, setSaving] = useState(false);
 
     const [appConfig, setAppConfig] = useState(null);
@@ -100,7 +100,9 @@ export default function MobileAstroDashboard() {
                 commissionRate: Number(editForm.commissionRate),
                 fakeFollowers: Number(editForm.fakeFollowers || 0),
                 badgeText: editForm.badgeText,
-                features: editForm.features
+                features: editForm.features,
+                tdsPercentage: Number(editForm.tdsPercentage),
+                pgPercentage: Number(editForm.pgPercentage)
             });
             toast.success("Astrologer logic overridden successfully!");
 
@@ -111,7 +113,12 @@ export default function MobileAstroDashboard() {
                     commissionRate: editForm.commissionRate,
                     fakeFollowers: Number(editForm.fakeFollowers || 0),
                     badgeText: editForm.badgeText,
-                    features: editForm.features
+                    features: editForm.features,
+                    userId: {
+                        ...a.userId,
+                        tdsPercentage: Number(editForm.tdsPercentage),
+                        pgPercentage: Number(editForm.pgPercentage)
+                    }
                 } : a
             ));
 
@@ -126,6 +133,8 @@ export default function MobileAstroDashboard() {
     const searchLower = search.toLowerCase();
     const filtered = astros.filter(a => {
         if ((a.displayName || a.name || '').toLowerCase().includes(searchLower)) return true;
+        if ((a._id || '').toLowerCase().includes(searchLower)) return true;
+        if ((a.userId?._id || a.userId || '').toLowerCase().includes(searchLower)) return true;
         if (searchLower === 'online' && a.isOnline) return true;
         if (searchLower === 'offline' && !a.isOnline) return true;
         if (searchLower === 'chat' && a.isChatOnline) return true;
@@ -206,7 +215,7 @@ export default function MobileAstroDashboard() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                 <input
                     type="text"
-                    placeholder="Search by Name or Status (online, offline, chat, call, video)..."
+                    placeholder="Search by Name, SYS_ID, or Status (online, offline, chat, call, video)..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50"
@@ -313,7 +322,9 @@ export default function MobileAstroDashboard() {
                                                     commissionRate: astro.commissionRate !== undefined ? astro.commissionRate : '',
                                                     fakeFollowers: astro.fakeFollowers || 0,
                                                     badgeText: astro.badgeText || '',
-                                                    features: astro.features || { chatEnabled: true, voiceEnabled: true, videoEnabled: true }
+                                                    features: astro.features || { chatEnabled: true, voiceEnabled: true, videoEnabled: true },
+                                                    tdsPercentage: astro.userId?.tdsPercentage !== undefined ? astro.userId.tdsPercentage : 10,
+                                                    pgPercentage: astro.userId?.pgPercentage !== undefined ? astro.userId.pgPercentage : 2.5
                                                 });
                                             }}
                                             className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition text-sm font-medium border border-slate-700"
@@ -354,7 +365,7 @@ export default function MobileAstroDashboard() {
                                         type="number"
                                         max="100" min="0" step="1"
                                         value={editForm.commissionRate}
-                                        onChange={(e) => setEditForm({ commissionRate: e.target.value })}
+                                        onChange={(e) => setEditForm({ ...editForm, commissionRate: e.target.value })}
                                         className="w-full bg-slate-950 border border-slate-800 text-white p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-emerald-500/50 text-base font-bold"
                                         placeholder="Globally Fallbacks if empty..."
                                     />
@@ -363,6 +374,39 @@ export default function MobileAstroDashboard() {
                                 <p className="text-[10px] text-slate-500 mt-1 leading-tight">
                                     This forces the Billing Engine to deduct precisely this percentage per transaction for this astrologer, ignoring the global `/mobile-admin/pricing` rules.
                                 </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 mb-1.5">TDS Deductions (%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            max="100" min="0" step="0.1"
+                                            value={editForm.tdsPercentage}
+                                            onChange={(e) => setEditForm({ ...editForm, tdsPercentage: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 text-white p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-emerald-500/50 text-base font-bold"
+                                            placeholder="10"
+                                        />
+                                        <Percent className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-1 leading-tight">Statutory TDS off Payout</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 mb-1.5">PG Charges (%)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            max="100" min="0" step="0.1"
+                                            value={editForm.pgPercentage}
+                                            onChange={(e) => setEditForm({ ...editForm, pgPercentage: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 text-white p-2.5 pl-10 rounded-xl focus:ring-2 focus:ring-emerald-500/50 text-base font-bold"
+                                            placeholder="2.5"
+                                        />
+                                        <Percent className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-1 leading-tight">Gateway fees off Payout</p>
+                                </div>
                             </div>
 
                             <div>
@@ -624,7 +668,9 @@ function AstroStatsModal({ astro, onClose }) {
         
         if (searchQuery) {
             const userName = s.userId?.name || s.userId?.displayName || 'Unknown User';
-            if (!userName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+            const sessionId = s._id || '';
+            const searchLower = searchQuery.toLowerCase();
+            if (!userName.toLowerCase().includes(searchLower) && !sessionId.toLowerCase().includes(searchLower)) return false;
         }
 
         return true;
@@ -671,7 +717,7 @@ function AstroStatsModal({ astro, onClose }) {
     };
 
     const handleExport = () => {
-        const headers = ["Date", "Start Time", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share %", "Astro Share", "Total Deducted"];
+        const headers = ["Date", "Start Time", "Session ID", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share %", "Astro Share", "Total Deducted"];
         const rows = filteredSessions.map(s => {
             const sharePercentage = s.totalAmountDeducted > 0 
                 ? ((s.astrologerShare / s.totalAmountDeducted) * 100).toFixed(0) + '%' 
@@ -680,6 +726,7 @@ function AstroStatsModal({ astro, onClose }) {
             return [
                 formatDate(s.createdAt),
                 formatTime(s.startTime || s.createdAt),
+                s._id || '-',
                 s.userId?.name || 'Unknown',
                 s.sessionType || 'chat',
                 s.status,
@@ -802,13 +849,13 @@ function AstroStatsModal({ astro, onClose }) {
                                     <option value="astrologer">Astrologer</option>
                                     <option value="system">System</option>
                                 </select>
-                                <label className="text-xs font-bold text-slate-400 uppercase ml-2">User:</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase ml-2">Search:</label>
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search..."
-                                    className="bg-slate-900 border border-slate-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:border-emerald-500 w-24"
+                                    placeholder="User or Session ID..."
+                                    className="bg-slate-900 border border-slate-700 text-white text-sm rounded px-2 py-1 focus:outline-none focus:border-emerald-500 w-40"
                                 />
                                 {(fromDate || toDate || endedByFilter !== 'all' || typeFilter !== 'all' || searchQuery) && (
                                     <button onClick={() => { setFromDate(""); setToDate(""); setEndedByFilter("all"); setTypeFilter("all"); setSearchQuery(""); }} className="text-xs text-rose-400 hover:text-rose-300 px-2 font-bold">Clear</button>
@@ -894,7 +941,20 @@ function AstroStatsModal({ astro, onClose }) {
                                             >
                                                 <td className="p-4 whitespace-nowrap">{formatDate(s.createdAt)}</td>
                                                 <td className="p-4 font-medium">{s.userId?.name || 'Unknown User'}</td>
-                                                <td className="p-4 text-xs font-bold uppercase tracking-wider text-blue-400">{s.sessionType || 'chat'}</td>
+                                                <td className="p-4">
+                                                    <div className="text-xs font-bold uppercase tracking-wider text-blue-400">{s.sessionType || 'chat'}</div>
+                                                    <div 
+                                                        className="text-[10px] text-slate-500 font-mono mt-0.5 cursor-pointer hover:text-slate-300 transition" 
+                                                        title="Click to copy full ID"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigator.clipboard.writeText(s._id);
+                                                            toast.success("Session ID copied!");
+                                                        }}
+                                                    >
+                                                        ID: {s._id ? s._id.substring(0, 8) + '...' : '-'}
+                                                    </div>
+                                                </td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${s.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                                         s.status === 'missed' || (s.status === 'initiated' && (!s.totalDuration || s.totalDuration === 0)) ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :

@@ -52,6 +52,13 @@ api.interceptors.response.use(
     async (error) => {
         if (error.response?.status === 401) {
             // Unauthorized, clear token
+            const message = error.response?.data?.message;
+            if (error.response?.data?.code === 'SESSION_EXPIRED' || message === 'Session expired. You have logged in from another device.') {
+                if (typeof window !== "undefined") {
+                    alert('Session expired. You have logged in from another device.');
+                }
+            }
+
             clearApiToken();
             await Preferences.remove({ key: "authToken" });
             if (typeof window !== "undefined") {

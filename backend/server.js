@@ -304,7 +304,9 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/activity', require('./src/routes/activityRoutes'));
 app.use('/api/admin/chats', require('./src/routes/adminChatRoutes'));
+app.use('/api/admin/payouts', require('./src/routes/adminPayoutRoutes'));
 app.use('/api/admin', adminRoutes);
+app.use('/api/astrologer/payouts', require('./src/routes/astrologerPayoutRoutes'));
 app.use('/api/notifications', require('./src/routes/notificationRoutes'));
 app.use('/api/panchang', panchangRoutes);
 app.use('/api/horoscope', horoscopeRoutes);
@@ -501,6 +503,12 @@ app.get('*', (req, res, next) => {
         next();
     }
 });
+
+const { initPayoutCron } = require('./src/cron/payoutCron');
+initPayoutCron();
+
+const { initOnlineNotificationCron } = require('./src/cron/onlineNotificationCron');
+initOnlineNotificationCron();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {

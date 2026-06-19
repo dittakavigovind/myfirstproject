@@ -100,6 +100,7 @@ const astrologerSchema = new mongoose.Schema({
     isVoiceOnline: { type: Boolean, default: false },
     isVideoOnline: { type: Boolean, default: false },
     lastOnlineAt: Date,
+    lastOnlineNotificationSentAt: Date,
     totalEarnings: {
         type: Number,
         default: 0,
@@ -113,6 +114,14 @@ const astrologerSchema = new mongoose.Schema({
     commissionRate: {
         type: Number,
         default: 20 // 20% platform fee by default
+    },
+    tdsPercentage: {
+        type: Number,
+        default: 10
+    },
+    pgPercentage: {
+        type: Number,
+        default: 2.5
     },
     isActive: {
         type: Boolean,

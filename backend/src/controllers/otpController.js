@@ -7,8 +7,8 @@ const mongoose = require('mongoose');
 const { getDeviceInfo } = require('../utils/deviceUtils');
 
 // Generate JWT
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id, sessionVersion = 0) => {
+    return jwt.sign({ id, sessionVersion }, process.env.JWT_SECRET, {
         expiresIn: '30d',
     });
 };
@@ -203,8 +203,18 @@ exports.verifyWhatsappOtp = async (req, res) => {
             }
         }
 
+        user.sessionVersion = (user.sessionVersion || 0) + 1;
         user.lastLogin = new Date();
         user.deviceInfo = getDeviceInfo(req);
+
+        if (user.role === 'astrologer') {
+            const Astrologer = require('../models/Astrologer');
+            const astro = await Astrologer.findOne({ userId: user._id });
+            if (astro && astro.isBusy) {
+                return res.status(403).json({ success: false, message: 'You cannot log in from a new device while an active consultation is in progress.' });
+            }
+        }
+
         await user.save();
 
         // Check if profile is complete (Mandatory: name, gender, dob)
@@ -229,7 +239,7 @@ exports.verifyWhatsappOtp = async (req, res) => {
             profileImage: user.profileImage,
             birthDetails: user.birthDetails,
             lastLogin: user.lastLogin,
-            token: generateToken(user._id),
+            token: generateToken(user._id, user.sessionVersion),
             needsProfileSetup: !isProfileComplete
         });
 

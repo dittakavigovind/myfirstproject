@@ -28,4 +28,23 @@ API.interceptors.request.use((req) => {
     return req;
 });
 
+// Add Response Interceptor for Global 401 Handling
+API.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            const message = error.response.data?.message;
+            if (error.response.data?.code === 'SESSION_EXPIRED' || message === 'Session expired. You have logged in from another device.') {
+                if (typeof window !== 'undefined') {
+                    alert('Session expired. You have logged in from another device.');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                }
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default API;
