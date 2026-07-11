@@ -83,6 +83,11 @@ export default function ChatRoomClient() {
     
     const [firebaseReady, setFirebaseReady] = useState(false);
 
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [showBlockModal, setShowBlockModal] = useState(false);
+    const [reportForm, setReportForm] = useState({ reason: '', description: '' });
+
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const inputRef = useRef(null);
@@ -480,11 +485,18 @@ export default function ChatRoomClient() {
         }
         return () => clearInterval(interval);
     }, [sessionActive]);
-
-    useEffect(scrollToBottom, [messages, isAstroTyping]);
+        useEffect(scrollToBottom, [messages, isAstroTyping]);
 
     const handleSend = async (e) => {
         e.preventDefault();
+        if (isReadOnly) {
+            toast.error("This session has ended.");
+            return;
+        }
+        if (!sessionActive && user?.role !== 'astrologer') {
+            toast.error("Please wait for the astrologer to start the session.");
+            return;
+        }
         if (!newMessage.trim() || !firebaseReady) return;
 
         const content = newMessage;
@@ -687,12 +699,147 @@ export default function ChatRoomClient() {
         router.replace('/history');
     };
 
+    const handleReportSubmit = async () => {
+        try {
+            const targetId = user?.role === 'astrologer' ? chatUser?._id : astrologer?._id;
+            await api.post('/moderation/report', {
+                reportedId: targetId,
+                reportedModel: user?.role === 'astrologer' ? 'User' : 'Astrologer',
+                reason: reportForm.reason,
+                description: reportForm.description
+            });
+            toast.success("Report submitted successfully.");
+            setShowReportModal(false);
+            setReportForm({ reason: '', description: '' });
+        } catch (error) {
+            toast.error("Failed to submit report.");
+        }
+    };
+
+    const handleBlockUser = async () => {
+        try {
+            const targetId = user?.role === 'astrologer' ? chatUser?._id : astrologer?._id;
+            await api.post('/moderation/block', {
+                blockedId: targetId,
+                blockedModel: user?.role === 'astrologer' ? 'User' : 'Astrologer',
+                roomId: roomId || null
+            });
+            toast.success("User blocked.");
+            setShowBlockModal(false);
+            
+            if (sessionActive) {
+                if (user?.role === 'astrologer') {
+                    setAstroEndReason('Other');
+                    setCustomAstroReason('Blocked User');
+                }
+                await confirmEndSession();
+            } else {
+                router.back();
+            }
+        } catch (error) {
+            toast.error("Failed to block user.");
+        }
+    };
+
     return (
         <div 
             className="fixed top-0 left-0 w-full z-50 flex flex-col mx-auto bg-cosmic-indigo overflow-hidden sm:max-w-md sm:left-1/2 sm:-translate-x-1/2"
             style={{ height: viewportHeight }}
         >
 
+
+            {/* Report Modal */}
+            <AnimatePresence>
+                {showReportModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                            className="bg-cosmic-indigo border border-white/10 rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative"
+                        >
+                            <button onClick={() => setShowReportModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                                <X size={20} />
+                            </button>
+                            <h3 className="text-xl font-bold text-white mb-4">Report Content</h3>
+                            
+                            <select 
+                                value={reportForm.reason} 
+                                onChange={(e) => setReportForm({...reportForm, reason: e.target.value})}
+                                className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 mb-4 focus:ring-2 focus:ring-electric-violet/50 outline-none"
+                            >
+                                <option value="" disabled>Select a reason...</option>
+                                <option value="Abusive Language">Abusive Language</option>
+                                <option value="Harassment">Harassment</option>
+                                <option value="Spam">Spam</option>
+                                <option value="Inappropriate Content">Inappropriate Content</option>
+                                <option value="Other">Other</option>
+                            </select>
+
+                            <textarea
+                                value={reportForm.description}
+                                onChange={(e) => setReportForm({ ...reportForm, description: e.target.value })}
+                                placeholder="Additional details (optional)..."
+                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-electric-violet/50 mb-6 min-h-[100px] resize-none"
+                            ></textarea>
+
+                            <button 
+                                onClick={handleReportSubmit}
+                                disabled={!reportForm.reason}
+                                className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl active:scale-95 transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                            >
+                                Submit Report
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Block Modal */}
+            <AnimatePresence>
+                {showBlockModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                            className="bg-cosmic-indigo border border-white/10 rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative text-center"
+                        >
+                            <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-500/30">
+                                <AlertCircle size={28} className="text-rose-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Block User?</h3>
+                            <p className="text-sm text-slate-400 mb-6">
+                                Are you sure you want to block this person? You will not be able to interact with them anymore. This session will also end immediately.
+                            </p>
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={handleBlockUser}
+                                    className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl active:scale-95 transition"
+                                >
+                                    Yes, Block
+                                </button>
+                                <button 
+                                    onClick={() => setShowBlockModal(false)}
+                                    className="w-full py-3.5 bg-white/5 border border-white/10 text-slate-300 font-bold rounded-xl active:scale-95 transition hover:bg-white/10"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Review Modal */}
             <AnimatePresence>
@@ -811,6 +958,31 @@ export default function ChatRoomClient() {
                             End
                         </button>
                     )}
+
+                    <div className="relative">
+                        <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="text-slate-400 p-1.5 hover:bg-white/5 rounded-lg ml-1">
+                            <MoreVertical size={18} />
+                        </button>
+                        {showMoreMenu && (
+                            <>
+                                <div className="fixed inset-0 z-[100]" onClick={() => setShowMoreMenu(false)} />
+                                <div className="absolute right-0 top-full mt-2 w-40 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[101] overflow-hidden">
+                                    <button 
+                                        onClick={() => { setShowMoreMenu(false); setShowReportModal(true); }}
+                                        className="w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-white/5 border-b border-white/5"
+                                    >
+                                        Report
+                                    </button>
+                                    <button 
+                                        onClick={() => { setShowMoreMenu(false); setShowBlockModal(true); }}
+                                        className="w-full text-left px-4 py-3 text-sm text-rose-500 hover:bg-rose-500/10 font-medium"
+                                    >
+                                        Block User
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
             

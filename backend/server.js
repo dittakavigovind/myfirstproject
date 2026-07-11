@@ -319,6 +319,7 @@ app.use('/api/pooja', poojaRoutes);
 app.use('/api/media', require('./src/routes/mediaRoutes'));
 app.use('/api/matchmaking', require('./src/routes/matchmakingRoutes'));
 app.use('/api/astrologer/ai-insights', require('./src/routes/aiInsights'));
+app.use('/api/moderation', require('./src/routes/moderationRoutes'));
 // --- SEO PROXY SERVER LOGIC ---
 // In-memory cache for SEO optimized HTML strings to ensure lightning-fast responses
 const seoCache = {};

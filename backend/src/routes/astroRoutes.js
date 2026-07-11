@@ -16,7 +16,7 @@ router.get('/astrologers', astroController.getAstrologers);
 router.get('/me', protect, astroController.getCurrentAstrologer);
 router.put('/me', protect, astroController.updateCurrentAstrologer);
 router.post('/me/warning', protect, astroController.incrementWarning);
-router.get('/astrologers/:id', astroController.getAstrologerById);
+router.get('/astrologers/:id', optionalProtect, astroController.getAstrologerById);
 
 // Admin/Manager only
 router.post('/astrologers', protect, authorize('admin', 'manager'), astroController.createAstrologer);

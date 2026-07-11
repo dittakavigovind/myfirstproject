@@ -47,6 +47,20 @@ exports.createChat = async (req, res) => {
             return res.json(chat);
         }
 
+        const UserBlock = require('../models/UserBlock');
+        // Because createChat uses user.id and partnerId (could be user to user, or user to astrologer)
+        // For simplicity we check if any block exists between these two IDs regardless of model
+        const blockExists = await UserBlock.findOne({
+            $or: [
+                { blockerId: req.user.id, blockedId: partnerId },
+                { blockerId: partnerId, blockedId: req.user.id }
+            ]
+        });
+
+        if (blockExists) {
+            return res.status(403).json({ success: false, message: 'Interaction blocked by user preferences.' });
+        }
+
         // Create new chat
         chat = new Chat({
             participants: [req.user.id, partnerId],
@@ -79,6 +93,20 @@ exports.startPaidChat = async (req, res) => {
 
         const astrologer = await Astrologer.findById(astrologerId);
         if (!astrologer) return res.status(404).json({ success: false, message: 'Astrologer not found' });
+
+        const UserBlock = require('../models/UserBlock');
+        const blockExists = await UserBlock.findOne({
+            $or: [
+                { blockerId: userId, blockerModel: 'User', blockedId: astrologerId, blockedModel: 'Astrologer' },
+                { blockerId: astrologerId, blockerModel: 'Astrologer', blockedId: userId, blockedModel: 'User' },
+                // Legacy blocks support (where astrologer blocked using their User ID)
+                { blockerId: astrologer.userId, blockerModel: 'Astrologer', blockedId: userId, blockedModel: 'User' }
+            ]
+        });
+
+        if (blockExists) {
+            return res.status(403).json({ success: false, message: 'Interaction blocked by user preferences.' });
+        }
 
         // Ensure astrologer is active and online
         if (sessionType === 'audio') {

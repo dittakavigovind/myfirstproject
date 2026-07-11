@@ -41,14 +41,45 @@ export function TermsModal({ isOpen, onClose }) {
                             <p className="mb-4">Way2Astro provides consultation features including Chat, Audio calls, and Video calls. By using the call feature, you consent to being contacted even if your number is on DND. Service Providers operate independently and are not employees of Way2Astro. They are solely responsible for their advice. Way2Astro does not assume responsibility for predictions or outcomes.</p>
 
                             <h3 className="text-base font-bold text-white mt-6 mb-2">8. Content & Conduct Rules</h3>
-                            <p className="mb-4">Users must not post abusive, defamatory, obscene, or unlawful content; promote hate speech or discrimination; upload malware; or engage in harassment. Violation may result in immediate account termination and legal action.</p>
+                            <p className="mb-4">Users must not post abusive, defamatory, obscene, or unlawful content; promote hate speech or discrimination; upload malware; or engage in harassment. We maintain a strict Zero Tolerance policy regarding Objectionable Content and Abusive Users. Violation will result in immediate account termination and legal action. You may report objectionable content or block abusive users directly within the app.</p>
 
                             <h3 className="text-base font-bold text-white mt-6 mb-2">9. Refund & Cancellation Policy</h3>
                             <p className="mb-4 font-semibold text-slate-200">Astrology Services:</p>
                             <p className="mb-4">No refund once consultation has started. Refund requests must be raised within 24 hours (subject to review). No refund for dissatisfaction based on prediction accuracy.</p>
                             <p className="mb-4 font-semibold text-slate-200">Technical Issues:</p>
                             <p className="mb-4">Refund may be considered in cases of network interruption, call disconnection, consultant language mismatch, or inappropriate behavior. No refund for wrong birth details entered, wrong phone number, or completed connected calls.</p>
+                            <p className="mb-4 font-semibold text-slate-200">In-App Purchases (App Store & Google Play):</p>
+                            <p className="mb-4">For digital credits purchased via the Apple App Store or Google Play Store, all payments and refunds are handled directly by Apple or Google according to their respective store policies. Way2Astro cannot directly issue refunds for in-app purchases.</p>
                             
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">10. Way2Astro Wallet Policy</h3>
+                            <p className="mb-4">Way2Astro may maintain a digital wallet system with two types of credits: Real Service Credits (purchased) and Virtual Service Credits (promotional). Credits have no cash value, are non-transferable and cannot be withdrawn. Virtual Credits expire in 14 Days, and Real Credits expire in up to 1 Year. Expired credits are non-refundable.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">11. Disclaimer & Limitation of Liability</h3>
+                            <p className="mb-4">Services are provided “AS IS”. We do not guarantee accuracy, reliability, or uninterrupted service. Way2Astro shall not be liable for decisions made based on advice, losses arising from use of Platform, indirect or consequential damages, or unauthorized access to accounts. Maximum liability shall not exceed the amount paid for the service in question.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">12. Prohibited Activities</h3>
+                            <p className="mb-4">Hate speech, sexual exploitation, child abuse material, black magic/witchcraft promotion, terrorist content, illegal drug promotion, sale of weapons, gambling promotion, harassment, and discrimination are strictly prohibited. Zero tolerance policy applies. Accounts violating these standards will be terminated immediately.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">13. Intellectual Property</h3>
+                            <p className="mb-4">All content including text, graphics, designs, logos, and software is the property of Go Digital Media and Solutions. Unauthorized commercial use is strictly prohibited.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">14. Indemnification</h3>
+                            <p className="mb-4">You agree to indemnify and hold harmless Way2Astro and Go Digital Media and Solutions from claims arising from misuse, violation of these Terms, or infringement of third-party rights.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">15. Governing Law & Jurisdiction</h3>
+                            <p className="mb-4">These Terms shall be governed by the laws of India. Disputes shall be resolved via arbitration under the Arbitration and Conciliation Act, 1996, in Hyderabad, India, in English. Courts of Hyderabad shall have exclusive jurisdiction.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">16. Termination</h3>
+                            <p className="mb-4">We may suspend or terminate accounts without prior notice for violations, security concerns, or legal compliance. Unused credits may lapse as per policy.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">17. Grievance Redressal</h3>
+                            <p className="mb-4">In accordance with the Information Technology Act, 2000 and rules made there under, the name and contact details of the Grievance Officer are provided below:<br/><br/>
+                            <strong>Name:</strong> Grievance Officer<br/>
+                            <strong>Email:</strong> info@way2astro.com<br/>
+                            <strong>Address:</strong> Go Digital Media and Solutions, Hyderabad, India.<br/>
+                            The Grievance Officer shall acknowledge the complaint within 24 hours and resolve it within 15 days from the date of receipt.
+                            </p>
+
                             <p className="mb-4 mt-8 font-bold text-center text-xs">Owned & Operated by Go Digital Media and Solutions<br/>info@way2astro.com | Hyderabad, India</p>
                         </div>
                     </motion.div>
@@ -98,7 +129,13 @@ export function PrivacyModal({ isOpen, onClose }) {
                             <h3 className="text-base font-bold text-white mt-6 mb-2">6. Profile Deletion and Data Retention</h3>
                             <p className="mb-4">Users may delete their account from the Account Settings section of the Website. Upon deletion request, personal data will be removed within a reasonable timeframe. Certain records may be retained where required under applicable law. We retain personal data only for as long as necessary to fulfill legitimate business purposes or legal obligations.</p>
 
-                            <h3 className="text-base font-bold text-white mt-6 mb-2">7. Security Measures</h3>
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">7. Third-Party Data Sharing</h3>
+                            <p className="mb-4">We do not sell, rent, or trade your personal information to third parties for marketing purposes. We only share information with trusted third-party services (such as payment processors and SMS gateways) necessary to operate our platform. All such third parties are bound by strict confidentiality agreements and are required to provide the same or equal protection of user data as stated in this Privacy Policy, in compliance with App Store Guidelines.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">8. Revocation of Consent & Data Deletion</h3>
+                            <p className="mb-4">You have the right to revoke your consent for data processing at any time. You can request the complete deletion of your account and associated personal data directly through the App Settings or by contacting us at info@way2astro.com. Upon receiving a deletion request, we will promptly remove your data, retaining only what is strictly required for legal or regulatory compliance.</p>
+
+                            <h3 className="text-base font-bold text-white mt-6 mb-2">9. Security Measures</h3>
                             <p className="mb-4">We implement appropriate technical and organizational measures including SSL encryption, secure servers, encrypted payment processing, firewalls and monitoring systems, and restricted access controls. While we strive to protect your data, no method of transmission over the Internet is completely secure. Users are responsible for safeguarding their login credentials.</p>
 
                             <p className="mb-4 mt-8 font-bold text-center text-xs">Owned & Operated by Go Digital Media and Solutions<br/>info@way2astro.com | Hyderabad, India</p>

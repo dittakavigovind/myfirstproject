@@ -370,6 +370,25 @@ export default function TermsAndConditionsPage() {
                             </div>
                             <p className="text-indigo-100/70 leading-relaxed font-medium">We may suspend or terminate accounts without prior notice for violations, security concerns, or legal compliance. Unused credits may lapse as per policy.</p>
                         </section>
+                        {/* 17. Grievance Redressal */}
+                        <section className="bg-red-500/5 p-8 rounded-3xl border border-red-500/10 space-y-6">
+                            <div className="flex items-center gap-4 mb-2">
+                                <AlertCircle className="text-red-400" size={24} />
+                                <h2 className="text-2xl font-black text-white m-0 uppercase tracking-tighter">17. Grievance Redressal</h2>
+                            </div>
+                            <div className="space-y-4">
+                                <p className="text-indigo-100/70 leading-relaxed font-medium">In accordance with the Information Technology Act, 2000 and rules made there under, the name and contact details of the Grievance Officer are provided below:</p>
+                                <ul className="space-y-2 list-none p-0 bg-white/2 rounded-2xl border border-white/5 p-6">
+                                    <li className="flex items-center gap-2 text-sm text-indigo-100/80"><strong className="text-white min-w-[100px]">Name:</strong> Grievance Officer</li>
+                                    <li className="flex items-center gap-2 text-sm text-indigo-100/80"><strong className="text-white min-w-[100px]">Email:</strong> grievances@way2astro.com</li>
+                                    <li className="flex items-center gap-2 text-sm text-indigo-100/80"><strong className="text-white min-w-[100px]">Address:</strong> Go Digital Media and Solutions, Hyderabad, India.</li>
+                                </ul>
+                                <p className="text-indigo-100/80 font-black text-sm flex items-center gap-2">
+                                    <ChevronRight size={16} className="text-astro-yellow shrink-0" />
+                                    The Grievance Officer shall acknowledge the complaint within 24 hours and resolve it within 15 days from the date of receipt.
+                                </p>
+                            </div>
+                        </section>
 
                         {/* Contact Info Footer */}
                         <div className="mt-16 pt-12 border-t border-white/10 flex flex-col items-center text-center space-y-8">

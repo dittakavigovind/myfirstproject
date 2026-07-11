@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { updateProfile, getProfile, toggleStatus, getRecentActivity, saveFCMToken, removeFCMToken, toggleFollow, getFollowing, incrementWarning } = require('../controllers/userController');
+const { updateProfile, getProfile, toggleStatus, getRecentActivity, saveFCMToken, removeFCMToken, toggleFollow, getFollowing, incrementWarning, deleteMyAccount } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.put('/profile', protect, updateProfile);
@@ -12,5 +12,6 @@ router.delete('/fcm-token', protect, removeFCMToken);
 router.post('/follow/:astrologerId', protect, toggleFollow);
 router.get('/following', protect, getFollowing);
 router.post('/warning', protect, incrementWarning);
+router.delete('/me', protect, deleteMyAccount);
 
 module.exports = router;

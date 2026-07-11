@@ -21,6 +21,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
+import api from "@/lib/api";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -112,16 +113,25 @@ export default function SettingsPage() {
         }
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         setIsDeleting(true);
-        // Simulate API call for deletion
-        setTimeout(() => {
+        try {
+            const res = await api.delete('/users/me');
+            if (res.data.success) {
+                setIsDeleting(false);
+                setShowDeleteConfirm(false);
+                setShowAccountModal(false);
+                if (logout) logout();
+                router.push('/login');
+            } else {
+                setIsDeleting(false);
+                alert('Failed to delete account');
+            }
+        } catch (error) {
+            console.error('Delete account error:', error);
             setIsDeleting(false);
-            setShowDeleteConfirm(false);
-            setShowAccountModal(false);
-            if (logout) logout();
-            router.push('/login');
-        }, 2000);
+            alert('Failed to delete account. Please try again.');
+        }
     };
 
     // Helper component for Toggle Switch
@@ -169,13 +179,26 @@ export default function SettingsPage() {
                         {/* Account Management */}
                         <div 
                             onClick={() => setShowAccountModal(true)}
-                            className="flex items-center justify-between p-4 active:bg-white/10 transition-colors cursor-pointer"
+                            className="flex items-center justify-between p-4 border-b border-white/5 active:bg-white/10 transition-colors cursor-pointer"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                                     <Shield size={16} />
                                 </div>
                                 <span className="text-sm font-medium text-slate-200">Account Management</span>
+                            </div>
+                            <ChevronRight size={16} className="text-slate-500" />
+                        </div>
+                        {/* Blocked Users */}
+                        <div 
+                            onClick={() => router.push('/settings/blocked')}
+                            className="flex items-center justify-between p-4 active:bg-white/10 transition-colors cursor-pointer"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400">
+                                    <AlertTriangle size={16} />
+                                </div>
+                                <span className="text-sm font-medium text-slate-200">Blocked Users</span>
                             </div>
                             <ChevronRight size={16} className="text-slate-500" />
                         </div>

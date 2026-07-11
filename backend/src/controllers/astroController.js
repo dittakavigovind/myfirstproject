@@ -221,7 +221,43 @@ exports.getAstrologerById = async (req, res) => {
             await astrologer.save();
         }
 
-        res.json({ success: true, data: astrologer });
+        let isBlockedByMe = false;
+        let isBlockedByThem = false;
+
+        if (req.user) {
+            const UserBlock = require('../models/UserBlock');
+            
+            // Determine my role and IDs
+            const myModel = req.user.role === 'astrologer' ? 'Astrologer' : 'User';
+            const myIds = [req.user.id];
+            
+            if (req.user.role === 'astrologer') {
+                const myAstro = await Astrologer.findOne({ userId: req.user.id });
+                if (myAstro) myIds.push(myAstro._id.toString());
+            }
+
+            // Determine their IDs
+            const theirIds = [astrologer._id.toString()];
+            if (astrologer.userId) {
+                theirIds.push(astrologer.userId._id ? astrologer.userId._id.toString() : astrologer.userId.toString());
+            }
+
+            // Did I block them?
+            const myBlock = await UserBlock.findOne({
+                blockerId: { $in: myIds },
+                blockedId: { $in: theirIds }
+            });
+            if (myBlock) isBlockedByMe = true;
+
+            // Did they block me?
+            const theirBlock = await UserBlock.findOne({
+                blockerId: { $in: theirIds },
+                blockedId: { $in: myIds }
+            });
+            if (theirBlock) isBlockedByThem = true;
+        }
+
+        res.json({ success: true, data: astrologer, isBlockedByMe, isBlockedByThem });
     } catch (error) {
         console.error('Fetch Astrologer Error:', error);
         res.status(500).json({ message: 'Server Error' });

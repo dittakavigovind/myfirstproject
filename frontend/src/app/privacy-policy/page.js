@@ -218,8 +218,8 @@ export default function PrivacyPolicyPage() {
                                 {[
                                     'Access their personal data',
                                     'Request correction of inaccurate data',
-                                    'Request deletion of personal data',
-                                    'Withdraw consent for data processing'
+                                    'Request deletion of personal data and account',
+                                    'Revoke consent for data processing at any time'
                                 ].map((item, i) => (
                                     <li key={i} className="bg-white/2 p-4 rounded-xl border border-white/5 text-sm font-medium text-indigo-100/70 flex items-center gap-3">
                                         <div className="w-1.5 h-1.5 rounded-full bg-astro-yellow shrink-0"></div>
@@ -274,8 +274,8 @@ export default function PrivacyPolicyPage() {
                                     </li>
                                 ))}
                             </ul>
-                            <p className="text-indigo-100/70 leading-relaxed">We are not responsible for the privacy practices of third-party websites linked from our platform. Users are encouraged to review their respective privacy policies.</p>
-                            <p className="text-emerald-400 font-bold text-sm">Mobile information and SMS opt-in data are not shared with third parties for marketing purposes.</p>
+                            <p className="text-indigo-100/70 leading-relaxed">We are not responsible for the privacy practices of third-party websites linked from our platform. However, any trusted third-party services we use to operate our platform are bound by strict confidentiality agreements and are required to provide the same or equal protection of user data as stated in this Privacy Policy, in compliance with App Store Guidelines.</p>
+                            <p className="text-emerald-400 font-bold text-sm">We do not sell, rent, or trade your personal information. Mobile information and SMS opt-in data are not shared with third parties for marketing purposes.</p>
                         </section>
 
                         {/* 11. Security Measures */}

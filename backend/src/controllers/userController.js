@@ -331,3 +331,53 @@ exports.incrementWarning = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+exports.deleteMyAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Overwrite PII for soft deletion
+        user.name = 'Deleted User';
+        user.email = '';
+        user.phone = 'deleted_' + Date.now();
+        user.mobileNumber = 'deleted_' + Date.now();
+        user.gender = undefined;
+        user.profileImage = 'default-avatar.png';
+        user.fcmTokens = [];
+        user.birthDetails = undefined;
+        user.isDeleted = true;
+        user.isOnline = false;
+        user.isChatOnline = false;
+        user.isVoiceOnline = false;
+        user.isVideoOnline = false;
+
+        if (user.role === 'astrologer') {
+            const astro = await Astrologer.findOne({ userId });
+            if (astro) {
+                astro.displayName = 'Deleted Astrologer';
+                astro.email = 'deleted_' + Date.now() + '@way2astro.com';
+                astro.phone = 'deleted_' + Date.now();
+                astro.bio = '';
+                astro.image = 'default-avatar.png';
+                astro.isActive = false;
+                astro.isOnline = false;
+                astro.isChatOnline = false;
+                astro.isVoiceOnline = false;
+                astro.isVideoOnline = false;
+                await astro.save();
+            }
+        }
+
+        await user.save();
+
+        res.json({ success: true, message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete My Account Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

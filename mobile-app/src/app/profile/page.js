@@ -212,7 +212,8 @@ export default function Profile() {
         { icon: DollarSign, label: "Earnings", value: `₹${user?.walletBalance || 0}`, color: "text-green-400", bg: "bg-green-400/10", route: "/profile/earnings" },
         { icon: Star, label: "My Reviews", color: "text-solar-gold", bg: "bg-solar-gold/10", route: "/profile/reviews" },
         { icon: History, label: "Consultation History", color: "text-blue-400", bg: "bg-blue-400/10", route: "/history" },
-        { icon: Settings, label: "Pricing & Settings", color: "text-slate-400", bg: "bg-white/5", onClick: () => setShowPricingModal(true) },
+        { icon: DollarSign, label: "Set Pricing", color: "text-purple-400", bg: "bg-purple-400/10", onClick: () => setShowPricingModal(true) },
+        { icon: Settings, label: "Settings", color: "text-slate-400", bg: "bg-white/5", route: "/settings" },
     ];
 
     const [todayStats, setTodayStats] = useState(null);

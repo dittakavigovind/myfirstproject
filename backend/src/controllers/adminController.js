@@ -302,9 +302,46 @@ exports.updateUserRole = async (req, res) => {
 // @access  Private/Admin
 exports.deleteUser = async (req, res) => {
     try {
-        await User.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: 'User deleted' });
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.name = 'Deleted User';
+        user.email = '';
+        user.phone = 'deleted_' + Date.now();
+        user.mobileNumber = 'deleted_' + Date.now();
+        user.gender = undefined;
+        user.profileImage = 'default-avatar.png';
+        user.fcmTokens = [];
+        user.birthDetails = undefined;
+        user.isDeleted = true;
+        user.isOnline = false;
+        user.isChatOnline = false;
+        user.isVoiceOnline = false;
+        user.isVideoOnline = false;
+
+        if (user.role === 'astrologer') {
+            const astro = await Astrologer.findOne({ userId: user._id });
+            if (astro) {
+                astro.displayName = 'Deleted Astrologer';
+                astro.email = 'deleted_' + Date.now() + '@way2astro.com';
+                astro.phone = 'deleted_' + Date.now();
+                astro.bio = '';
+                astro.image = 'default-avatar.png';
+                astro.isActive = false;
+                astro.isOnline = false;
+                astro.isChatOnline = false;
+                astro.isVoiceOnline = false;
+                astro.isVideoOnline = false;
+                await astro.save();
+            }
+        }
+
+        await user.save();
+        res.json({ success: true, message: 'User soft-deleted successfully' });
     } catch (error) {
+        console.error('Delete User Error:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -442,6 +479,57 @@ exports.getSocketMonitorStats = async (req, res) => {
         });
     } catch (error) {
         console.error('Socket Monitor Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+const Report = require('../models/Report');
+const UserBlock = require('../models/UserBlock');
+
+// @desc    Get All Reports
+// @route   GET /api/admin/reports
+// @access  Private/Admin
+exports.getAllReports = async (req, res) => {
+    try {
+        const reports = await Report.find()
+            .populate('reporterId', 'name displayName email phone role profilePic image')
+            .populate('reportedId', 'name displayName email phone role profilePic image')
+            .sort({ createdAt: -1 });
+        res.json({ success: true, data: reports });
+    } catch (error) {
+        console.error('GetAllReports Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get all transactions for Financial Dashboard
+// @route   GET /api/admin/transactions
+// @access  Private/Admin
+exports.getAllTransactions = async (req, res) => {
+    try {
+        const transactions = await Transaction.find()
+            .populate('user', 'name email phone role isDeleted')
+            .sort({ createdAt: -1 });
+
+        res.json({ success: true, transactions });
+    } catch (error) {
+        console.error('GetAllTransactions Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get All Blocked Users
+// @route   GET /api/admin/blocked-users
+// @access  Private/Admin
+exports.getAllBlockedUsers = async (req, res) => {
+    try {
+        const blocks = await UserBlock.find()
+            .populate('blockerId', 'name displayName email phone role profilePic image')
+            .populate('blockedId', 'name displayName email phone role profilePic image')
+            .sort({ createdAt: -1 });
+        res.json({ success: true, data: blocks });
+    } catch (error) {
+        console.error('GetAllBlockedUsers Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

@@ -151,6 +151,7 @@ const userSchema = new mongoose.Schema({
     isVideoOnline: { type: Boolean, default: false },
     lastOnlineAt: { type: Date }, // Timestamp when they went online
     isBlocked: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
     
     // Session tracking to restrict multi-device login
     sessionVersion: { type: Number, default: 0 }

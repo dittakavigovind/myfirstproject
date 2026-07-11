@@ -273,6 +273,21 @@ module.exports = function (io) {
                     return socket.emit('waitlist_error', { message: 'Astrologer is offline' });
                 }
 
+                // Check for active blocks
+                const UserBlock = require('../models/UserBlock');
+                const astro = await Astrologer.findById(astrologerId);
+                const blockExists = await UserBlock.findOne({
+                    $or: [
+                        { blockerId: socket.user.id, blockerModel: 'User', blockedId: astrologerId, blockedModel: 'Astrologer' },
+                        { blockerId: astrologerId, blockerModel: 'Astrologer', blockedId: socket.user.id, blockedModel: 'User' },
+                        ...(astro ? [{ blockerId: astro.userId, blockerModel: 'Astrologer', blockedId: socket.user.id, blockedModel: 'User' }] : [])
+                    ]
+                });
+
+                if (blockExists) {
+                    return socket.emit('waitlist_error', { message: 'Interaction blocked by user preferences.' });
+                }
+
                 const position = await QueueService.enqueueUser(astrologerId, socket.user.id, sessionType);
                 socket.emit('waitlist_update', { position, message: 'You are in the queue' });
 

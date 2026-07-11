@@ -42,6 +42,16 @@ export default function MobileAdminSidebar() {
                     Live Analytics
                 </Link>
 
+                <Link href="/mobile-admin/finance"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/finance')
+                        ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <DollarSign size={18} />
+                    Financial Dashboard
+                </Link>
+
                 <Link href="/mobile-admin/users"
                     className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/users')
                         ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
@@ -144,6 +154,26 @@ export default function MobileAdminSidebar() {
                 >
                     <AlertTriangle size={18} />
                     Warnings & Violations
+                </Link>
+
+                <Link href="/mobile-admin/reports"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/reports')
+                        ? 'bg-red-600/20 text-red-400 border border-red-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <AlertTriangle size={18} />
+                    User Reports
+                </Link>
+
+                <Link href="/mobile-admin/blocked"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/blocked')
+                        ? 'bg-red-600/20 text-red-400 border border-red-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <AlertTriangle size={18} />
+                    Blocked Users
                 </Link>
             </nav>
 
