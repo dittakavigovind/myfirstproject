@@ -270,10 +270,10 @@ export function TimingTable({ title, dayData, nightData, delay, color, isHora, s
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.03 * idx }}
-                        className={`relative flex items-center justify-between p-3 md:p-4 rounded-xl border transition-all group/row overflow-hidden w-full ${active ? 'bg-indigo-50/50 border-indigo-200 shadow-md shadow-indigo-100 ring-2 ring-indigo-500/20' : 'border-slate-50 bg-white hover:border-slate-100 hover:shadow-lg hover:shadow-slate-100/50'}`}
+                        className={`relative flex flex-col items-start justify-center p-3 md:p-4 rounded-xl border transition-all group/row overflow-hidden w-full gap-2 ${active ? 'bg-indigo-50/50 border-indigo-200 shadow-md shadow-indigo-100 ring-2 ring-indigo-500/20' : 'border-slate-50 bg-white hover:border-slate-100 hover:shadow-lg hover:shadow-slate-100/50'}`}
                     >
                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${info.bar} ${active ? 'w-2 shadow-[2px_0_8px_rgba(0,0,0,0.1)]' : ''}`}></div>
-                        <div className="flex items-center gap-3 md:gap-4 pl-2 md:pl-3 w-full sm:w-auto overflow-hidden">
+                        <div className="flex items-center gap-3 md:gap-4 pl-2 md:pl-3 w-full min-w-0">
                             <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 ${info.bg} ${info.color} ${active ? 'animate-pulse' : ''}`}>
                                 <Icon size={16} strokeWidth={2.5} className="md:w-[18px] md:h-[18px]" />
                             </div>
@@ -289,8 +289,8 @@ export function TimingTable({ title, dayData, nightData, delay, color, isHora, s
                                 )}
                             </div>
                         </div>
-                        <div className="text-right pl-2 shrink-0">
-                            <div className={`px-2 py-1 md:px-3 md:py-1.5 rounded-lg border transition-colors ${active ? 'bg-white border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-100 group-hover/row:bg-white group-hover/row:border-slate-200'}`}>
+                        <div className="w-full text-left pl-12 md:pl-[3.5rem] shrink-0">
+                            <div className={`inline-block px-2 py-1 md:px-3 md:py-1.5 rounded-lg border transition-colors ${active ? 'bg-white border-indigo-200 text-indigo-700' : 'bg-slate-50 border-slate-100 group-hover/row:bg-white group-hover/row:border-slate-200'}`}>
                                 <span className="text-[10px] md:text-xs font-bold tabular-nums whitespace-nowrap">
                                     {item.start} - {item.end}
                                 </span>
