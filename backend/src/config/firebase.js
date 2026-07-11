@@ -26,7 +26,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
 if (serviceAccount) {
     try {
         admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount)
+            credential: admin.cert(serviceAccount)
         });
         console.log('🔥 Firebase Admin SDK Initialized Successfully.');
     } catch (error) {
