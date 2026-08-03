@@ -25,11 +25,13 @@ exports.createNotification = async (req, res) => {
         // -----------------------------------------------------
         // FIREBASE CLOUD MESSAGING (FCM) INTEGRATION
         // -----------------------------------------------------
-        const adminFirebase = require('../config/firebase');
+        require('../config/firebase');
+        const { getApps } = require('firebase-admin/app');
+        const { getMessaging } = require('firebase-admin/messaging');
         let pushSentCount = 0;
         let pushDispatched = false;
 
-        if (adminFirebase && adminFirebase.apps.length > 0) {
+        if (getApps().length > 0) {
             try {
                 const messagePayload = {
                     notification: {
@@ -65,11 +67,11 @@ exports.createNotification = async (req, res) => {
                     messagePayload.tokens = tokens;
                     // Chunk tokens if there are more than 500 (FCM limit)
                     if (tokens.length <= 500) {
-                        await adminFirebase.messaging().sendEachForMulticast(messagePayload);
+                        await getMessaging().sendEachForMulticast(messagePayload);
                     } else {
                         for (let i = 0; i < tokens.length; i += 500) {
                             const chunk = tokens.slice(i, i + 500);
-                            await adminFirebase.messaging().sendEachForMulticast({ ...messagePayload, tokens: chunk });
+                            await getMessaging().sendEachForMulticast({ ...messagePayload, tokens: chunk });
                         }
                     }
                     pushSentCount = tokens.length;

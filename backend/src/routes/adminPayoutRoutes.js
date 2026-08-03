@@ -9,5 +9,7 @@ router.put('/:id/hold', protect, admin, adminPayoutController.putOnHold);
 router.put('/:id/release', protect, admin, adminPayoutController.releaseHold);
 router.put('/:id/edit', protect, admin, adminPayoutController.editPayout);
 router.post('/:id/mark-paid', protect, admin, adminPayoutController.markPaid);
+router.get('/:id/export', protect, admin, adminPayoutController.exportSinglePayoutCSV);
+router.get('/:id/summary', protect, admin, adminPayoutController.getPayoutSummary);
 
 module.exports = router;

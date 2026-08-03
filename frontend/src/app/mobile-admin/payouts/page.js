@@ -87,6 +87,37 @@ export default function PayoutsDashboard() {
         }
     };
 
+    const handleExportSingleCSV = async (payout) => {
+        try {
+            const res = await API.get(`/admin/payouts/${payout._id}/export`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `payout_${payout.astrologerId?.displayName || 'details'}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            toast.success("Export successful!");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to export CSV");
+        }
+    };
+
+    const handleViewSummary = async (payout) => {
+        setActionModal({ type: 'view', payout, platformEarnings: null, loadingSummary: true });
+        try {
+            const res = await API.get(`/admin/payouts/${payout._id}/summary`);
+            setActionModal(prev => prev?.type === 'view' && prev.payout._id === payout._id 
+                ? { ...prev, platformEarnings: res.data.platformEarnings, loadingSummary: false } 
+                : prev);
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to fetch summary");
+            setActionModal(prev => prev?.type === 'view' ? { ...prev, loadingSummary: false } : prev);
+        }
+    };
+
     const filteredPayouts = payouts.filter(p => {
         const matchesSearch = (p.astrologerId?.displayName || '').toLowerCase().includes(search.toLowerCase());
         const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
@@ -162,8 +193,8 @@ export default function PayoutsDashboard() {
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="text-slate-300 text-xs">
-                                            {payout.cycleStartDate ? new Date(payout.cycleStartDate).toLocaleDateString() : 'N/A'} - 
-                                            {payout.cycleEndDate ? new Date(payout.cycleEndDate).toLocaleDateString() : 'N/A'}
+                                            {payout.cycleStartDate ? new Date(payout.cycleStartDate).toLocaleDateString('en-GB') : 'N/A'} - 
+                                            {payout.cycleEndDate ? new Date(payout.cycleEndDate).toLocaleDateString('en-GB') : 'N/A'}
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
@@ -180,11 +211,13 @@ export default function PayoutsDashboard() {
                                         {payout.adminRemarks || '-'}
                                     </td>
                                     <td className="px-6 py-5 text-right space-x-2">
+                                        <button onClick={() => handleViewSummary(payout)} className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 px-3 py-1 rounded text-xs border border-indigo-500/20 mb-2 sm:mb-0 mr-2">View</button>
+                                        <button onClick={() => handleExportSingleCSV(payout)} className="bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 px-3 py-1 rounded text-xs border border-purple-500/20 mb-2 sm:mb-0 mr-2">Export CSV</button>
                                         {payout.status === 'pending' && (
                                             <>
-                                                <button onClick={() => setActionModal({ type: 'pay', payout })} className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-3 py-1 rounded text-xs border border-emerald-500/20">Pay</button>
-                                                <button onClick={() => setActionModal({ type: 'hold', payout })} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 px-3 py-1 rounded text-xs border border-orange-500/20">Hold</button>
-                                                <button onClick={() => setActionModal({ type: 'edit', payout })} className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 px-3 py-1 rounded text-xs border border-blue-500/20">Edit</button>
+                                                <button onClick={() => setActionModal({ type: 'pay', payout })} className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-3 py-1 rounded text-xs border border-emerald-500/20 mb-2 sm:mb-0">Pay</button>
+                                                <button onClick={() => setActionModal({ type: 'hold', payout })} className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 px-3 py-1 rounded text-xs border border-orange-500/20 mb-2 sm:mb-0">Hold</button>
+                                                <button onClick={() => setActionModal({ type: 'edit', payout })} className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 px-3 py-1 rounded text-xs border border-blue-500/20 mb-2 sm:mb-0">Edit</button>
                                             </>
                                         )}
                                         {payout.status === 'on_hold' && (
@@ -207,8 +240,39 @@ export default function PayoutsDashboard() {
             {actionModal && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
                     <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-md shadow-2xl">
-                        <h3 className="text-xl font-bold text-white mb-4 capitalize">{actionModal.type} Payout</h3>
+                        <h3 className="text-xl font-bold text-white mb-4 capitalize">{actionModal.type === 'view' ? 'Amounts Summary' : `${actionModal.type} Payout`}</h3>
                         
+                        {actionModal.type === 'view' && (
+                            <div className="space-y-4 mb-6">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <span className="text-slate-400">Astrologer Earnings (Gross)</span>
+                                    <span className="text-white font-medium">₹{actionModal.payout.grossAmount?.toFixed(2) || '0.00'}</span>
+                                </div>
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <span className="text-slate-400">TDS Deduction ({actionModal.payout.tdsPercentage || 10}%)</span>
+                                    <span className="text-red-400 font-medium">- ₹{actionModal.payout.tdsAmount?.toFixed(2) || '0.00'}</span>
+                                </div>
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <span className="text-slate-400">PG Charges ({actionModal.payout.pgPercentage || 2.5}%)</span>
+                                    <span className="text-red-400 font-medium">- ₹{actionModal.payout.pgAmount?.toFixed(2) || '0.00'}</span>
+                                </div>
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <span className="text-slate-400">Net Payable Amount</span>
+                                    <span className="text-emerald-400 font-bold">₹{actionModal.payout.netPayableAmount?.toFixed(2) || actionModal.payout.amount?.toFixed(2) || '0.00'}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2">
+                                    <span className="text-slate-400">Platform Earnings</span>
+                                    <span className="text-blue-400 font-medium">
+                                        {actionModal.loadingSummary ? (
+                                            <Loader2 size={14} className="animate-spin inline" />
+                                        ) : (
+                                            actionModal.platformEarnings !== null ? `₹${actionModal.platformEarnings.toFixed(2)}` : 'N/A'
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {actionModal.type === 'pay' && (
                             <input 
                                 type="text" 
@@ -238,8 +302,14 @@ export default function PayoutsDashboard() {
                         )}
 
                         <div className="flex justify-end gap-3">
-                            <button onClick={() => { setActionModal(null); setActionInput(''); }} className="px-4 py-2 text-slate-400 hover:text-white transition">Cancel</button>
-                            <button onClick={handleActionSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow transition">Submit</button>
+                            {actionModal.type === 'view' ? (
+                                <button onClick={() => { setActionModal(null); setActionInput(''); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium shadow transition">Close</button>
+                            ) : (
+                                <>
+                                    <button onClick={() => { setActionModal(null); setActionInput(''); }} className="px-4 py-2 text-slate-400 hover:text-white transition">Cancel</button>
+                                    <button onClick={handleActionSubmit} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow transition">Submit</button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

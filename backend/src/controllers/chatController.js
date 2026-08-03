@@ -274,9 +274,11 @@ exports.getSessionMessages = async (req, res) => {
         // Fallback to Firebase if MongoDB has no messages
         if (messages.length === 0) {
             try {
-                const admin = require('../config/firebase');
-                if (admin && admin.apps && admin.apps.length > 0) {
-                    const db = admin.firestore();
+                require('../config/firebase');
+                const { getApps } = require('firebase-admin/app');
+                const { getFirestore } = require('firebase-admin/firestore');
+                if (getApps().length > 0) {
+                    const db = getFirestore();
                     const snapshot = await db.collection('chat_sessions')
                         .doc(roomId)
                         .collection('messages')
