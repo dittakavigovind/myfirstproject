@@ -38,7 +38,7 @@
         "react-icons": "^5.5.0",
         "react-quill-new": "^3.7.0",
         "recharts": "^3.7.0",
-        "sharp": "^0.34.5",
+        "sharp": "^0.35.3",
         "socket.io-client": "^4.8.3"
     },
     "devDependencies": {
@@ -49,5 +49,10 @@
         "eslint-config-next": "^16.1.4",
         "postcss": "^8",
         "tailwindcss": "^3.3.0"
+    },
+    "overrides": {
+        "brace-expansion": "^2.1.4",
+        "fast-xml-parser": "^5.10.1",
+        "sharp": "^0.35.3"
     }
 }
