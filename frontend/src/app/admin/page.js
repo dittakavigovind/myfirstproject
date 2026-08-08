@@ -26,6 +26,7 @@ import FAQPageManager from '../../components/admin/FAQPageManager';
 import ExploreServicesSettings from '../../components/admin/ExploreServicesSettings';
 import HeroCarouselSettings from '../../components/admin/HeroCarouselSettings';
 import GalleryManagerModal from '../../components/admin/GalleryManagerModal';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
     const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ export default function AdminDashboard() {
     const [reqList, setReqList] = useState([]);
     const [managerList, setManagerList] = useState([]);
     const [interactionStats, setInteractionStats] = useState([]);
+    const [siteVisits, setSiteVisits] = useState([]);
     const [userInteractions, setUserInteractions] = useState({});
     const [showAstroForm, setShowAstroForm] = useState(false);
     const [editingAstro, setEditingAstro] = useState(null);
@@ -122,6 +124,13 @@ export default function AdminDashboard() {
                         setInteractionStats(kpiRes.data.stats);
                     }
                 } catch (e) { console.error("KPIs fetch error", e); }
+
+                try {
+                    const visitsRes = await API.get('/analytics/visits');
+                    if (visitsRes.data.success) {
+                        setSiteVisits(visitsRes.data.visits);
+                    }
+                } catch (e) { console.error("Visits fetch error", e); }
 
                 try {
                     const userMetricsRes = await API.get('/analytics/users-summary');
@@ -547,6 +556,50 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     )}
+
+                    {/* Website Visits Chart */}
+                    <div className="space-y-4">
+                        <h2 className="font-bold text-lg text-slate-700 flex items-center gap-2">
+                            <TrendingUp size={20} className="text-blue-500" />
+                            Website Visits (Last 30 Days)
+                        </h2>
+                        <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm h-80">
+                            {siteVisits.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={siteVisits}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis 
+                                            dataKey="date" 
+                                            tickFormatter={(val) => {
+                                                const d = new Date(val);
+                                                return `${d.getDate()}/${d.getMonth()+1}`;
+                                            }}
+                                            stroke="#94a3b8" 
+                                            fontSize={12} 
+                                            tickMargin={10} 
+                                        />
+                                        <YAxis stroke="#94a3b8" fontSize={12} tickMargin={10} />
+                                        <Tooltip 
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                            labelFormatter={(val) => new Date(val).toLocaleDateString('en-GB')}
+                                        />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="count" 
+                                            stroke="#3b82f6" 
+                                            strokeWidth={3}
+                                            dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
+                                            activeDot={{ r: 6, fill: '#2563eb', strokeWidth: 0 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-slate-400">
+                                    No visit data available yet
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     {/* Real-time Interaction KPIs */}
                     <div className="space-y-4">

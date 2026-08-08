@@ -1,5 +1,6 @@
 const Interaction = require('../models/Interaction');
 const User = require('../models/User');
+const SiteVisit = require('../models/SiteVisit');
 const mongoose = require('mongoose');
 
 exports.trackInteraction = async (req, res) => {
@@ -189,5 +190,43 @@ exports.getInteractionDetails = async (req, res) => {
     } catch (error) {
         console.error('Get Interaction Details Error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch interaction details' });
+    }
+};
+
+exports.trackSiteVisit = async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        await SiteVisit.findOneAndUpdate(
+            { date: today },
+            { $inc: { count: 1 } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Track Site Visit Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to track visit' });
+    }
+};
+
+exports.getSiteVisits = async (req, res) => {
+    try {
+        // Get last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const dateString = thirtyDaysAgo.toISOString().split('T')[0];
+
+        const visits = await SiteVisit.find({ date: { $gte: dateString } })
+            .sort({ date: 1 })
+            .lean();
+
+        res.status(200).json({
+            success: true,
+            visits
+        });
+    } catch (error) {
+        console.error('Get Site Visits Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch site visits' });
     }
 };
