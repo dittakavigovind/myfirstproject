@@ -207,7 +207,7 @@ export default function PayoutsDashboard() {
                                             {payout.status.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-5 text-xs text-slate-400 max-w-xs truncate">
+                                    <td className="px-6 py-5 text-xs text-slate-400 max-w-xs whitespace-normal break-words">
                                         {payout.adminRemarks || '-'}
                                     </td>
                                     <td className="px-6 py-5 text-right space-x-2">
@@ -260,7 +260,7 @@ export default function PayoutsDashboard() {
                                     <span className="text-slate-400">Net Payable Amount</span>
                                     <span className="text-emerald-400 font-bold">₹{actionModal.payout.netPayableAmount?.toFixed(2) || actionModal.payout.amount?.toFixed(2) || '0.00'}</span>
                                 </div>
-                                <div className="flex justify-between items-center pt-2">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                                     <span className="text-slate-400">Platform Earnings</span>
                                     <span className="text-blue-400 font-medium">
                                         {actionModal.loadingSummary ? (
@@ -270,6 +270,24 @@ export default function PayoutsDashboard() {
                                         )}
                                     </span>
                                 </div>
+                                <div className="flex justify-between items-center pt-2">
+                                    <span className="text-slate-400">Total Earnings (Revenue)</span>
+                                    <span className="text-purple-400 font-bold">
+                                        {actionModal.loadingSummary ? (
+                                            <Loader2 size={14} className="animate-spin inline" />
+                                        ) : (
+                                            actionModal.platformEarnings !== null && actionModal.payout.grossAmount !== undefined
+                                                ? `₹${(actionModal.platformEarnings + actionModal.payout.grossAmount).toFixed(2)}` 
+                                                : 'N/A'
+                                        )}
+                                    </span>
+                                </div>
+                                {actionModal.payout.adminRemarks && (
+                                    <div className="pt-2 border-t border-slate-800">
+                                        <span className="text-slate-400 block mb-1">Remarks</span>
+                                        <p className="text-slate-300 text-sm italic">{actionModal.payout.adminRemarks}</p>
+                                    </div>
+                                )}
                             </div>
                         )}
 

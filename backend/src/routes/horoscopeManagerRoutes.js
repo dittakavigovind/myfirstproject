@@ -29,6 +29,9 @@ router.get('/monthly/availability', protect, authorize('admin', 'manager'), cont
 // Import
 router.post('/import', protect, authorize('admin', 'manager'), controller.importHoroscopes);
 
+// Cleanup
+router.delete('/cleanup', protect, authorize('admin', 'manager'), controller.cleanupOldHoroscopes);
+
 // Featured Astrologer
 router.get('/featured-astrologer/availability', protect, authorize('admin', 'manager'), controller.checkFeaturedAvailability);
 router.get('/featured-astrologer/search', protect, authorize('admin', 'manager'), controller.getFeaturedAstrologerByName);

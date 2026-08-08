@@ -520,3 +520,40 @@ exports.importHoroscopes = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.cleanupOldHoroscopes = async (req, res) => {
+    try {
+        const moment = require('moment');
+        const today = moment().startOf('day').toDate();
+        const currentMonth = moment().month() + 1; // 1-12
+        const currentYear = moment().year();
+
+        const dailyResult = await DailyHoroscope.deleteMany({
+            date: { $lt: today }
+        });
+
+        const weeklyResult = await WeeklyHoroscope.deleteMany({
+            weekEndDate: { $lt: today }
+        });
+
+        const monthlyResult = await MonthlyHoroscope.deleteMany({
+            $or: [
+                { year: { $lt: currentYear } },
+                { year: currentYear, month: { $lt: currentMonth } }
+            ]
+        });
+
+        res.json({
+            success: true,
+            message: 'Cleanup completed successfully.',
+            data: {
+                dailyDeleted: dailyResult.deletedCount,
+                weeklyDeleted: weeklyResult.deletedCount,
+                monthlyDeleted: monthlyResult.deletedCount
+            }
+        });
+    } catch (error) {
+        console.error('Cleanup old horoscopes error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

@@ -65,6 +65,28 @@ const generatePayouts = async () => {
             const pgAmount = (grossAmount * pgPercentage) / 100;
             const netPayableAmount = grossAmount - tdsAmount - pgAmount;
 
+            // Check for previous cancelled payouts since last completed
+            const lastCompleted = await AstrologerPayout.findOne({
+                astrologerId: astro._id,
+                status: 'completed'
+            }).sort({ cycleEndDate: -1 }).session(session);
+
+            const queryForCancelled = {
+                astrologerId: astro._id,
+                status: 'cancelled'
+            };
+
+            if (lastCompleted && lastCompleted.cycleEndDate) {
+                queryForCancelled.cycleEndDate = { $gt: lastCompleted.cycleEndDate };
+            }
+
+            const rolledOver = await AstrologerPayout.findOne(queryForCancelled).session(session);
+            
+            let remarks = '';
+            if (rolledOver) {
+                remarks = 'Includes rolled-over amount from previous cycle(s).';
+            }
+
             payoutsToCreate.push({
                 astrologerId: astro._id,
                 amount: netPayableAmount, // For legacy compatibility
@@ -77,6 +99,7 @@ const generatePayouts = async () => {
                 status: 'pending',
                 cycleStartDate: cycleStartDate,
                 cycleEndDate: cycleEndDate,
+                adminRemarks: remarks
             });
         }
 
