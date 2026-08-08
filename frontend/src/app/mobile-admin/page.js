@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, Users, DollarSign, Clock, Receipt, X, Video, Phone, List, Radio } from 'lucide-react';
 import API from '../../lib/api';
+import toast from 'react-hot-toast';
 
 export default function MobileAdminDashboard() {
     const [stats, setStats] = useState({ users: 0, astrologers: 0, revenue: 0, totalChatMinutes: 0, activeChats: 0, totalUserWallets: 0 });
@@ -33,6 +34,22 @@ export default function MobileAdminDashboard() {
             console.error("Failed to fetch active sessions:", err);
         } finally {
             setLoadingActiveSessions(false);
+        }
+    };
+
+    const handleDownloadDormantFunds = async () => {
+        try {
+            const res = await API.get('/admin/dormant-funds/export', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'dormant_funds.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Download failed:', error);
+            toast.error('Failed to download dormant funds. No dormant users found or server error.');
         }
     };
 
@@ -120,6 +137,30 @@ export default function MobileAdminDashboard() {
                      <h2 className="text-5xl font-black text-white mt-2 tracking-tight">₹ {(stats.totalUserWallets || 0).toLocaleString()}</h2>
                      <p className="text-slate-400 text-sm mt-2">Sum total of all active user wallet balances available to be spent on the platform.</p>
                  </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 p-8 rounded-3xl shadow-2xl flex justify-between items-center flex-wrap gap-6">
+                <div className="flex items-center gap-6">
+                     <div className="w-16 h-16 bg-slate-800 text-slate-400 rounded-2xl flex items-center justify-center shrink-0 border border-slate-700">
+                         <DollarSign size={32} />
+                     </div>
+                     <div>
+                         <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Dormant Funds (Deleted Users)</p>
+                         <h2 className="text-4xl font-black text-white mt-2 tracking-tight">₹ {(stats.totalDormantFunds || 0).toLocaleString()}</h2>
+                         <p className="text-slate-500 text-sm mt-2">Unspent wallet balances retained from users who have deleted their accounts.</p>
+                     </div>
+                </div>
+                <button 
+                    onClick={handleDownloadDormantFunds}
+                    disabled={!stats.totalDormantFunds || stats.totalDormantFunds === 0}
+                    className={`px-6 py-3 rounded-xl font-bold transition flex items-center gap-2 ${
+                        (!stats.totalDormantFunds || stats.totalDormantFunds === 0) 
+                            ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                            : 'bg-slate-700 hover:bg-slate-600 text-white'
+                    }`}
+                >
+                    <List size={20} /> Download CSV
+                </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

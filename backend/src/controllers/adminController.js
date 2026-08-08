@@ -86,6 +86,11 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: null, todayGst: { $sum: '$gstAmount' } } }
         ]);
 
+        const dormantAggregate = await User.aggregate([
+            { $match: { isDeleted: true, walletBalance: { $gt: 0 } } },
+            { $group: { _id: null, totalDormantFunds: { $sum: '$walletBalance' } } }
+        ]);
+
         res.json({
             users,
             astrologers,
@@ -97,7 +102,8 @@ exports.getDashboardStats = async (req, res) => {
             totalChatMinutes: Math.floor((revenueAggregate[0]?.totalDuration || 0) / 60),
             totalUserWallets: walletAggregate[0]?.totalBalance || 0,
             totalGst: gstAggregate[0]?.totalGst || 0,
-            todayGst: todayGstAggregate[0]?.todayGst || 0
+            todayGst: todayGstAggregate[0]?.todayGst || 0,
+            totalDormantFunds: dormantAggregate[0]?.totalDormantFunds || 0
         });
     } catch (error) {
         console.error(error);
@@ -531,5 +537,36 @@ exports.getAllBlockedUsers = async (req, res) => {
     } catch (error) {
         console.error('GetAllBlockedUsers Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Export Dormant Funds to CSV
+// @route   GET /api/admin/dormant-funds/export
+// @access  Private/Admin
+exports.exportDormantFundsCSV = async (req, res) => {
+    try {
+        const dormantUsers = await User.find({ isDeleted: true, walletBalance: { $gt: 0 } }).lean();
+
+        if (!dormantUsers || dormantUsers.length === 0) {
+            return res.status(404).json({ message: 'No dormant users found with a balance.' });
+        }
+
+        const { parse } = require('json2csv');
+        const fields = ['_id', 'walletBalance', 'updatedAt'];
+        const opts = { fields };
+
+        try {
+            const csv = parse(dormantUsers, opts);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=dormant_funds.csv');
+            return res.status(200).send(csv);
+        } catch (err) {
+            console.error('CSV Parse Error:', err);
+            return res.status(500).json({ message: 'Error generating CSV' });
+        }
+
+    } catch (error) {
+        console.error('Export Dormant Funds Error:', error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };

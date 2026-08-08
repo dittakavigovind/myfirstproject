@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, toggleUserBlock, updateAstrologerSettings, getAllSessions, bypassWaitlist, getSocketMonitorStats, getAllReports, getAllBlockedUsers, getAllTransactions } = require('../controllers/adminController');
+const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, exportDormantFundsCSV, toggleUserBlock, updateAstrologerSettings, getAllSessions, bypassWaitlist, getSocketMonitorStats, getAllReports, getAllBlockedUsers, getAllTransactions } = require('../controllers/adminController');
 const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 // Route
@@ -16,6 +16,7 @@ const { getAppConfig, updateAppConfig, getPricingConfig, updatePricingConfig } =
 // I'll check authMiddleware file next. For now I'll define routes.
 
 router.get('/users/export', protect, admin, exportUsersCSV);
+router.get('/dormant-funds/export', protect, admin, exportDormantFundsCSV);
 router.get('/stats', protect, admin, getDashboardStats);
 router.get('/users', protect, admin, getAllUsers);
 router.get('/users/:id', protect, admin, getUserById);
