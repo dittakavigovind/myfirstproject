@@ -7,6 +7,7 @@ const QueueService = require('../services/QueueService');
 const Transaction = require('../models/Transaction');
 const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
+const ArchivedUser = require('../models/ArchivedUser');
 
 // @desc    Get Dashboard Stats
 // @route   GET /api/admin/stats
@@ -313,6 +314,23 @@ exports.deleteUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        let astro = null;
+        if (user.role === 'astrologer') {
+            astro = await Astrologer.findOne({ userId: user._id });
+        }
+
+        // Archive user data before scrubbing
+        const archiveData = {
+            originalUserId: user._id,
+            role: user.role,
+            userData: user.toObject(),
+            deletedBy: 'admin'
+        };
+        if (astro) {
+            archiveData.astrologerData = astro.toObject();
+        }
+        await ArchivedUser.create(archiveData);
+
         user.name = 'Deleted User';
         user.email = '';
         user.phone = 'deleted_' + Date.now();
@@ -327,21 +345,18 @@ exports.deleteUser = async (req, res) => {
         user.isVoiceOnline = false;
         user.isVideoOnline = false;
 
-        if (user.role === 'astrologer') {
-            const astro = await Astrologer.findOne({ userId: user._id });
-            if (astro) {
-                astro.displayName = 'Deleted Astrologer';
-                astro.email = 'deleted_' + Date.now() + '@way2astro.com';
-                astro.phone = 'deleted_' + Date.now();
-                astro.bio = '';
-                astro.image = 'default-avatar.png';
-                astro.isActive = false;
-                astro.isOnline = false;
-                astro.isChatOnline = false;
-                astro.isVoiceOnline = false;
-                astro.isVideoOnline = false;
-                await astro.save();
-            }
+        if (astro) {
+            astro.displayName = 'Deleted Astrologer';
+            astro.email = 'deleted_' + Date.now() + '@way2astro.com';
+            astro.phone = 'deleted_' + Date.now();
+            astro.bio = '';
+            astro.image = 'default-avatar.png';
+            astro.isActive = false;
+            astro.isOnline = false;
+            astro.isChatOnline = false;
+            astro.isVoiceOnline = false;
+            astro.isVideoOnline = false;
+            await astro.save();
         }
 
         await user.save();
