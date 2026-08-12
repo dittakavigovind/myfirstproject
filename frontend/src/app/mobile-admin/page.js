@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Activity, Users, DollarSign, Clock, Receipt, X, Video, Phone, List, Radio } from 'lucide-react';
 import API from '../../lib/api';
-import toast from 'react-hot-toast';
 
 export default function MobileAdminDashboard() {
     const [stats, setStats] = useState({ users: 0, astrologers: 0, revenue: 0, totalChatMinutes: 0, activeChats: 0, totalUserWallets: 0 });
@@ -49,7 +48,7 @@ export default function MobileAdminDashboard() {
             link.remove();
         } catch (error) {
             console.error('Download failed:', error);
-            toast.error('Failed to download dormant funds. No dormant users found or server error.');
+            alert('Failed to download dormant funds. No dormant users found or server error.');
         }
     };
 

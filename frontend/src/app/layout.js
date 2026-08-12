@@ -132,7 +132,7 @@ export default async function RootLayout({ children }) {
     }
 
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning={true}>
             <head>
                 {lcpImageUrl && (
                     <link 
@@ -144,7 +144,7 @@ export default async function RootLayout({ children }) {
                     />
                 )}
             </head>
-            <body className={`${poppins.variable} font-sans`}>
+            <body className={`${poppins.variable} font-sans`} suppressHydrationWarning={true}>
                 {googleAnalyticsId && (
                     <>
                         <Script
