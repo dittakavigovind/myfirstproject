@@ -49,6 +49,11 @@ exports.generateAgoraToken = async (req, res) => {
 
         let rtcToken = null;
         let rtmToken = null;
+        
+        const accountId = String(uid || (req.user && (req.user.id || req.user._id)) || "").trim();
+        if (!accountId) {
+            return res.status(400).json({ success: false, message: 'User ID is required for token generation' });
+        }
 
         if (safeAppCertificate) {
             // Using buildTokenWithAccount for String IDs (like Mongo IDs)
@@ -56,7 +61,7 @@ exports.generateAgoraToken = async (req, res) => {
                 appID,
                 safeAppCertificate,
                 channelName,
-                uid || req.user.id, // Account
+                accountId, // Account
                 role,
                 privilegeExpiredTs
             );
@@ -65,7 +70,7 @@ exports.generateAgoraToken = async (req, res) => {
             rtmToken = RtmTokenBuilder.buildToken(
                 appID,
                 safeAppCertificate,
-                uid || req.user.id,
+                accountId,
                 RtmRole.Rtm_User,
                 privilegeExpiredTs
             );

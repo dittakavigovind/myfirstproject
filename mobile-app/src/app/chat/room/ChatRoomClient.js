@@ -508,7 +508,7 @@ export default function ChatRoomClient() {
 
         // Check recent messages combined to prevent "govind at" ... "gmail" circumvention
         const myRecentMessages = messages
-            .filter(m => m.senderId === (user.astrologerId || user._id))
+            .filter(m => m.senderId === (user.astrologerId || user._id || user.id))
             .slice(-3)
             .map(m => m.content)
             .join(' ');
@@ -549,7 +549,7 @@ export default function ChatRoomClient() {
             const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
             await addDoc(messagesRef, {
                 content: content,
-                senderId: user.astrologerId || user._id,
+                senderId: user.astrologerId || user._id || user.id,
                 senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                 status: 'sent',
                 createdAt: Date.now()
@@ -619,7 +619,7 @@ export default function ChatRoomClient() {
                     content: file.type.startsWith('image/') ? '📷 Image attached' : '📄 File attached',
                     mediaUrl: downloadURL,
                     mediaType: file.type,
-                    senderId: user._id,
+                    senderId: user.astrologerId || user._id || user.id,
                     senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                     status: 'sent',
                     createdAt: Date.now()
@@ -653,7 +653,7 @@ export default function ChatRoomClient() {
                 content: messageContent,
                 mediaUrl: mediaUrl,
                 mediaType: 'image/svg+xml',
-                senderId: user.astrologerId || user._id,
+                senderId: user.astrologerId || user._id || user.id,
                 senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                 status: 'sent',
                 createdAt: Date.now()
