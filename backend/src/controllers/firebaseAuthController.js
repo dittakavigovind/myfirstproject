@@ -1,4 +1,5 @@
 const admin = require('../config/firebase');
+const { getAuth } = require('firebase-admin/auth');
 
 exports.getCustomToken = async (req, res) => {
     try {
@@ -26,7 +27,7 @@ exports.getCustomToken = async (req, res) => {
             ...(astrologerId && { astrologerId })
         };
 
-        const customToken = await admin.auth().createCustomToken(uid, additionalClaims);
+        const customToken = await getAuth().createCustomToken(uid, additionalClaims);
 
         res.status(200).json({
             success: true,
