@@ -94,7 +94,7 @@ export default function WalletPage() {
                 const orderId = res.data.order_id;
                 
                 const options = {
-                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                    key: res.data.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
                     amount: (amount * 100).toString(),
                     currency: 'INR',
                     name: 'Way2Astro',

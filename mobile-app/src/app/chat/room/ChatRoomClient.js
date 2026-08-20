@@ -201,8 +201,11 @@ export default function ChatRoomClient() {
 
     const fetchSessionData = async () => {
         try {
-            const { data } = await api.get(`/chat/session/${roomId}/metadata`);
+            const { data } = await api.get(`/chat/session/${roomId}/messages`);
             if (data.success) {
+                if (data.messages && data.messages.length > 0) {
+                    setMessages(data.messages);
+                }
                 if (data.session) {
                     setAstrologer(data.session.astrologerId || data.session.astrologer);
                     setChatUser(data.session.userId);
@@ -264,7 +267,11 @@ export default function ChatRoomClient() {
             snapshot.forEach(document => {
                 msgs.push({ _id: document.id, ...document.data() });
             });
-            setMessages(msgs);
+            
+            // Only update messages if Firebase has them, or if it's an active session
+            if (msgs.length > 0 || !isReadOnlyRef.current) {
+                setMessages(msgs);
+            }
 
             // Mark unread messages as seen if they belong to the partner
             msgs.forEach(msg => {

@@ -3,7 +3,7 @@ const admin = require('../config/firebase');
 exports.getCustomToken = async (req, res) => {
     try {
         if (!admin || admin.apps.length === 0) {
-            return res.status(500).json({ success: false, message: 'Firebase Admin SDK not initialized on server' });
+            return res.status(400).json({ success: false, message: 'Firebase Admin SDK not initialized on server' });
         }
 
         let uid = req.user.id.toString(); // Use the MongoDB ObjectId as Firebase UID
