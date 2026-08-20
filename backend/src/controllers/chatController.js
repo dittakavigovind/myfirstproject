@@ -158,17 +158,20 @@ exports.startPaidChat = async (req, res) => {
 
         // Send FCM Push Notification for Background Alert
         try {
-            const adminFirebase = require('../config/firebase');
-            if (adminFirebase && adminFirebase.apps.length > 0) {
+            require('../config/firebase'); // ensure initialized
+            const { getApps } = require('firebase-admin/app');
+            const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+            const { getMessaging } = require('firebase-admin/messaging');
+            if (getApps().length > 0) {
                 // 1. Initialize Firestore Chat Room
                 try {
-                    await adminFirebase.firestore().collection('chat_sessions').doc(roomId).set({
+                    await getFirestore().collection('chat_sessions').doc(roomId).set({
                         roomId: roomId,
                         astrologerId: astrologerId.toString(),
                         userId: userId.toString(),
                         status: 'active',
-                        createdAt: adminFirebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: adminFirebase.firestore.FieldValue.serverTimestamp()
+                        createdAt: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp()
                     });
                     console.log(`[StartPaidChat] Firestore room ${roomId} initialized`);
                 } catch (fsErr) {
@@ -202,7 +205,7 @@ exports.startPaidChat = async (req, res) => {
                         },
                         tokens: [...new Set(astroUser.fcmTokens)]
                     };
-                    await adminFirebase.messaging().sendEachForMulticast(messagePayload);
+                    await getMessaging().sendEachForMulticast(messagePayload);
                     console.log(`[StartPaidChat] Push Notification sent to Astrologer`);
                 }
             }
@@ -537,11 +540,13 @@ exports.declineSession = async (req, res) => {
 
         // Update Firestore if using it for background alerts
         try {
-            const adminFirebase = require('../config/firebase');
-            if (adminFirebase && adminFirebase.apps.length > 0) {
-                await adminFirebase.firestore().collection('chat_sessions').doc(roomId).update({
+            require('../config/firebase');
+            const { getApps } = require('firebase-admin/app');
+            const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+            if (getApps().length > 0) {
+                await getFirestore().collection('chat_sessions').doc(roomId).update({
                     status: 'failed',
-                    updatedAt: adminFirebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: FieldValue.serverTimestamp()
                 });
             }
         } catch (fsErr) {

@@ -74,14 +74,17 @@ exports.initOnlineNotificationCron = () => {
                             }
                         };
 
-                        if (adminFirebase && adminFirebase.apps.length > 0) {
+                        const { getApps } = require('firebase-admin/app');
+                        const { getMessaging } = require('firebase-admin/messaging');
+                        
+                        if (getApps().length > 0) {
                             // Chunk tokens if more than 500
                             if (tokens.length <= 500) {
-                                await adminFirebase.messaging().sendEachForMulticast({ ...messagePayload, tokens });
+                                await getMessaging().sendEachForMulticast({ ...messagePayload, tokens });
                             } else {
                                 for (let i = 0; i < tokens.length; i += 500) {
                                     const chunk = tokens.slice(i, i + 500);
-                                    await adminFirebase.messaging().sendEachForMulticast({ ...messagePayload, tokens: chunk });
+                                    await getMessaging().sendEachForMulticast({ ...messagePayload, tokens: chunk });
                                 }
                             }
                             console.log(`[Online Cron] Sent online notification for ${astrologer.displayName} to ${tokens.length} devices.`);
