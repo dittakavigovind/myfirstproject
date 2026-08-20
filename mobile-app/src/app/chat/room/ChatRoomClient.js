@@ -175,20 +175,30 @@ export default function ChatRoomClient() {
 
     // 1. Firebase Auth
     useEffect(() => {
+        let isMounted = true;
         const authWithFirebase = async () => {
             try {
                 const { data } = await api.get('/auth/firebase-token');
-                if (data.success) {
+                if (data.success && isMounted) {
                     await signInWithCustomToken(auth, data.customToken);
                     setFirebaseReady(true);
+                } else if (!data.success && isMounted) {
+                    toast.error(`Firebase Auth Error: ${data.message}`);
                 }
             } catch (error) {
                 console.error("Firebase auth error:", error);
+                if (isMounted) {
+                    const errorMsg = error.response?.data?.message || error.message;
+                    toast.error(`Chat Init Error: ${errorMsg}`);
+                }
             }
         };
+
         if (user && !firebaseReady) {
             authWithFirebase();
         }
+
+        return () => { isMounted = false; };
     }, [user, firebaseReady]);
 
     useEffect(() => {

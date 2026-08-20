@@ -3,7 +3,7 @@ const { getAuth } = require('firebase-admin/auth');
 
 exports.getCustomToken = async (req, res) => {
     try {
-        if (!admin || admin.apps.length === 0) {
+        if (!admin || admin.getApps().length === 0) {
             return res.status(400).json({ success: false, message: 'Firebase Admin SDK not initialized on server' });
         }
 
