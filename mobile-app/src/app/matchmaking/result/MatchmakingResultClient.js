@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import toast from 'react-hot-toast';
 
 export default function MatchmakingResultContent() {
     const searchParams = useSearchParams();
@@ -96,7 +97,7 @@ export default function MatchmakingResultContent() {
             pdf.save(`Matchmaking_Report_${boyName}_${girlName}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
-            alert('Failed to generate PDF. Please try again.');
+            toast.error('Failed to generate PDF. Please try again.');
         } finally {
             setGenerating(false);
         }

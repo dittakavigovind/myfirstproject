@@ -11,6 +11,7 @@ import { AudioToggle } from '@anuradev/capacitor-audio-toggle';
 import AIInsightsPanel from "@/components/AIInsightsPanel";
 import UserKundliModal from "../../chat/room/UserKundliModal";
 import { maskUserName } from "@/utils/maskUtils";
+import { getImageUrl } from "@/lib/utils";
 
 let AgoraRTC;
 if (typeof window !== "undefined") {
@@ -335,14 +336,7 @@ export default function CallRoomClient() {
         );
     }
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
     const partner = user?.role === 'astrologer' ? callData?.userId : callData?.astrologerId;
     const partnerImage = getImageUrl(partner?.image || partner?.profileImage, partner?.gender);

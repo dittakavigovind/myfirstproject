@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Checkout } from 'capacitor-razorpay';
 import {
     ArrowLeft, Wallet, Plus, ChevronRight,
     History, CreditCard, Sparkles, ShieldCheck,
@@ -11,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import API from "@/lib/api";
 import { maskUserName } from "@/utils/maskUtils";
+import toast from "react-hot-toast";
 
 export default function WalletPage() {
     const router = useRouter();
@@ -90,16 +92,29 @@ export default function WalletPage() {
             const res = await API.post('/wallet/recharge', payload);
             if (res.data.success) {
                 const orderId = res.data.order_id;
-                // For Native Mobile Apps, you would typically pass this orderId to a Razorpay Capacitor/Cordova Plugin here.
-                // For now, we will alert to prove the API integration is physically connected to the node server.
-                alert(`Razorpay Order Created: ${orderId}\nReady for Native Checkout Plugin Integration.`);
                 
-                // If using Web Checkout as fallback:
-                // window.location.href = `https://your-checkout-url.com?order_id=${orderId}`;
+                const options = {
+                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                    amount: (amount * 100).toString(),
+                    currency: 'INR',
+                    name: 'Way2Astro',
+                    description: 'Wallet Recharge',
+                    order_id: orderId,
+                    theme: { color: '#6b21a8' }
+                };
+
+                try {
+                    await Checkout.open(options);
+                    toast.success('Payment Successful!');
+                    // Optionally refresh the balance or page
+                    // window.location.reload(); 
+                } catch (error) {
+                    toast.error('Payment Cancelled or Failed');
+                }
             }
         } catch (error) {
             console.error('Recharge Initiation Failed:', error);
-            alert('Failed to initiate recharge. Check network.');
+            toast.error('Failed to initiate recharge. Check network.');
         } finally {
             setProcessing(false);
         }

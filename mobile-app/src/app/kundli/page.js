@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function KundliFormPage() {
     const router = useRouter();
@@ -50,7 +51,7 @@ export default function KundliFormPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.date || !formData.time || !formData.lat) {
-            alert("Please fill all cosmic details.");
+            toast.error("Please fill all cosmic details.");
             return;
         }
 

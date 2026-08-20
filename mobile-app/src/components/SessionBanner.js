@@ -8,6 +8,8 @@ import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
 import { maskUserName } from "@/utils/maskUtils";
+import toast from "react-hot-toast";
+import { getImageUrl } from "@/lib/utils";
 
 export default function SessionBanner() {
     const { user } = useAuth();
@@ -17,14 +19,7 @@ export default function SessionBanner() {
     const [activeSession, setActiveSession] = useState(null);
     const [duration, setDuration] = useState(0);
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
     // Don't show on the chat or call page itself
     const isChatPage = pathname.includes("/chat/") || pathname.includes("/call/");
@@ -118,7 +113,7 @@ export default function SessionBanner() {
                     className="glass-panel border-electric-violet/30 bg-electric-violet/10 backdrop-blur-xl p-4 rounded-3xl flex items-center justify-between shadow-2xl shadow-electric-violet/20"
                     onClick={() => {
                         if (!activeSession.roomId) {
-                            alert("Error: Room ID is missing from active session!");
+                            toast.error("Error: Room ID is missing from active session!");
                             return;
                         }
                         

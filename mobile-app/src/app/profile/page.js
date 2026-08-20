@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import api from "@/lib/api";
 import toast from 'react-hot-toast';
+import { getImageUrl } from "@/lib/utils";
 
 const Toggle = ({ enabled, onChange, loading, color = "bg-green-500" }) => (
     <button 
@@ -95,19 +96,7 @@ export default function Profile() {
         }
     };
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-        
-        // If it's a full URL, ensure localhost is rewritten to the real network IP
-        if (path.startsWith("http")) {
-            return path.replace('localhost:5000', '192.168.29.133:5000');
-        }
-        
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
 
     useEffect(() => {
@@ -181,12 +170,12 @@ export default function Profile() {
 
     const handleUpdatePrices = async () => {
         if (prices.chat < 15 || prices.call < 15 || prices.video < 15) {
-            alert("Minimum price for any service is ₹15/min");
+            toast.error("Minimum price for any service is ₹15/min");
             return;
         }
         
         if (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline) {
-             alert("Cannot change pricing while availability is enabled. Please turn off availability first.");
+             toast.error("Cannot change pricing while availability is enabled. Please turn off availability first.");
              return;
         }
 
@@ -505,13 +494,13 @@ export default function Profile() {
             <button
                 onClick={async () => {
                     if (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline) {
-                        alert("Please turn off Chat, Voice, and Video availability before logging out.");
+                        toast.error("Please turn off Chat, Voice, and Video availability before logging out.");
                         return;
                     }
                     try {
                         const { data } = await api.get("/chat/active-session");
                         if (data.success && data.session) {
-                            alert("You have an active consultation. Please end the session before logging out.");
+                            toast.error("You have an active consultation. Please end the session before logging out.");
                             return;
                         }
                     } catch (e) {

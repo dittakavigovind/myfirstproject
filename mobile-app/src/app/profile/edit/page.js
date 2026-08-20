@@ -7,6 +7,8 @@ import api from "@/lib/api";
 import { ChevronLeft, Camera, Save, User, Loader2 } from "lucide-react";
 import CosmicCard from "@/components/CosmicCard";
 import CosmicLoader from "@/components/CosmicLoader";
+import toast from "react-hot-toast";
+import { getImageUrl } from "@/lib/utils";
 
 export default function EditProfile() {
     const router = useRouter();
@@ -34,19 +36,7 @@ export default function EditProfile() {
         }
     }, [user]);
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-        
-        // If it's a full URL, ensure localhost is rewritten to the real network IP
-        if (path.startsWith("http")) {
-            return path.replace('localhost:5000', '192.168.29.133:5000');
-        }
-        
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
 
     const handleChange = (e) => {
@@ -74,11 +64,11 @@ export default function EditProfile() {
                 const path = data.filePath || data.url; 
                 setFormData(prev => ({ ...prev, profileImage: path }));
             } else {
-                alert("Image upload failed");
+                toast.error("Image upload failed");
             }
         } catch (error) {
             console.error("Upload error", error);
-            alert("Failed to upload image. Please try again.");
+            toast.error("Failed to upload image. Please try again.");
         } finally {
             setUploading(false);
             e.target.value = '';
@@ -94,11 +84,11 @@ export default function EditProfile() {
                 if (checkUser) await checkUser();
                 router.back();
             } else {
-                alert(data.message || "Failed to update profile");
+                toast.error(data.message || "Failed to update profile");
             }
         } catch (error) {
             console.error("Save error", error);
-            alert("An error occurred while saving profile.");
+            toast.error("An error occurred while saving profile.");
         } finally {
             setSaving(false);
         }

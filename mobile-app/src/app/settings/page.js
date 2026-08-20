@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import api from "@/lib/api";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -66,7 +67,7 @@ export default function SettingsPage() {
         const newLang = e.target.value;
         setLanguage(newLang);
         localStorage.setItem("app_language", newLang);
-        alert(`Language changed to ${newLang}. Please restart the app to apply changes globally.`);
+        toast.success(`Language changed to ${newLang}. Please restart the app to apply changes globally.`);
     };
 
     const applyTheme = (selectedTheme) => {
@@ -125,12 +126,12 @@ export default function SettingsPage() {
                 router.push('/login');
             } else {
                 setIsDeleting(false);
-                alert('Failed to delete account');
+                toast.error('Failed to delete account');
             }
         } catch (error) {
             console.error('Delete account error:', error);
             setIsDeleting(false);
-            alert('Failed to delete account. Please try again.');
+            toast.error('Failed to delete account. Please try again.');
         }
     };
 

@@ -30,6 +30,8 @@ import { useSocket } from "@/context/SocketContext";
 import CosmicLoader from "@/components/CosmicLoader";
 import CosmicCard from "@/components/CosmicCard";
 import { useConsultation } from "@/hooks/useConsultation";
+import toast from "react-hot-toast";
+import { getImageUrl } from "@/lib/utils";
 
 export default function AstrologerProfileClient() {
     const router = useRouter();
@@ -159,7 +161,7 @@ export default function AstrologerProfileClient() {
             });
             setShowReportModal(false);
             setReportReason('');
-            alert('Astrologer reported successfully.');
+            toast.success('Astrologer reported successfully.');
         } catch (error) {
             console.error('Failed to report:', error);
         }
@@ -192,7 +194,7 @@ export default function AstrologerProfileClient() {
 
     const handleFollowToggle = async () => {
         if (!user) {
-            alert("Please login to follow this astrologer.");
+            toast.error("Please login to follow this astrologer.");
             return;
         }
         const actualId = astrologer?._id;
@@ -252,19 +254,7 @@ export default function AstrologerProfileClient() {
         }
     };
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-
-        // If it's a full URL, ensure localhost is rewritten to the real network IP
-        if (path.startsWith("http")) {
-            return path.replace('localhost:5000', '192.168.29.133:5000');
-        }
-
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
 
     if (loading) return <CosmicLoader />;

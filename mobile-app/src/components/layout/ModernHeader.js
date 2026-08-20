@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { getImageUrl } from "@/lib/utils";
 
 export default function ModernHeader() {
     const { user, logout } = useAuth();
@@ -29,14 +31,7 @@ export default function ModernHeader() {
 
     const displayName = user?.name ? user.name.split(' ')[0] : "Seeker";
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-        if (path.startsWith("http")) return path.replace('localhost:5000', '192.168.29.133:5000');
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
     const menuItems = [
         { name: "Home", route: "/", icon: Home },
@@ -161,7 +156,7 @@ export default function ModernHeader() {
                                 <button 
                                     onClick={() => {
                                         if (user?.role === 'astrologer' && (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline)) {
-                                            alert("Please turn off Chat, Voice, and Video availability before logging out.");
+                                            toast.error("Please turn off Chat, Voice, and Video availability before logging out.");
                                             return;
                                         }
                                         setIsMenuOpen(false);

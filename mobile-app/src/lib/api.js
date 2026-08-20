@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Preferences } from "@capacitor/preferences";
+import toast from "react-hot-toast";
 
 let cachedToken = null;
 
@@ -13,10 +14,8 @@ export const clearApiToken = () => {
 
 export const getApiToken = () => cachedToken;
 
-// Assuming the local backend runs on localhost:5000. 
-// For physical devices, you might need your local IP here (e.g., http://192.168.x.x:5000)
-// Use localhost for Port Forwarding (Most stable for physical devices via USB)
-const API_URL = "http://192.168.29.133:5000/api";
+// Use environment variable for the API URL, fallback to local IP if not set
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.133:5000/api";
 
 const api = axios.create({
     baseURL: API_URL,
@@ -55,7 +54,7 @@ api.interceptors.response.use(
             const message = error.response?.data?.message;
             if (error.response?.data?.code === 'SESSION_EXPIRED' || message === 'Session expired. You have logged in from another device.') {
                 if (typeof window !== "undefined") {
-                    alert('Session expired. You have logged in from another device.');
+                    toast.error('Session expired. You have logged in from another device.');
                 }
             }
 
@@ -63,6 +62,14 @@ api.interceptors.response.use(
             await Preferences.remove({ key: "authToken" });
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new Event("auth-unauthorized"));
+            }
+        } else if (error.response?.status >= 500) {
+            if (typeof window !== "undefined") {
+                toast.error("Server error. Please try again later.");
+            }
+        } else if (error.message === "Network Error") {
+            if (typeof window !== "undefined") {
+                toast.error("Network error. Please check your connection.");
             }
         }
         return Promise.reject(error);

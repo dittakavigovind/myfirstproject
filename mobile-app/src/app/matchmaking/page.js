@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useBirthDetails } from "@/context/BirthDetailsContext";
 import { useAuth } from "@/context/AuthContext";
 import LocationSearch from "@/components/LocationSearch";
+import toast from "react-hot-toast";
 
 export default function MatchmakingPage() {
     const router = useRouter();
@@ -63,7 +64,7 @@ export default function MatchmakingPage() {
 
         // Validation
         if (!boy.date || !girl.date || !boy.name || !girl.name) {
-            alert("The stars require full names and dates to align.");
+            toast.error("The stars require full names and dates to align.");
             return;
         }
 

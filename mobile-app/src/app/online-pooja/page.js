@@ -7,25 +7,14 @@ import { motion } from "framer-motion";
 import api from "@/lib/api";
 import CosmicCard from "@/components/CosmicCard";
 import CosmicLoader from "@/components/CosmicLoader";
+import { getImageUrl } from "@/lib/utils";
 
 function OnlinePoojaContent() {
     const router = useRouter();
     const [temples, setTemples] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const getImageUrl = (path, gender = null) => {
-        if (!path || path.includes('default-avatar.png')) {
-            return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-        }
-
-        // If it's a full URL, ensure localhost is rewritten to the real network IP
-        if (path.startsWith("http")) {
-            return path.replace('localhost:5000', '192.168.29.133:5000');
-        }
-
-        const normalizedPath = path.replace(/\\/g, "/");
-        return `http://192.168.29.133:5000${normalizedPath.startsWith("/") ? "" : "/"}${normalizedPath}`;
-    };
+    
 
 
     useEffect(() => {
