@@ -7,12 +7,12 @@ exports.getCustomToken = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Firebase Admin SDK not initialized on server' });
         }
 
-        let uid = req.user.id.toString(); // Use the MongoDB ObjectId as Firebase UID
+        let uid = req.user._id.toString(); // Use the MongoDB ObjectId as Firebase UID
         let astrologerId = null;
 
         if (req.user.role === 'astrologer') {
             const Astrologer = require('../models/Astrologer');
-            const astro = await Astrologer.findOne({ userId: req.user.id });
+            const astro = await Astrologer.findOne({ userId: req.user._id });
             if (astro) {
                 astrologerId = astro._id.toString();
                 // Optionally, we could use astrologerId as uid, or pass it in claims
@@ -35,6 +35,6 @@ exports.getCustomToken = async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating custom token:', error);
-        res.status(500).json({ success: false, message: 'Failed to generate Firebase token' });
+        res.status(500).json({ success: false, message: 'Failed to generate Firebase token: ' + error.message });
     }
 };
