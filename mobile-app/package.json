@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "sync-branding": "node scripts/sync-branding.js",
-    "deploy-android": "npm run sync-branding && npx cap sync android && cd android && .\\gradlew assembleDebug && C:\\Users\\DELL\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r app/build/outputs/apk/debug/app-debug.apk && C:\\Users\\DELL\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell monkey -p com.way2astro.mobile -c android.intent.category.LAUNCHER 1"
+    "deploy-android": "npm run sync-branding && npx cap sync android && cd android && .\\gradlew assembleDebug && C:\\Users\\DELL\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r app/build/outputs/apk/debug/app-debug.apk && C:\\Users\\DELL\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell monkey -p com.way2astro.mobile -c android.intent.category.LAUNCHER 1",
+    "build:android:debug": "npm run build && npx cap sync android && cd android && ./gradlew assembleDebug",
+    "build:android:release": "npm run build && npx cap sync android && cd android && ./gradlew bundleRelease",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@anuradev/capacitor-audio-toggle": "^7.0.0",
@@ -22,6 +25,7 @@
     "@capacitor/splash-screen": "^8.0.1",
     "agora-rtc-sdk-ng": "^4.24.4",
     "axios": "^1.13.6",
+    "capacitor-razorpay": "^1.3.0",
     "clsx": "^2.1.1",
     "firebase": "^12.13.0",
     "framer-motion": "^12.35.0",
@@ -40,6 +44,8 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
   },

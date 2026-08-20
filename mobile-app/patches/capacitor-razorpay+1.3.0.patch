@@ -1,0 +1,13 @@
+diff --git a/node_modules/capacitor-razorpay/android/build.gradle b/node_modules/capacitor-razorpay/android/build.gradle
+index c29f9bd..dd25345 100644
+--- a/node_modules/capacitor-razorpay/android/build.gradle
++++ b/node_modules/capacitor-razorpay/android/build.gradle
+@@ -7,7 +7,7 @@ ext {
+ buildscript {
+     repositories {
+         google()
+-        jcenter()
++        mavenCentral()
+     }
+     dependencies {
+         classpath 'com.android.tools.build:gradle:8.2.1'
