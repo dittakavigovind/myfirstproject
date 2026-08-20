@@ -502,10 +502,6 @@ export default function ChatRoomClient() {
             toast.error("This session has ended.");
             return;
         }
-        if (!sessionActive && user?.role !== 'astrologer') {
-            toast.error("Please wait for the astrologer to start the session.");
-            return;
-        }
         if (!newMessage.trim() || !firebaseReady) return;
 
         const content = newMessage;
@@ -566,8 +562,8 @@ export default function ChatRoomClient() {
                 }
             }, { merge: true });
 
-            // If it's the astrologer, emit to backend to start the timer
-            if (user.role === 'astrologer' && socket && !sessionActive) {
+            // Emit to backend to start the timer if session is not active
+            if (socket && !sessionActive) {
                 socket.emit("start_chat_session", { roomId });
                 // Optimistically start the timer locally so it immediately shows up
                 setSessionActive(true);
@@ -628,6 +624,14 @@ export default function ChatRoomClient() {
                     status: 'sent',
                     createdAt: Date.now()
                 });
+                
+                // Emit to backend to start the timer if session is not active
+                if (socket && !sessionActive) {
+                    socket.emit("start_chat_session", { roomId });
+                    setSessionActive(true);
+                    localStartTimeRef.current = Date.now();
+                    setDuration(0);
+                }
             }
         );
     };

@@ -157,8 +157,8 @@ module.exports = function (io) {
                     return socket.emit('error', 'Session not active');
                 }
 
-                // If sender is Astrologer and session is initiated, start it!
-                if (socket.user.role === 'astrologer' && session.status === 'initiated') {
+                // If session is initiated, start it!
+                if (session.status === 'initiated') {
                     console.log(`[Socket] Starting billing for session ${roomId}`);
                     session.status = 'active';
                     session.startTime = new Date();
@@ -167,8 +167,8 @@ module.exports = function (io) {
                     startBillingEngine(roomId, session._id, io);
                     
                     // Mark Astrologer as Busy
-                    await Astrologer.findByIdAndUpdate(socket.astrologerId, { isBusy: true });
-                    io.emit('astrologer_status_changed', { astrologerId: socket.astrologerId, isBusy: true });
+                    await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
+                    io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
 
                     io.to(roomId).emit('session_started', { startTime: session.startTime });
                 }
@@ -208,11 +208,6 @@ module.exports = function (io) {
         socket.on('start_chat_session', async ({ roomId }) => {
             console.log(`[Socket] Received start_chat_session for roomId ${roomId}`);
             try {
-                if (socket.user.role !== 'astrologer') {
-                    console.log(`[Socket] Ignored start_chat_session because role is ${socket.user.role}`);
-                    return;
-                }
-                
                 const session = await Session.findOne({ roomId });
                 if (session && session.status === 'initiated') {
                     console.log(`[Socket] Starting billing via Firebase trigger for session ${roomId}`);
@@ -223,8 +218,8 @@ module.exports = function (io) {
                     startBillingEngine(roomId, session._id, io);
                     
                     // Mark Astrologer as Busy
-                    await Astrologer.findByIdAndUpdate(socket.astrologerId, { isBusy: true });
-                    io.emit('astrologer_status_changed', { astrologerId: socket.astrologerId, isBusy: true });
+                    await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
+                    io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
 
                     io.to(roomId).emit('session_started', { startTime: session.startTime });
                 }
