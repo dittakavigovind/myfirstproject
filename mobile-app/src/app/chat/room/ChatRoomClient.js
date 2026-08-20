@@ -502,7 +502,12 @@ export default function ChatRoomClient() {
             toast.error("This session has ended.");
             return;
         }
-        if (!newMessage.trim() || !firebaseReady) return;
+        if (!newMessage.trim()) return;
+        
+        if (!firebaseReady) {
+            toast.error("Chat connection is still initializing. Please wait...");
+            return;
+        }
 
         const content = newMessage;
 
@@ -549,7 +554,7 @@ export default function ChatRoomClient() {
             const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
             await addDoc(messagesRef, {
                 content: content,
-                senderId: user.astrologerId || user._id || user.id,
+                senderId: user.astrologerId || user._id || user.id || "unknown",
                 senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                 status: 'sent',
                 createdAt: Date.now()
@@ -574,6 +579,7 @@ export default function ChatRoomClient() {
 
         } catch (error) {
             console.error("Error sending message:", error);
+            toast.error("Failed to send: " + (error.message || "Unknown error"));
         }
         inputRef.current?.focus();
     };
