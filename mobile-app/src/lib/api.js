@@ -64,7 +64,8 @@ api.interceptors.response.use(
                 window.dispatchEvent(new Event("auth-unauthorized"));
             }
         } else if (error.response?.status >= 500) {
-            if (typeof window !== "undefined") {
+            const url = error.config?.url || '';
+            if (typeof window !== "undefined" && !url.includes('/auth/firebase-token')) {
                 toast.error("Server error. Please try again later.");
             }
         } else if (error.message === "Network Error") {
