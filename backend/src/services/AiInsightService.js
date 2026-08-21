@@ -33,23 +33,22 @@ class AiInsightService {
                 return;
             }
 
-            // Fetch chat messages from Firebase Firestore
-            const db = admin.firestore();
-            const messagesSnapshot = await db.collection('chat_sessions')
-                .doc(session.roomId)
-                .collection('messages')
-                .orderBy('createdAt', 'asc')
-                .get();
+            // Fetch chat messages from MongoDB
+            const CryptoUtil = require('../utils/CryptoUtil');
+            const messages = await Message.find({ sessionId: session._id }).sort({ createdAt: 1 });
 
-            if (messagesSnapshot.empty) {
-                console.log(`[AiInsightService] No messages found in Firebase for session ${sessionId} (roomId: ${session.roomId}). Skipping summary.`);
+            if (!messages || messages.length === 0) {
+                console.log(`[AiInsightService] No messages found in MongoDB for session ${sessionId}. Skipping summary.`);
                 return;
             }
 
-            const transcript = messagesSnapshot.docs.map(doc => {
-                const data = doc.data();
-                const senderModel = data.senderModel || (data.senderId === session.astrologerId.toString() ? 'Astrologer' : 'User');
-                const text = data.content || (data.fileUrl ? '[Sent a file/image]' : '[Empty Message]');
+            const transcript = messages.map(msg => {
+                let text = msg.content;
+                if (msg.isEncrypted && msg.iv) {
+                    text = CryptoUtil.decrypt(msg.content, msg.iv);
+                }
+                if (!text) text = '[Empty Message]';
+                const senderModel = msg.senderModel || 'User';
                 return `${senderModel}: ${text}`;
             }).join('\n');
 
