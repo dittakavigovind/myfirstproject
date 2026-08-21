@@ -81,6 +81,14 @@ router.post('/:userId/translate', protect, isAstrologer, async (req, res) => {
         const AiInsightService = require('../services/AiInsightService');
         const translatedData = await AiInsightService.translateInsights(data, targetLanguage);
 
+        if (!translatedData) {
+            console.log(`[AI Insights] Translation failed for ${targetLanguage}. Returning original data.`);
+            return res.json({
+                success: true,
+                data: data // Return English/original if failed
+            });
+        }
+
         // Save translation back to DB for future requests
         if (memory) {
             if (!memory.translations) {

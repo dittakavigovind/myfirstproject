@@ -273,7 +273,7 @@ Do NOT endlessly concatenate strings. Replace old tips entirely with fresh, dyna
     static async translateInsights(insightsData, targetLanguage) {
         if (!openai) {
             console.log("[AiInsightService] OPENAI_API_KEY not set. Cannot translate.");
-            return insightsData;
+            return null;
         }
 
         try {
@@ -294,7 +294,7 @@ Do NOT endlessly concatenate strings. Replace old tips entirely with fresh, dyna
             return JSON.parse(response.choices[0].message.content);
         } catch (error) {
             console.error("[AiInsightService] Translation failed:", error.message);
-            return insightsData; // Fallback to original
+            return null; // Fallback handled by the route
         }
     }
 }
