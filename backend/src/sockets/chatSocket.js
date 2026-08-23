@@ -479,25 +479,39 @@ module.exports = function (io) {
             });
 
             // Record Transactions
-            await Transaction.create({
-                user: user._id,
-                amount: pricePerMinute,
-                type: 'debit',
-                status: 'success',
-                description: `Chat deduction for session ${roomId}`,
-                referenceModel: 'Session',
-                referenceId: session._id
-            });
+            await Transaction.findOneAndUpdate(
+                {
+                    user: user._id,
+                    referenceModel: 'Session',
+                    referenceId: session._id,
+                    type: 'debit'
+                },
+                {
+                    $inc: { amount: pricePerMinute },
+                    $set: { 
+                        status: 'success', 
+                        description: `Chat deduction for session ${roomId}`
+                    }
+                },
+                { upsert: true, new: true }
+            );
 
-            await Transaction.create({
-                user: astrologerInfo.userId,
-                amount: earnings,
-                type: 'credit',
-                status: 'success',
-                description: `Chat earning for session ${roomId}`,
-                referenceModel: 'Session',
-                referenceId: session._id
-            });
+            await Transaction.findOneAndUpdate(
+                {
+                    user: astrologerInfo.userId,
+                    referenceModel: 'Session',
+                    referenceId: session._id,
+                    type: 'credit'
+                },
+                {
+                    $inc: { amount: earnings },
+                    $set: { 
+                        status: 'success', 
+                        description: `Chat earning for session ${roomId}`
+                    }
+                },
+                { upsert: true, new: true }
+            );
 
             // Update Session duration
             session.totalDuration += 60;

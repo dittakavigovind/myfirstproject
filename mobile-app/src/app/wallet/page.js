@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 
 export default function WalletPage() {
     const router = useRouter();
-    const { user, fetchProfile } = useAuth();
+    const { user, checkUser } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function WalletPage() {
     useEffect(() => {
         fetchHistory();
         fetchPlans();
-        if (fetchProfile) fetchProfile();
+        if (checkUser) checkUser();
     }, []);
 
     const fetchPlans = async () => {
@@ -52,7 +52,28 @@ export default function WalletPage() {
         try {
             const res = await API.get('/wallet/transactions');
             if (res.data.success) {
-                setHistory(res.data.transactions);
+                const grouped = res.data.transactions.reduce((acc, tx) => {
+                    if (tx.referenceModel === 'Session' && tx.referenceId) {
+                        const refId = typeof tx.referenceId === 'object' ? tx.referenceId._id : tx.referenceId;
+                        const existing = acc.find(item => {
+                            const itemRefId = typeof item.referenceId === 'object' ? item.referenceId._id : item.referenceId;
+                            return item.referenceModel === 'Session' && itemRefId === refId && item.type === tx.type;
+                        });
+                        
+                        if (existing) {
+                            existing.amount += tx.amount;
+                            if (new Date(tx.createdAt) > new Date(existing.createdAt)) {
+                                existing.createdAt = tx.createdAt;
+                            }
+                            return acc;
+                        }
+                    }
+                    acc.push({ ...tx });
+                    return acc;
+                }, []);
+                
+                grouped.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                setHistory(grouped);
             }
         } catch (error) {
             console.error('Failed to fetch wallet history:', error);
@@ -66,7 +87,7 @@ export default function WalletPage() {
         try {
             await Promise.all([
                 fetchHistory(),
-                fetchProfile ? fetchProfile() : Promise.resolve()
+                checkUser ? checkUser() : Promise.resolve()
             ]);
             toast.success("Refreshed successfully");
         } catch (error) {
@@ -128,7 +149,7 @@ export default function WalletPage() {
 
                         if (verifyRes.data.success) {
                             toast.success('Payment Successful!');
-                            if (fetchProfile) fetchProfile();
+                            if (checkUser) await checkUser();
                             setShowBreakdown(false);
                             router.push('/explore');
                             return;
