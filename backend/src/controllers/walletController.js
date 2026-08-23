@@ -152,6 +152,35 @@ exports.verifyPayment = async (req, res) => {
     }
 };
 
+exports.cancelPayment = async (req, res) => {
+    try {
+        const { order_id } = req.body;
+
+        if (!order_id) {
+            return res.status(400).json({ success: false, message: 'Order ID is required' });
+        }
+
+        const transaction = await Transaction.findOne({ orderId: order_id });
+
+        if (!transaction) {
+            return res.status(404).json({ success: false, message: 'Transaction not found' });
+        }
+
+        if (transaction.status === 'success') {
+            return res.status(400).json({ success: false, message: 'Payment already successful, cannot cancel' });
+        }
+
+        transaction.status = 'failed';
+        transaction.description = 'Wallet Recharge - Cancelled';
+        await transaction.save();
+
+        res.status(200).json({ success: true, message: 'Payment cancelled successfully' });
+    } catch (error) {
+        console.error('Cancel Payment Error:', error);
+        res.status(500).json({ success: false, message: 'Server error cancelling payment' });
+    }
+};
+
 exports.getTransactions = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;

@@ -61,6 +61,20 @@ export default function WalletPage() {
         }
     };
 
+    const handleRefresh = async () => {
+        setLoading(true);
+        try {
+            await Promise.all([
+                fetchHistory(),
+                fetchProfile ? fetchProfile() : Promise.resolve()
+            ]);
+            toast.success("Refreshed successfully");
+        } catch (error) {
+            console.error('Failed to refresh:', error);
+            toast.error("Failed to refresh");
+        }
+    };
+
     const getRechargeAmount = () => {
         if (selectedPlan === 'custom') return parseFloat(customAmount) || 0;
         return plans.find(p => p._id === selectedPlan)?.amount || 0;
@@ -104,12 +118,35 @@ export default function WalletPage() {
                 };
 
                 try {
-                    await Checkout.open(options);
-                    toast.success('Payment Successful!');
-                    // Optionally refresh the balance or page
-                    // window.location.reload(); 
+                    const paymentResponse = await Checkout.open(options);
+                    
+                    try {
+                        const verifyRes = await API.post('/wallet/verify-payment', {
+                            ...(paymentResponse.response || paymentResponse), // fallback in case it's directly returned
+                            amount: amount
+                        });
+
+                        if (verifyRes.data.success) {
+                            toast.success('Payment Successful!');
+                            if (fetchProfile) fetchProfile();
+                            setShowBreakdown(false);
+                            router.push('/explore');
+                            return;
+                        } else {
+                            toast.error('Payment Verification Failed');
+                        }
+                    } catch (verifyError) {
+                        toast.error('Payment Verification Failed');
+                        console.error('Verify error:', verifyError);
+                    }
                 } catch (error) {
                     toast.error('Payment Cancelled or Failed');
+                    try {
+                        await API.post('/wallet/cancel-payment', { order_id: orderId });
+                        fetchHistory();
+                    } catch (cancelError) {
+                        console.error('Cancel API Error:', cancelError);
+                    }
                 }
             }
         } catch (error) {
@@ -232,7 +269,7 @@ export default function WalletPage() {
                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                         <History size={14} /> Recent Activity
                     </h3>
-                    <button onClick={fetchHistory} className="text-[10px] font-black text-electric-violet uppercase tracking-widest">Refresh</button>
+                    <button onClick={handleRefresh} disabled={loading} className="text-[10px] font-black text-electric-violet uppercase tracking-widest disabled:opacity-50">Refresh</button>
                 </div>
 
                 <div className="space-y-3">
@@ -252,9 +289,13 @@ export default function WalletPage() {
                                             setToastMessage("Audio call history cannot be replayed.");
                                             setTimeout(() => setToastMessage(''), 3000);
                                         }
+                                    } else if (tx.status === 'pending' || tx.status === 'failed') {
+                                        setCustomAmount(tx.amount.toString());
+                                        setSelectedPlan('custom');
+                                        setShowBreakdown(true);
                                     }
                                 }}
-                                className={`glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/5 ${tx.referenceId?.roomId ? 'cursor-pointer hover:bg-white/10 active:scale-[0.98] transition-all' : ''}`}
+                                className={`glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5 bg-white/5 ${(tx.referenceId?.roomId || tx.status === 'pending' || tx.status === 'failed') ? 'cursor-pointer hover:bg-white/10 active:scale-[0.98] transition-all' : ''}`}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
