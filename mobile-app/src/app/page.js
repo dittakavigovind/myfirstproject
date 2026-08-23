@@ -312,12 +312,12 @@ export default function Home() {
               <div className="w-5 h-5 rounded-full border-t-2 border-electric-violet animate-spin" />
             </div>
           ) : astrologers.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pt-2 pb-2 scrollbar-hide px-2 -mx-2">
-              {sortedAstrologers.slice(0, 12).map((astro) => (
+            <div className="grid grid-cols-4 gap-y-4 gap-x-2 pt-2 pb-2 px-1">
+              {sortedAstrologers.slice(0, 8).map((astro) => (
                 <div
                   key={astro._id}
                   onClick={() => router.push(`/astrologer?id=${astro.slug || astro._id}`)}
-                  className="flex-shrink-0 w-20 flex flex-col items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                 >
                   <div className="relative">
                     {astro.badgeText && (

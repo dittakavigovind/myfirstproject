@@ -225,7 +225,7 @@ export default function WalletPage() {
                             key={plan._id}
                             onClick={() => {
                                 setSelectedPlan(plan._id);
-                                setCustomAmount('');
+                                setCustomAmount(plan.amount.toString());
                             }}
                             className={`relative p-4 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden ${
                                 selectedPlan === plan._id
@@ -263,7 +263,7 @@ export default function WalletPage() {
 
                 <div 
                     onClick={() => setSelectedPlan('custom')}
-                    className={`mt-3 relative glass-panel p-5 rounded-[2rem] border-white/5 cursor-pointer transition-all duration-300 flex items-center justify-between ${selectedPlan === 'custom' ? 'ring-2 ring-solar-gold bg-solar-gold/10' : 'bg-white/5 hover:bg-white/10'}`}
+                    className={`mt-3 relative glass-panel p-3 pl-5 rounded-[2.5rem] border-white/5 cursor-pointer transition-all duration-300 flex items-center justify-between ${selectedPlan === 'custom' ? 'ring-2 ring-solar-gold bg-solar-gold/10' : 'bg-white/5 hover:bg-white/10'}`}
                 >
                     <div className="flex-1">
                         <p className={`text-[10px] font-bold uppercase tracking-tighter mb-1 ${selectedPlan === 'custom' ? 'text-solar-gold/80' : 'text-slate-500'}`}>Custom Amount</p>
@@ -281,6 +281,17 @@ export default function WalletPage() {
                             />
                         </div>
                     </div>
+                    
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleRechargeClick();
+                        }}
+                        disabled={getRechargeAmount() <= 0 || processing}
+                        className="h-12 px-8 rounded-full bg-indigo-600 text-white font-black text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                    >
+                        {processing ? '...' : 'Pay'}
+                    </button>
                 </div>
             </div>
 
@@ -342,17 +353,6 @@ export default function WalletPage() {
                 </div>
             </div>
 
-            {/* Bottom Button - Positioned above Bottom Nav */}
-            <div className="fixed bottom-24 left-0 right-0 px-4 pointer-events-none">
-                <button
-                    disabled={getRechargeAmount() <= 0 || processing}
-                    onClick={handleRechargeClick}
-                    className="w-full h-16 rounded-[2rem] bg-indigo-600 text-white font-black text-lg shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 pointer-events-auto"
-                >
-                    <CreditCard size={20} />
-                    {processing ? 'Processing...' : 'Confirm Recharge'}
-                </button>
-            </div>
             {/* GST Breakdown Modal */}
             {showBreakdown && getRechargeAmount() > 0 && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">

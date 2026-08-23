@@ -3,7 +3,7 @@
 import { Bell, Search, Menu, User, Wallet, X, Home, Compass, Sparkles, Sun, FileText, Heart, Star, BookOpen, LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
@@ -13,6 +13,7 @@ import { getImageUrl } from "@/lib/utils";
 export default function ModernHeader() {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
@@ -36,7 +37,7 @@ export default function ModernHeader() {
     const menuItems = [
         { name: "Home", route: "/", icon: Home },
         { name: "Explore Astrologers", route: "/explore", icon: Compass, hideForAstro: true },
-        { name: "Online Seva (Pooja)", route: "/online-pooja", icon: Sparkles, highlight: true },
+        { name: "Online Seva (Pooja)", route: "/online-pooja", icon: Sparkles },
         { name: "Daily Panchang", route: "/panchang", icon: Sun },
         { name: "Free Kundli", route: "/kundli", icon: FileText },
         { name: "Matching", route: "/matchmaking", icon: Heart },
@@ -134,22 +135,25 @@ export default function ModernHeader() {
                             </div>
 
                             <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-                                {menuItems.map((item) => (
-                                    <button
-                                        key={item.name}
-                                        onClick={() => handleNavigation(item.route)}
-                                        className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all active:scale-95 group ${
-                                            item.highlight 
-                                            ? "bg-electric-violet/10 text-electric-violet border border-electric-violet/20" 
-                                            : "hover:bg-white/5 text-slate-300"
-                                        }`}
-                                    >
-                                        <div className={`p-2 rounded-xl ${item.highlight ? "bg-electric-violet/20" : "bg-white/5 group-hover:bg-white/10"}`}>
-                                            <item.icon size={18} />
-                                        </div>
-                                        <span className="text-sm font-bold">{item.name}</span>
-                                    </button>
-                                ))}
+                                {menuItems.map((item) => {
+                                    const isActive = pathname === item.route;
+                                    return (
+                                        <button
+                                            key={item.name}
+                                            onClick={() => handleNavigation(item.route)}
+                                            className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all active:scale-95 group ${
+                                                isActive 
+                                                ? "bg-electric-violet/10 text-electric-violet border border-electric-violet/20" 
+                                                : "hover:bg-white/5 text-slate-300"
+                                            }`}
+                                        >
+                                            <div className={`p-2 rounded-xl ${isActive ? "bg-electric-violet/20" : "bg-white/5 group-hover:bg-white/10"}`}>
+                                                <item.icon size={18} />
+                                            </div>
+                                            <span className="text-sm font-bold">{item.name}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <div className="p-6 border-t border-white/5 pb-[calc(var(--safe-area-inset-bottom)+1.5rem)]">
