@@ -36,6 +36,7 @@ export default function ModernHeader() {
 
     const menuItems = [
         { name: "Home", route: "/", icon: Home },
+        { name: "Wallet", route: "/wallet", icon: Wallet },
         { name: "Explore Astrologers", route: "/explore", icon: Compass, hideForAstro: true },
         { name: "Online Seva (Pooja)", route: "/online-pooja", icon: Sparkles },
         { name: "Daily Panchang", route: "/panchang", icon: Sun },
@@ -134,14 +135,14 @@ export default function ModernHeader() {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+                            <div className="flex-1 overflow-y-auto py-4 px-4 space-y-1">
                                 {menuItems.map((item) => {
-                                    const isActive = pathname === item.route;
+                                    const isActive = pathname === item.route || (item.route !== '/' && pathname.startsWith(item.route));
                                     return (
                                         <button
                                             key={item.name}
                                             onClick={() => handleNavigation(item.route)}
-                                            className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all active:scale-95 group ${
+                                            className={`w-full flex items-center gap-3 p-2.5 rounded-2xl transition-all active:scale-95 group ${
                                                 isActive 
                                                 ? "bg-electric-violet/10 text-electric-violet border border-electric-violet/20" 
                                                 : "hover:bg-white/5 text-slate-300"
@@ -166,7 +167,7 @@ export default function ModernHeader() {
                                         setIsMenuOpen(false);
                                         logout();
                                     }}
-                                    className="w-full flex items-center gap-4 p-3 rounded-2xl text-rose-400 hover:bg-rose-400/10 transition-all active:scale-95 group"
+                                    className="w-full flex items-center gap-3 p-2.5 rounded-2xl text-rose-400 hover:bg-rose-400/10 transition-all active:scale-95 group"
                                 >
                                     <div className="p-2 rounded-xl bg-rose-400/10 group-hover:bg-rose-400/20">
                                         <LogOut size={18} />
