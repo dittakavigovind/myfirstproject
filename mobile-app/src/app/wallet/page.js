@@ -193,22 +193,22 @@ export default function WalletPage() {
 
             {/* Balance Card */}
             <div className="mt-2">
-                <div className="relative h-48 rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-indigo-600 to-electric-violet p-8 flex flex-col justify-between shadow-2xl shadow-indigo-500/20">
+                <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-indigo-600 to-electric-violet p-6 flex flex-col gap-4 shadow-2xl shadow-indigo-500/20">
                     <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
-                            <p className="text-indigo-100/60 text-xs font-black uppercase tracking-widest mb-1">Total Balance</p>
-                            <h2 className="text-4xl font-black text-white">₹{user?.walletBalance || 0}</h2>
+                            <p className="text-indigo-100/60 text-[10px] font-black uppercase tracking-widest mb-1">Total Balance</p>
+                            <h2 className="text-3xl font-black text-white leading-none">₹{user?.walletBalance || 0}</h2>
                         </div>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center text-white">
-                            <Wallet size={24} />
+                        <div className="w-10 h-10 bg-white/20 rounded-xl backdrop-blur-md flex items-center justify-center text-white">
+                            <Wallet size={20} />
                         </div>
                     </div>
 
-                    <div className="flex gap-4 relative z-10">
-                        <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
-                            <TrendingUp size={12} className="text-emerald-400" />
-                            <span className="text-[10px] font-bold text-white uppercase tracking-wider">Safe & Secure</span>
+                    <div className="flex relative z-10">
+                        <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md">
+                            <ShieldCheck size={12} className="text-emerald-400" />
+                            <span className="text-[9px] font-bold text-white uppercase tracking-wider">Safe & Secure</span>
                         </div>
                     </div>
                 </div>
