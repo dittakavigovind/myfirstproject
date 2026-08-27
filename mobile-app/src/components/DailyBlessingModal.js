@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, X, Sparkles } from 'lucide-react';
 import { Share } from '@capacitor/share';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { getImageUrl } from '@/lib/utils';
 import api from '@/lib/api';
 
@@ -24,39 +26,55 @@ export default function DailyBlessingModal({ isOpen, onClose, blessing }) {
 
     const handleShare = async () => {
         setIsSharing(true);
-        
         try {
             api.post('/analytics/daily-blessing', { 
                 action: 'daily_blessing_share_clicked',
                 blessingId: blessing.id
             }).catch(console.error);
 
-            const shareData = {
-                title: "Today's Divine Blessing",
-                text: `${blessing.greeting}\n\n${blessing.message}\n\n✨ Start your day with divine blessings on Way2Astro.`,
+            const shareImageUrl = getImageUrl(blessing.shareImageUrl || blessing.imageUrl);
+            let shareFiles = [];
+
+            if (Capacitor.isNativePlatform()) {
+                // On mobile apps, download the image to cache first so we can share the physical file
+                const fileName = `blessing-${Date.now()}.jpg`;
+                const downloadResult = await Filesystem.downloadFile({
+                    url: shareImageUrl,
+                    path: fileName,
+                    directory: Directory.Cache
+                });
+                if (downloadResult.path) {
+                    shareFiles.push(downloadResult.path);
+                }
+            }
+
+            const shareOptions = {
+                title: blessing.title || "Today's Divine Blessing",
+                text: `${blessing.greeting}\n\n"${blessing.message}"\n${blessing.mantra ? `\n${blessing.mantra}\n` : ''}\nGet your daily blessing on Way2Astro:`,
                 url: blessing.deepLink,
-                dialogTitle: "Share Divine Blessing",
+                dialogTitle: 'Share Divine Blessing'
             };
 
-            // Use Capacitor Share plugin
+            if (shareFiles.length > 0) {
+                shareOptions.files = shareFiles;
+            }
+
             const canShare = await Share.canShare();
-            
             if (canShare.value) {
-                await Share.share(shareData);
+                await Share.share(shareOptions);
                 api.post('/analytics/daily-blessing', { 
                     action: 'daily_blessing_shared',
                     blessingId: blessing.id
                 }).catch(console.error);
             } else if (navigator.share) {
-                // Fallback to web share api
-                await navigator.share(shareData);
+                // Fallback for Web
+                await navigator.share(shareOptions);
                 api.post('/analytics/daily-blessing', { 
                     action: 'daily_blessing_shared',
                     blessingId: blessing.id
                 }).catch(console.error);
             } else {
-                // Final fallback
-                await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+                await navigator.clipboard.writeText(`${shareOptions.text} ${shareOptions.url}`);
                 alert("Blessing link copied to clipboard!");
             }
         } catch (error) {

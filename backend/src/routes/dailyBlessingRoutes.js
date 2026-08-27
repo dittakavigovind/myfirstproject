@@ -12,6 +12,7 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Public Route (Highly Cacheable)
 router.get('/today', getTodayBlessing);
+router.get('/public/:id', getBlessing); // Re-use getBlessing as public, it just fetches the data
 
 // Admin Routes
 router.use(protect);
