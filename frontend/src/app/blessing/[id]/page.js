@@ -1,44 +1,49 @@
-import Image from 'next/image';
-import { notFound } from 'next/navigation';
+"use client";
 
-async function getBlessing(id) {
-    try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.133:5000/api";
-        const res = await fetch(`${API_URL}/daily-blessing/public/${id}`, { cache: 'no-store' });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.data; // backend controller getBlessing returns { success: true, data: blessing }
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
-}
+import { useEffect, useState } from 'react';
+import { notFound, useParams } from 'next/navigation';
 
-export async function generateMetadata({ params }) {
-    const blessing = await getBlessing(params.id);
-    if (!blessing) return { title: 'Blessing Not Found' };
+export default function BlessingPage() {
+    const params = useParams();
+    const id = params?.id;
+    const [blessing, setBlessing] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-    return {
-        title: blessing.title || 'Divine Blessing',
-        description: blessing.message,
-        openGraph: {
-            title: blessing.title || 'Divine Blessing',
-            description: blessing.message,
-            images: [blessing.shareImageUrl || blessing.imageUrl],
+    useEffect(() => {
+        async function fetchBlessing() {
+            if (!id) return;
+            try {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.133:5000/api";
+                const res = await fetch(`${API_URL}/daily-blessing/public/${id}`);
+                if (!res.ok) {
+                    setError(true);
+                    setLoading(false);
+                    return;
+                }
+                const data = await res.json();
+                setBlessing(data.data);
+            } catch (e) {
+                console.error(e);
+                setError(true);
+            } finally {
+                setLoading(false);
+            }
         }
-    };
-}
+        fetchBlessing();
+    }, [id]);
 
-export default async function BlessingPage({ params }) {
-    const blessing = await getBlessing(params.id);
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center bg-[#0F172A] text-white">Loading Blessing...</div>;
+    }
 
-    if (!blessing) {
-        notFound();
+    if (error || !blessing) {
+        return <div className="min-h-screen flex items-center justify-center bg-[#0F172A] text-white">Blessing not found.</div>;
     }
 
     // Resolving image path based on backend location
     let imageUrl = blessing.shareImageUrl || blessing.imageUrl;
-    if (imageUrl.includes('/api/uploads/')) {
+    if (imageUrl && imageUrl.includes('/api/uploads/')) {
         const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://192.168.29.133:5000";
         const parts = imageUrl.split('/api/uploads/');
         imageUrl = `${backendUrl}/api/uploads/${parts[1]}`;
@@ -51,14 +56,16 @@ export default async function BlessingPage({ params }) {
                     <img 
                         src={imageUrl} 
                         alt={blessing.deityName || 'Divine Blessing'} 
-                        className="w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                     />
                 </div>
                 <div className="p-6 text-center">
-                    <h1 className="text-2xl font-bold text-yellow-500 mb-4">{blessing.greeting}</h1>
-                    <p className="text-white/90 italic font-serif mb-6 leading-relaxed">"{blessing.message}"</p>
+                    <h1 className="text-2xl font-bold text-yellow-500 mb-4 flex items-center justify-center gap-2">
+                        ✨ {blessing.greeting} ✨
+                    </h1>
+                    <p className="text-white/90 italic font-serif mb-6 leading-relaxed text-lg">"{blessing.message}"</p>
                     {blessing.mantra && (
-                        <p className="text-yellow-500 font-bold text-lg mb-8">{blessing.mantra}</p>
+                        <p className="text-yellow-500 font-bold text-xl mb-8">{blessing.mantra}</p>
                     )}
                     <a 
                         href="https://play.google.com/store/apps/details?id=com.way2astro.mobile" 
