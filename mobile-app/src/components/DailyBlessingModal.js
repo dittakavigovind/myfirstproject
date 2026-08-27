@@ -36,22 +36,27 @@ export default function DailyBlessingModal({ isOpen, onClose, blessing }) {
             let shareFiles = [];
 
             if (Capacitor.isNativePlatform()) {
-                // On mobile apps, download the image to cache first so we can share the physical file
-                const fileName = `blessing-${Date.now()}.jpg`;
-                const downloadResult = await Filesystem.downloadFile({
-                    url: shareImageUrl,
-                    path: fileName,
-                    directory: Directory.Cache
-                });
-                
-                // We MUST get the file:// URI for Share plugin to work
-                const { uri } = await Filesystem.getUri({
-                    path: fileName,
-                    directory: Directory.Cache
-                });
-                
-                if (uri) {
-                    shareFiles.push(uri);
+                try {
+                    // On mobile apps, download the image to cache first so we can share the physical file
+                    const fileName = `blessing-${Date.now()}.jpg`;
+                    const downloadResult = await Filesystem.downloadFile({
+                        url: shareImageUrl,
+                        path: fileName,
+                        directory: Directory.Cache
+                    });
+                    
+                    // We MUST get the file:// URI for Share plugin to work
+                    const { uri } = await Filesystem.getUri({
+                        path: fileName,
+                        directory: Directory.Cache
+                    });
+                    
+                    if (uri) {
+                        shareFiles.push(uri);
+                    }
+                } catch (downloadError) {
+                    console.log('Image download failed (404 or network issue), falling back to text only share', downloadError);
+                    // Continue without adding to shareFiles
                 }
             }
 
