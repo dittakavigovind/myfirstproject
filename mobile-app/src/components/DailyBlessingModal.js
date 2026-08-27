@@ -63,7 +63,7 @@ export default function DailyBlessingModal({ isOpen, onClose, blessing }) {
             const shareOptions = {
                 title: blessing.title || "Today's Divine Blessing",
                 text: `${blessing.greeting}\n\n"${blessing.message}"\n${blessing.mantra ? `\n${blessing.mantra}\n` : ''}\nGet your daily blessing on Way2Astro:`,
-                url: blessing.deepLink,
+                url: 'https://way2astro.com/',
                 dialogTitle: 'Share Divine Blessing'
             };
 

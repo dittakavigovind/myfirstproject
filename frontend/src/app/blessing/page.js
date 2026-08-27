@@ -47,10 +47,17 @@ function BlessingContent() {
 
     // Resolving image path based on backend location
     let imageUrl = blessing.shareImageUrl || blessing.imageUrl;
-    if (imageUrl && imageUrl.includes('/api/uploads/')) {
-        const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://192.168.29.133:5000";
-        const parts = imageUrl.split('/api/uploads/');
-        imageUrl = `${backendUrl}/api/uploads/${parts[1]}`;
+    if (imageUrl) {
+        // Always rewrite to production URL to prevent local network warnings in browsers
+        // (Even if DB contains localhost or 192.168)
+        const backendUrl = "https://api.way2astro.com";
+        if (imageUrl.includes('/api/uploads/')) {
+            const parts = imageUrl.split('/api/uploads/');
+            imageUrl = `${backendUrl}/api/uploads/${parts[1]}`;
+        } else {
+            imageUrl = imageUrl.replace(/http(s)?:\/\/localhost:5000/g, backendUrl)
+                               .replace(/http(s)?:\/\/192\.168\.\d+\.\d+:5000/g, backendUrl);
+        }
     }
 
     return (
