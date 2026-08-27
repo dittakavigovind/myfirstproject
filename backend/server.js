@@ -53,6 +53,7 @@ const earningsRoutes = require('./src/routes/earningsRoutes');
 const webhookRoutes = require('./src/routes/webhookRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const poojaRoutes = require('./src/routes/poojaRoutes');
+const dailyBlessingRoutes = require('./src/routes/dailyBlessingRoutes');
 
 // Initialize App
 const app = express();
@@ -316,6 +317,7 @@ app.use('/api/site-settings', require('./src/routes/siteSettingsRoutes'));
 app.use('/api/page-content', require('./src/routes/pageContentRoutes'));
 app.use('/api/popups', require('./src/routes/popupRoutes'));
 app.use('/api/pooja', poojaRoutes);
+app.use('/api/daily-blessing', dailyBlessingRoutes);
 app.use('/api/media', require('./src/routes/mediaRoutes'));
 app.use('/api/matchmaking', require('./src/routes/matchmakingRoutes'));
 app.use('/api/astrologer/ai-insights', require('./src/routes/aiInsights'));

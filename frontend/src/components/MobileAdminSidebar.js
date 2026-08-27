@@ -94,6 +94,16 @@ export default function MobileAdminSidebar() {
                     Push Notifications
                 </Link>
 
+                <Link href="/admin/daily-blessings"
+                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/admin/daily-blessings')
+                        ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                >
+                    <Sparkles size={18} />
+                    Daily Blessings
+                </Link>
+
                 <Link href="/mobile-admin/astrologers"
                     className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium transition-all ${isActive('/mobile-admin/astrologers')
                         ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20'

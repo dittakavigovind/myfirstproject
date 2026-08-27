@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
     TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, HelpCircle,
-    ChevronDown, ChevronRight, Settings, Tag, MessageSquare
+    ChevronDown, ChevronRight, Settings, Tag, MessageSquare, Sparkles
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -146,6 +146,14 @@ export default function AdminSidebar({ pendingRequestsCount = 0 }) {
 
                 {/* Content Links - Actual Routes */}
                 <div className="px-3 mt-6 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Content</div>
+
+                <Link href="/admin/daily-blessings"
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname === '/admin/daily-blessings' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                >
+                    <Sparkles size={18} />
+                    Daily Blessings
+                </Link>
 
                 <Link href="/admin/blog"
                     className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname === '/admin/blog' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'

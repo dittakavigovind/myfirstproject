@@ -28,6 +28,7 @@ import { BirthDetailsProvider } from "@/context/BirthDetailsContext";
 import { SocketProvider } from "@/context/SocketContext";
 import SessionBanner from "@/components/SessionBanner";
 import ProfileSetupModal from "@/components/ProfileSetupModal";
+import DailyBlessingWrapper from "@/components/DailyBlessingWrapper";
 import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({ children }) {
@@ -39,6 +40,7 @@ export default function RootLayout({ children }) {
             <BirthDetailsProvider>
               <SessionBanner />
               <ProfileSetupModal />
+              <DailyBlessingWrapper />
               <MobileLayout>
                 {children}
               </MobileLayout>
