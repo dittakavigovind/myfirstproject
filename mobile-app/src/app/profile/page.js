@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { 
-    User, Settings, Wallet, CreditCard, HelpCircle, LogOut, ChevronRight, 
+import {
+    User, Settings, Wallet, CreditCard, HelpCircle, LogOut, ChevronRight,
     ShoppingBag, MessageCircle, History, Sparkles, BookOpen, FileText,
-    Apple, Globe, Youtube, Facebook, Instagram, Linkedin, Heart,
+    Globe, Youtube, Facebook, Instagram, Heart,
     Star, DollarSign, Phone, Video, RefreshCw, Edit3
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 import { getImageUrl } from "@/lib/utils";
 
 const Toggle = ({ enabled, onChange, loading, color = "bg-green-500" }) => (
-    <button 
+    <button
         type="button"
         disabled={loading}
         onClick={(e) => {
@@ -27,7 +27,7 @@ const Toggle = ({ enabled, onChange, loading, color = "bg-green-500" }) => (
         }}
         className={`w-12 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${enabled ? color : 'bg-slate-700'} ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
-        <motion.div 
+        <motion.div
             animate={{ x: enabled ? 24 : 0 }}
             className="w-4 h-4 bg-white rounded-full shadow-sm"
         />
@@ -40,11 +40,11 @@ export default function Profile() {
     const router = useRouter();
     const [updatingStatus, setUpdatingStatus] = useState(false);
     const timerRef = useRef(null);
-    
+
     const isAstrologer = user?.role === 'astrologer';
     const rawName = user?.displayName || user?.name || "Seeker";
-    const displayName = isAstrologer && !rawName.toLowerCase().startsWith('astro') 
-        ? `Astro ${rawName}` 
+    const displayName = isAstrologer && !rawName.toLowerCase().startsWith('astro')
+        ? `Astro ${rawName}`
         : rawName;
 
     const centerToastConfig = {
@@ -96,7 +96,7 @@ export default function Profile() {
         }
     };
 
-    
+
 
 
     useEffect(() => {
@@ -173,10 +173,10 @@ export default function Profile() {
             toast.error("Minimum price for any service is ₹15/min");
             return;
         }
-        
+
         if (user?.isChatOnline || user?.isVoiceOnline || user?.isVideoOnline) {
-             toast.error("Cannot change pricing while availability is enabled. Please turn off availability first.");
-             return;
+            toast.error("Cannot change pricing while availability is enabled. Please turn off availability first.");
+            return;
         }
 
         setUpdatingPrices(true);
@@ -232,7 +232,7 @@ export default function Profile() {
                 {/* Clean background without decorative blurs */}
 
                 <div className="flex justify-between items-center mb-4 relative z-10">
-                    <button 
+                    <button
                         onClick={handleRefresh}
                         disabled={refreshing}
                         className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 active:scale-95 transition-all text-white hover:bg-white/10 shadow-lg"
@@ -243,20 +243,20 @@ export default function Profile() {
                     {isAstrologer && (
                         <div className="flex items-center gap-2 bg-[#0b1026]/60 backdrop-blur-xl px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg">
                             <span className={`relative flex h-2 w-2`}>
-                              {user?.isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
-                              <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.isOnline ? 'bg-green-500' : 'bg-slate-500'}`}></span>
+                                {user?.isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+                                <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.isOnline ? 'bg-green-500' : 'bg-slate-500'}`}></span>
                             </span>
                             <span className="text-[10px] font-black uppercase text-white tracking-widest mr-1">{user?.isOnline ? "Online" : "Offline"}</span>
-                            <Toggle 
-                                enabled={user?.isOnline && user?.isActive !== false} 
+                            <Toggle
+                                enabled={user?.isOnline && user?.isActive !== false}
                                 onChange={(val) => {
                                     if (user?.isActive === false) {
                                         toast.error("Your account has been deactivated by Admin.", centerToastConfig);
                                         return;
                                     }
                                     handleToggle('status', val);
-                                }} 
-                                loading={updatingStatus} 
+                                }}
+                                loading={updatingStatus}
                             />
                         </div>
                     )}
@@ -283,7 +283,7 @@ export default function Profile() {
                                 {displayName} ✨
                             </h2>
                             <p className="text-electric-violet text-[11px] font-bold tracking-wide truncate">{user?.phone || "+91 9948505111"}</p>
-                            
+
                             {/* Inline Stats */}
                             {isAstrologer && (
                                 <div className="flex items-center gap-3 mt-1.5">
@@ -302,14 +302,14 @@ export default function Profile() {
 
                     {/* Action Buttons */}
                     <div className="flex w-full gap-2">
-                        <button 
+                        <button
                             onClick={() => router.push('/profile/edit')}
                             className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-white transition-all active:scale-95 shadow-sm"
                         >
                             Edit Profile
                         </button>
                         {isAstrologer && (
-                            <button 
+                            <button
                                 onClick={() => setShowPricingModal(true)}
                                 className="flex-1 py-2 rounded-lg bg-gradient-to-r from-electric-violet to-fuchsia-600 text-[11px] font-black text-white shadow-md shadow-electric-violet/25 active:scale-95 transition-all"
                             >
@@ -327,8 +327,8 @@ export default function Profile() {
                                 { label: "Video", icon: Video, field: 'isVideoOnline', enabled: user?.isVideoOnline, color: 'text-purple-400', bg: 'bg-purple-400/10' },
                             ].map((mode) => {
                                 const globalKey = mode.label === 'Chat' ? 'chatEnabled' : mode.label === 'Voice' ? 'voiceEnabled' : 'videoEnabled';
-                                const isDisabled = 
-                                    (user?.globalFeatures && user.globalFeatures[globalKey] === false) || 
+                                const isDisabled =
+                                    (user?.globalFeatures && user.globalFeatures[globalKey] === false) ||
                                     (user?.astroFeatures && user.astroFeatures[globalKey] === false) ||
                                     user?.isActive === false;
 
@@ -339,16 +339,16 @@ export default function Profile() {
                                                 <mode.icon size={12} />
                                             </div>
                                             <div onClick={isDisabled ? () => toast.error(user?.isActive === false ? "Your account has been deactivated." : `Admin has disabled the ${mode.label} feature.`, user?.isActive === false ? centerToastConfig : undefined) : undefined}>
-                                                <Toggle 
-                                                    enabled={mode.enabled && !isDisabled} 
+                                                <Toggle
+                                                    enabled={mode.enabled && !isDisabled}
                                                     onChange={(val) => {
                                                         if (isDisabled) {
                                                             toast.error(user?.isActive === false ? "Your account has been deactivated." : `Admin has disabled the ${mode.label} feature.`, user?.isActive === false ? centerToastConfig : undefined);
                                                             return;
                                                         }
                                                         handleToggle(mode.field, val);
-                                                    }} 
-                                                    loading={updatingStatus} 
+                                                    }}
+                                                    loading={updatingStatus}
                                                     color={mode.label === 'Chat' ? 'bg-blue-500' : mode.label === 'Voice' ? 'bg-green-500' : 'bg-purple-500'}
                                                 />
                                             </div>
@@ -433,14 +433,14 @@ export default function Profile() {
             <AnimatePresence>
                 {showPricingModal && (
                     <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-32">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => !updatingPrices && setShowPricingModal(false)}
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         />
-                        <motion.div 
+                        <motion.div
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%" }}
@@ -448,7 +448,7 @@ export default function Profile() {
                         >
                             <h3 className="text-xl font-bold text-white mb-2">Pricing Adjustments</h3>
                             <p className="text-slate-400 text-sm mb-6 font-medium leading-relaxed">
-                                Set your consultation price per minute. <br/>
+                                Set your consultation price per minute. <br />
                                 <span className="text-solar-gold font-bold italic">Minimum ₹15/min for all services.</span>
                             </p>
 
@@ -467,10 +467,10 @@ export default function Profile() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <span className="text-solar-gold font-black">₹</span>
-                                            <input 
-                                                type="number" 
+                                            <input
+                                                type="number"
                                                 value={prices[field.field]}
-                                                onChange={(e) => setPrices({...prices, [field.field]: parseInt(e.target.value) || 0})}
+                                                onChange={(e) => setPrices({ ...prices, [field.field]: parseInt(e.target.value) || 0 })}
                                                 className="w-20 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white font-black text-right focus:outline-none focus:border-solar-gold transition-colors"
                                             />
                                         </div>
@@ -478,7 +478,7 @@ export default function Profile() {
                                 ))}
                             </div>
 
-                            <button 
+                            <button
                                 onClick={handleUpdatePrices}
                                 disabled={updatingPrices}
                                 className="w-full py-4 rounded-2xl bg-solar-gold text-cosmic-indigo font-black text-lg shadow-lg shadow-solar-gold/20 active:scale-95 transition-all"
@@ -519,16 +519,15 @@ export default function Profile() {
                 <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-4 italic">Also available on</p>
                 <div className="flex justify-center gap-4">
                     {[
-                        { icon: Apple, color: "bg-white/5 text-white" },
-                        { icon: Globe, color: "bg-green-500/10 text-green-400" },
-                        { icon: Youtube, color: "bg-red-500/10 text-red-500" },
-                        { icon: Facebook, color: "bg-blue-600/10 text-blue-500" },
-                        { icon: Instagram, color: "bg-pink-500/10 text-pink-500" },
-                        { icon: Linkedin, color: "bg-blue-700/10 text-blue-600" }
+                        { icon: Globe, color: "bg-green-500/10 text-green-400", link: "https://way2astro.com" },
+                        { icon: Youtube, color: "bg-red-500/10 text-red-500", link: "https://www.youtube.com/@Way2Astro" },
+                        { icon: Facebook, color: "bg-blue-600/10 text-blue-500", link: "https://www.facebook.com/Way2AstroOfficial" },
+                        { icon: Instagram, color: "bg-pink-500/10 text-pink-500", link: "https://www.instagram.com/way2astroofficial" }
                     ].map((social, i) => (
-                        <motion.div 
-                            key={i} 
+                        <motion.div
+                            key={i}
                             whileTap={{ scale: 0.9 }}
+                            onClick={() => window.open(social.link, '_blank')}
                             className={`p-2.5 rounded-xl ${social.color} border border-white/5 active:bg-white/10 transition-all cursor-pointer`}
                         >
                             <social.icon size={20} strokeWidth={1.5} />

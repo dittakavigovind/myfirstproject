@@ -246,6 +246,60 @@ exports.getDashboardStats = async (req, res) => {
 
         const breakdown = await calculateEarningsBreakdown();
 
+        // Calculate Datewise Earnings
+        const commission = (astrologer.commissionRate !== undefined && astrologer.commissionRate !== null) 
+            ? astrologer.commissionRate 
+            : (require('../models/PricingConfig').findOne().then(c => c?.globalRates?.globalPlatformFee || 40) || 40); // Wait, this is tricky if not awaited. Let's use the one from calculateEarningsBreakdown.
+
+        const PricingConfig = require('../models/PricingConfig');
+        const pConfig = await PricingConfig.findOne();
+        const globalFee = pConfig?.globalRates?.globalPlatformFee || 40;
+        const finalCommission = (astrologer.commissionRate !== undefined && astrologer.commissionRate !== null) ? astrologer.commissionRate : globalFee;
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const firstDayLastMonth = new Date();
+        firstDayLastMonth.setMonth(firstDayLastMonth.getMonth() - 1);
+        firstDayLastMonth.setDate(1);
+        firstDayLastMonth.setHours(0, 0, 0, 0);
+
+        const lastDayLastMonth = new Date(firstDayLastMonth);
+        lastDayLastMonth.setMonth(lastDayLastMonth.getMonth() + 1);
+        lastDayLastMonth.setDate(0);
+        lastDayLastMonth.setHours(23, 59, 59, 999);
+
+        const pipeline = (startDate, endDate) => [
+            {
+                $match: {
+                    astrologerId: astrologer._id,
+                    createdAt: { $gte: startDate, $lte: endDate },
+                    endTime: { $exists: true }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "Asia/Kolkata" } },
+                    net: {
+                        $sum: {
+                            $cond: [
+                                { $gt: ["$astrologerShare", 0] },
+                                "$astrologerShare",
+                                { $multiply: [{ $ifNull: ["$totalAmountDeducted", 0] }, (100 - finalCommission) / 100] }
+                            ]
+                        }
+                    }
+                }
+            },
+            { $sort: { _id: -1 } }
+        ];
+
+        const [last7Days, lastMonth] = await Promise.all([
+            Session.aggregate(pipeline(sevenDaysAgo, new Date())),
+            Session.aggregate(pipeline(firstDayLastMonth, lastDayLastMonth))
+        ]);
+
         res.json({
             success: true,
             data: {
@@ -263,6 +317,8 @@ exports.getDashboardStats = async (req, res) => {
                 todayGross: breakdown.gross,
                 todayPlatformShare: breakdown.platform,
                 todayNet: breakdown.net,
+                last7Days,
+                lastMonth,
                 callsCount: sessions.filter(s => s.sessionType === 'audio' || s.sessionType === 'video').length,
                 chatsCount: sessions.filter(s => s.sessionType === 'chat').length,
                 totalSessions: sessions.length + (activeSession ? 1 : 0)

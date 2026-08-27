@@ -21,10 +21,10 @@ module.exports = function (io) {
             if (!token) return next(new Error('Authentication error: No token provided'));
 
             const decoded = jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET);
-            
+
             const user = await User.findById(decoded.id).select('-password');
             if (!user) return next(new Error('User not found'));
-            
+
             socket.user = user;
             socket.data.user = user;
 
@@ -47,7 +47,7 @@ module.exports = function (io) {
             const astrologerId = socket.astrologerId;
             QueueService.setAstrologerStatus(astrologerId, 'online');
             socket.join(`astro_${astrologerId}`);
-            
+
             // Clear any pending disconnect timer for Astrologer
             if (disconnectTimers.has(astrologerId)) {
                 clearTimeout(disconnectTimers.get(astrologerId));
@@ -83,9 +83,9 @@ module.exports = function (io) {
                         isVoiceOnline: astro.isVoiceOnline,
                         isVideoOnline: astro.isVideoOnline
                     });
-                    
-                    io.emit('astrologer_status_changed', { 
-                        astrologerId, 
+
+                    io.emit('astrologer_status_changed', {
+                        astrologerId,
                         isChatOnline: astro.isChatOnline,
                         isVoiceOnline: astro.isVoiceOnline,
                         isVideoOnline: astro.isVideoOnline,
@@ -119,15 +119,15 @@ module.exports = function (io) {
                     // Do not activate session here.
                     // The session will become active when the astrologer sends the first message.
                 } else if (session.status === 'active') {
-                    const actualElapsedSeconds = session.startTime 
-                        ? Math.floor((new Date() - session.startTime) / 1000) 
+                    const actualElapsedSeconds = session.startTime
+                        ? Math.floor((new Date() - session.startTime) / 1000)
                         : 0;
-                    socket.emit('session_restored', { 
-                        startTime: session.startTime, 
+                    socket.emit('session_restored', {
+                        startTime: session.startTime,
                         duration: session.totalDuration,
                         actualElapsedSeconds
                     });
-                    
+
                     // If server restarted, the in-memory billing interval is lost. Restart it.
                     if (socket.user.role === 'astrologer' && !activeSessions.has(roomId)) {
                         console.log(`Restarting billing engine for active room ${roomId} after reconnect.`);
@@ -165,7 +165,7 @@ module.exports = function (io) {
                     await session.save();
 
                     startBillingEngine(roomId, session._id, io);
-                    
+
                     // Mark Astrologer as Busy
                     await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
                     io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
@@ -195,7 +195,7 @@ module.exports = function (io) {
 
                 // Decrypt for live broadcast to the room so recipients see it clearly
                 const broadcastMessage = newMessage.toObject();
-                broadcastMessage.content = content; 
+                broadcastMessage.content = content;
 
                 io.to(roomId).emit('receive_session_message', broadcastMessage);
                 console.log(`[Socket] Message broadcasted to room ${roomId}`);
@@ -216,7 +216,7 @@ module.exports = function (io) {
                     await session.save();
 
                     startBillingEngine(roomId, session._id, io);
-                    
+
                     // Mark Astrologer as Busy
                     await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
                     io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
@@ -307,20 +307,20 @@ module.exports = function (io) {
         socket.on('disconnect', async () => {
             if (socket.user.role === 'astrologer') {
                 const astrologerId = socket.astrologerId;
-                
+
                 // Check if they have other active sockets before going completely offline
                 const activeAstroSockets = await io.in(`astro_${astrologerId}`).fetchSockets();
-                
+
                 if (activeAstroSockets.length === 0) {
                     console.log(`[Socket] Astrologer ${astrologerId} disconnected. Starting 10s offline timer.`);
-                    
+
                     const userId = socket.user.id;
                     const offlineTimeoutId = setTimeout(async () => {
                         console.log(`[Socket] 10s passed. Astrologer ${astrologerId} going offline.`);
-                        
+
                         // 1. Redis Status
                         await QueueService.setAstrologerStatus(astrologerId, 'offline');
-                        
+
                         // 2. MongoDB Status (Real-time availability integrity)
                         await Astrologer.findByIdAndUpdate(astrologerId, {
                             isOnline: false,
@@ -372,13 +372,13 @@ module.exports = function (io) {
 
                         offlineTimers.delete(astrologerId);
                     }, 10000);
-                    
+
                     offlineTimers.set(astrologerId, offlineTimeoutId);
 
                     // 4. Force end active BILLED sessions (Chat/Call)
-                    const activeBilledSessions = await Session.find({ 
-                        astrologerId, 
-                        status: { $in: ['active', 'initiated'] } 
+                    const activeBilledSessions = await Session.find({
+                        astrologerId,
+                        status: { $in: ['active', 'initiated'] }
                     });
 
                     // Wait 30 seconds before terminating sessions (Grace Period)
@@ -394,7 +394,7 @@ module.exports = function (io) {
                             console.error('Error in Astrologer disconnect timeout:', err);
                         }
                     }, 30000);
-                    
+
                     disconnectTimers.set(astrologerId, timeoutId);
                 }
             }
@@ -404,7 +404,7 @@ module.exports = function (io) {
                 const session = await Session.findOne({ roomId: socket.roomId });
                 if (session && (session.status === 'active' || session.status === 'initiated')) {
                     console.log(`Socket disconnected for user in room ${socket.roomId}. Starting 30s auto-end timer.`);
-                    
+
                     // Clear existing timer if any (e.g. multiple tabs disconnecting)
                     if (disconnectTimers.has(socket.roomId)) {
                         clearTimeout(disconnectTimers.get(socket.roomId));
@@ -415,7 +415,7 @@ module.exports = function (io) {
                         await terminateSession(socket.roomId, io, 'Terminated due to participant disconnection', 'system');
                         disconnectTimers.delete(socket.roomId);
                     }, 30000);
-                    
+
                     disconnectTimers.set(socket.roomId, timeoutId);
                 }
             }
@@ -458,7 +458,7 @@ module.exports = function (io) {
 
             // Update Session amount and shares
             await Session.findByIdAndUpdate(session._id, {
-                $inc: { 
+                $inc: {
                     totalAmountDeducted: pricePerMinute,
                     platformShare: platformFee,
                     astrologerShare: earnings
@@ -488,8 +488,8 @@ module.exports = function (io) {
                 },
                 {
                     $inc: { amount: pricePerMinute },
-                    $set: { 
-                        status: 'success', 
+                    $set: {
+                        status: 'success',
                         description: `Chat deduction for session ${roomId}`
                     }
                 },
@@ -505,8 +505,8 @@ module.exports = function (io) {
                 },
                 {
                     $inc: { amount: earnings },
-                    $set: { 
-                        status: 'success', 
+                    $set: {
+                        status: 'success',
                         description: `Chat earning for session ${roomId}`
                     }
                 },
@@ -518,10 +518,10 @@ module.exports = function (io) {
             await session.save();
 
             // Notify Room with actual elapsed time, not billed time
-            const actualElapsedSeconds = session.startTime 
-                ? Math.floor((new Date() - session.startTime) / 1000) 
+            const actualElapsedSeconds = session.startTime
+                ? Math.floor((new Date() - session.startTime) / 1000)
                 : 0;
-                
+
             io.to(roomId).emit('timer_update', {
                 duration: actualElapsedSeconds,
                 remainingBalance: user.walletBalance,
@@ -601,8 +601,8 @@ module.exports = function (io) {
 
                 if (otherActiveSessions === 0) {
                     const astro = await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: false }, { new: true });
-                    io.emit('astrologer_status_changed', { 
-                        astrologerId: session.astrologerId.toString(), 
+                    io.emit('astrologer_status_changed', {
+                        astrologerId: session.astrologerId.toString(),
                         isBusy: false,
                         isChatOnline: astro.isChatOnline,
                         isVoiceOnline: astro.isVoiceOnline,
