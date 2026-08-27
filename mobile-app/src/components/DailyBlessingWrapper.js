@@ -13,11 +13,11 @@ export default function DailyBlessingWrapper() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        // Only run logic on the client side, and only when user is fully loaded and logged in
-        if (typeof window === 'undefined' || loading || !user) return;
+        // Only run logic on the client side, wait for auth to finish loading
+        if (typeof window === 'undefined' || loading) return;
         
-        // Exclude astrologers
-        if (user.role === 'astrologer') return;
+        // Exclude astrologers if logged in
+        if (user && user.role === 'astrologer') return;
 
         // Only trigger on the main home screen to prevent interrupting deep links or sub-pages
         if (pathname !== '/') return;
@@ -27,8 +27,9 @@ export default function DailyBlessingWrapper() {
                 // Get local date string YYYY-MM-DD
                 const today = new Date().toLocaleDateString('en-CA'); // 'en-CA' outputs YYYY-MM-DD format based on local timezone 
                 const lastShownDate = localStorage.getItem('lastBlessingShownDate');
+                const isTestMode = window.location.search.includes('test_blessing=1');
 
-                if (lastShownDate !== today) {
+                if (lastShownDate !== today || isTestMode) {
                     const response = await api.get('/daily-blessing/today');
                     if (response.data && response.data.success && response.data.blessing) {
                         setBlessing(response.data.blessing);

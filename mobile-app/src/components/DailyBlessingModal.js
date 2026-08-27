@@ -103,8 +103,8 @@ export default function DailyBlessingModal({ isOpen, onClose, blessing }) {
                             <X size={18} className="text-white" />
                         </button>
 
-                        {/* Image Container (4:5 Aspect Ratio Approximation) */}
-                        <div className="w-full relative pt-[100%] bg-black">
+                        {/* Image Container */}
+                        <div className="w-full aspect-square relative bg-black shrink-0">
                             <img 
                                 src={getImageUrl(blessing.imageUrl)} 
                                 alt={blessing.deityName} 
