@@ -43,8 +43,15 @@ export default function DailyBlessingModal({ isOpen, onClose, blessing }) {
                     path: fileName,
                     directory: Directory.Cache
                 });
-                if (downloadResult.path) {
-                    shareFiles.push(downloadResult.path);
+                
+                // We MUST get the file:// URI for Share plugin to work
+                const { uri } = await Filesystem.getUri({
+                    path: fileName,
+                    directory: Directory.Cache
+                });
+                
+                if (uri) {
+                    shareFiles.push(uri);
                 }
             }
 
