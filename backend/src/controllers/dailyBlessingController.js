@@ -43,7 +43,7 @@ exports.getTodayBlessing = async (req, res) => {
                 mantra: blessing.mantra,
                 imageUrl: blessing.imageUrl,
                 shareImageUrl: blessing.shareImageUrl,
-                deepLink: `https://way2astro.com/blessing/${blessing._id}` // Placeholder for app links
+                deepLink: `https://way2astro.com/blessing?id=${blessing._id}` // App links compatible format
             }
         });
     } catch (error) {

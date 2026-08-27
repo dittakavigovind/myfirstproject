@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { notFound, useSearchParams } from 'next/navigation';
 
-export default function BlessingPage() {
-    const params = useParams();
-    const id = params?.id;
+function BlessingContent() {
+    const searchParams = useSearchParams();
+    const id = searchParams?.get('id');
     const [blessing, setBlessing] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
     useEffect(() => {
         async function fetchBlessing() {
-            if (!id) return;
+            if (!id) {
+                setLoading(false);
+                setError(true);
+                return;
+            }
             try {
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.133:5000/api";
                 const res = await fetch(`${API_URL}/daily-blessing/public/${id}`);
@@ -76,5 +80,13 @@ export default function BlessingPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function BlessingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0F172A] text-white">Loading...</div>}>
+            <BlessingContent />
+        </Suspense>
     );
 }
