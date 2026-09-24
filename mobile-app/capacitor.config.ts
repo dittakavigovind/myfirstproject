@@ -5,9 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Way2Astro',
   webDir: 'out',
   server: {
-    androidScheme: 'http',
-    hostname: 'localhost',
-    cleartext: true
+    androidScheme: 'https',
+    hostname: 'localhost'
   },
   plugins: {
     PushNotifications: {

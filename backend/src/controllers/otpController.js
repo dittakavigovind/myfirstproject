@@ -62,7 +62,7 @@ exports.sendWhatsappOtp = async (req, res) => {
 
         // 4b. Hardcoded OTP for Testing
         const purePhone = mobile_number.replace(/\D/g, ''); // Strip all non-digits
-        const testNumbers = ['919948505111', '919491537320', '919849097924', '919032594469'];
+        const testNumbers = ['919948505111', '919491537320', '919849097924', '919032594469', '919999999999'];
 
         if (testNumbers.includes(purePhone) || otp === '123456') {
             return res.status(200).json({ success: true, message: 'Test OTP generated (123456)' });
@@ -144,12 +144,10 @@ exports.verifyWhatsappOtp = async (req, res) => {
 
         // 1. Find latest valid OTP record
         const purePhone = mobile_number.replace(/\D/g, ''); // Strip all non-digits
-        const testNumbers = ['919948505111', '919491537320', '919849097924', '919032594469', '9032594469'];
-        const isTestNumber = (testNumbers.includes(purePhone) || true) && String(otp) === '123456';
-        // Note: (testNumbers.includes(purePhone) || true) is a bit loose, 
-        // but if they enter 123456 we usually want it to work in dev.
-        // I will stick to specific numbers + 123456.
-
+        // Added 919999999999 for Google Play Review
+        const testNumbers = ['919948505111', '919491537320', '919849097924', '919032594469', '9032594469', '919999999999'];
+        const isTestNumber = testNumbers.includes(purePhone) && String(otp) === '123456';
+        
         let record = null;
         if (!isTestNumber) {
             record = await OtpVerification.findOne({
