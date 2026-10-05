@@ -106,7 +106,12 @@ export function AuthProvider({ children }) {
 
             PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
                 console.log('Push Action Performed: ', notification);
-                router.push('/notifications');
+                const data = notification.notification?.data || notification.data || {};
+                if (data.actionLink) {
+                    router.push(data.actionLink);
+                } else {
+                    router.push('/notifications');
+                }
             });
         }
     };
