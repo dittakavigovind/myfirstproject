@@ -4,11 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
-import { ChevronLeft, Camera, Save, User, Loader2 } from "lucide-react";
+import { ChevronLeft, Camera, Save, User, Loader2, Image as ImageIcon } from "lucide-react";
 import CosmicCard from "@/components/CosmicCard";
 import CosmicLoader from "@/components/CosmicLoader";
 import toast from "react-hot-toast";
 import { getImageUrl } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function EditProfile() {
     const router = useRouter();
@@ -17,7 +18,10 @@ export default function EditProfile() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const fileInputRef = useRef(null);
+    const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+    
+    const cameraInputRef = useRef(null);
+    const galleryInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         displayName: "",
@@ -36,16 +40,13 @@ export default function EditProfile() {
         }
     }, [user]);
 
-    
-
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleImageClick = () => {
-        fileInputRef.current?.click();
+        setShowPhotoOptions(true);
     };
 
     const handleImageUpload = async (e) => {
@@ -153,9 +154,19 @@ export default function EditProfile() {
                         >
                             <Camera size={14} className="text-white" />
                         </button>
+                        
+                        {/* Hidden inputs for both methods */}
                         <input 
                             type="file"
-                            ref={fileInputRef}
+                            ref={cameraInputRef}
+                            onChange={handleImageUpload}
+                            accept="image/*"
+                            capture="user"
+                            className="hidden"
+                        />
+                        <input 
+                            type="file"
+                            ref={galleryInputRef}
                             onChange={handleImageUpload}
                             accept="image/*"
                             className="hidden"
@@ -214,6 +225,52 @@ export default function EditProfile() {
                     </button>
                 </div>
             </form>
+
+            {/* Photo Selection Bottom Sheet */}
+            <AnimatePresence>
+                {showPhotoOptions && (
+                    <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-8">
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }} 
+                            onClick={() => setShowPhotoOptions(false)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div 
+                            initial={{ y: "100%" }} 
+                            animate={{ y: 0 }} 
+                            exit={{ y: "100%" }} 
+                            className="relative w-full max-w-sm glass-panel p-6 rounded-3xl border-white/10 z-10"
+                        >
+                            <h3 className="text-lg font-bold text-white mb-4 text-center">Update Profile Photo</h3>
+                            <div className="space-y-3">
+                                <button 
+                                    type="button" 
+                                    onClick={() => { setShowPhotoOptions(false); cameraInputRef.current?.click(); }}
+                                    className="w-full py-4 rounded-2xl bg-electric-violet text-white font-bold flex items-center justify-center gap-3 active:scale-95 transition-all"
+                                >
+                                    <Camera size={20} /> Take a Selfie
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => { setShowPhotoOptions(false); galleryInputRef.current?.click(); }}
+                                    className="w-full py-4 rounded-2xl bg-white/10 text-white font-bold flex items-center justify-center gap-3 active:scale-95 transition-all border border-white/5"
+                                >
+                                    <ImageIcon size={20} /> Choose from Gallery
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowPhotoOptions(false)}
+                                    className="w-full py-3 rounded-2xl text-slate-400 font-bold flex items-center justify-center gap-3 active:scale-95 transition-all mt-2"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -53,27 +53,27 @@ router.get('/', protect, admin, async (req, res) => {
         // Calculate usage counts for each media item
         const mediaWithUsage = await Promise.all(media.map(async (item) => {
             const filename = item.filename;
-            
+
             // Search in various collections
             const counts = await Promise.all([
-                BlogPost.countDocuments({ 
-                    $or: [ 
-                        { content: { $regex: filename, $options: 'i' } }, 
-                        { featuredImage: { $regex: filename, $options: 'i' } }, 
-                        { 'seo.ogImage': { $regex: filename, $options: 'i' } } 
-                    ] 
+                BlogPost.countDocuments({
+                    $or: [
+                        { content: { $regex: filename, $options: 'i' } },
+                        { featuredImage: { $regex: filename, $options: 'i' } },
+                        { 'seo.ogImage': { $regex: filename, $options: 'i' } }
+                    ]
                 }),
-                Temple.countDocuments({ 
-                    $or: [ 
-                        { images: { $regex: filename, $options: 'i' } }, 
-                        { ogImage: { $regex: filename, $options: 'i' } } 
-                    ] 
+                Temple.countDocuments({
+                    $or: [
+                        { images: { $regex: filename, $options: 'i' } },
+                        { ogImage: { $regex: filename, $options: 'i' } }
+                    ]
                 }),
-                PageContent.countDocuments({ 
-                    $or: [ 
-                        { content: { $regex: filename, $options: 'i' } }, 
-                        { imageUrl: { $regex: filename, $options: 'i' } } 
-                    ] 
+                PageContent.countDocuments({
+                    $or: [
+                        { content: { $regex: filename, $options: 'i' } },
+                        { imageUrl: { $regex: filename, $options: 'i' } }
+                    ]
                 })
             ]);
 
@@ -105,12 +105,13 @@ router.post('/upload', protect, admin, upload.single('file'), async (req, res) =
             const newPath = path.join(uploadDir, newFilename);
 
             await sharp(filePath)
+                .rotate() // Auto-rotate based on EXIF orientation
                 .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
                 .webp({ quality: 70, effort: 6 })
                 .toFile(newPath);
 
             fs.unlinkSync(filePath);
-            
+
             // Update req.file for DB entry
             req.file.filename = newFilename;
             req.file.path = newPath;
@@ -147,16 +148,16 @@ router.delete('/:id', protect, admin, async (req, res) => {
         // Check usage again before delete
         const filename = media.filename;
         const counts = await Promise.all([
-            BlogPost.countDocuments({ $or: [ { content: { $regex: filename } }, { featuredImage: { $regex: filename } } ] }),
-            Temple.countDocuments({ $or: [ { images: { $regex: filename } } ] })
+            BlogPost.countDocuments({ $or: [{ content: { $regex: filename } }, { featuredImage: { $regex: filename } }] }),
+            Temple.countDocuments({ $or: [{ images: { $regex: filename } }] })
         ]);
         const usageCount = counts.reduce((a, b) => a + b, 0);
 
         if (usageCount > 0 && !req.query.force) {
-            return res.status(400).json({ 
-                success: false, 
+            return res.status(400).json({
+                success: false,
                 message: `Cannot delete. Image is used in ${usageCount} place(s).`,
-                usageCount 
+                usageCount
             });
         }
 

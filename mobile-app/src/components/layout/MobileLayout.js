@@ -2,17 +2,52 @@
 
 import ModernHeader from "./ModernHeader";
 import BottomNav from "./BottomNav";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function MobileLayout({ children }) {
     const pathname = usePathname();
+    const router = useRouter();
+    
     const isProfile = pathname === "/astrologer";
-    const hideLayoutElements =
-        pathname === "/auth" ||
-        pathname.startsWith("/chat/");
-
-    // Don't show global sidebar/header on auth or chat
     const isSpecialPage = pathname === "/auth" || pathname.startsWith("/chat/");
+
+    // Handle Hardware Back Button & Edge Swipe in Capacitor
+    useEffect(() => {
+        let listenerObj = null;
+        
+        const setupBackButton = async () => {
+            if (typeof window !== "undefined" && window.Capacitor) {
+                try {
+                    const { App } = await import("@capacitor/app");
+                    listenerObj = await App.addListener("backButton", () => {
+                        // Define which paths should exit the app when back is pressed
+                        const exitPaths = ["/", "/auth", "/explore", "/wallet", "/profile"];
+                        
+                        // Use window.location.pathname to get the current actual path, 
+                        // as Next's usePathname in useEffect closure might be stale
+                        const currentPath = window.location.pathname;
+                        
+                        if (exitPaths.includes(currentPath)) {
+                            App.exitApp();
+                        } else {
+                            router.back();
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to setup capacitor back button:", e);
+                }
+            }
+        };
+        
+        setupBackButton();
+        
+        return () => {
+            if (listenerObj && typeof listenerObj.remove === "function") {
+                listenerObj.remove();
+            }
+        };
+    }, [router]);
 
     return (
         <div 

@@ -83,6 +83,7 @@ const uploadMiddleware = (req, res, next) => {
 
                     // Convert everything to webp by default for better performance
                     await sharp(filePath)
+                        .rotate() // Auto-rotate based on EXIF orientation
                         .resize({
                             width: 1400,
                             height: 1400,

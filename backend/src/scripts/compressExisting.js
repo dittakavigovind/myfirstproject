@@ -30,7 +30,7 @@ async function compressExisting() {
 
                 const tempPath = filePath + '.tmp';
 
-                let sharpInstance = sharp(filePath)
+                let sharpInstance = sharp(filePath).rotate(); // Auto-rotate based on EXIF
                     .resize({
                         width: 1920,
                         height: 1920,

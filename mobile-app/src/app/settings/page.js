@@ -305,7 +305,10 @@ export default function SettingsPage() {
                             )}
                         </div>
                         {/* Rate the App */}
-                        <div className="flex items-center justify-between p-4 active:bg-white/10 transition-colors cursor-pointer">
+                        <div 
+                            onClick={() => window.open('https://play.google.com/store/apps/details?id=com.way2astro.mobile', '_blank')}
+                            className="flex items-center justify-between p-4 active:bg-white/10 transition-colors cursor-pointer"
+                        >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400">
                                     <Smartphone size={16} />
@@ -319,7 +322,7 @@ export default function SettingsPage() {
 
                 {/* Version Info */}
                 <div className="pt-6 pb-2 text-center">
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Version 1.1.465</p>
+                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Version 1.0.0</p>
                 </div>
 
             </div>

@@ -535,7 +535,7 @@ export default function Profile() {
                     ))}
                 </div>
                 <div className="mt-8">
-                    <p className="text-[10px] text-slate-600 font-black tracking-widest uppercase">Version 1.1.465</p>
+                    <p className="text-[10px] text-slate-600 font-black tracking-widest uppercase">Version 1.0.0</p>
                 </div>
             </div>
 

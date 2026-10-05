@@ -16,6 +16,7 @@
   "dependencies": {
     "@anuradev/capacitor-audio-toggle": "^7.0.0",
     "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capacitor/filesystem": "^8.1.3",
