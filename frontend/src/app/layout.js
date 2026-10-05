@@ -133,7 +133,7 @@ export default async function RootLayout({ children }) {
 
     return (
         <html lang="en" suppressHydrationWarning={true}>
-            <head>
+            {/* <head>
                 {lcpImageUrl && (
                     <link 
                         rel="preload" 
@@ -143,7 +143,7 @@ export default async function RootLayout({ children }) {
                         crossOrigin="anonymous"
                     />
                 )}
-            </head>
+            </head> */}
             <body className={`${poppins.variable} font-sans`} suppressHydrationWarning={true}>
                 {googleAnalyticsId && (
                     <>
