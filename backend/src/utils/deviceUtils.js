@@ -1,6 +1,7 @@
 const geoip = require('geoip-lite');
+const axios = require('axios');
 
-exports.getDeviceInfo = (req) => {
+exports.getDeviceInfo = async (req) => {
     const userAgent = req.headers['user-agent'] || '';
     
     // Explicit headers passed by the mobile app
@@ -32,12 +33,24 @@ exports.getDeviceInfo = (req) => {
 
     let location = { ip };
     if (ip && ip !== '127.0.0.1' && ip !== '::1') {
-        const geo = geoip.lookup(ip);
-        if (geo) {
-            location.country = geo.country;
-            location.region = geo.region;
-            location.city = geo.city;
-            location.ll = geo.ll; // [latitude, longitude]
+        try {
+            const res = await axios.get(`http://ip-api.com/json/${ip}`, { timeout: 2000 });
+            if (res.data && res.data.status === 'success') {
+                location.country = res.data.countryCode;
+                location.region = res.data.regionName;
+                location.city = res.data.city;
+                location.ll = [res.data.lat, res.data.lon];
+            } else {
+                throw new Error('API failed, fallback to geoip-lite');
+            }
+        } catch (err) {
+            const geo = geoip.lookup(ip);
+            if (geo) {
+                location.country = geo.country;
+                location.region = geo.region;
+                location.city = geo.city;
+                location.ll = geo.ll; // [latitude, longitude]
+            }
         }
     }
 

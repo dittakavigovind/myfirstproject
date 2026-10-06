@@ -87,7 +87,7 @@ exports.registerUser = async (req, res) => {
             emailVerified: false,
             verificationToken,
             verificationTokenExpire,
-            deviceInfo: getDeviceInfo(req)
+            deviceInfo: await getDeviceInfo(req)
         });
 
         if (user) {
@@ -151,7 +151,7 @@ exports.loginUser = async (req, res) => {
             // Update sessionVersion and lastLogin
             user.sessionVersion = (user.sessionVersion || 0) + 1;
             user.lastLogin = new Date();
-            user.deviceInfo = getDeviceInfo(req);
+            user.deviceInfo = await getDeviceInfo(req);
             await user.save();
 
             res.json({
@@ -358,7 +358,7 @@ exports.verifyEmailOtp = async (req, res) => {
         user.verificationToken = undefined;
         user.verificationTokenExpire = undefined;
         user.lastLogin = new Date();
-        user.deviceInfo = getDeviceInfo(req);
+        user.deviceInfo = await getDeviceInfo(req);
         await user.save();
 
         res.json({

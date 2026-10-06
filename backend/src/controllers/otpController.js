@@ -188,7 +188,7 @@ exports.verifyWhatsappOtp = async (req, res) => {
             user = await User.create({
                 phone: `+${purePhone}`, // Store in E.164 format
                 name: 'User',
-                deviceInfo: getDeviceInfo(req)
+                deviceInfo: await getDeviceInfo(req)
             });
         } else {
             // Ensure phone is normalized to + format if it wasn't
@@ -203,7 +203,7 @@ exports.verifyWhatsappOtp = async (req, res) => {
 
         user.sessionVersion = (user.sessionVersion || 0) + 1;
         user.lastLogin = new Date();
-        user.deviceInfo = getDeviceInfo(req);
+        user.deviceInfo = await getDeviceInfo(req);
 
         if (user.role === 'astrologer') {
             const Astrologer = require('../models/Astrologer');

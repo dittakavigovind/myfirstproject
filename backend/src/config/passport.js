@@ -15,7 +15,7 @@ passport.use(new GoogleStrategy({
         const googleId = profile.id;
         const name = profile.displayName;
         const profileImage = profile.photos[0]?.value;
-        const deviceInfo = getDeviceInfo(req);
+        const deviceInfo = await getDeviceInfo(req);
 
         // Find or create user
         let user = await User.findOne({ $or: [{ googleId }, { email }] });
