@@ -139,11 +139,48 @@ export default function MobileConfigDashboard() {
                                 
                                 <ToggleSwitch 
                                     label="Force App Update" 
-                                    description="Forces users on old versions to download the latest app."
+                                    description="Master switch to force update for ALL users immediately."
                                     icon={<AlertTriangle size={16} className="text-orange-400" />}
                                     checked={appConfig.forceUpdate} 
                                     onChange={(v) => setAppConfig({ ...appConfig, forceUpdate: v })} 
                                 />
+
+                                <div className="mt-4 pt-4 border-t border-slate-800">
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Version Control (Robust)</h4>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-400 mb-1">Minimum Required Version</label>
+                                            <input 
+                                                type="text" 
+                                                value={appConfig.minimumAppVersion || "1.0.0"} 
+                                                onChange={(e) => setAppConfig({ ...appConfig, minimumAppVersion: e.target.value })}
+                                                className="w-full bg-slate-950 border border-slate-800 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500/50"
+                                                placeholder="e.g., 1.0.5"
+                                            />
+                                            <p className="text-xs text-slate-500 mt-1">Users on an older version will be forced to update.</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-400 mb-1">Latest App Version</label>
+                                            <input 
+                                                type="text" 
+                                                value={appConfig.latestAppVersion || "1.0.0"} 
+                                                onChange={(e) => setAppConfig({ ...appConfig, latestAppVersion: e.target.value })}
+                                                className="w-full bg-slate-950 border border-slate-800 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500/50"
+                                                placeholder="e.g., 1.0.6"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-400 mb-1">Play Store URL</label>
+                                            <input 
+                                                type="text" 
+                                                value={appConfig.playStoreUrl || ""} 
+                                                onChange={(e) => setAppConfig({ ...appConfig, playStoreUrl: e.target.value })}
+                                                className="w-full bg-slate-950 border border-slate-800 text-white p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500/50"
+                                                placeholder="https://play.google.com/..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-6">

@@ -14,6 +14,31 @@ const generateToken = (id, sessionVersion = 0) => {
 };
 
 /**
+ * @desc    Get Public Config
+ * @route   GET /api/auth/public-config
+ * @access  Public
+ */
+exports.getPublicConfig = async (req, res) => {
+    try {
+        const AppConfig = require('../models/AppConfig');
+        const config = await AppConfig.findOne() || {};
+        res.json({
+            success: true,
+            config: {
+                forceUpdate: config.forceUpdate || false,
+                minimumAppVersion: config.minimumAppVersion || "1.0.0",
+                latestAppVersion: config.latestAppVersion || "1.0.0",
+                playStoreUrl: config.playStoreUrl || "https://play.google.com/store/apps/details?id=com.way2astro.app",
+                maintenanceMode: config.maintenanceMode || { enabled: false }
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+/**
  * @desc    Register new user
  * @route   POST /api/auth/register
  * @access  Public

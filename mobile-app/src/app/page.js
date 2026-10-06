@@ -202,6 +202,18 @@ export default function Home() {
     });
   }, [astrologers, followingIds, sessionCounts]);
 
+  const promoEnabled = user?.role === 'astrologer' ? siteSettings?.astrologerPromoEnabled 
+                     : user?.role === 'manager' ? siteSettings?.managerPromoEnabled 
+                     : siteSettings?.mobilePromoEnabled;
+                     
+  const promoBannerUrl = user?.role === 'astrologer' ? siteSettings?.astrologerPromoBannerUrl 
+                       : user?.role === 'manager' ? siteSettings?.managerPromoBannerUrl 
+                       : siteSettings?.mobilePromoBannerUrl;
+
+  const promoLink = user?.role === 'astrologer' ? siteSettings?.astrologerPromoLink 
+                  : user?.role === 'manager' ? siteSettings?.managerPromoLink 
+                  : siteSettings?.mobilePromoLink;
+
   return (
     <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden">
 
@@ -271,25 +283,25 @@ export default function Home() {
       </div>
 
       {/* Promotional Banner */}
-      {siteSettings?.mobilePromoEnabled && siteSettings?.mobilePromoBannerUrl && (
+      {promoEnabled && promoBannerUrl && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mt-4"
           onClick={() => {
-            if (siteSettings.mobilePromoLink) {
-              if (siteSettings.mobilePromoLink.startsWith('http')) {
-                window.open(siteSettings.mobilePromoLink, '_blank');
+            if (promoLink) {
+              if (promoLink.startsWith('http')) {
+                window.open(promoLink, '_blank');
               } else {
-                router.push(siteSettings.mobilePromoLink);
+                router.push(promoLink);
               }
             }
           }}
         >
           <div className="w-full rounded-2xl overflow-hidden cursor-pointer shadow-lg border border-white/10 relative flex items-center justify-center bg-black/20">
             <img
-              src={getImageUrl(siteSettings.mobilePromoBannerUrl)}
+              src={getImageUrl(promoBannerUrl)}
               alt="Promotion"
               className="w-full h-auto object-contain"
             />

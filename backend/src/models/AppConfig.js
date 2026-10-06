@@ -19,7 +19,10 @@ const appConfigSchema = new mongoose.Schema({
         toAstrologer: { type: Boolean, default: true }
     },
     disableNewSignups: { type: Boolean, default: false },
-    forceUpdate: { type: Boolean, default: false },
+    forceUpdate: { type: Boolean, default: false }, // Master switch
+    minimumAppVersion: { type: String, default: "1.0.0" },
+    latestAppVersion: { type: String, default: "1.0.0" },
+    playStoreUrl: { type: String, default: "https://play.google.com/store/apps/details?id=com.way2astro.mobile" },
     banners: [{
         imageUrl: String,
         targetUrl: String,

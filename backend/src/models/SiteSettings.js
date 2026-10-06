@@ -158,6 +158,34 @@ const siteSettingsSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    astrologerPromoBannerUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    astrologerPromoLink: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    astrologerPromoEnabled: {
+        type: Boolean,
+        default: false
+    },
+    managerPromoBannerUrl: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    managerPromoLink: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    managerPromoEnabled: {
+        type: Boolean,
+        default: false
+    },
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

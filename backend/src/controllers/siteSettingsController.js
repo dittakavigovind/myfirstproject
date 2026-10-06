@@ -149,6 +149,14 @@ exports.updateSiteSettings = async (req, res) => {
         if (req.body.mobilePromoBannerUrl !== undefined) settings.mobilePromoBannerUrl = req.body.mobilePromoBannerUrl;
         if (req.body.mobilePromoLink !== undefined) settings.mobilePromoLink = req.body.mobilePromoLink;
         if (req.body.mobilePromoEnabled !== undefined) settings.mobilePromoEnabled = req.body.mobilePromoEnabled;
+        
+        if (req.body.astrologerPromoBannerUrl !== undefined) settings.astrologerPromoBannerUrl = req.body.astrologerPromoBannerUrl;
+        if (req.body.astrologerPromoLink !== undefined) settings.astrologerPromoLink = req.body.astrologerPromoLink;
+        if (req.body.astrologerPromoEnabled !== undefined) settings.astrologerPromoEnabled = req.body.astrologerPromoEnabled;
+        
+        if (req.body.managerPromoBannerUrl !== undefined) settings.managerPromoBannerUrl = req.body.managerPromoBannerUrl;
+        if (req.body.managerPromoLink !== undefined) settings.managerPromoLink = req.body.managerPromoLink;
+        if (req.body.managerPromoEnabled !== undefined) settings.managerPromoEnabled = req.body.managerPromoEnabled;
 
         if (req.body.customColors) {
             settings.customColors = { ...settings.customColors, ...req.body.customColors };

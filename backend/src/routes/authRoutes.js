@@ -9,7 +9,8 @@ const {
     verifyOtp,
     verifyEmail,
     verifyEmailOtp,
-    resendVerification
+    resendVerification,
+    getPublicConfig
 } = require('../controllers/authController');
 const passport = require('../config/passport');
 const { protect } = require('../middleware/authMiddleware');
@@ -24,6 +25,9 @@ router.get('/test', (req, res) => {
         headers: req.headers
     });
 });
+
+// Public App Config
+router.get('/public-config', getPublicConfig);
 
 // Email Auth
 router.post('/register', registerUser);

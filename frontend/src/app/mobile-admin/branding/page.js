@@ -12,7 +12,13 @@ export default function MobileBrandingDashboard() {
         mobileAppLogoUrl: '',
         mobilePromoBannerUrl: '',
         mobilePromoLink: '',
-        mobilePromoEnabled: false
+        mobilePromoEnabled: false,
+        astrologerPromoBannerUrl: '',
+        astrologerPromoLink: '',
+        astrologerPromoEnabled: false,
+        managerPromoBannerUrl: '',
+        managerPromoLink: '',
+        managerPromoEnabled: false
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -21,6 +27,8 @@ export default function MobileBrandingDashboard() {
     const [uploadingAppSplash, setUploadingAppSplash] = useState(false);
     const [uploadingAppLogo, setUploadingAppLogo] = useState(false);
     const [uploadingPromo, setUploadingPromo] = useState(false);
+    const [uploadingAstroPromo, setUploadingAstroPromo] = useState(false);
+    const [uploadingManagerPromo, setUploadingManagerPromo] = useState(false);
 
     useEffect(() => {
         fetchConfigs();
@@ -36,7 +44,13 @@ export default function MobileBrandingDashboard() {
                     mobileAppLogoUrl: res.data.settings.mobileAppLogoUrl || '',
                     mobilePromoBannerUrl: res.data.settings.mobilePromoBannerUrl || '',
                     mobilePromoLink: res.data.settings.mobilePromoLink || '',
-                    mobilePromoEnabled: res.data.settings.mobilePromoEnabled || false
+                    mobilePromoEnabled: res.data.settings.mobilePromoEnabled || false,
+                    astrologerPromoBannerUrl: res.data.settings.astrologerPromoBannerUrl || '',
+                    astrologerPromoLink: res.data.settings.astrologerPromoLink || '',
+                    astrologerPromoEnabled: res.data.settings.astrologerPromoEnabled || false,
+                    managerPromoBannerUrl: res.data.settings.managerPromoBannerUrl || '',
+                    managerPromoLink: res.data.settings.managerPromoLink || '',
+                    managerPromoEnabled: res.data.settings.managerPromoEnabled || false
                 });
             }
         } catch (error) {
@@ -56,7 +70,13 @@ export default function MobileBrandingDashboard() {
                 mobileAppLogoUrl: siteSettings.mobileAppLogoUrl,
                 mobilePromoBannerUrl: siteSettings.mobilePromoBannerUrl,
                 mobilePromoLink: siteSettings.mobilePromoLink,
-                mobilePromoEnabled: siteSettings.mobilePromoEnabled
+                mobilePromoEnabled: siteSettings.mobilePromoEnabled,
+                astrologerPromoBannerUrl: siteSettings.astrologerPromoBannerUrl,
+                astrologerPromoLink: siteSettings.astrologerPromoLink,
+                astrologerPromoEnabled: siteSettings.astrologerPromoEnabled,
+                managerPromoBannerUrl: siteSettings.managerPromoBannerUrl,
+                managerPromoLink: siteSettings.managerPromoLink,
+                managerPromoEnabled: siteSettings.managerPromoEnabled
             });
             toast.success("Branding assets updated instantly");
         } catch (err) {
@@ -73,6 +93,8 @@ export default function MobileBrandingDashboard() {
         if (type === 'splash') setUploadingAppSplash(true);
         if (type === 'logo') setUploadingAppLogo(true);
         if (type === 'promo') setUploadingPromo(true);
+        if (type === 'astroPromo') setUploadingAstroPromo(true);
+        if (type === 'managerPromo') setUploadingManagerPromo(true);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -87,7 +109,7 @@ export default function MobileBrandingDashboard() {
                 toast.success('Asset uploaded successfully');
                 setSiteSettings(prev => ({
                     ...prev,
-                    [type === 'icon' ? 'mobileAppIconUrl' : type === 'splash' ? 'mobileAppSplashUrl' : type === 'logo' ? 'mobileAppLogoUrl' : 'mobilePromoBannerUrl']: data.filePath
+                    [type === 'icon' ? 'mobileAppIconUrl' : type === 'splash' ? 'mobileAppSplashUrl' : type === 'logo' ? 'mobileAppLogoUrl' : type === 'promo' ? 'mobilePromoBannerUrl' : type === 'astroPromo' ? 'astrologerPromoBannerUrl' : 'managerPromoBannerUrl']: data.filePath
                 }));
             } else {
                 toast.error(data.message || 'Upload failed');
@@ -100,6 +122,8 @@ export default function MobileBrandingDashboard() {
             if (type === 'splash') setUploadingAppSplash(false);
             if (type === 'logo') setUploadingAppLogo(false);
             if (type === 'promo') setUploadingPromo(false);
+            if (type === 'astroPromo') setUploadingAstroPromo(false);
+            if (type === 'managerPromo') setUploadingManagerPromo(false);
         }
     };
 
@@ -208,17 +232,17 @@ export default function MobileBrandingDashboard() {
                             </div>
                         </div>
 
-                        {/* Mobile Home Banner */}
+                        {/* Mobile Home Banners */}
                         <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50 mt-4">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
-                                    <label className="block text-sm font-bold text-white">Mobile Home Banner</label>
-                                    <p className="text-xs text-slate-500 mt-1">Promotional banner displayed on the mobile app home screen. Recommended dimensions: <strong>1200x420 px</strong> (Approx 3:1 aspect ratio).</p>
+                                    <label className="block text-sm font-bold text-white">Mobile Home Banner (User / Guest)</label>
+                                    <p className="text-xs text-slate-500 mt-1">Promotional banner displayed on the user's mobile app home screen. Recommended dimensions: <strong>1200x420 px</strong>.</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" className="sr-only peer" checked={siteSettings.mobilePromoEnabled} onChange={(e) => setSiteSettings({...siteSettings, mobilePromoEnabled: e.target.checked})} />
                                     <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
-                                    <span className="ml-3 text-sm font-medium text-slate-300">Enable Banner</span>
+                                    <span className="ml-3 text-sm font-medium text-slate-300">Enable</span>
                                 </label>
                             </div>
                             
@@ -251,6 +275,106 @@ export default function MobileBrandingDashboard() {
                                         value={siteSettings.mobilePromoLink}
                                         onChange={(e) => setSiteSettings({ ...siteSettings, mobilePromoLink: e.target.value })}
                                         placeholder="e.g. /explore"
+                                        className="w-full bg-slate-900 border border-slate-800 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500/50"
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">Route to navigate when banner is clicked.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Astrologer Home Banner */}
+                        <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50 mt-4">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <label className="block text-sm font-bold text-white">Mobile Home Banner (Astrologer)</label>
+                                    <p className="text-xs text-slate-500 mt-1">Promotional banner displayed on the astrologer's mobile app home screen. Recommended dimensions: <strong>1200x420 px</strong>.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" checked={siteSettings.astrologerPromoEnabled} onChange={(e) => setSiteSettings({...siteSettings, astrologerPromoEnabled: e.target.checked})} />
+                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                                    <span className="ml-3 text-sm font-medium text-slate-300">Enable</span>
+                                </label>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">Banner Image URL</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={siteSettings.astrologerPromoBannerUrl}
+                                            onChange={(e) => setSiteSettings({ ...siteSettings, astrologerPromoBannerUrl: e.target.value })}
+                                            placeholder="/uploads/astro_banner.png"
+                                            className="w-full bg-slate-900 border border-slate-800 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500/50"
+                                        />
+                                        <label className="flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-white px-3 rounded-lg cursor-pointer transition whitespace-nowrap">
+                                            {uploadingAstroPromo ? <Loader2 size={16} className="animate-spin"/> : <UploadCloud size={16}/>}
+                                            <input type="file" accept=".png,.jpg,.jpeg,.svg,image/*" className="hidden" onChange={(e) => handleAssetUpload(e, 'astroPromo')} disabled={uploadingAstroPromo} />
+                                        </label>
+                                    </div>
+                                    {siteSettings.astrologerPromoBannerUrl && (
+                                        <div className="mt-3 bg-slate-900 rounded-lg overflow-hidden border border-slate-800 h-24 flex items-center justify-center">
+                                            <img src={siteSettings.astrologerPromoBannerUrl} alt="Astro Promo preview" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">Link URL (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={siteSettings.astrologerPromoLink}
+                                        onChange={(e) => setSiteSettings({ ...siteSettings, astrologerPromoLink: e.target.value })}
+                                        placeholder="e.g. /dashboard"
+                                        className="w-full bg-slate-900 border border-slate-800 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500/50"
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">Route to navigate when banner is clicked.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Manager Home Banner */}
+                        <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50 mt-4">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <label className="block text-sm font-bold text-white">Mobile Home Banner (Manager)</label>
+                                    <p className="text-xs text-slate-500 mt-1">Promotional banner displayed on the manager's mobile app home screen. Recommended dimensions: <strong>1200x420 px</strong>.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" checked={siteSettings.managerPromoEnabled} onChange={(e) => setSiteSettings({...siteSettings, managerPromoEnabled: e.target.checked})} />
+                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                                    <span className="ml-3 text-sm font-medium text-slate-300">Enable</span>
+                                </label>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">Banner Image URL</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={siteSettings.managerPromoBannerUrl}
+                                            onChange={(e) => setSiteSettings({ ...siteSettings, managerPromoBannerUrl: e.target.value })}
+                                            placeholder="/uploads/manager_banner.png"
+                                            className="w-full bg-slate-900 border border-slate-800 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500/50"
+                                        />
+                                        <label className="flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-white px-3 rounded-lg cursor-pointer transition whitespace-nowrap">
+                                            {uploadingManagerPromo ? <Loader2 size={16} className="animate-spin"/> : <UploadCloud size={16}/>}
+                                            <input type="file" accept=".png,.jpg,.jpeg,.svg,image/*" className="hidden" onChange={(e) => handleAssetUpload(e, 'managerPromo')} disabled={uploadingManagerPromo} />
+                                        </label>
+                                    </div>
+                                    {siteSettings.managerPromoBannerUrl && (
+                                        <div className="mt-3 bg-slate-900 rounded-lg overflow-hidden border border-slate-800 h-24 flex items-center justify-center">
+                                            <img src={siteSettings.managerPromoBannerUrl} alt="Manager Promo preview" className="max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">Link URL (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={siteSettings.managerPromoLink}
+                                        onChange={(e) => setSiteSettings({ ...siteSettings, managerPromoLink: e.target.value })}
+                                        placeholder="e.g. /manager-dashboard"
                                         className="w-full bg-slate-900 border border-slate-800 text-white p-2 rounded-lg focus:ring-2 focus:ring-indigo-500/50"
                                     />
                                     <p className="text-[10px] text-slate-500 mt-1">Route to navigate when banner is clicked.</p>

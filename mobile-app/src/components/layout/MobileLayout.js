@@ -4,6 +4,7 @@ import ModernHeader from "./ModernHeader";
 import BottomNav from "./BottomNav";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import VersionCheckOverlay from "./VersionCheckOverlay";
 
 export default function MobileLayout({ children }) {
     const pathname = usePathname();
@@ -54,9 +55,10 @@ export default function MobileLayout({ children }) {
             className={`relative h-[100dvh] flex flex-col max-w-md mx-auto overflow-hidden shadow-2xl shadow-electric-violet/5`}
             style={{ paddingTop: isProfile || isSpecialPage ? 'var(--safe-area-inset-top)' : 'calc(var(--safe-area-inset-top) + 4rem)' }}
         >
-            {/* Background glow effects */}
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-electric-violet/20 blur-[100px] pointer-events-none" />
             <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-solar-gold/10 blur-[100px] pointer-events-none" />
+
+            <VersionCheckOverlay />
 
             {!isSpecialPage && !isProfile && <ModernHeader />}
 
