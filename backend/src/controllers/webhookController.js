@@ -65,9 +65,9 @@ exports.handleRazorpayWebhook = async (req, res) => {
         const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
         const signature = req.headers['x-razorpay-signature'];
         
-        // Validate signature
+        // Validate signature using raw body
         const expectedSignature = crypto.createHmac('sha256', secret)
-            .update(JSON.stringify(req.body))
+            .update(req.rawBody || JSON.stringify(req.body))
             .digest('hex');
 
         if (expectedSignature !== signature) {
@@ -85,18 +85,19 @@ exports.handleRazorpayWebhook = async (req, res) => {
             const transaction = await Transaction.findOne({ orderId });
             
             if (transaction && transaction.status === 'pending') {
-                // Fulfill payment
-                await WalletService.creditBalance(
-                    transaction.user, 
-                    transaction.amount, 
-                    paymentId, 
-                    orderId, 
-                    'Wallet Recharge via Hook'
-                );
-                
+                const User = require('../models/User');
+
+                // Fulfill payment without creating a duplicate transaction
                 transaction.status = 'success';
                 transaction.paymentId = paymentId;
+                transaction.description = 'Wallet Recharge via Hook';
                 await transaction.save();
+
+                await User.findByIdAndUpdate(
+                    transaction.user,
+                    { $inc: { walletBalance: transaction.amount + (transaction.bonusAmount || 0) } }
+                );
+
                 console.log(`[Webhook] Razorpay Payment Captured & Wallet Credited: ${paymentId}`);
             }
         } else if (event === 'payment.failed') {

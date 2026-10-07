@@ -142,8 +142,13 @@ export default function WalletPage() {
                     const paymentResponse = await Checkout.open(options);
                     
                     try {
+                        let responseData = paymentResponse.response || paymentResponse;
+                        if (typeof responseData === 'string') {
+                            try { responseData = JSON.parse(responseData); } catch (e) { console.error('Parse err:', e); }
+                        }
+
                         const verifyRes = await API.post('/wallet/verify-payment', {
-                            ...(paymentResponse.response || paymentResponse), // fallback in case it's directly returned
+                            ...responseData,
                             amount: amount
                         });
 

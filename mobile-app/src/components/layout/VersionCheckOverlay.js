@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { AlertTriangle } from "lucide-react";
 
-// Helper function to compare semver versions (e.g., "1.0.5" vs "1.0.0")
-// Returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal
 const compareVersions = (v1, v2) => {
-    const p1 = v1.split('.').map(Number);
-    const p2 = v2.split('.').map(Number);
+    const p1 = v1.split('.').map(str => parseInt(str, 10));
+    const p2 = v2.split('.').map(str => parseInt(str, 10));
     for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
-        const num1 = p1[i] || 0;
-        const num2 = p2[i] || 0;
+        const num1 = isNaN(p1[i]) ? 0 : p1[i];
+        const num2 = isNaN(p2[i]) ? 0 : p2[i];
         if (num1 > num2) return 1;
         if (num1 < num2) return -1;
     }

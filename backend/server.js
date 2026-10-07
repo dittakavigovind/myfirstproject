@@ -153,7 +153,12 @@ app.use((req, res, next) => {
 app.get('/api/test-connection', (req, res) => {
     res.json({ success: true, message: "Backend is reachable!", time: new Date() });
 });
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ 
+    limit: '50mb',
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Global Maintenance Mode check
