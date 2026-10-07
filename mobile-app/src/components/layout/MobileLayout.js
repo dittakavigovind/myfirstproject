@@ -5,6 +5,7 @@ import BottomNav from "./BottomNav";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import VersionCheckOverlay from "./VersionCheckOverlay";
+import PullToRefresh from "../PullToRefresh";
 
 export default function MobileLayout({ children }) {
     const pathname = usePathname();
@@ -63,10 +64,11 @@ export default function MobileLayout({ children }) {
             {!isSpecialPage && !isProfile && <ModernHeader />}
 
             <main 
-                id="main-scroll-container"
-                className={`relative z-10 flex-1 overflow-y-auto overflow-x-hidden ${isSpecialPage ? '' : 'px-4 pb-24'}`}
+                className={`relative z-10 flex-1 overflow-hidden ${isSpecialPage ? '' : 'px-4 pb-24'}`}
             >
-                {children}
+                <PullToRefresh>
+                    {children}
+                </PullToRefresh>
             </main>
 
             {!isSpecialPage && <BottomNav />}

@@ -3,7 +3,7 @@ const axios = require('axios');
 
 exports.getDeviceInfo = async (req) => {
     const userAgent = req.headers['user-agent'] || '';
-    
+
     // Explicit headers passed by the mobile app
     const explicitOs = req.headers['x-device-os'];
     const deviceModel = req.headers['x-device-model'] || '';

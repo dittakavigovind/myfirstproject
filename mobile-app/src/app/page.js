@@ -325,7 +325,7 @@ export default function Home() {
             </div>
           ) : astrologers.length > 0 ? (
             <div className="grid grid-cols-4 gap-y-4 gap-x-2 pt-2 pb-2 px-1">
-              {sortedAstrologers.slice(0, 8).map((astro) => (
+              {sortedAstrologers.slice(0, 20).map((astro) => (
                 <div
                   key={astro._id}
                   onClick={() => router.push(`/astrologer?id=${astro.slug || astro._id}`)}
