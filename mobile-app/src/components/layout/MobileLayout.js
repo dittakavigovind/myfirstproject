@@ -3,14 +3,21 @@
 import ModernHeader from "./ModernHeader";
 import BottomNav from "./BottomNav";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import VersionCheckOverlay from "./VersionCheckOverlay";
 import PullToRefresh from "../PullToRefresh";
 
 export default function MobileLayout({ children }) {
     const pathname = usePathname();
     const router = useRouter();
-    
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleRefresh = async () => {
+        setRefreshKey(prev => prev + 1);
+        // Add a small delay for the animation
+        await new Promise(r => setTimeout(r, 800));
+    };
+
     const isProfile = pathname === "/astrologer";
     const isSpecialPage = pathname === "/auth" || pathname.startsWith("/chat/");
 
@@ -66,8 +73,10 @@ export default function MobileLayout({ children }) {
             <main 
                 className={`relative z-10 flex-1 overflow-hidden ${isSpecialPage ? '' : 'px-4 pb-24'}`}
             >
-                <PullToRefresh>
-                    {children}
+                <PullToRefresh onRefresh={handleRefresh}>
+                    <div key={refreshKey} className="h-full">
+                        {children}
+                    </div>
                 </PullToRefresh>
             </main>
 
