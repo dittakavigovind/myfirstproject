@@ -96,7 +96,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState('kundali');
-    const [chartStyle, setChartStyle] = useState('north');
+    const [chartStyle, setChartStyle] = useState('south');
     
     const [isEditing, setIsEditing] = useState(false);
     const [birthDetails, setBirthDetails] = useState({
@@ -172,6 +172,13 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
     if (!isOpen) return null;
 
     const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+    const NAKSHATRAS = [
+        "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", 
+        "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", 
+        "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", 
+        "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", 
+        "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+    ];
 
     return (
         <AnimatePresence>
@@ -183,7 +190,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                 className="absolute inset-x-0 bottom-0 top-20 z-50 bg-cosmic-indigo/95 backdrop-blur-md flex flex-col rounded-t-[2rem] overflow-hidden shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] border-b border-white/10 glass-panel shrink-0">
+                <div className="flex items-center justify-between px-3 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)] border-b border-white/10 glass-panel shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-electric-violet/20 flex items-center justify-center border border-electric-violet/30">
                             <Star size={20} className="text-solar-gold" />
@@ -203,7 +210,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-4 pb-20">
+                <div className="flex-1 overflow-y-auto p-2 pb-20">
                     {isEditing ? (
                         <form onSubmit={handleUpdate} className="space-y-4">
                             <div className="glass-panel p-4 rounded-2xl border-white/10">
@@ -268,7 +275,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                     ) : (
                         <div>
                             {/* Chart Overview */}
-                            <div className="glass-panel p-4 rounded-3xl border-white/10 mb-6 flex items-center justify-between">
+                            <div className="glass-panel p-4 rounded-3xl border-white/10 mb-3 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{birthDetails.date} • {birthDetails.time}</p>
                                     <p className="text-xs text-white font-medium">{birthDetails.place}</p>
@@ -289,38 +296,33 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                 </div>
                             ) : kundliData ? (
                                 <div>
-                                    {/* Tabs */}
-                                    <div className="flex bg-white/5 p-1 rounded-xl mb-4">
-                                        {['kundali', 'D9', 'D10', 'dasha'].map(t => (
-                                            <button 
-                                                key={t}
-                                                onClick={() => setActiveTab(t)}
-                                                className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase transition-colors ${activeTab === t ? 'bg-electric-violet text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
-                                            >
-                                                {t}
-                                            </button>
-                                        ))}
+                                    {/* Tabs and Controls */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="flex flex-1 bg-white/5 p-1 rounded-xl">
+                                            {['kundali', 'D9', 'D10', 'dasha'].map(t => (
+                                                <button 
+                                                    key={t}
+                                                    onClick={() => setActiveTab(t)}
+                                                    className={`flex-1 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-colors ${activeTab === t ? 'bg-electric-violet text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {activeTab !== 'dasha' && (
+                                            <div className="bg-black/50 backdrop-blur-md rounded-xl p-1 border border-white/10 flex shadow-lg shadow-black/20 items-center shrink-0">
+                                                <button onClick={() => setChartStyle('north')} className={`w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-black uppercase transition-all duration-300 ${chartStyle === 'north' ? 'bg-solar-gold text-slate-900 shadow-[0_0_12px_rgba(250,204,21,0.4)]' : 'text-slate-400 hover:text-slate-200'}`}>N</button>
+                                                <button onClick={() => setChartStyle('south')} className={`w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-black uppercase transition-all duration-300 ${chartStyle === 'south' ? 'bg-solar-gold text-slate-900 shadow-[0_0_12px_rgba(250,204,21,0.4)]' : 'text-slate-400 hover:text-slate-200'}`}>S</button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {activeTab !== 'dasha' && (
                                         <>
                                             {/* Chart */}
-                                            <div className="glass-panel p-4 rounded-[2.5rem] border-white/5 bg-gradient-to-br from-white/5 to-transparent mb-6 relative">
-                                                <div id="kundli-chart-container" className="aspect-square w-full max-w-[300px] mx-auto">
-                                                    <KundliChart 
-                                                        planets={activeTab === 'kundali' ? kundliData.planets : kundliData.charts?.[activeTab] || kundliData.planets} 
-                                                        ascendantSign={Math.floor(kundliData.houses.ascendant / 30) + 1} 
-                                                        style={chartStyle}
-                                                        ascendantDegree={kundliData.houses.ascendant % 30}
-                                                        sav={activeTab === 'kundali' ? kundliData.ashtakavarga?.sav : null}
-                                                    />
-                                                </div>
-                                                <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md rounded-full p-1 border border-white/10 flex">
-                                                    <button onClick={() => setChartStyle('north')} className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${chartStyle === 'north' ? 'bg-solar-gold text-slate-900' : 'text-slate-300'}`}>North</button>
-                                                    <button onClick={() => setChartStyle('south')} className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${chartStyle === 'south' ? 'bg-solar-gold text-slate-900' : 'text-slate-300'}`}>South</button>
-                                                </div>
+                                            <div className="glass-panel p-2 rounded-3xl border-white/5 bg-gradient-to-br from-white/5 to-transparent mb-4 relative">
                                                 {isLive && (
-                                                    <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md rounded-full p-1 border border-white/10 flex">
+                                                    <div className="absolute top-2 left-2 z-10 bg-black/50 backdrop-blur-md rounded-full p-1 border border-white/10 flex">
                                                         <button 
                                                             onClick={() => {
                                                                 const svgElement = document.querySelector('#kundli-chart-container svg');
@@ -330,12 +332,22 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                                                     onShareChart(svgString, `Astrologer shared a ${chartName} chart.`);
                                                                 }
                                                             }} 
-                                                            className="px-3 py-1 rounded-full text-[9px] font-bold uppercase bg-electric-violet text-white flex items-center gap-1 hover:bg-electric-violet/80 transition-colors"
+                                                            className="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-electric-violet text-white flex items-center gap-1.5 hover:bg-electric-violet/80 transition-colors shadow-lg shadow-electric-violet/20"
                                                         >
                                                             <Share2 size={10} /> Share
                                                         </button>
                                                     </div>
                                                 )}
+                                                
+                                                <div id="kundli-chart-container" className="aspect-square w-full max-w-[320px] mx-auto pb-2">
+                                                    <KundliChart 
+                                                        planets={activeTab === 'kundali' ? kundliData.planets : kundliData.charts?.[activeTab] || kundliData.planets} 
+                                                        ascendantSign={Math.floor(kundliData.houses.ascendant / 30) + 1} 
+                                                        style={chartStyle}
+                                                        ascendantDegree={kundliData.houses.ascendant % 30}
+                                                        sav={activeTab === 'kundali' ? kundliData.ashtakavarga?.sav : null}
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* Quick Info */}
@@ -363,12 +375,87 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                             {/* Simplified Planets */}
                                             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Planetary Positions ({activeTab})</h3>
                                             <div className="space-y-2">
-                                                {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'].map(p => {
+                                                {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].map(p => {
                                                     const planetData = activeTab === 'kundali' ? kundliData.planets[p] : kundliData.charts?.[activeTab]?.[p];
+                                                    const sunLong = kundliData.planets['Sun']?.longitude;
+                                                    let degreeStr = '';
+                                                    let sym = '';
+                                                    
+                                                    if (planetData && planetData.longitude !== undefined) {
+                                                        const deg = Math.floor(planetData.longitude % 30).toString().padStart(2, '0');
+                                                        const min = Math.floor((planetData.longitude % 1) * 60).toString().padStart(2, '0');
+                                                        degreeStr = `${deg}° ${min}'`;
+                                                        
+                                                        if (planetData.retrograde) sym += '(R) ';
+                                                        
+                                                        if (sunLong && !['Sun', 'Moon', 'Rahu', 'Ketu'].includes(p)) {
+                                                            let diff = Math.abs(planetData.longitude - sunLong);
+                                                            if (diff > 180) diff = 360 - diff;
+                                                            let isCombust = false;
+                                                            switch (p) {
+                                                                case 'Mars': isCombust = diff <= 17; break;
+                                                                case 'Mercury': isCombust = diff <= (planetData.retrograde ? 12 : 14); break;
+                                                                case 'Jupiter': isCombust = diff <= 11; break;
+                                                                case 'Venus': isCombust = diff <= (planetData.retrograde ? 8 : 10); break;
+                                                                case 'Saturn': isCombust = diff <= 15; break;
+                                                            }
+                                                            if (isCombust) sym += '(C)';
+                                                        }
+                                                    }
+                                                    let savScore = null;
+                                                    if (activeTab === 'kundali' && kundliData.ashtakavarga?.sav && planetData) {
+                                                        savScore = kundliData.ashtakavarga.sav[SIGNS[planetData.sign - 1]];
+                                                    }
+                                                    
                                                     return (
                                                         <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                                                            <span className="text-xs font-bold text-white">{p}</span>
-                                                            <span className="text-xs text-solar-gold font-medium">{planetData ? SIGNS[planetData.sign - 1] : '-'}</span>
+                                                            <div className="flex items-center gap-1.5 w-[30%]">
+                                                                <span className="text-xs font-bold text-white">{p}</span>
+                                                                {sym && <span className="text-[10px] text-pink-400 font-black">{sym}</span>}
+                                                            </div>
+                                                            <div className="w-[40%] text-center">
+                                                                {degreeStr && <span className="text-[11px] text-slate-300 font-mono font-medium block">{degreeStr}</span>}
+                                                                {savScore !== null && (
+                                                                    <span className="text-[9px] text-emerald-400 font-bold block mt-0.5">SAV: {savScore}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="w-[30%] text-right">
+                                                                <span className="text-xs text-solar-gold font-medium block leading-tight">{planetData ? SIGNS[planetData.sign - 1] : '-'}</span>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-6 mb-3 ml-2">Planetary Nakshatras</h3>
+                                            <div className="space-y-2">
+                                                {['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].map(p => {
+                                                    const planetData = activeTab === 'kundali' ? kundliData.planets[p] : kundliData.charts?.[activeTab]?.[p];
+                                                    
+                                                    if (!planetData || planetData.longitude === undefined) return null;
+                                                    
+                                                    const absLong = planetData.longitude;
+                                                    const nakshatraDeg = 13 + 1/3;
+                                                    const nakshatraIndex = Math.floor(absLong / nakshatraDeg);
+                                                    const nakshatraName = NAKSHATRAS[nakshatraIndex];
+                                                    
+                                                    const degInNakshatra = absLong % nakshatraDeg;
+                                                    const deg = Math.floor(degInNakshatra).toString().padStart(2, '0');
+                                                    const min = Math.floor((degInNakshatra % 1) * 60).toString().padStart(2, '0');
+                                                    const pada = Math.floor(degInNakshatra / (3 + 1/3)) + 1;
+                                                    
+                                                    return (
+                                                        <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                                                            <div className="flex items-center w-[30%]">
+                                                                <span className="text-xs font-bold text-white">{p}</span>
+                                                            </div>
+                                                            <div className="w-[40%] text-center">
+                                                                <span className="text-xs text-indigo-300 font-bold block">{nakshatraName}</span>
+                                                                <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Pada {pada}</span>
+                                                            </div>
+                                                            <div className="w-[30%] text-right">
+                                                                <span className="text-[11px] text-slate-300 font-mono font-medium block">{deg}° {min}'</span>
+                                                            </div>
                                                         </div>
                                                     )
                                                 })}

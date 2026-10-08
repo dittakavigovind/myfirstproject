@@ -66,8 +66,8 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
                         const isRet = data.retrograde;
                         const isCombust = checkCombust(name, data.longitude, sunLong, isRet);
                         let sym = '';
-                        if (isRet) sym += '®';
-                        if (isCombust) sym += '©';
+                        if (isRet) sym += '(R)';
+                        if (isCombust) sym += '(C)';
                         text = `${abbr} ${degStr}${sym ? ' ' + sym : ''}`;
                     }
 
@@ -131,7 +131,10 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, lang, sav }
             <g key={houseIndex}>
                 {/* Sign Number */}
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={signSize} fill="#f59e0b" fillOpacity="0.4" fontWeight="bold" dy="-25">
-                    {signVal} {sav && sav[SIGNS_FULL[signVal - 1]] !== undefined ? `[${sav[SIGNS_FULL[signVal - 1]]}]` : ''}
+                    {signVal}
+                    {sav && sav[SIGNS_FULL[signVal - 1]] !== undefined && (
+                        <tspan fill="#34d399" fillOpacity="0.8"> [{sav[SIGNS_FULL[signVal - 1]]}]</tspan>
+                    )}
                 </text>
                 {/* Planets */}
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={planetSize} fontWeight="bold">
@@ -289,6 +292,9 @@ function SouthIndianChart({ planetsBySign, ascendantSign, lang, sav }) {
                         {/* Sign Name (Small) */}
                         <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#f59e0b" fillOpacity="0.8" fontWeight="bold">
                             {lang === 'hi' ? box.nameHi : lang === 'te' ? box.nameTe : box.nameEn}
+                            {sav && sav[SIGNS_FULL[box.sign - 1]] !== undefined && (
+                                <tspan fill="#34d399" fillOpacity="0.8"> [{sav[SIGNS_FULL[box.sign - 1]]}]</tspan>
+                            )}
                         </text>
 
                         <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="11" fontWeight="bold">

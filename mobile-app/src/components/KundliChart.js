@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 // Signs for reference
 const SIGNS = ['Ar', 'Ta', 'Ge', 'Ca', 'Le', 'Vi', 'Li', 'Sc', 'Sa', 'Cp', 'Aq', 'Pi'];
+const SIGNS_FULL = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 
 /**
  * KundliChart Component
@@ -56,8 +57,8 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
                         const isRet = data.retrograde;
                         const isCombust = checkCombust(name, data.longitude, sunLong, isRet);
                         let sym = '';
-                        if (isRet) sym += '®';
-                        if (isCombust) sym += '©';
+                        if (isRet) sym += 'R';
+                        if (isCombust) sym += 'C';
                         text = `${abbr} ${degStr}${sym ? ' ' + sym : ''}`;
                     }
                     if (!map[sign].some(p => p.text.startsWith(abbr))) {
@@ -97,8 +98,8 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, sav }) {
         const planets = planetsBySign[signVal] || [];
         const coord = houses[houseIndex - 1];
 
-        const signSize = smallMode ? "8" : "10";
-        const planetSize = smallMode ? "9" : "11";
+        const signSize = smallMode ? "10" : "12";
+        const planetSize = smallMode ? "11" : "14";
 
         const lagnaPlanet = planets.find(p => p.isLagna);
         const otherPlanets = planets.filter(p => !p.isLagna).map(p => p.text);
@@ -111,7 +112,10 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, sav }) {
         return (
             <g key={houseIndex}>
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={signSize} fill="#facc15" fillOpacity="0.4" fontWeight="bold" dy="-25">
-                    {signVal} {sav && sav[SIGNS_FULL[signVal - 1]] !== undefined ? `[${sav[SIGNS_FULL[signVal - 1]]}]` : ''}
+                    {signVal}
+                    {sav && sav[SIGNS_FULL[signVal - 1]] !== undefined && (
+                        <tspan fill="#34d399" fillOpacity="0.8"> [{sav[SIGNS_FULL[signVal - 1]]}]</tspan>
+                    )}
                 </text>
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={planetSize} fontWeight="bold">
                     {lagnaPlanet && (
@@ -121,7 +125,7 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, sav }) {
                         <tspan
                             key={idx}
                             x={coord.x}
-                            dy={idx === 0 ? (lagnaPlanet ? (smallMode ? "11" : "14") : "5") : (smallMode ? "10" : "13")}
+                            dy={idx === 0 ? (lagnaPlanet ? (smallMode ? "12" : "15") : "5") : (smallMode ? "11" : "14")}
                             fill="#fde047"
                         >
                             {line}
@@ -183,24 +187,27 @@ function SouthIndianChart({ planetsBySign, ascendantSign, sav }) {
             {GRID.map(box => {
                 const planets = planetsBySign[box.sign] || [];
                 const lagnaPlanet = planets.find(p => p.isLagna);
-        const otherPlanets = planets.filter(p => !p.isLagna).map(p => p.text);
+                const otherPlanets = planets.filter(p => !p.isLagna).map(p => p.text);
 
-        const lines = [];
-        for (let i = 0; i < otherPlanets.length; i += 2) {
-            lines.push(otherPlanets.slice(i, i + 2).join(', '));
-        }
+                const lines = [];
+                for (let i = 0; i < otherPlanets.length; i += 2) {
+                    lines.push(otherPlanets.slice(i, i + 2).join(', '));
+                }
 
                 return (
                     <g key={box.sign}>
-                        <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#facc15" fillOpacity="0.4" fontWeight="bold">
+                        <text x={box.x + 5} y={box.y + 16} fontSize="11" fill="#facc15" fillOpacity="0.4" fontWeight="bold">
                             {SIGNS[box.sign - 1]}
+                            {sav && sav[SIGNS_FULL[box.sign - 1]] !== undefined && (
+                                <tspan fill="#34d399" fillOpacity="0.8"> [{sav[SIGNS_FULL[box.sign - 1]]}]</tspan>
+                            )}
                         </text>
                         {sav && sav[SIGNS_FULL[box.sign - 1]] !== undefined && (
                             <text x={box.x + 85} y={box.y + 90} fontSize="11" fill="#34d399" fontWeight="bold">
-                                {sav[SIGNS_FULL[box.sign - 1]]}
+                                {""}
                             </text>
                         )}
-                        <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="11" fontWeight="bold">
+                        <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="13" fontWeight="bold">
                             {lagnaPlanet && (
                                 <tspan x={box.x + 50} dy={lines.length > 0 ? "-5" : "5"} fill="#8b5cf6">{lagnaPlanet.text}</tspan>
                             )}
@@ -208,7 +215,7 @@ function SouthIndianChart({ planetsBySign, ascendantSign, sav }) {
                                 <tspan
                                     key={idx}
                                     x={box.x + 50}
-                                    dy={idx === 0 ? (lagnaPlanet ? "14" : "5") : "12"}
+                                    dy={idx === 0 ? (lagnaPlanet ? "16" : "5") : "14"}
                                     fill="#fde047"
                                 >
                                     {line}

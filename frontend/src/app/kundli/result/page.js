@@ -58,7 +58,7 @@ function KundliResultContent() {
 
 
     // Chart Style State
-    const [chartStyle, setChartStyle] = useState('north'); // 'north' or 'south'
+    const [chartStyle, setChartStyle] = useState('south'); // 'north' or 'south'
     const [activeChart, setActiveChart] = useState('D1'); // 'D1' or 'D9'
 
     // Premium Features State
