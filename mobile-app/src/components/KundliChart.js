@@ -9,16 +9,32 @@ const SIGNS = ['Ar', 'Ta', 'Ge', 'Ca', 'Le', 'Vi', 'Li', 'Sc', 'Sa', 'Cp', 'Aq',
  * KundliChart Component
  * Renders a Vedic Astrology Chart in North or South Indian style.
  */
-export default function KundliChart({ planets, ascendantSign, style = 'north', smallMode = false }) {
-
-    // Group planets by sign for easy rendering
+export default function KundliChart({ planets, ascendantSign, style = 'north', smallMode = false, ascendantDegree, sav }) {
+    const checkCombust = (planetName, planetLong, sunLong, isRetrograde) => {
+        if (!sunLong || ['Sun', 'Moon', 'Rahu', 'Ketu', 'Lagna', 'Ascendant'].includes(planetName)) return false;
+        let diff = Math.abs(planetLong - sunLong);
+        if (diff > 180) diff = 360 - diff;
+        switch (planetName) {
+            case 'Mars': return diff <= 17;
+            case 'Mercury': return diff <= (isRetrograde ? 12 : 14);
+            case 'Jupiter': return diff <= 11;
+            case 'Venus': return diff <= (isRetrograde ? 8 : 10);
+            case 'Saturn': return diff <= 15;
+            default: return false;
+        }
+    };
     const planetsBySign = useMemo(() => {
         const map = {};
         for (let i = 1; i <= 12; i++) map[i] = [];
 
-        // Add Ascendant (Lagna) Label
+        const sunLong = planets?.['Sun']?.longitude;
+
         if (ascendantSign) {
-            map[ascendantSign].push('Lagna');
+            let text = 'Lagna';
+            if (ascendantDegree !== undefined) {
+                text += ` ${Math.floor(ascendantDegree).toString().padStart(2, '0')}`;
+            }
+            map[ascendantSign].push({ text, isLagna: true });
         }
 
         if (planets) {
@@ -34,24 +50,33 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
 
                 if (sign && map[sign]) {
                     const abbr = name.substring(0, 2);
-                    if (!map[sign].includes(abbr)) {
-                        map[sign].push(abbr);
+                    let text = abbr;
+                    if (data.longitude !== undefined) {
+                        const degStr = Math.floor(data.longitude % 30).toString().padStart(2, '0');
+                        const isRet = data.retrograde;
+                        const isCombust = checkCombust(name, data.longitude, sunLong, isRet);
+                        let sym = '';
+                        if (isRet) sym += '®';
+                        if (isCombust) sym += '©';
+                        text = `${abbr} ${degStr}${sym ? ' ' + sym : ''}`;
+                    }
+                    if (!map[sign].some(p => p.text.startsWith(abbr))) {
+                        map[sign].push({ text, isLagna: false });
                     }
                 }
             });
         }
-
         return map;
-    }, [planets, ascendantSign]);
+    }, [planets, ascendantSign, ascendantDegree]);
 
     if (style === 'north') {
-        return <NorthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} />;
+        return <NorthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} sav={sav} />;
     } else {
-        return <SouthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} />;
+        return <SouthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} sav={sav} />;
     }
 }
 
-function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
+function NorthIndianChart({ planetsBySign, ascendantSign, smallMode, sav }) {
     const houses = [
         { id: 1, x: 200, y: 100 },
         { id: 2, x: 100, y: 50 },
@@ -75,28 +100,28 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
         const signSize = smallMode ? "8" : "10";
         const planetSize = smallMode ? "9" : "11";
 
-        const hasLagna = planets.includes('Lagna');
-        const otherPlanets = planets.filter(p => p !== 'Lagna');
+        const lagnaPlanet = planets.find(p => p.isLagna);
+        const otherPlanets = planets.filter(p => !p.isLagna).map(p => p.text);
 
         const lines = [];
-        for (let i = 0; i < otherPlanets.length; i += 3) {
-            lines.push(otherPlanets.slice(i, i + 3).join(', '));
+        for (let i = 0; i < otherPlanets.length; i += 2) {
+            lines.push(otherPlanets.slice(i, i + 2).join(', '));
         }
 
         return (
             <g key={houseIndex}>
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={signSize} fill="#facc15" fillOpacity="0.4" fontWeight="bold" dy="-25">
-                    {signVal}
+                    {signVal} {sav && sav[SIGNS_FULL[signVal - 1]] !== undefined ? `[${sav[SIGNS_FULL[signVal - 1]]}]` : ''}
                 </text>
                 <text x={coord.x} y={coord.y} textAnchor="middle" fontSize={planetSize} fontWeight="bold">
-                    {hasLagna && (
-                        <tspan x={coord.x} dy="0" fill="#8b5cf6">Lagna</tspan>
+                    {lagnaPlanet && (
+                        <tspan x={coord.x} dy="0" fill="#8b5cf6">{lagnaPlanet.text}</tspan>
                     )}
                     {lines.map((line, idx) => (
                         <tspan
                             key={idx}
                             x={coord.x}
-                            dy={idx === 0 ? (hasLagna ? (smallMode ? "11" : "14") : "5") : (smallMode ? "10" : "13")}
+                            dy={idx === 0 ? (lagnaPlanet ? (smallMode ? "11" : "14") : "5") : (smallMode ? "10" : "13")}
                             fill="#fde047"
                         >
                             {line}
@@ -132,7 +157,7 @@ function NorthIndianChart({ planetsBySign, ascendantSign, smallMode }) {
     );
 }
 
-function SouthIndianChart({ planetsBySign, ascendantSign }) {
+function SouthIndianChart({ planetsBySign, ascendantSign, sav }) {
     const GRID = [
         { sign: 12, x: 0, y: 0 }, { sign: 1, x: 100, y: 0 }, { sign: 2, x: 200, y: 0 }, { sign: 3, x: 300, y: 0 },
         { sign: 11, x: 0, y: 100 }, { sign: 4, x: 300, y: 100 },
@@ -157,28 +182,33 @@ function SouthIndianChart({ planetsBySign, ascendantSign }) {
 
             {GRID.map(box => {
                 const planets = planetsBySign[box.sign] || [];
-                const hasLagna = planets.includes('Lagna');
-                const otherPlanets = planets.filter(p => p !== 'Lagna');
+                const lagnaPlanet = planets.find(p => p.isLagna);
+        const otherPlanets = planets.filter(p => !p.isLagna).map(p => p.text);
 
-                const lines = [];
-                for (let i = 0; i < otherPlanets.length; i += 3) {
-                    lines.push(otherPlanets.slice(i, i + 3).join(', '));
-                }
+        const lines = [];
+        for (let i = 0; i < otherPlanets.length; i += 2) {
+            lines.push(otherPlanets.slice(i, i + 2).join(', '));
+        }
 
                 return (
                     <g key={box.sign}>
                         <text x={box.x + 5} y={box.y + 15} fontSize="9" fill="#facc15" fillOpacity="0.4" fontWeight="bold">
                             {SIGNS[box.sign - 1]}
                         </text>
+                        {sav && sav[SIGNS_FULL[box.sign - 1]] !== undefined && (
+                            <text x={box.x + 85} y={box.y + 90} fontSize="11" fill="#34d399" fontWeight="bold">
+                                {sav[SIGNS_FULL[box.sign - 1]]}
+                            </text>
+                        )}
                         <text x={box.x + 50} y={box.y + 50} textAnchor="middle" fontSize="11" fontWeight="bold">
-                            {hasLagna && (
-                                <tspan x={box.x + 50} dy={lines.length > 0 ? "-5" : "5"} fill="#8b5cf6">Lagna</tspan>
+                            {lagnaPlanet && (
+                                <tspan x={box.x + 50} dy={lines.length > 0 ? "-5" : "5"} fill="#8b5cf6">{lagnaPlanet.text}</tspan>
                             )}
                             {lines.map((line, idx) => (
                                 <tspan
                                     key={idx}
                                     x={box.x + 50}
-                                    dy={idx === 0 ? (hasLagna ? "14" : "5") : "12"}
+                                    dy={idx === 0 ? (lagnaPlanet ? "14" : "5") : "12"}
                                     fill="#fde047"
                                 >
                                     {line}

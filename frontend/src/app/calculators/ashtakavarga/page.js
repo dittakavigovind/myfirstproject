@@ -105,12 +105,12 @@ const SouthChart = ({ points, signs, title, ascendantSign }) => {
 
         return (
             <motion.div
-                whileHover={{ scale: 1.05 }}
-                className={`relative aspect-square border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center p-1 transition-all ${isLagna ? 'bg-orange-50 dark:bg-orange-950/20' : 'bg-white dark:bg-slate-900'} ${className}`}
+                whileHover={{ scale: 1.05, zIndex: 10 }}
+                className={`relative aspect-square border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center p-1 transition-all shadow-sm hover:shadow-lg ${isLagna ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-500/50' : 'bg-white dark:bg-slate-800'} ${className}`}
             >
-                {isLagna && <div className="absolute top-1 left-1 bg-orange-500 text-white text-[8px] px-1 rounded font-bold">ASC</div>}
-                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter mb-1">{signName.substring(0, 3)}</span>
-                <span className={`text-xl font-black ${val >= 28 ? 'text-emerald-600 dark:text-emerald-400' : val < 20 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-white'}`}>
+                {isLagna && <div className="absolute top-1 left-1 bg-gradient-to-br from-orange-400 to-orange-600 text-white text-[8px] px-1.5 py-0.5 rounded shadow-sm font-black tracking-wider">ASC</div>}
+                <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest mb-1">{signName.substring(0, 3)}</span>
+                <span className={`text-2xl font-black ${val >= 28 ? 'text-emerald-600 dark:text-emerald-400' : val < 20 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-white'}`}>
                     {val}
                 </span>
             </motion.div>
@@ -118,18 +118,18 @@ const SouthChart = ({ points, signs, title, ascendantSign }) => {
     };
 
     return (
-        <div className="w-full max-w-[380px] mx-auto p-4 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800">
-            {title && <h3 className="text-center font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-widest text-xs">{title}</h3>}
-            <div className="grid grid-cols-4 grid-rows-4 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl overflow-hidden">
+        <div className="w-full max-w-[380px] mx-auto p-6 bg-white dark:bg-slate-800/80 backdrop-blur-md rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-700">
+            {title && <h3 className="text-center font-black text-slate-800 dark:text-white mb-6 tracking-widest text-sm">{title}</h3>}
+            <div className="grid grid-cols-4 grid-rows-4 gap-1 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700/50">
                 <Box signIndex={11} className="rounded-tl-xl" />
                 <Box signIndex={0} />
                 <Box signIndex={1} />
                 <Box signIndex={2} className="rounded-tr-xl" />
                 <Box signIndex={10} />
-                <div className="col-span-2 row-span-2 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <div className="col-span-2 row-span-2 flex items-center justify-center bg-slate-50 dark:bg-slate-950/50 rounded-xl inner-shadow">
                     <div className="text-center">
-                        <Sparkles className="mx-auto text-orange-400 mb-1" size={20} />
-                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Points</span>
+                        <Sparkles className="mx-auto text-orange-400 mb-2 drop-shadow-md" size={24} />
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black">Points</span>
                     </div>
                 </div>
                 <Box signIndex={3} />
@@ -157,42 +157,38 @@ const NorthChart = ({ points, signs, ascendantSign, title }) => {
         const signNum = signs.indexOf(signName) + 1;
         const val = points[signName];
         return (
-            <g className="cursor-default">
+            <g className="cursor-default transition-all hover:scale-110" style={{ transformOrigin: `${x}px ${y}px` }}>
                 <text x={x} y={y} textAnchor="middle" dominantBaseline="middle">
-                    <tspan x={x} dy="-8" className="fill-slate-400 dark:fill-slate-500 text-[10px] font-bold">{signNum}</tspan>
-                    <tspan x={x} dy="18" className={`text-lg font-black ${val >= 28 ? 'fill-emerald-600' : val < 20 ? 'fill-rose-500' : 'fill-slate-800 dark:fill-white'}`}>{val}</tspan>
+                    <tspan x={x} dy="-10" className="fill-slate-400 dark:fill-slate-500 text-[10px] font-black tracking-widest">{signNum}</tspan>
+                    <tspan x={x} dy="20" className={`text-2xl font-black ${val >= 28 ? 'fill-emerald-600 dark:fill-emerald-400' : val < 20 ? 'fill-rose-600 dark:fill-rose-400' : 'fill-slate-800 dark:fill-white'}`}>{val}</tspan>
                 </text>
             </g>
         );
     };
 
     return (
-        <div className="w-full max-w-[380px] mx-auto p-4 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800">
-            {title && <h3 className="text-center font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-widest text-xs">{title}</h3>}
-            <svg viewBox="0 0 200 200" className="w-full h-full stroke-slate-200 dark:stroke-slate-800 stroke-[1.5]">
-                <rect x="0" y="0" width="200" height="200" fill="none" rx="16" className="stroke-slate-300 dark:stroke-slate-700 stroke-[2]" />
-                <path d="M0,0 L200,200" strokeDasharray="4 2" className="opacity-30" />
-                <path d="M200,0 L0,200" strokeDasharray="4 2" className="opacity-30" />
-                <path d="M100,0 L0,100 L100,200 L200,100 Z" className="fill-slate-50/50 dark:fill-slate-800/20" />
-
+        <div className="w-full max-w-[380px] mx-auto p-6 bg-white dark:bg-slate-800/80 backdrop-blur-md rounded-[2rem] shadow-xl border border-slate-200 dark:border-slate-700">
+            {title && <h3 className="text-center font-black text-slate-800 dark:text-white mb-6 tracking-widest text-sm">{title}</h3>}
+            <svg viewBox="0 0 200 200" className="w-full h-full stroke-orange-200 dark:stroke-orange-500/30 stroke-[1.5]">
+                <rect x="0" y="0" width="200" height="200" fill="none" rx="8" className="stroke-orange-300 dark:stroke-orange-500/50 stroke-[2]" />
+                
                 {/* Fixed Diagonals for triangles */}
-                <path d="M0,0 L100,100 L200,0" />
-                <path d="M0,200 L100,100 L200,200" />
-                <path d="M0,0 L100,100 L0,200" />
-                <path d="M200,0 L100,100 L200,200" />
+                <path d="M0,0 L200,200" className="stroke-orange-200 dark:stroke-orange-500/30" />
+                <path d="M200,0 L0,200" className="stroke-orange-200 dark:stroke-orange-500/30" />
+                <path d="M100,0 L0,100 L100,200 L200,100 Z" className="fill-orange-50/50 dark:fill-orange-900/10 stroke-orange-300 dark:stroke-orange-500/50" />
 
                 <HouseText h={1} x={100} y={45} />
-                <HouseText h={2} x={50} y={25} />
-                <HouseText h={3} x={25} y={50} />
+                <HouseText h={2} x={45} y={25} />
+                <HouseText h={3} x={25} y={45} />
                 <HouseText h={4} x={45} y={100} />
-                <HouseText h={5} x={25} y={150} />
-                <HouseText h={6} x={50} y={175} />
+                <HouseText h={5} x={25} y={155} />
+                <HouseText h={6} x={45} y={175} />
                 <HouseText h={7} x={100} y={155} />
-                <HouseText h={8} x={150} y={175} />
-                <HouseText h={9} x={175} y={150} />
+                <HouseText h={8} x={155} y={175} />
+                <HouseText h={9} x={175} y={155} />
                 <HouseText h={10} x={155} y={100} />
-                <HouseText h={11} x={175} y={50} />
-                <HouseText h={12} x={150} y={25} />
+                <HouseText h={11} x={175} y={45} />
+                <HouseText h={12} x={155} y={25} />
             </svg>
         </div>
     );
@@ -201,7 +197,7 @@ const NorthChart = ({ points, signs, ascendantSign, title }) => {
 
 export default function AshtakavargaCalculator() {
     const { user } = useAuth();
-    const { birthDetails } = useBirthDetails();
+    const { birthDetails, setBirthDetails } = useBirthDetails();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -256,12 +252,29 @@ export default function AshtakavargaCalculator() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.lat || !formData.lng) {
+            toast.error("Please select a valid Birth Place from the search results.");
+            return;
+        }
+
         setLoading(true);
         try {
-            const localDate = formData.date.getFullYear() + '-' +
-                String(formData.date.getMonth() + 1).padStart(2, '0') + '-' +
-                String(formData.date.getDate()).padStart(2, '0');
-            const timeStr = formData.time.toTimeString().slice(0, 5);
+            let localDate = '';
+            if (formData.date instanceof Date && !isNaN(formData.date)) {
+                localDate = formData.date.getFullYear() + '-' +
+                    String(formData.date.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(formData.date.getDate()).padStart(2, '0');
+            } else if (typeof formData.date === 'string') {
+                localDate = formData.date.split('T')[0];
+            } else {
+                localDate = new Date().toISOString().split('T')[0];
+            }
+
+            let timeStr = "12:00";
+            if (formData.time instanceof Date && !isNaN(formData.time)) {
+                timeStr = formData.time.toTimeString().slice(0, 5);
+            }
 
             const payload = { ...formData, date: localDate, time: timeStr };
 
@@ -276,7 +289,8 @@ export default function AshtakavargaCalculator() {
                 toast.error(res.data.message || "Calculation failed");
             }
         } catch (error) {
-            toast.error("An error occurred");
+            console.error("Submit Error:", error, formData);
+            toast.error(error.response?.data?.message || "An error occurred");
         } finally {
             setLoading(false);
         }
@@ -289,10 +303,10 @@ export default function AshtakavargaCalculator() {
 
     // Prediction helper based on SAV values
     const getPrediction = (points) => {
-        if (points >= 30) return { label: 'Excellent', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', desc: 'Highly auspicious results.' };
-        if (points >= 28) return { label: 'Strong', color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', desc: 'Favorable outcomes.' };
-        if (points >= 25) return { label: 'Average', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20', desc: 'Balanced results.' };
-        return { label: 'Weak', color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20', desc: 'Exercise caution.' };
+        if (points >= 30) return { label: 'Excellent', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30', border: 'border-emerald-200 dark:border-emerald-500/30', desc: 'Highly auspicious results.' };
+        if (points >= 28) return { label: 'Strong', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/30', border: 'border-green-200 dark:border-green-500/30', desc: 'Favorable outcomes.' };
+        if (points >= 25) return { label: 'Average', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/30', border: 'border-orange-200 dark:border-orange-500/30', desc: 'Balanced results.' };
+        return { label: 'Weak', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/30', border: 'border-rose-200 dark:border-rose-500/30', desc: 'Exercise caution.' };
     };
 
     return (
@@ -357,7 +371,7 @@ export default function AshtakavargaCalculator() {
                         {/* Row 2: Date & Time */}
                         <div className="md:col-span-2">
                             <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Birth Date</label>
-                            <DatePicker customInput={<CustomDateInput placeholder='Select Birth Date' Icon={Calendar} />} selected={formData.date ? new Date(formData.date) : null} onChange={(date) => setFormData({ ...formData, date: date ? date.toISOString().split('T')[0] : '' })} dateFormat={["dd-MMM-yyyy", "dd-MM-yyyy", "dd/MM/yyyy"]} className="w-full p-3.5 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500" showYearDropdown showMonthDropdown scrollableYearDropdown yearDropdownItemNumber={100} />
+                            <DatePicker customInput={<CustomDateInput placeholder='Select Birth Date' Icon={Calendar} />} selected={formData.date ? new Date(formData.date) : null} onChange={(date) => setFormData({ ...formData, date })} dateFormat={["dd-MMM-yyyy", "dd-MM-yyyy", "dd/MM/yyyy"]} className="w-full p-3.5 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 border-2 rounded-2xl focus:border-orange-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500" showYearDropdown showMonthDropdown scrollableYearDropdown yearDropdownItemNumber={100} />
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Birth Time</label>
@@ -433,11 +447,11 @@ export default function AshtakavargaCalculator() {
                                             <motion.div
                                                 key={sign}
                                                 whileHover={{ y: -5, scale: 1.02 }}
-                                                className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-4 rounded-3xl border border-slate-100 dark:border-slate-750 shadow-lg flex flex-col items-center text-center gap-1"
+                                                className={`bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-5 rounded-3xl border shadow-lg flex flex-col items-center text-center gap-1.5 transition-all hover:shadow-xl ${pred.border}`}
                                             >
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{sign.substring(0, 6)}</span>
+                                                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{sign.substring(0, 6)}</span>
                                                 <span className={`text-4xl font-black ${pred.color}`}>{result.sav[sign]}</span>
-                                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${pred.bg} ${pred.color}`}>{pred.label}</span>
+                                                <span className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-full ${pred.bg} ${pred.color}`}>{pred.label}</span>
                                             </motion.div>
                                         );
                                     })}
@@ -509,17 +523,17 @@ export default function AshtakavargaCalculator() {
                                 <table className="w-full text-center">
                                     <thead>
                                         <tr className="bg-slate-50 dark:bg-slate-800/50">
-                                            <th className="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">Sign</th>
-                                            {planetsList.map(p => <th key={p} className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{p.substring(0, 2)}</th>)}
+                                            <th className="p-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-left">Sign</th>
+                                            {planetsList.map(p => <th key={p} className="p-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{p.substring(0, 2)}</th>)}
                                             <th className="p-4 text-[10px] font-black text-orange-600 uppercase tracking-widest bg-orange-50/50 dark:bg-orange-950/20">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {result.signs.map(s => (
-                                            <tr key={s} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors">
+                                            <tr key={s} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors">
                                                 <td className="p-5 text-left font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">{s}</td>
                                                 {planetsList.map(p => (
-                                                    <td key={p} className="p-4 text-sm font-bold text-slate-500">
+                                                    <td key={p} className="p-4 text-base font-bold text-slate-700 dark:text-slate-300 transition-colors group-hover:text-slate-900 dark:group-hover:text-white">
                                                         {result.bav[p][s]}
                                                     </td>
                                                 ))}

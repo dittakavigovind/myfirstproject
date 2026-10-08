@@ -232,6 +232,7 @@ export default function Navbar() {
                                     { name: 'GOCHAR', path: '/calculators/gochar' },
                                     {
                                         name: 'CALCULATORS', path: '#', hasDropdown: true, dropdownItems: [
+                                            { name: 'Ashtakavarga Calculator', path: '/calculators/ashtakavarga' },
                                             { name: 'Love Calculator', path: '/calculators/love-calculator' },
                                             { name: 'Moon Sign Calculator', path: '/calculators/moon-sign-calculator' },
                                             { name: 'Shani Sade Sati', path: '/calculators/sade-sati-calculator' },

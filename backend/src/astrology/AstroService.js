@@ -576,6 +576,12 @@ const generateKundli = async (dateString, timeString, lat, lng, timezone, lang =
         const vimshottari = planets['Moon'] ? calculateVimshottari(planets['Moon'].longitude, dateString, planets, houseData, lang) : null;
         const panchang = planets['Sun'] && planets['Moon'] ? calculatePanchang(planets['Sun'].longitude, planets['Moon'].longitude, dateString, swe, jd, lang) : null;
         const arudha = calculateArudhaLagna(planets, houseData);
+        let ashtakavarga = null;
+        try {
+            ashtakavarga = await calculateAshtakavarga(dateString, timeString, lat, lng, timezone);
+        } catch (e) {
+            console.error("Ashtakavarga calc error in Kundli:", e);
+        }
 
         return {
             meta: { date: dateString, time: timeString, lat, lng, timezone, julianDay: jd, ayanamsa: ayanamsa },
@@ -584,7 +590,8 @@ const generateKundli = async (dateString, timeString, lat, lng, timezone, lang =
             charts: { D1: planets, D9: d9Chart, D10: d10Chart },
             dashas: vimshottari,
             panchang: panchang,
-            arudha: arudha // Including Arudha in main response for convenience
+            arudha: arudha, // Including Arudha in main response for convenience
+            ashtakavarga: ashtakavarga
         };
     } catch (error) {
         console.error("Kundli Calc Error:", error);

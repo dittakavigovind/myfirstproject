@@ -311,6 +311,8 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                                         planets={activeTab === 'kundali' ? kundliData.planets : kundliData.charts?.[activeTab] || kundliData.planets} 
                                                         ascendantSign={Math.floor(kundliData.houses.ascendant / 30) + 1} 
                                                         style={chartStyle}
+                                                        ascendantDegree={kundliData.houses.ascendant % 30}
+                                                        sav={activeTab === 'kundali' ? kundliData.ashtakavarga?.sav : null}
                                                     />
                                                 </div>
                                                 <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md rounded-full p-1 border border-white/10 flex">

@@ -355,7 +355,14 @@ function KundliResultContent() {
                                     </div>
                                 </div>
                                 <div className="relative z-10 aspect-square w-full max-w-[400px] mx-auto mt-6">
-                                    <KundliChart planets={activeChart === 'D1' ? data.planets : data.charts.D9} ascendantSign={activeChart === 'D1' ? d1AscendantSign : d9AscendantSign} style={chartStyle} lang={lang} />
+                                    <KundliChart 
+                                        planets={activeChart === 'D1' ? data.planets : data.charts.D9} 
+                                        ascendantSign={activeChart === 'D1' ? d1AscendantSign : d9AscendantSign} 
+                                        style={chartStyle} 
+                                        lang={lang} 
+                                        ascendantDegree={activeChart === 'D1' ? data.houses.ascendant % 30 : undefined}
+                                        sav={activeChart === 'D1' ? data.ashtakavarga?.sav : null}
+                                    />
                                 </div>
                             </motion.div>
                         </div>
