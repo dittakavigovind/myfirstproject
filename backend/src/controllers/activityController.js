@@ -335,6 +335,12 @@ exports.getDashboardStats = async (req, res) => {
             Session.aggregate(pipeline(firstDayLastMonth, lastDayLastMonth))
         ]);
 
+        // Enforce that total online time is at least the total time spent in sessions today
+        const totalSessionSecondsToday = chatStats.seconds + voiceStats.seconds + videoStats.seconds;
+        if (todayOnlineSeconds < totalSessionSecondsToday) {
+            todayOnlineSeconds = totalSessionSecondsToday;
+        }
+
         res.json({
             success: true,
             data: {
@@ -344,8 +350,8 @@ exports.getDashboardStats = async (req, res) => {
                 isVideoOnline: astrologer.isVideoOnline || false,
                 lastOnlineAt: activeSession?.startTime || null,
                 historyOnlineSeconds: historySeconds,
-                totalOnlineSeconds: todayOnlineSeconds, // using real online presence
-                last7DaysOnlineSeconds: last7DaysOnlineSeconds, // new metric
+                totalOnlineSeconds: todayOnlineSeconds, // using real online presence, bounded by session time
+                last7DaysOnlineSeconds: Math.max(last7DaysOnlineSeconds, todayOnlineSeconds), // ensure 7 days >= today
                 chatMinutes: chatStats.minutes,
                 voiceMinutes: voiceStats.minutes,
                 videoMinutes: videoStats.minutes,

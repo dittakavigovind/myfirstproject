@@ -701,13 +701,19 @@ function AstroStatsModal({ astro, onClose }) {
     const totalOnlineDurationMinutes = filteredDailyStats.reduce((acc, curr) => acc + (curr.onlineDurationMinutes || 0), 0);
     const totalOnlineDurationSeconds = filteredDailyStats.reduce((acc, curr) => acc + (curr.onlineDurationSeconds || 0), 0);
     const totalOnlineTimeMinutes = totalOnlineDurationMinutes + Math.floor(totalOnlineDurationSeconds / 60);
-    const totalOnlineTimeHours = Math.floor(totalOnlineTimeMinutes / 60);
-    const totalOnlineTimeRemainderMinutes = totalOnlineTimeMinutes % 60;
-    const onlineDurationStr = `${totalOnlineTimeHours}h ${totalOnlineTimeRemainderMinutes}m`;
-
+    const rawTotalOnlineTimeSeconds = totalOnlineTimeMinutes * 60 + (totalOnlineDurationSeconds % 60);
+    
     const chatDurationSec = filteredSessions.filter(s => s.sessionType === 'chat').reduce((acc, s) => acc + (s.totalDuration || 0), 0);
     const callDurationSec = filteredSessions.filter(s => s.sessionType === 'audio' || s.sessionType === 'voice').reduce((acc, s) => acc + (s.totalDuration || 0), 0);
     const videoDurationSec = filteredSessions.filter(s => s.sessionType === 'video').reduce((acc, s) => acc + (s.totalDuration || 0), 0);
+    
+    // Ensure that online time is at least equal to the total time spent taking sessions
+    const totalSessionSeconds = chatDurationSec + callDurationSec + videoDurationSec;
+    const effectiveOnlineSeconds = Math.max(rawTotalOnlineTimeSeconds, totalSessionSeconds);
+
+    const totalOnlineTimeHours = Math.floor(effectiveOnlineSeconds / 3600);
+    const totalOnlineTimeRemainderMinutes = Math.floor((effectiveOnlineSeconds % 3600) / 60);
+    const onlineDurationStr = `${totalOnlineTimeHours}h ${totalOnlineTimeRemainderMinutes}m`;
     
     const formatSecs = (sec) => {
         const h = Math.floor(sec / 3600);

@@ -121,6 +121,21 @@ exports.startPaidChat = async (req, res) => {
             }
         }
 
+        // Ensure astrologer is not busy in another session
+        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const existingSession = await Session.findOne({
+            astrologerId,
+            $or: [
+                { status: 'active' },
+                { status: 'initiated', createdAt: { $gte: fiveMinsAgo } }
+            ]
+        });
+
+        if (existingSession || astrologer.isBusy) {
+            console.error(`[StartPaidChat] 400 Error: Astrologer ${astrologer.displayName} is currently busy.`);
+            return res.status(400).json({ success: false, message: 'Astrologer is currently busy in another session' });
+        }
+
         const pricePerMinute = sessionType === 'audio' 
             ? (astrologer.charges?.callPerMinute || 20) 
             : (astrologer.charges?.chatPerMinute || 10);
