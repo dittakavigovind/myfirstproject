@@ -159,7 +159,7 @@ exports.getDashboardStats = async (req, res) => {
             .filter(s => s.endTime) // Only completed ones
             .reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
 
-        // 3. Calculate Current Session Duration
+        // 4. Calculate Current Session Duration
         let currentSessionSeconds = 0;
         if (activeSession) {
             const nowTime = new Date().getTime();
@@ -167,10 +167,42 @@ exports.getDashboardStats = async (req, res) => {
             currentSessionSeconds = Math.floor((nowTime - startTime) / 1000);
         }
 
-        const totalOnlineSeconds = historySeconds + currentSessionSeconds;
-        const totalOnlineMinutes = Math.floor(totalOnlineSeconds / 60);
+        // 5. Calculate Real Online Duration (from AstrologerOnlineSession)
+        const todayOnlineSessions = await AstrologerOnlineSession.find({
+            astrologerId,
+            loginTime: { $gte: startOfToday, $lte: endOfToday }
+        });
 
-        // 4. Calculate Service Breakdown (approximate based on session config)
+        let todayOnlineSeconds = 0;
+        let isActuallyOnline = false;
+        todayOnlineSessions.forEach(s => {
+            if (s.status === 'completed' || s.status === 'auto_closed') {
+                const logout = s.logoutTime ? new Date(s.logoutTime).getTime() : new Date().getTime();
+                todayOnlineSeconds += Math.floor((logout - new Date(s.loginTime).getTime()) / 1000);
+            } else if (s.status === 'active') {
+                isActuallyOnline = true;
+                todayOnlineSeconds += Math.floor((new Date().getTime() - new Date(s.loginTime).getTime()) / 1000);
+            }
+        });
+
+        const sevenDaysAgoStartOnline = new Date(startOfToday);
+        sevenDaysAgoStartOnline.setDate(sevenDaysAgoStartOnline.getDate() - 6);
+        const last7DaysOnlineSessions = await AstrologerOnlineSession.find({
+            astrologerId,
+            loginTime: { $gte: sevenDaysAgoStartOnline, $lte: endOfToday }
+        });
+
+        let last7DaysOnlineSeconds = 0;
+        last7DaysOnlineSessions.forEach(s => {
+            if (s.status === 'completed' || s.status === 'auto_closed') {
+                const logout = s.logoutTime ? new Date(s.logoutTime).getTime() : new Date().getTime();
+                last7DaysOnlineSeconds += Math.floor((logout - new Date(s.loginTime).getTime()) / 1000);
+            } else if (s.status === 'active') {
+                last7DaysOnlineSeconds += Math.floor((new Date().getTime() - new Date(s.loginTime).getTime()) / 1000);
+            }
+        });
+
+        // 6. Calculate Service Breakdown (approximate based on session config)
         // If a session had multiple services, we count it for all? 
         // Or do we split? The schema has `servicesUsed: [String]`.
         // For simplicity: if a session is 10 mins and services=['chat', 'voice'], 
@@ -188,12 +220,15 @@ exports.getDashboardStats = async (req, res) => {
             if (activeSession && (activeSession.sessionType === serviceName || (serviceName === 'voice' && activeSession.sessionType === 'audio'))) {
                 seconds += currentSessionSeconds;
             }
-            return Math.floor(seconds / 60); // Minutes
+            return {
+                seconds,
+                minutes: Math.floor(seconds / 60)
+            };
         };
 
-        const chatMinutes = calculateServiceDuration('chat');
-        const voiceMinutes = calculateServiceDuration('voice');
-        const videoMinutes = calculateServiceDuration('video');
+        const chatStats = calculateServiceDuration('chat');
+        const voiceStats = calculateServiceDuration('voice');
+        const videoStats = calculateServiceDuration('video');
 
         const calculateEarningsBreakdown = async () => {
             let gross = 0;
@@ -303,16 +338,20 @@ exports.getDashboardStats = async (req, res) => {
         res.json({
             success: true,
             data: {
-                isOnline: !!activeSession,
+                isOnline: isActuallyOnline || !!activeSession,
                 isChatOnline: astrologer.isChatOnline || false,
                 isVoiceOnline: astrologer.isVoiceOnline || false,
                 isVideoOnline: astrologer.isVideoOnline || false,
                 lastOnlineAt: activeSession?.startTime || null,
                 historyOnlineSeconds: historySeconds,
-                totalOnlineSeconds: totalOnlineSeconds,
-                chatMinutes,
-                voiceMinutes,
-                videoMinutes,
+                totalOnlineSeconds: todayOnlineSeconds, // using real online presence
+                last7DaysOnlineSeconds: last7DaysOnlineSeconds, // new metric
+                chatMinutes: chatStats.minutes,
+                voiceMinutes: voiceStats.minutes,
+                videoMinutes: videoStats.minutes,
+                chatSeconds: chatStats.seconds,
+                voiceSeconds: voiceStats.seconds,
+                videoSeconds: videoStats.seconds,
                 earnings: breakdown.net,
                 todayGross: breakdown.gross,
                 todayPlatformShare: breakdown.platform,

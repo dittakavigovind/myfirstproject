@@ -206,6 +206,7 @@ export default function Profile() {
     ];
 
     const [todayStats, setTodayStats] = useState(null);
+    const [lastUpdated, setLastUpdated] = useState(null);
     useEffect(() => {
         if (!isAstrologer) return;
         const fetchTodayStats = async () => {
@@ -213,16 +214,34 @@ export default function Profile() {
                 const { data } = await api.get('/activity/stats/dashboard');
                 if (data.success) {
                     setTodayStats(data.data);
+                    setLastUpdated(new Date());
                 }
             } catch (err) {
                 console.error("Failed to fetch today stats", err);
             }
         };
         fetchTodayStats();
-        // Poll every 30 seconds for updates
-        const interval = setInterval(fetchTodayStats, 30000);
+        // Poll every 2 minutes for updates
+        const interval = setInterval(fetchTodayStats, 120000);
         return () => clearInterval(interval);
     }, [isAstrologer]);
+
+    const formatTime = (seconds) => {
+        if (!seconds) return '0m 0s';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        if (h > 0) return `${h}h ${m}m`;
+        const s = seconds % 60;
+        return `${m}m ${s}s`;
+    };
+
+    let badge = null;
+    if (todayStats) {
+        const last7DaysHours = (todayStats.last7DaysOnlineSeconds || 0) / 3600;
+        if (last7DaysHours >= 42) badge = { name: 'Gold', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' };
+        else if (last7DaysHours >= 35) badge = { name: 'Bronze', color: 'bg-amber-700/20 text-amber-500 border-amber-700/50' };
+        else if (last7DaysHours >= 28) badge = { name: 'Silver', color: 'bg-slate-300/20 text-slate-300 border-slate-300/50' };
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -365,31 +384,82 @@ export default function Profile() {
             {/* Today's Stats for Astrologers */}
             {isAstrologer && todayStats && (
                 <div className="grid grid-cols-1 gap-3 px-1">
-                    <div className="glass-panel p-5 rounded-2xl border-white/5 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden group">
+                    <div className="glass-panel p-4 rounded-2xl border-white/5 bg-gradient-to-br from-[#0b1026] to-[#120a2f] relative overflow-hidden group shadow-lg">
                         <div className="absolute -right-4 -top-4 w-24 h-24 bg-electric-violet/10 rounded-full blur-2xl group-hover:bg-electric-violet/20 transition-all" />
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-start mb-4 relative z-10">
                             <div>
-                                <h3 className="text-white font-bold text-lg">Today's Activity</h3>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Real-time Stats</p>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-white font-black text-lg">Today's Activity</h3>
+                                    {badge && (
+                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border flex items-center gap-1 ${badge.color}`}>
+                                            {badge.name === 'Gold' ? '🥇' : badge.name === 'Silver' ? '🥈' : '🥉'} {badge.name}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Real-time Stats</p>
                             </div>
                             <div className="flex flex-col items-end">
-                                <span className="text-[9px] text-slate-500 mt-1 italic">Updates every 60s</span>
+                                <span className="text-[9px] text-slate-500 italic bg-white/5 px-2 py-1 rounded-lg">
+                                    Last update: {lastUpdated ? lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
+                                </span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="text-center">
-                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-1">Duration</p>
-                                <p className="text-sm font-black text-white">{Math.floor((todayStats.totalOnlineSeconds || 0) / 60)}m {(todayStats.totalOnlineSeconds || 0) % 60}s</p>
+                        {/* Progress Section */}
+                        <div className="mb-4 bg-white/5 p-2.5 rounded-xl border border-white/5 relative z-10">
+                            <div className="flex justify-between items-end mb-2">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Goal Progress (6hrs/day)</p>
+                                    <p className="text-lg font-black text-white">{formatTime(todayStats.totalOnlineSeconds)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Remaining</p>
+                                    <p className="text-sm font-bold text-electric-violet">{formatTime(Math.max(0, 21600 - (todayStats.totalOnlineSeconds || 0)))}</p>
+                                </div>
                             </div>
-                            <div className="text-center border-x border-white/5">
-                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-1">Sessions</p>
-                                <p className="text-sm font-black text-white">{todayStats.totalSessions || 0}</p>
+                            <div className="w-full h-2 bg-[#0b1026] rounded-full overflow-hidden border border-white/10">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-electric-violet to-fuchsia-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(100, ((todayStats.totalOnlineSeconds || 0) / 21600) * 100)}%` }}
+                                />
                             </div>
-                            <div className="text-center">
-                                <p className="text-[9px] text-emerald-400 font-bold uppercase mb-1">Your Net</p>
-                                <p className="text-base font-black text-emerald-400">₹{todayStats.todayNet}</p>
+                        </div>
+
+                        {/* Activity Breakdown */}
+                        <div className="grid grid-cols-4 gap-1.5 mb-3 relative z-10">
+                            <div className="text-center bg-[#0b1026]/50 py-1.5 px-1 rounded-lg border border-white/5">
+                                <MessageCircle size={14} className="text-blue-400 mx-auto mb-1" />
+                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Chat</p>
+                                <p className="text-[11px] font-black text-white">{formatTime(todayStats.chatSeconds || 0)}</p>
                             </div>
+                            <div className="text-center bg-[#0b1026]/50 py-1.5 px-1 rounded-lg border border-white/5">
+                                <Phone size={14} className="text-green-400 mx-auto mb-1" />
+                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Call</p>
+                                <p className="text-[11px] font-black text-white">{formatTime(todayStats.voiceSeconds || 0)}</p>
+                            </div>
+                            <div className="text-center bg-[#0b1026]/50 py-1.5 px-1 rounded-lg border border-white/5">
+                                <Video size={14} className="text-purple-400 mx-auto mb-1" />
+                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Video</p>
+                                <p className="text-[11px] font-black text-white">{formatTime(todayStats.videoSeconds || 0)}</p>
+                            </div>
+                            <div className="text-center bg-gradient-to-br from-emerald-500/10 to-transparent py-1.5 px-1 rounded-lg border border-emerald-500/20">
+                                <DollarSign size={14} className="text-emerald-400 mx-auto mb-1" />
+                                <p className="text-[9px] text-emerald-400/80 font-bold uppercase mb-0.5">Net</p>
+                                <p className="text-[11px] font-black text-emerald-400">₹{todayStats.todayNet}</p>
+                            </div>
+                        </div>
+
+                        {/* Badges Legend */}
+                        <div className="flex justify-center items-center gap-3 pt-3 border-t border-white/5 relative z-10">
+                            <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
+                                <span className="text-yellow-400">🥇</span> Gold (42h)
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
+                                <span className="text-slate-300">🥈</span> Silver (35h)
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
+                                <span className="text-amber-600">🥉</span> Bronze (28h)
+                            </span>
                         </div>
                     </div>
                 </div>

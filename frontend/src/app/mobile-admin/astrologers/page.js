@@ -705,6 +705,21 @@ function AstroStatsModal({ astro, onClose }) {
     const totalOnlineTimeRemainderMinutes = totalOnlineTimeMinutes % 60;
     const onlineDurationStr = `${totalOnlineTimeHours}h ${totalOnlineTimeRemainderMinutes}m`;
 
+    const chatDurationSec = filteredSessions.filter(s => s.sessionType === 'chat').reduce((acc, s) => acc + (s.totalDuration || 0), 0);
+    const callDurationSec = filteredSessions.filter(s => s.sessionType === 'audio' || s.sessionType === 'voice').reduce((acc, s) => acc + (s.totalDuration || 0), 0);
+    const videoDurationSec = filteredSessions.filter(s => s.sessionType === 'video').reduce((acc, s) => acc + (s.totalDuration || 0), 0);
+    
+    const formatSecs = (sec) => {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        return h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+    };
+
+    const chatStr = formatSecs(chatDurationSec);
+    const callStr = formatSecs(callDurationSec);
+    const videoStr = formatSecs(videoDurationSec);
+
     const formatDate = (dateString) => {
         const options = { day: 'numeric', month: 'short', year: 'numeric' };
         return new Date(dateString).toLocaleDateString('en-GB', options);
@@ -717,7 +732,7 @@ function AstroStatsModal({ astro, onClose }) {
     };
 
     const handleExport = () => {
-        const headers = ["Date", "Start Time", "Session ID", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astro Share %", "Astro Share", "Total Deducted"];
+        const headers = ["Date", "Start Time", "Session ID", "User", "Type", "Status", "Ended By", "Astrologer Reason", "Session Duration (s)", "Rate", "Astrologer Share %", "Astrologer Share", "Total Deducted"];
         const rows = filteredSessions.map(s => {
             const sharePercentage = s.totalAmountDeducted > 0 
                 ? ((s.astrologerShare / s.totalAmountDeducted) * 100).toFixed(0) + '%' 
@@ -745,8 +760,11 @@ function AstroStatsModal({ astro, onClose }) {
         rows.push(["--- SUMMARY STATS ---"]);
         rows.push(["Total Sessions:", filteredSessions.length]);
         rows.push(["Online Time:", onlineDurationStr]);
+        rows.push(["Chat Duration:", chatStr]);
+        rows.push(["Call Duration:", callStr]);
+        rows.push(["Video Duration:", videoStr]);
         rows.push(["Platform Share:", totalPlatformShare.toFixed(2)]);
-        rows.push(["Astro Share:", totalAstroShare.toFixed(2)]);
+        rows.push(["Astrologer Share:", totalAstroShare.toFixed(2)]);
         rows.push(["Total Earned:", totalEarned.toFixed(2)]);
 
         // Add Day-wise Online Time at the bottom
@@ -769,7 +787,10 @@ function AstroStatsModal({ astro, onClose }) {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `sessions_${astro.name}.csv`);
+        
+        const astroName = astro.displayName || astro.name || astro.userId?.name || 'Astrologer';
+        const safeName = astroName.replace(/[^a-zA-Z0-9]/g, '_');
+        link.setAttribute("download", `sessions_${safeName}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -866,42 +887,54 @@ function AstroStatsModal({ astro, onClose }) {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-9 gap-4 mb-6 shrink-0">
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
+                        <div className="flex flex-wrap gap-3 mb-6 shrink-0 w-full overflow-x-auto pb-2 styled-scrollbar">
+                            <div className="flex-1 min-w-[120px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase">Online Time</p>
-                                <p className="text-lg font-bold text-violet-400 mt-1">{onlineDurationStr}</p>
+                                <p className="text-lg font-bold text-violet-400 mt-1 truncate">{onlineDurationStr}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Total Sessions</p>
+                            <div className="flex-1 min-w-[90px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Sessions</p>
                                 <p className="text-lg font-bold text-white mt-1">{filteredSessions.length}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Duration</p>
-                                <p className="text-lg font-bold text-blue-400 mt-1">{totalDurationStr}</p>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Chat Time</p>
+                                <p className="text-sm font-bold text-blue-400 mt-1">{chatStr}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Ended By Astro</p>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Call Time</p>
+                                <p className="text-sm font-bold text-amber-400 mt-1">{callStr}</p>
+                            </div>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Video Time</p>
+                                <p className="text-sm font-bold text-pink-400 mt-1">{videoStr}</p>
+                            </div>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Total Dur</p>
+                                <p className="text-sm font-bold text-slate-300 mt-1">{totalDurationStr}</p>
+                            </div>
+                            <div className="flex-1 min-w-[90px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Ended Astrologer</p>
                                 <p className="text-lg font-bold text-sky-400 mt-1">{endedByAstroCount}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Ended By User</p>
+                            <div className="flex-1 min-w-[90px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Ended User</p>
                                 <p className="text-lg font-bold text-emerald-400 mt-1">{endedByUserCount}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Missed/System</p>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Missed/Sys</p>
                                 <p className="text-lg font-bold text-rose-400 mt-1">{missedCount + endedBySystemCount}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Platform Share</p>
-                                <p className="text-lg font-bold text-amber-400 mt-1">₹{totalPlatformShare.toFixed(2)}</p>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Platform</p>
+                                <p className="text-sm font-bold text-amber-400 mt-1">₹{totalPlatformShare.toFixed(2)}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Astro Share</p>
-                                <p className="text-lg font-bold text-sky-400 mt-1">₹{totalAstroShare.toFixed(2)}</p>
+                            <div className="flex-1 min-w-[100px] bg-slate-800/50 border border-slate-700 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Astrologer Share</p>
+                                <p className="text-sm font-bold text-sky-400 mt-1">₹{totalAstroShare.toFixed(2)}</p>
                             </div>
-                            <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Total Earned</p>
-                                <p className="text-lg font-bold text-emerald-400 mt-1">₹{totalEarned.toFixed(2)}</p>
+                            <div className="flex-1 min-w-[100px] bg-emerald-900/30 border border-emerald-500/30 p-3 rounded-xl flex flex-col justify-between">
+                                <p className="text-[10px] font-bold text-emerald-400 uppercase">Earned</p>
+                                <p className="text-sm font-bold text-emerald-400 mt-1">₹{totalEarned.toFixed(2)}</p>
                             </div>
                         </div>
 
