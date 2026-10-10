@@ -40,6 +40,12 @@ jobs:
         working-directory: ./mobile-app
         run: npx cap sync android
         
+      - name: Fix Capacitor Plugins Gradle
+        working-directory: ./mobile-app
+        run: |
+          sed -i 's/proguard-android.txt/proguard-android-optimize.txt/g' node_modules/@anuradev/capacitor-audio-toggle/android/build.gradle
+          sed -i 's/proguard-android.txt/proguard-android-optimize.txt/g' node_modules/@anuradev/capacitor-background-mode/android/build.gradle
+        
       - name: Build Debug APK
         working-directory: ./mobile-app/android
         run: ./gradlew assembleDebug
