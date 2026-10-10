@@ -5,8 +5,8 @@ const adminFirebase = require('../config/firebase');
 const moment = require('moment-timezone');
 
 exports.initDailyHoroscopeCron = () => {
-    // Run daily at 8:00 AM IST
-    cron.schedule('0 8 * * *', async () => {
+    // Run daily at 7:00 AM IST
+    cron.schedule('0 7 * * *', async () => {
         try {
             console.log('[Daily Horoscope Cron] Starting daily horoscope push notifications...');
             
