@@ -5,6 +5,9 @@ project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/
 include ':anuradev-capacitor-audio-toggle'
 project(':anuradev-capacitor-audio-toggle').projectDir = new File('../node_modules/@anuradev/capacitor-audio-toggle/android')
 
+include ':anuradev-capacitor-background-mode'
+project(':anuradev-capacitor-background-mode').projectDir = new File('../node_modules/@anuradev/capacitor-background-mode/android')
+
 include ':capacitor-app'
 project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
 

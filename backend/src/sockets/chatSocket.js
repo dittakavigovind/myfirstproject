@@ -371,7 +371,7 @@ module.exports = function (io) {
                         }
 
                         offlineTimers.delete(astrologerId);
-                    }, 10000);
+                    }, 300000); // Increased to 5 minutes (300,000 ms) to allow for background notifications
 
                     offlineTimers.set(astrologerId, offlineTimeoutId);
 

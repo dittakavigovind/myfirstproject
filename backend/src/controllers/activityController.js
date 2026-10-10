@@ -41,7 +41,7 @@ exports.toggleOnlineStatus = async (req, res) => {
 
         const today = getTodayDate();
 
-        if (isOnline) {
+        if (isOnline && (astrologer.isChatOnline || astrologer.isVoiceOnline || astrologer.isVideoOnline)) {
             // GOING ONLINE: Create new active session
             // Close any existing open sessions first to be safe (prevent duplicates)
             await AstrologerOnlineSession.updateMany(

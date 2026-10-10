@@ -101,14 +101,17 @@ exports.toggleStatus = async (req, res) => {
                 }
             );
 
-            // Track Session Duration
-            if (updatedAstro && currentUser.isOnline !== (user.isOnline === true)) {
+            // Track Session Duration based on actual service availability
+            const wasAvailable = (currentUser.isChatOnline === true) || (currentUser.isVoiceOnline === true) || (currentUser.isVideoOnline === true);
+            const isAvailableNow = finalIsChatOnline || finalIsVoiceOnline || finalIsVideoOnline;
+
+            if (updatedAstro && wasAvailable !== isAvailableNow) {
                 const AstrologerOnlineSession = require('../models/AstrologerOnlineSession');
                 const AstrologerDailyStat = require('../models/AstrologerDailyStat');
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                if (user.isOnline === true) {
+                if (isAvailableNow) {
                     await AstrologerOnlineSession.updateMany(
                         { astrologerId: updatedAstro._id, status: 'active' },
                         { $set: { status: 'auto_closed', logoutTime: new Date() } }

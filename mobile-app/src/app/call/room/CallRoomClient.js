@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Loader2, Sparkles, AlertCircle, UserRound, Grid } from "lucide-react";
 import toast from "react-hot-toast";
 import { AudioToggle } from '@anuradev/capacitor-audio-toggle';
+import { BackgroundMode } from '@anuradev/capacitor-background-mode';
 import AIInsightsPanel from "@/components/AIInsightsPanel";
 import UserKundliModal from "../../chat/room/UserKundliModal";
 import { maskUserName } from "@/utils/maskUtils";
@@ -125,6 +126,20 @@ export default function CallRoomClient() {
                 throw new Error("Failed to get token");
             }
 
+            try {
+                if (typeof window !== 'undefined' && window.Capacitor) {
+                    await BackgroundMode.enable();
+                    await BackgroundMode.setSettings({
+                        title: "Active Consultation",
+                        text: "Call in progress...",
+                        resume: true,
+                        hidden: false
+                    });
+                }
+            } catch (e) {
+                console.error("Background mode error", e);
+            }
+
             const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
             clientRef.current = client;
 
@@ -136,6 +151,15 @@ export default function CallRoomClient() {
                     remoteAudioTrackRef.current = remoteUser.audioTrack;
                     remoteUser.audioTrack.play();
                     console.log("Remote audio track played automatically");
+                    
+                    try {
+                        if (typeof window !== 'undefined' && window.Capacitor) {
+                            await AudioToggle.setSpeakerOn({ speakerOn: true });
+                            setIsSpeakerOn(true);
+                        }
+                    } catch (e) {
+                        console.error("Failed to set speaker on", e);
+                    }
                 }
             });
 
@@ -188,6 +212,14 @@ export default function CallRoomClient() {
         if (clientRef.current) {
             clientRef.current.leave();
             clientRef.current = null;
+        }
+        
+        try {
+            if (typeof window !== 'undefined' && window.Capacitor) {
+                BackgroundMode.disable();
+            }
+        } catch (e) {
+            console.error("Failed to disable background mode", e);
         }
     };
 
