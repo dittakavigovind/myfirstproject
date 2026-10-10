@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
+import { translatePlanet, translateSign } from '../utils/astrologyTranslations';
 
 // Signs for reference
 const SIGNS = ['Ar', 'Ta', 'Ge', 'Ca', 'Le', 'Vi', 'Li', 'Sc', 'Sa', 'Cp', 'Aq', 'Pi'];
@@ -10,7 +11,7 @@ const SIGNS_FULL = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libr
  * KundliChart Component
  * Renders a Vedic Astrology Chart in North or South Indian style.
  */
-export default function KundliChart({ planets, ascendantSign, style = 'north', smallMode = false, ascendantDegree, sav }) {
+export default function KundliChart({ planets, ascendantSign, style = 'north', smallMode = false, ascendantDegree, sav, chartLanguage = 'English' }) {
     const checkCombust = (planetName, planetLong, sunLong, isRetrograde) => {
         if (!sunLong || ['Sun', 'Moon', 'Rahu', 'Ketu', 'Lagna', 'Ascendant'].includes(planetName)) return false;
         let diff = Math.abs(planetLong - sunLong);
@@ -31,7 +32,7 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
         const sunLong = planets?.['Sun']?.longitude;
 
         if (ascendantSign) {
-            let text = 'Lagna';
+            let text = translatePlanet('Lagna', chartLanguage);
             if (ascendantDegree !== undefined) {
                 text += ` ${Math.floor(ascendantDegree).toString().padStart(2, '0')}`;
             }
@@ -50,7 +51,7 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
                 }
 
                 if (sign && map[sign]) {
-                    const abbr = name.substring(0, 2);
+                    const abbr = translatePlanet(name, chartLanguage);
                     let text = abbr;
                     if (data.longitude !== undefined) {
                         const degStr = Math.floor(data.longitude % 30).toString().padStart(2, '0');
@@ -68,7 +69,7 @@ export default function KundliChart({ planets, ascendantSign, style = 'north', s
             });
         }
         return map;
-    }, [planets, ascendantSign, ascendantDegree]);
+    }, [planets, ascendantSign, ascendantDegree, chartLanguage]);
 
     if (style === 'north') {
         return <NorthIndianChart planetsBySign={planetsBySign} ascendantSign={ascendantSign} smallMode={smallMode} sav={sav} />;

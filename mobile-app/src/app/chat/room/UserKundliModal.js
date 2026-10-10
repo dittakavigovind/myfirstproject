@@ -6,6 +6,7 @@ import { X, Star, Calendar, Clock, MapPin, Search, Edit2, ChevronDown, ChevronUp
 import api from "@/lib/api";
 import CosmicLoader from "@/components/CosmicLoader";
 import KundliChart from "@/components/KundliChart";
+import { translateSign, translateNakshatra, translatePlanet, translatePlanetFull } from "../../../utils/astrologyTranslations";
 import LocationSearch from "@/components/LocationSearch";
 import { useAuth } from "@/context/AuthContext";
 import { maskUserName } from "@/utils/maskUtils";
@@ -42,7 +43,7 @@ const getSubPeriods = (parentLord, parentStart, parentDuration) => {
     return subPeriods;
 };
 
-const DashaNode = ({ dasha, level = 0 }) => {
+const DashaNode = ({ dasha, level = 0, chartLanguage }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [localSubPeriods, setLocalSubPeriods] = useState(dasha.subPeriods || null);
     
@@ -67,7 +68,7 @@ const DashaNode = ({ dasha, level = 0 }) => {
             >
                 <div>
                     <span className={`font-bold ${level === 0 ? 'text-white text-sm' : 'text-slate-200 text-xs'}`}>
-                        {dasha.lord} <span className="text-[10px] font-normal text-slate-400">({levelName})</span>
+                        {chartLanguage === "English" ? dasha.lord : translatePlanetFull(dasha.lord, chartLanguage)} <span className="text-[10px] font-normal text-slate-400">({levelName})</span>
                     </span>
                     {isCurrent && <span className="ml-2 text-[9px] bg-electric-violet text-white px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Current</span>}
                 </div>
@@ -82,7 +83,7 @@ const DashaNode = ({ dasha, level = 0 }) => {
             {isExpanded && localSubPeriods && (
                 <div className={`bg-black/20 p-2 border-t border-white/5 ${level === 0 ? 'pl-2' : 'pl-4'} pr-0 pb-0`}>
                     {localSubPeriods.map((sub, idx) => (
-                        <DashaNode key={`${sub.lord}-${idx}`} dasha={sub} level={level + 1} />
+                        <DashaNode key={`${sub.lord}-${idx}`} dasha={sub} level={level + 1} chartLanguage={chartLanguage} />
                     ))}
                 </div>
             )}
@@ -97,6 +98,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState('kundali');
     const [chartStyle, setChartStyle] = useState('south');
+    const [chartLanguage, setChartLanguage] = useState('English');
     
     const [isEditing, setIsEditing] = useState(false);
     const [birthDetails, setBirthDetails] = useState({
@@ -107,6 +109,11 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
         timezone: 5.5,
         place: ""
     });
+
+    useEffect(() => {
+        const savedLang = localStorage.getItem("app_language");
+        if (savedLang) setChartLanguage(savedLang);
+    }, []);
 
     useEffect(() => {
         if (isOpen && chatUser?.birthDetails) {
@@ -203,6 +210,20 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                 {isEditing ? "Update Details" : "Live Horoscope Map"}
                             </p>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-2 mr-2">
+                        <select 
+                            value={chartLanguage}
+                            onChange={(e) => setChartLanguage(e.target.value)}
+                            className="bg-white/10 text-white text-xs border border-white/20 rounded-lg px-2 py-1 outline-none appearance-none"
+                        >
+                            <option value="English" className="text-black">En</option>
+                            <option value="Telugu" className="text-black">తెలు</option>
+                            <option value="Hindi" className="text-black">हिं</option>
+                            <option value="Kannada" className="text-black">ಕನ್ನ</option>
+                            <option value="Tamil" className="text-black">தமிழ்</option>
+                            <option value="Malayalam" className="text-black">മല</option>
+                        </select>
                     </div>
                     <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-slate-400">
                         <X size={20} />
@@ -345,6 +366,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                                         ascendantSign={Math.floor(kundliData.houses.ascendant / 30) + 1} 
                                                         style={chartStyle}
                                                         ascendantDegree={kundliData.houses.ascendant % 30}
+                                                        chartLanguage={chartLanguage}
                                                         sav={activeTab === 'kundali' ? kundliData.ashtakavarga?.sav : null}
                                                     />
                                                 </div>
@@ -354,20 +376,20 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                             <div className="grid grid-cols-2 gap-3 mb-6">
                                                 <div className="glass-panel p-3 rounded-2xl border-white/5">
                                                     <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Lagna</p>
-                                                    <p className="text-sm text-white font-bold">{SIGNS[Math.floor(kundliData.houses.ascendant / 30)]}</p>
+                                                    <p className="text-sm text-white font-bold">{translateSign(SIGNS[Math.floor(kundliData.houses.ascendant / 30)], chartLanguage)}</p>
                                                 </div>
                                                 <div className="glass-panel p-3 rounded-2xl border-white/5">
                                                     <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Rashi</p>
-                                                    <p className="text-sm text-white font-bold">{SIGNS[kundliData.planets.Moon.sign - 1]}</p>
+                                                    <p className="text-sm text-white font-bold">{translateSign(SIGNS[kundliData.planets.Moon.sign - 1], chartLanguage)}</p>
                                                 </div>
                                                 <div className="glass-panel p-3 rounded-2xl border-white/5">
                                                     <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Nakshatra</p>
-                                                    <p className="text-sm text-white font-bold truncate">{kundliData.dashas?.birthNakshatra}</p>
+                                                    <p className="text-sm text-white font-bold truncate">{translateNakshatra(kundliData.dashas?.birthNakshatra, chartLanguage)}</p>
                                                 </div>
                                                 <div className="glass-panel p-3 rounded-2xl border-white/5">
                                                     <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Current Dasha</p>
                                                     <p className="text-sm text-white font-bold">
-                                                        {kundliData.dashas?.list?.find(d => new Date() >= new Date(d.start) && new Date() <= new Date(d.end))?.lord || '-'}
+                                                        {(() => { const lord = kundliData.dashas?.list?.find(d => new Date() >= new Date(d.start) && new Date() <= new Date(d.end))?.lord; return lord ? (chartLanguage === "English" ? lord : translatePlanetFull(lord, chartLanguage)) : "-"; })()}
                                                     </p>
                                                 </div>
                                             </div>
@@ -410,7 +432,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                                     return (
                                                         <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
                                                             <div className="flex items-center gap-1.5 w-[30%]">
-                                                                <span className="text-xs font-bold text-white">{p}</span>
+                                                                <span className="text-xs font-bold text-white">{chartLanguage === "English" ? p : translatePlanetFull(p, chartLanguage)}</span>
                                                                 {sym && <span className="text-[10px] text-pink-400 font-black">{sym}</span>}
                                                             </div>
                                                             <div className="w-[40%] text-center">
@@ -420,7 +442,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                                                 )}
                                                             </div>
                                                             <div className="w-[30%] text-right">
-                                                                <span className="text-xs text-solar-gold font-medium block leading-tight">{planetData ? SIGNS[planetData.sign - 1] : '-'}</span>
+                                                                <span className="text-xs text-solar-gold font-medium block leading-tight">{planetData ? translateSign(SIGNS[planetData.sign - 1], chartLanguage) : '-'}</span>
                                                             </div>
                                                         </div>
                                                     )
@@ -447,10 +469,10 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                                     return (
                                                         <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
                                                             <div className="flex items-center w-[30%]">
-                                                                <span className="text-xs font-bold text-white">{p}</span>
+                                                                <span className="text-xs font-bold text-white">{chartLanguage === "English" ? p : translatePlanetFull(p, chartLanguage)}</span>
                                                             </div>
                                                             <div className="w-[40%] text-center">
-                                                                <span className="text-xs text-indigo-300 font-bold block">{nakshatraName}</span>
+                                                                <span className="text-xs text-indigo-300 font-bold block">{translateNakshatra(nakshatraName, chartLanguage)}</span>
                                                                 <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Pada {pada}</span>
                                                             </div>
                                                             <div className="w-[30%] text-right">
@@ -467,7 +489,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                                         <div className="space-y-2">
                                             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Vimshottari Dasha</h3>
                                             {kundliData.dashas?.list?.map((md, idx) => (
-                                                <DashaNode key={`${md.lord}-${idx}`} dasha={md} level={0} />
+                                                <DashaNode key={`${md.lord}-${idx}`} dasha={md} level={0} chartLanguage={chartLanguage} />
                                             ))}
                                         </div>
                                     )}
