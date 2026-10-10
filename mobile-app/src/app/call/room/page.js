@@ -1,11 +1,14 @@
-import { Suspense } from "react";
-import CallRoomClient from "./CallRoomClient";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CosmicLoader from "@/components/CosmicLoader";
 
 export default function Page() {
-    return (
-        <Suspense fallback={<CosmicLoader message="Connecting Call..." />}>
-            <CallRoomClient />
-        </Suspense>
-    );
+    const router = useRouter();
+
+    useEffect(() => {
+        router.replace("/explore");
+    }, [router]);
+
+    return <CosmicLoader message="Connecting Call..." />;
 }

@@ -31,6 +31,8 @@ import ProfileSetupModal from "@/components/ProfileSetupModal";
 import DailyBlessingWrapper from "@/components/DailyBlessingWrapper";
 import { Toaster } from "react-hot-toast";
 
+import GlobalCallManager from "@/components/GlobalCallManager";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
@@ -41,6 +43,7 @@ export default function RootLayout({ children }) {
               <SessionBanner />
               <ProfileSetupModal />
               <DailyBlessingWrapper />
+              <GlobalCallManager />
               <MobileLayout>
                 {children}
               </MobileLayout>

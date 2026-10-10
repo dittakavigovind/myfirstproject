@@ -19,12 +19,12 @@ if (typeof window !== "undefined") {
     AgoraRTC = require("agora-rtc-sdk-ng");
 }
 
-export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }) {
+export default function CallRoomClient() {
     const { user, checkUser } = useAuth();
     const { socket } = useSocket();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const roomId = globalRoomId || searchParams.get("id");
+    const roomId = searchParams.get("id");
 
     const [loading, setLoading] = useState(true);
     const [sessionActive, setSessionActive] = useState(false);
@@ -57,10 +57,6 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     const handleLeaveRoom = () => {
         if (checkUser) checkUser();
-        if (onCallEnded) {
-            onCallEnded();
-            return;
-        }
         if (user?.role !== 'astrologer') {
             router.replace('/history'); // Replace with review modal later if needed
         } else {
@@ -251,10 +247,6 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
             toast(msg, { icon: 'ℹ️', id: 'session_ended_toast' });
 
             setTimeout(() => {
-                if (onCallEnded) {
-                    onCallEnded();
-                    return;
-                }
                 if (user?.role === 'astrologer') {
                     router.replace('/astrologer');
                 } else {
@@ -389,16 +381,6 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     return (
         <div className="fixed inset-0 bg-slate-900 flex flex-col z-[100] text-white">
-            {/* Top Bar for Minimize */}
-            {onMinimize && (
-                <button 
-                    onClick={onMinimize} 
-                    className="absolute top-[env(safe-area-inset-top,20px)] left-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center z-[999] backdrop-blur-md active:scale-95"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
-                </button>
-            )}
-            
             {/* Top Bar for Astrologer Tools */}
             {user?.role === 'astrologer' && (
                 <div
