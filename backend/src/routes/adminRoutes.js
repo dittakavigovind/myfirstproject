@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, exportDormantFundsCSV, toggleUserBlock, updateAstrologerSettings, getAllSessions, bypassWaitlist, getSocketMonitorStats, getAllReports, getAllBlockedUsers, getAllTransactions } = require('../controllers/adminController');
+const { getAllUsers, getUserById, updateUserRole, getAstrologerActivity, getDashboardStats, deleteUser, exportUsersCSV, exportDormantFundsCSV, toggleUserBlock, updateAstrologerSettings, getAllSessions, bypassWaitlist, getSocketMonitorStats, getAllReports, getAllBlockedUsers, getAllTransactions, addManualWalletBalance, getManualWalletTransactions } = require('../controllers/adminController');
 const { protect, admin, authorize } = require('../middleware/authMiddleware');
 
 // Route
 router.get('/transactions', protect, admin, getAllTransactions);
+router.post('/manual-wallet', protect, admin, addManualWalletBalance);
+router.get('/manual-wallet/transactions', protect, admin, getManualWalletTransactions);
 const { getAppConfig, updateAppConfig, getPricingConfig, updatePricingConfig } = require('../controllers/adminConfigController');
 
 // Middleware to ensure admin

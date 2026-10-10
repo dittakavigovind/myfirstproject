@@ -9,6 +9,66 @@ const mongoose = require('mongoose');
 const { Parser } = require('json2csv');
 const ArchivedUser = require('../models/ArchivedUser');
 
+// @desc    Add wallet balance manually
+// @route   POST /api/admin/manual-wallet
+// @access  Private/Admin
+exports.addManualWalletBalance = async (req, res) => {
+    try {
+        const { searchKey, amount, description } = req.body;
+        
+        if (!searchKey || !amount || amount <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid search key or amount' });
+        }
+
+        const searchPattern = new RegExp(searchKey, 'i');
+        const user = await User.findOne({
+            $or: [
+                { phone: { $regex: searchPattern } },
+                { mobileNumber: { $regex: searchPattern } },
+                { email: { $regex: searchPattern } }
+            ]
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User/Astrologer not found' });
+        }
+
+        user.walletBalance += Number(amount);
+        await user.save();
+
+        const transaction = await Transaction.create({
+            user: user._id,
+            amount: Number(amount),
+            totalAmount: Number(amount),
+            type: 'credit',
+            status: 'success',
+            description: description || 'Manual Wallet Recharge',
+            referenceModel: 'WalletRecharge'
+        });
+
+        res.json({ success: true, message: 'Wallet balance added successfully', user, transaction });
+    } catch (error) {
+        console.error('Manual Wallet Add Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Get Manual Wallet Transactions
+// @route   GET /api/admin/manual-wallet/transactions
+// @access  Private/Admin
+exports.getManualWalletTransactions = async (req, res) => {
+    try {
+        const transactions = await Transaction.find({ description: { $regex: /Manual Wallet Recharge/i } })
+            .populate('user', 'name email phone role')
+            .sort({ createdAt: -1 });
+
+        res.json({ success: true, data: transactions });
+    } catch (error) {
+        console.error('Manual Wallet Transactions Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 // @desc    Get Dashboard Stats
 // @route   GET /api/admin/stats
 // @access  Private/Admin

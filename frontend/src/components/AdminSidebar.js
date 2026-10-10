@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
     TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, HelpCircle,
-    ChevronDown, ChevronRight, Settings, Tag, MessageSquare, Sparkles
+    ChevronDown, ChevronRight, Settings, Tag, MessageSquare, Sparkles, Smartphone
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -53,6 +53,16 @@ export default function AdminSidebar({ pendingRequestsCount = 0 }) {
                 >
                     <LayoutDashboard size={18} />
                     Overview
+                </Link>
+
+                <Link href="/mobile-admin"
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${pathname === '/mobile-admin'
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                >
+                    <Smartphone size={18} />
+                    Mobile Admin
                 </Link>
 
                 {/* Admin Management Links */}
