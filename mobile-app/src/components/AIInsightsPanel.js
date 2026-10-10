@@ -192,7 +192,7 @@ export default function AIInsightsPanel({ userId, isOpen, onClose, onTipSelect }
                         </div>
 
                         {/* Main Scrollable Content */}
-                        <div className="flex-1 overflow-y-auto px-6 pb-8 custom-scrollbar bg-white dark:bg-slate-900 relative">
+                        <div className="flex-1 overflow-y-auto overscroll-y-none px-6 pb-8 custom-scrollbar bg-white dark:bg-slate-900 relative">
                             {loading || isTranslating ? (
                                 <div className="flex flex-col items-center justify-center py-10">
                                     <div className="w-8 h-8 border-2 border-purple-200 dark:border-purple-800 border-t-purple-600 dark:border-t-purple-400 rounded-full animate-spin mb-3"></div>

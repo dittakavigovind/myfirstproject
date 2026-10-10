@@ -19,7 +19,7 @@ export default function MobileLayout({ children }) {
     };
 
     const isProfile = pathname === "/astrologer";
-    const isSpecialPage = pathname === "/auth" || pathname.startsWith("/chat/");
+    const isSpecialPage = pathname === "/auth" || pathname.startsWith("/chat/") || pathname.startsWith("/call/");
 
     // Handle Hardware Back Button & Edge Swipe in Capacitor
     useEffect(() => {
@@ -60,7 +60,7 @@ export default function MobileLayout({ children }) {
 
     return (
         <div 
-            className={`relative h-[100dvh] flex flex-col max-w-md mx-auto overflow-hidden shadow-2xl shadow-electric-violet/5`}
+            className={`relative h-full flex flex-col max-w-md mx-auto overflow-hidden shadow-2xl shadow-electric-violet/5`}
             style={{ paddingTop: isProfile || isSpecialPage ? 'var(--safe-area-inset-top)' : 'calc(var(--safe-area-inset-top) + 4rem)' }}
         >
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-electric-violet/20 blur-[100px] pointer-events-none" />
@@ -73,11 +73,17 @@ export default function MobileLayout({ children }) {
             <main 
                 className={`relative z-10 flex-1 overflow-hidden ${isSpecialPage ? '' : 'px-4 pb-24'}`}
             >
-                <PullToRefresh onRefresh={handleRefresh}>
-                    <div key={refreshKey} className="h-full">
+                {isSpecialPage ? (
+                    <div className="h-full">
                         {children}
                     </div>
-                </PullToRefresh>
+                ) : (
+                    <PullToRefresh onRefresh={handleRefresh}>
+                        <div key={refreshKey} className="h-full">
+                            {children}
+                        </div>
+                    </PullToRefresh>
+                )}
             </main>
 
             {!isSpecialPage && <BottomNav />}

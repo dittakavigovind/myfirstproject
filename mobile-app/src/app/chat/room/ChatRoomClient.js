@@ -374,12 +374,14 @@ export default function ChatRoomClient() {
         const originalBodyPosition = document.body.style.position;
         const originalBodyHeight = document.body.style.height;
         const originalHtmlOverflow = document.documentElement.style.overflow;
+        const originalOverscroll = document.body.style.overscrollBehavior;
 
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
         document.body.style.position = 'fixed';
         document.body.style.height = '100%';
         document.body.style.width = '100%';
+        document.body.style.overscrollBehavior = 'none';
 
         return () => {
             document.documentElement.style.overflow = originalHtmlOverflow;
@@ -387,13 +389,21 @@ export default function ChatRoomClient() {
             document.body.style.position = originalBodyPosition;
             document.body.style.height = originalBodyHeight;
             document.body.style.width = '';
+            document.body.style.overscrollBehavior = originalOverscroll;
         };
     }, []);
 
     // 4. Socket Listeners for Timer and Session Status ONLY
     useEffect(() => {
         if (user && roomId && socket) {
-            socket.emit("join_chat_session", { roomId });
+            const joinRoom = () => {
+                if (socket.connected) {
+                    socket.emit("join_chat_session", { roomId });
+                }
+            };
+            
+            joinRoom();
+            socket.on("connect", joinRoom);
 
             const handleSessionStarted = ({ startTime }) => {
                 setSessionActive(true);
@@ -480,6 +490,7 @@ export default function ChatRoomClient() {
             socket.on("session_read_only", handleSessionReadOnly);
 
             return () => {
+                socket.off("connect", joinRoom);
                 socket.off("session_started", handleSessionStarted);
                 socket.off("session_restored", handleSessionRestored);
                 socket.off("timer_update", handleTimerUpdate);
@@ -559,6 +570,10 @@ export default function ChatRoomClient() {
         }
 
         setNewMessage("");
+        if (inputRef.current) {
+            inputRef.current.style.height = 'inherit';
+            inputRef.current.focus(); // Synchronously ensure focus remains
+        }
 
         try {
             const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
@@ -591,7 +606,6 @@ export default function ChatRoomClient() {
             console.error("Error sending message:", error);
             toast.error("Failed to send: " + (error.message || "Unknown error"));
         }
-        inputRef.current?.focus();
     };
 
     let typingTimeout = useRef(null);
@@ -1220,8 +1234,7 @@ export default function ChatRoomClient() {
                         {typeof showEndedPopup === 'string' ? showEndedPopup : "THIS SESSION HAS ENDED"}
                     </div>
                 ) : (
-                    <form
-                        onSubmit={handleSend}
+                    <div
                         className="flex items-end gap-2 max-w-md mx-auto mb-2"
                     >
                         <div className="flex-1 glass-panel border-white/10 rounded-[24px] p-1.5 flex items-center shadow-2xl min-h-[48px] overflow-hidden">
@@ -1262,8 +1275,12 @@ export default function ChatRoomClient() {
                             />
                         </div>
                         <button
-                            type="submit"
+                            type="button"
                             disabled={!newMessage.trim()}
+                            onPointerDown={(e) => {
+                                e.preventDefault(); // Prevents input from losing focus
+                                if (newMessage.trim()) handleSend(e);
+                            }}
                             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${newMessage.trim()
                                 ? 'bg-electric-violet text-white shadow-lg shadow-electric-violet/40 scale-100 rotate-0'
                                 : 'bg-white/10 text-slate-600 scale-90 -rotate-12'
@@ -1271,7 +1288,7 @@ export default function ChatRoomClient() {
                         >
                             <Send size={20} className={newMessage.trim() ? "translate-x-0.5" : ""} />
                         </button>
-                    </form>
+                    </div>
                 )}
             </div>
 

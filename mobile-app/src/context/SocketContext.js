@@ -188,8 +188,8 @@ export function SocketProvider({ children }) {
                             onClick={() => {
                                 stopAlertSound();
                                 setIncomingSession(null);
-                                if (incomingSession.sessionType === 'audio' || incomingSession.sessionType === 'call') {
-                                    router.push(`/call/room?id=${incomingSession.roomId}`);
+                                if (incomingSession.sessionType === 'audio' || incomingSession.sessionType === 'call' || incomingSession.sessionType === 'voice') {
+                                    window.dispatchEvent(new CustomEvent('start-global-call', { detail: { roomId: incomingSession.roomId } }));
                                 } else {
                                     router.push(`/chat/room?id=${incomingSession.roomId}`);
                                 }

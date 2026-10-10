@@ -125,7 +125,7 @@ export default function SessionBanner() {
                         }
 
                         if (['audio', 'call', 'voice'].includes(activeSession.sessionType)) {
-                            router.push(`/call/room?id=${activeSession.roomId}`);
+                            window.dispatchEvent(new CustomEvent('start-global-call', { detail: { roomId: activeSession.roomId } }));
                         } else {
                             router.push(`/chat/room?id=${activeSession.roomId}`);
                         }

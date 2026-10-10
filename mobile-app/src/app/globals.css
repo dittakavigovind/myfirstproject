@@ -18,6 +18,11 @@
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+html, body {
+  overscroll-behavior-y: none;
+  height: 100%;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
@@ -27,7 +32,7 @@ body {
   /* Subtle stars/noise overlay could go here, but simple background for now */
   background-image: radial-gradient(circle at 50% 0%, #1a1b41 0%, #0b1026 50%);
   background-attachment: fixed;
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
   width: 100%;
 }

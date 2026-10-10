@@ -69,8 +69,8 @@ export function useConsultation() {
             const { data } = await api.post("/chat/start-paid", { astrologerId, sessionType: 'audio' });
 
             if (data.success) {
-                // 3. Redirect to call room
-                router.push(`/call/room?id=${data.roomId}`);
+                // 3. Dispatch event to open global call room
+                window.dispatchEvent(new CustomEvent('start-global-call', { detail: { roomId: data.roomId } }));
             } else {
                 setError(data.message || "Failed to start call.");
             }

@@ -237,8 +237,15 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     useEffect(() => {
         if (!socket || !roomId || !user) return;
 
-        socket.emit("join_chat_session", { roomId, userId: user._id, role: user.role });
+        const joinRoom = () => {
+            if (socket.connected) {
+                socket.emit("join_chat_session", { roomId, userId: user._id, role: user.role });
+            }
+        };
 
+        joinRoom();
+        socket.on('connect', joinRoom);
+        
         // Timer/Status handlers
         const handleSessionEnded = (data) => {
             setIsReadOnly(true);
@@ -290,6 +297,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
         socket.on("low_balance_warning", handleLowBalanceWarning);
 
         return () => {
+            socket.off('connect', joinRoom);
             socket.off("session_ended", handleSessionEnded);
             socket.off("session_started", handleSessionStarted);
             socket.off("timer_update", handleTimerUpdate);
@@ -389,23 +397,33 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     return (
         <div className="fixed inset-0 bg-slate-900 flex flex-col z-[100] text-white">
-            {/* Top Bar for Minimize */}
-            {onMinimize && (
-                <button 
-                    onClick={onMinimize} 
-                    className="absolute top-[env(safe-area-inset-top,20px)] left-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center z-[999] backdrop-blur-md active:scale-95"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
-                </button>
-            )}
-            
-            {/* Top Bar for Astrologer Tools */}
-            {user?.role === 'astrologer' && (
-                <div
-                    className="absolute left-0 right-0 w-full flex justify-center z-[999] pointer-events-none"
-                    style={{ top: 'calc(var(--safe-area-inset-top, 0px) + 0.75rem)' }}
-                >
-                    <div className="flex gap-2 pointer-events-auto -translate-x-6">
+            {/* Top Header Bar */}
+            <div className="absolute top-[env(safe-area-inset-top,20px)] left-0 right-0 px-4 flex items-center justify-between z-[999] pointer-events-none">
+                <div className="flex items-center gap-3 pointer-events-auto">
+                    {onMinimize && (
+                        <button 
+                            onClick={onMinimize} 
+                            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md active:scale-95"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+                        </button>
+                    )}
+                    
+                    <div className="flex flex-col">
+                        <h2 className="text-lg font-bold leading-tight">
+                            {user?.role === 'astrologer'
+                                ? maskUserName(callData?.userId?.name || 'User')
+                                : (callData?.astrologerId?.displayName || 'Astrologer')}
+                        </h2>
+                        <p className={`text-sm ${sessionActive ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
+                            {sessionActive ? formatTime(duration) : connectionState}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Astrologer Tools */}
+                {user?.role === 'astrologer' && (
+                    <div className="flex gap-2 pointer-events-auto">
                         <button
                             onClick={() => setShowKundli(true)}
                             className="bg-electric-violet/20 border border-electric-violet/30 text-electric-violet w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg active:scale-95 transition-transform"
@@ -419,27 +437,17 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                             <Sparkles size={18} />
                         </button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Header / Info */}
-            <div className="flex-1 flex flex-col items-center justify-center pt-10">
-                <div className="w-32 h-32 rounded-full bg-slate-800 shadow-2xl flex items-center justify-center mb-6 relative overflow-hidden border-4 border-slate-700">
+            <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="w-32 h-32 rounded-full bg-slate-800 shadow-2xl flex items-center justify-center mb-8 relative overflow-hidden border-4 border-slate-700">
                     <img src={partnerImage} alt="Avatar" className="w-full h-full object-cover" />
                     {sessionActive && remoteUserJoined && (
                         <div className="absolute inset-0 border-4 border-emerald-500 rounded-full animate-pulse" />
                     )}
                 </div>
-
-                <h2 className="text-3xl font-bold mb-2 text-center px-4">
-                    {user?.role === 'astrologer'
-                        ? maskUserName(callData?.userId?.name || 'User')
-                        : (callData?.astrologerId?.displayName || 'Astrologer')}
-                </h2>
-
-                <p className={`text-lg mb-8 ${sessionActive ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
-                    {sessionActive ? formatTime(duration) : connectionState}
-                </p>
 
                 {isReadOnly && (
                     <div className="mt-4 px-6 py-2 bg-rose-500/20 text-rose-300 rounded-full flex items-center gap-2">

@@ -231,7 +231,7 @@ export default function UserKundliModal({ isOpen, onClose, chatUser, onShareChar
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-2 pb-20">
+                <div className="flex-1 overflow-y-auto overscroll-y-none p-2 pb-20">
                     {isEditing ? (
                         <form onSubmit={handleUpdate} className="space-y-4">
                             <div className="glass-panel p-4 rounded-2xl border-white/10">
