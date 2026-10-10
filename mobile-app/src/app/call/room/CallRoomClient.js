@@ -128,13 +128,19 @@ export default function CallRoomClient() {
 
             try {
                 if (typeof window !== 'undefined' && window.Capacitor) {
-                    await BackgroundMode.enable();
-                    await BackgroundMode.setSettings({
+                    await BackgroundMode.enable({
                         title: "Active Consultation",
                         text: "Call in progress...",
                         resume: true,
-                        hidden: false
+                        hidden: false,
+                        disableWebViewOptimization: true,
+                        allowMicrophoneInBackground: true
                     });
+                    
+                    // Crucial for WebRTC audio to continue while app is minimized
+                    if (BackgroundMode.disableWebViewOptimizations) {
+                        await BackgroundMode.disableWebViewOptimizations();
+                    }
                 }
             } catch (e) {
                 console.error("Background mode error", e);
