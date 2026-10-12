@@ -125,7 +125,7 @@ export default function SinglePostSidebar({ currentPostId, currentCategory }) {
                 <div className="ml-6 pl-6 pt-2 mb-4 border-l border-dotted border-gray-300">
                     <div className="flex flex-col gap-3">
                         {categories.map(cat => (
-                            <Link key={cat._id} href={`/blog/category?category=${cat.slug}`} className="flex items-center gap-3 text-gray-600 hover:text-astro-maroon transition-colors group">
+                            <Link key={cat._id} href={`/blog?category=${cat.slug}`} className="flex items-center gap-3 text-gray-600 hover:text-astro-maroon transition-colors group">
                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-astro-maroon transition-colors"></span>
                                 <span className="text-sm font-medium uppercase tracking-wide">{cat.name}</span>
                             </Link>

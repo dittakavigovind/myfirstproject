@@ -7,7 +7,7 @@ export const dynamicParams = false;
 // This function is required for static export to know which paths to generate
 export async function generateStaticParams() {
     try {
-        const res = await fetch(`${API_BASE}/blog/posts?status=published`, { next: { revalidate: 3600 } });
+        const res = await fetch(`${API_BASE}/blog/posts?status=published&limit=all`, { next: { revalidate: 3600 } });
         const data = await res.json();
 
         if (data.success && data.data && data.data.length > 0) {

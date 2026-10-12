@@ -6,6 +6,7 @@ import { resolveImageUrl } from '@/lib/urlHelper';
 import SinglePostSidebar from '@/components/blog/SinglePostSidebar';
 import FAQDisplay from '@/components/FAQDisplay';
 import Breadcrumbs from '@/components/common/Breadcrumbs';
+import ToTopButton from '@/components/common/ToTopButton';
 import { FaWhatsapp, FaTwitter, FaLinkedinIn, FaFacebookF, FaTumblr } from 'react-icons/fa';
 
 export default function BlogPostClient({ post: initialPost, slug: propSlug }) {
@@ -150,6 +151,7 @@ export default function BlogPostClient({ post: initialPost, slug: propSlug }) {
 
                 </div>
             </div>
+            <ToTopButton />
         </div>
     );
 }

@@ -7,6 +7,9 @@ import { ArrowLeft, Calendar, User, Share2 } from "lucide-react";
 import CosmicCard from "@/components/CosmicCard";
 
 
+import { cleanBlogContent } from "@/lib/blogHelper";
+import ToTopButton from "@/components/ToTopButton";
+
 export default function BlogDetail({ params }) {
     const { slug } = use(params);
     const router = useRouter();
@@ -101,13 +104,12 @@ export default function BlogDetail({ params }) {
 
                     {/* Main Content */}
                     <div 
-                        className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed space-y-4
-                            prose-headings:text-white prose-headings:font-black prose-a:text-electric-violet
-                            prose-img:rounded-3xl prose-strong:text-white"
-                        dangerouslySetInnerHTML={{ __html: blog.content }}
+                        className="blog-content-rendered text-slate-200 leading-relaxed space-y-4"
+                        dangerouslySetInnerHTML={{ __html: cleanBlogContent(blog.content) }}
                     />
                 </CosmicCard>
             </div>
+            <ToTopButton bottomClass="bottom-24" />
         </div>
     );
 }

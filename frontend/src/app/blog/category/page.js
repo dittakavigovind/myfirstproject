@@ -1,95 +1,36 @@
 "use client";
 
-import { useEffect, useState, Suspense } from 'react';
-import API from '@/lib/api';
-import { useSearchParams } from 'next/navigation';
-import BlogSidebar from '../../../components/blog/BlogSidebar';
-import BlogCard from '../../../components/blog/BlogCard';
-import Breadcrumbs from '../../../components/common/Breadcrumbs';
+import { useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+function CategoryRedirect() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const categoryQuery = searchParams.get('category');
+    const pageQuery = searchParams.get('page');
+
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (categoryQuery) params.set('category', categoryQuery);
+        if (pageQuery) params.set('page', pageQuery);
+        const qs = params.toString();
+        router.replace(qs ? `/blog?${qs}` : '/blog');
+    }, [categoryQuery, pageQuery, router]);
+
+    return (
+        <div className="bg-slate-50 min-h-screen flex items-center justify-center">
+            <div className="text-center">
+                <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Loading Category...</p>
+            </div>
+        </div>
+    );
+}
 
 export default function CategoryStatsWrapper() {
     return (
-        <Suspense fallback={<div className="bg-gray-50 min-h-screen"></div>}>
-            <CategoryStats />
+        <Suspense fallback={<div className="bg-slate-50 min-h-screen"></div>}>
+            <CategoryRedirect />
         </Suspense>
-    )
-}
-
-function CategoryStats() {
-    const searchParams = useSearchParams();
-    const categoryQuery = searchParams.get('category'); // { category }
-    const [posts, setPosts] = useState([]);
-    const [categories, setCategories] = useState([]); // Need categories for sidebar
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!categoryQuery) return;
-
-            try {
-                const [postRes, catRes] = await Promise.all([
-                    API.get(`/blog/posts?category=${categoryQuery}&status=published`),
-                    API.get('/blog/categories')
-                ]);
-                setPosts(postRes.data.data);
-                setCategories(catRes.data.data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [categoryQuery]);
-
-    // Helper to get current category name
-    const currentCategoryName = categories.find(c => c.slug === categoryQuery)?.name || 'Category';
-
-    return (
-        <div className="bg-gray-50 min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
-
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar */}
-                    <BlogSidebar categories={categories} />
-
-                    {/* Main Content */}
-                    <div className="w-full lg:w-3/4">
-                        <Breadcrumbs
-                            items={[
-                                { label: 'Blog', href: '/blog' },
-                                { label: currentCategoryName }
-                            ]}
-                        />
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-gray-900">{currentCategoryName}</h1>
-                            <p className="text-gray-500 text-sm">Browsing articles in {currentCategoryName}</p>
-                        </div>
-
-                        {loading ? (
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="bg-gray-200 h-80 rounded-xl"></div>
-                                ))}
-                            </div>
-                        ) : (
-                            <>
-                                {posts.length > 0 ? (
-                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {posts.map(post => (
-                                            <BlogCard key={post._id} post={post} />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="bg-white p-12 text-center rounded-xl text-gray-400">
-                                        No posts found in this category.
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
     );
 }

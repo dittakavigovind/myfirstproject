@@ -6,6 +6,9 @@ import api from "@/lib/api";
 import { ArrowLeft, Calendar, User, Share2, Sparkles } from "lucide-react";
 import CosmicCard from "@/components/CosmicCard";
 
+import { cleanBlogContent } from "@/lib/blogHelper";
+import ToTopButton from "@/components/ToTopButton";
+
 function BlogDetailContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -126,17 +129,12 @@ function BlogDetailContent() {
 
                     {/* Main Content */}
                     <div 
-                        className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed space-y-4 prose-headings:text-white prose-headings:font-black prose-a:text-electric-violet prose-img:rounded-3xl prose-strong:text-white blog-content-rendered"
-                        dangerouslySetInnerHTML={{ __html: blog.content }}
+                        className="blog-content-rendered text-slate-200 leading-relaxed space-y-4"
+                        dangerouslySetInnerHTML={{ __html: cleanBlogContent(blog.content) }}
                     />
                 </CosmicCard>
             </div>
-
-            <style jsx global>{`
-                .blog-content-rendered p { margin-bottom: 1.5rem; }
-                .blog-content-rendered h2, .blog-content-rendered h3 { margin-top: 2rem; margin-bottom: 1rem; color: white; font-weight: 800; }
-                .blog-content-rendered img { border-radius: 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; }
-            `}</style>
+            <ToTopButton bottomClass="bottom-24" />
         </div>
     );
 }

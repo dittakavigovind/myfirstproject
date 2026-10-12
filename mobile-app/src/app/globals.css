@@ -112,3 +112,150 @@ html.light .header-scrolled {
   border-bottom-color: rgba(0, 0, 0, 0.1) !important;
 }
 
+/* ========================================================
+   BLOG CONTENT TYPOGRAPHY FOR MOBILE APP
+   Ensures crystal-clear readability on cosmic dark theme
+   ======================================================== */
+.blog-content-rendered,
+.blog-content-rendered * {
+  color: #e2e8f0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.blog-content-rendered h1,
+.blog-content-rendered h1 *,
+.blog-content-rendered h2,
+.blog-content-rendered h2 *,
+.blog-content-rendered h3,
+.blog-content-rendered h3 *,
+.blog-content-rendered h4,
+.blog-content-rendered h4 *,
+.blog-content-rendered h5,
+.blog-content-rendered h5 *,
+.blog-content-rendered h6,
+.blog-content-rendered h6 * {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.blog-content-rendered h1 { font-size: 1.5rem !important; }
+.blog-content-rendered h2 { font-size: 1.3rem !important; }
+.blog-content-rendered h3 { font-size: 1.15rem !important; }
+
+.blog-content-rendered p,
+.blog-content-rendered div,
+.blog-content-rendered section {
+  color: #e2e8f0 !important;
+  line-height: 1.8 !important;
+}
+
+.blog-content-rendered p {
+  margin-bottom: 1.25rem !important;
+}
+
+.blog-content-rendered [class*="uppercase"] {
+  color: #fcd34d !important;
+  font-weight: 700 !important;
+}
+
+.blog-content-rendered strong,
+.blog-content-rendered strong *,
+.blog-content-rendered b,
+.blog-content-rendered b * {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.blog-content-rendered a,
+.blog-content-rendered a * {
+  color: #a78bfa !important;
+  text-decoration: underline !important;
+  font-weight: 600 !important;
+}
+
+.blog-content-rendered ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 1rem 0 1.25rem 0 !important;
+}
+
+.blog-content-rendered ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 1rem 0 1.25rem 0 !important;
+}
+
+.blog-content-rendered li,
+.blog-content-rendered li * {
+  color: #cbd5e1 !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.6 !important;
+}
+
+.blog-content-rendered blockquote {
+  border-left: 4px solid #8b5cf6 !important;
+  padding-left: 1rem !important;
+  margin: 1.5rem 0 !important;
+  color: #cbd5e1 !important;
+  font-style: italic !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+.blog-content-rendered img {
+  border-radius: 1.25rem !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 1.5rem auto !important;
+  display: block !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.blog-content-rendered table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1.5rem 0 !important;
+}
+
+.blog-content-rendered th,
+.blog-content-rendered td {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 0.75rem !important;
+  color: #e2e8f0 !important;
+}
+
+.blog-content-rendered th {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Light Theme Overrides */
+html.light .blog-content-rendered,
+html.light .blog-content-rendered * {
+  color: #1e293b !important;
+}
+
+html.light .blog-content-rendered h1,
+html.light .blog-content-rendered h1 *,
+html.light .blog-content-rendered h2,
+html.light .blog-content-rendered h2 *,
+html.light .blog-content-rendered h3,
+html.light .blog-content-rendered h3 *,
+html.light .blog-content-rendered strong,
+html.light .blog-content-rendered strong * {
+  color: #0f172a !important;
+}
+
+html.light .blog-content-rendered p,
+html.light .blog-content-rendered div,
+html.light .blog-content-rendered li {
+  color: #334155 !important;
+}
+

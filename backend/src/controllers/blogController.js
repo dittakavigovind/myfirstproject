@@ -82,14 +82,11 @@ exports.deleteCategory = async (req, res) => {
 // @desc    Get all posts (Pagination + Filtering)
 // @route   GET /api/blog/posts
 // @access  Public
-// @desc    Get all posts (Pagination + Filtering)
-// @route   GET /api/blog/posts
-// @access  Public
 exports.getPosts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
+        const limit = req.query.limit === 'all' ? 0 : (parseInt(req.query.limit) || 9);
+        const skip = limit > 0 ? (page - 1) * limit : 0;
 
         let query = { status: 'published' };
         let sort = { createdAt: -1 };
@@ -130,11 +127,12 @@ exports.getPosts = async (req, res) => {
             }
         }
 
-        const posts = await BlogPost.find(query)
-            .sort(sort)
-            .skip(skip)
-            .limit(limit);
+        let queryBuilder = BlogPost.find(query).sort(sort);
+        if (limit > 0) {
+            queryBuilder = queryBuilder.skip(skip).limit(limit);
+        }
 
+        const posts = await queryBuilder;
         const total = await BlogPost.countDocuments(query);
 
         res.json({
@@ -142,7 +140,7 @@ exports.getPosts = async (req, res) => {
             count: posts.length,
             total,
             page,
-            pages: Math.ceil(total / limit),
+            pages: limit > 0 ? Math.ceil(total / limit) : 1,
             data: posts
         });
     } catch (error) {
