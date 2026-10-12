@@ -5,7 +5,7 @@ const http = require('http');
 const { execSync } = require('child_process');
 
 // Configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.way2astro.com/api';
 const ASSETS_DIR = path.join(__dirname, '../assets');
 
 // Ensure assets directory exists
