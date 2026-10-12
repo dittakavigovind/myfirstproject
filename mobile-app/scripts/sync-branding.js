@@ -96,12 +96,40 @@ const syncBranding = async () => {
             });
             console.log("Native assets generated successfully!");
             
-            // Automatically patch Android 12 splash screen to use the square image (anti-squeezing fix)
+            // Automatically patch Android 12 splash screen with optimized 512x512 square image
             const sourceSplash = path.join(ASSETS_DIR, 'splash.png');
             const destSplash = path.join(__dirname, '../android/app/src/main/res/drawable/splash_icon.png');
             if (fs.existsSync(sourceSplash) && fs.existsSync(path.dirname(destSplash))) {
-                fs.copyFileSync(sourceSplash, destSplash);
-                console.log("Applied Android 12 anti-squeezing splash fix.");
+                try {
+                    const sharp = require('sharp');
+                    const splashBuffer = await sharp(sourceSplash)
+                        .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+                        .png({ compressionLevel: 9, effort: 7 })
+                        .toBuffer();
+                    fs.writeFileSync(destSplash, splashBuffer);
+                    console.log(`Applied optimized Android 12 splash icon (512x512, ${(splashBuffer.length / 1024).toFixed(1)} KB).`);
+
+                    // Compress all generated splash.png files in drawable folders to minimize APK/AAB size
+                    console.log("Optimizing generated native splash drawables...");
+                    const resDir = path.join(__dirname, '../android/app/src/main/res');
+                    const drawableDirs = fs.readdirSync(resDir).filter(d => d.startsWith('drawable'));
+                    for (const d of drawableDirs) {
+                        const targetSplash = path.join(resDir, d, 'splash.png');
+                        if (fs.existsSync(targetSplash)) {
+                            const originalSize = fs.statSync(targetSplash).size;
+                            if (originalSize > 200 * 1024) {
+                                const optimizedBuf = await sharp(targetSplash)
+                                    .png({ compressionLevel: 9, effort: 7 })
+                                    .toBuffer();
+                                fs.writeFileSync(targetSplash, optimizedBuf);
+                                console.log(`  Compressed ${d}/splash.png: ${(originalSize / 1024).toFixed(0)} KB -> ${(optimizedBuf.length / 1024).toFixed(0)} KB`);
+                            }
+                        }
+                    }
+                } catch (sharpErr) {
+                    console.warn("Sharp optimization failed, falling back to copy:", sharpErr.message);
+                    fs.copyFileSync(sourceSplash, destSplash);
+                }
             }
         } else {
             console.log("No branding URLs configured in the dashboard. Nothing to sync.");
