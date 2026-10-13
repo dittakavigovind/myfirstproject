@@ -3,14 +3,65 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { Search, Loader2, Save, X, Edit, Percent, Heart, PhoneOff, Pin } from 'lucide-react';
+import { Search, Loader2, Save, X, Edit, Percent, Heart, PhoneOff, Pin, LogIn, Clock, ArrowUpDown, Phone, Mail } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { SERVER_BASE } from '../../../lib/urlHelper';
+
+export const formatLastLogin = (dateString) => {
+    if (!dateString) return { hasLogin: false, formatted: 'Never', relative: '', full: '' };
+    const date = new Date(dateString);
+    if (isNaN(date.getTime()) || date.getTime() === 0) return { hasLogin: false, formatted: 'Never', relative: '', full: '' };
+
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    let relative = '';
+    if (diffMs < 0 || diffMins < 1) relative = 'Just now';
+    else if (diffMins < 60) relative = `${diffMins}m ago`;
+    else if (diffHours < 24) relative = `${diffHours}h ago`;
+    else if (diffDays === 1) relative = 'Yesterday';
+    else if (diffDays < 30) relative = `${diffDays}d ago`;
+    else if (diffDays < 365) relative = `${Math.floor(diffDays / 30)}mo ago`;
+    else relative = `${Math.floor(diffDays / 365)}y ago`;
+
+    const shortDate = date.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+
+    const timeStr = date.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+
+    const full = date.toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+
+    return {
+        hasLogin: true,
+        formatted: `${shortDate}, ${timeStr}`,
+        relative,
+        full
+    };
+};
 
 export default function MobileAstroDashboard() {
     const [astros, setAstros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [sortBy, setSortBy] = useState('default');
 
     const [editingAstro, setEditingAstro] = useState(null);
     const [editForm, setEditForm] = useState({ commissionRate: 20, features: { chatEnabled: true, voiceEnabled: true, videoEnabled: true }, tdsPercentage: 10, pgPercentage: 2.5 });
@@ -130,21 +181,115 @@ export default function MobileAstroDashboard() {
         setSaving(false);
     };
 
-    const searchLower = search.toLowerCase();
+    const searchLower = search.toLowerCase().trim();
     const filtered = astros.filter(a => {
+        // Status filter shortcuts
+        if (searchLower === 'online') return a.isOnline;
+        if (searchLower === 'offline') return !a.isOnline;
+        if (searchLower === 'chat') return a.isChatOnline;
+        if (searchLower === 'call') return a.isVoiceOnline;
+        if (searchLower === 'video') return a.isVideoOnline;
+        if (searchLower === 'recent-online' || searchLower === 'recent online') {
+            if (a.isOnline) return true;
+            const time = a.lastOnlineAt || a.userId?.lastOnlineAt;
+            if (!time) return false;
+            const diffHours = (Date.now() - new Date(time).getTime()) / (1000 * 60 * 60);
+            return diffHours <= 48; // Online in last 48 hours
+        }
+
+        // Text search across identity fields
         if ((a.displayName || a.name || '').toLowerCase().includes(searchLower)) return true;
+        if ((a.userId?.name || '').toLowerCase().includes(searchLower)) return true;
+        if ((a.userId?.phone || '').toLowerCase().includes(searchLower)) return true;
+        if ((a.userId?.email || '').toLowerCase().includes(searchLower)) return true;
         if ((a._id || '').toLowerCase().includes(searchLower)) return true;
         if ((a.userId?._id || a.userId || '').toLowerCase().includes(searchLower)) return true;
-        if (searchLower === 'online' && a.isOnline) return true;
-        if (searchLower === 'offline' && !a.isOnline) return true;
-        if (searchLower === 'chat' && a.isChatOnline) return true;
-        if (searchLower === 'call' && a.isVoiceOnline) return true;
-        if (searchLower === 'video' && a.isVideoOnline) return true;
         return false;
+    });
+
+    const sortedAstros = [...filtered].sort((a, b) => {
+        // 1. Recent Online: Recent to Past (Newest First)
+        if (sortBy === 'online_recent_to_past' || sortBy === 'recent_online') {
+            const getOnlineScore = (astro) => {
+                if (astro.isOnline) return Date.now() + 10000000; // Live online right now is highest priority
+                const d = astro.lastOnlineAt || astro.userId?.lastOnlineAt;
+                return d ? new Date(d).getTime() : 0;
+            };
+            return getOnlineScore(b) - getOnlineScore(a);
+        }
+
+        // 2. Recent Online: Past to Recent (Oldest First)
+        if (sortBy === 'online_past_to_recent' || sortBy === 'oldest_online') {
+            const getOnlineScore = (astro) => {
+                if (astro.isOnline) return Date.now() + 10000000;
+                const d = astro.lastOnlineAt || astro.userId?.lastOnlineAt;
+                return d ? new Date(d).getTime() : 0;
+            };
+            return getOnlineScore(a) - getOnlineScore(b);
+        }
+
+        // 3. Last Login: Recent to Past (Newest First / High to Low)
+        if (sortBy === 'login_recent_to_past' || sortBy === 'recent_login') {
+            const timeA = new Date(a.lastLogin || a.userId?.lastLogin || 0).getTime();
+            const timeB = new Date(b.lastLogin || b.userId?.lastLogin || 0).getTime();
+            return timeB - timeA;
+        }
+
+        // 4. Last Login: Past to Recent (Oldest First / Low to High)
+        if (sortBy === 'login_past_to_recent' || sortBy === 'oldest_login') {
+            const timeA = new Date(a.lastLogin || a.userId?.lastLogin || 0).getTime();
+            const timeB = new Date(b.lastLogin || b.userId?.lastLogin || 0).getTime();
+            return timeA - timeB;
+        }
+
+        // 5. Followers: High to Low
+        if (sortBy === 'followers_desc' || sortBy === 'followers') {
+            const countA = (a.followersCount || 0) + (a.fakeFollowers || 0);
+            const countB = (b.followersCount || 0) + (b.fakeFollowers || 0);
+            return countB - countA;
+        }
+
+        // 6. Followers: Low to High
+        if (sortBy === 'followers_asc') {
+            const countA = (a.followersCount || 0) + (a.fakeFollowers || 0);
+            const countB = (b.followersCount || 0) + (b.fakeFollowers || 0);
+            return countA - countB;
+        }
+
+        // 7. Pricing: High to Low
+        if (sortBy === 'pricing_desc') {
+            const priceA = a.charges?.callPerMinute || a.charges?.chatPerMinute || 0;
+            const priceB = b.charges?.callPerMinute || b.charges?.chatPerMinute || 0;
+            return priceB - priceA;
+        }
+
+        // 8. Pricing: Low to High
+        if (sortBy === 'pricing_asc') {
+            const priceA = a.charges?.callPerMinute || a.charges?.chatPerMinute || 0;
+            const priceB = b.charges?.callPerMinute || b.charges?.chatPerMinute || 0;
+            return priceA - priceB;
+        }
+
+        // 9. Name: A to Z
+        if (sortBy === 'name_asc') {
+            return (a.displayName || a.name || '').localeCompare(b.displayName || b.name || '');
+        }
+
+        // Default: Pinned first, then pinOrder
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        if (a.isPinned && b.isPinned) return (a.pinOrder || 0) - (b.pinOrder || 0);
+        return 0;
     });
 
     const totalAstros = astros.length;
     const onlineAstros = astros.filter(a => a.isOnline).length;
+    const recentOnlineAstros = astros.filter(a => {
+        if (a.isOnline) return true;
+        const time = a.lastOnlineAt || a.userId?.lastOnlineAt;
+        if (!time) return false;
+        const diffHours = (Date.now() - new Date(time).getTime()) / (1000 * 60 * 60);
+        return diffHours <= 48;
+    }).length;
     const offlineAstros = totalAstros - onlineAstros;
     const chatOnline = astros.filter(a => a.isChatOnline).length;
     const callOnline = astros.filter(a => a.isVoiceOnline).length;
@@ -161,17 +306,17 @@ export default function MobileAstroDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-2">
                 <div 
                     onClick={() => setSearch('')}
-                    className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-slate-800 transition"
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-slate-800 transition ${!search ? 'border-emerald-500/50 bg-slate-800/60 ring-1 ring-emerald-500/30' : 'border-slate-800'}`}
                 >
                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Nodes</p>
                     <p className="text-2xl font-bold text-white mt-1">{totalAstros}</p>
                 </div>
                 <div 
                     onClick={() => setSearch('online')}
-                    className="bg-slate-900 border border-emerald-500/30 p-4 rounded-2xl shadow-lg relative overflow-hidden cursor-pointer hover:bg-emerald-900/20 transition"
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg relative overflow-hidden cursor-pointer hover:bg-emerald-900/20 transition ${search === 'online' ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-950/20' : 'border-emerald-500/30'}`}
                 >
                     <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full"></div>
                     <p className="text-xs text-emerald-400 font-medium uppercase tracking-wider flex items-center gap-1.5">
@@ -180,8 +325,21 @@ export default function MobileAstroDashboard() {
                     <p className="text-2xl font-bold text-white mt-1">{onlineAstros}</p>
                 </div>
                 <div 
+                    onClick={() => {
+                        setSearch('recent-online');
+                        setSortBy('online_recent_to_past');
+                    }}
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg relative overflow-hidden cursor-pointer hover:bg-cyan-900/20 transition ${search === 'recent-online' ? 'border-cyan-500 ring-1 ring-cyan-500 bg-cyan-950/20' : 'border-cyan-500/30'}`}
+                >
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-500/10 rounded-bl-full"></div>
+                    <p className="text-xs text-cyan-400 font-medium uppercase tracking-wider flex items-center gap-1.5">
+                        <Clock size={12} className="text-cyan-400" /> Recent Online
+                    </p>
+                    <p className="text-2xl font-bold text-white mt-1">{recentOnlineAstros}</p>
+                </div>
+                <div 
                     onClick={() => setSearch('offline')}
-                    className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-slate-800 transition"
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-slate-800 transition ${search === 'offline' ? 'border-slate-500 ring-1 ring-slate-500 bg-slate-800/40' : 'border-slate-800'}`}
                 >
                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wider flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-slate-600"></span> Offline
@@ -190,36 +348,91 @@ export default function MobileAstroDashboard() {
                 </div>
                 <div 
                     onClick={() => setSearch('chat')}
-                    className="bg-slate-900 border border-blue-500/20 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-blue-900/20 transition"
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-blue-900/20 transition ${search === 'chat' ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-950/20' : 'border-blue-500/20'}`}
                 >
                     <p className="text-xs text-blue-400 font-medium uppercase tracking-wider">Chat</p>
                     <p className="text-2xl font-bold text-white mt-1">{chatOnline}</p>
                 </div>
                 <div 
                     onClick={() => setSearch('call')}
-                    className="bg-slate-900 border border-amber-500/20 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-amber-900/20 transition"
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-amber-900/20 transition ${search === 'call' ? 'border-amber-500 ring-1 ring-amber-500 bg-amber-950/20' : 'border-amber-500/20'}`}
                 >
                     <p className="text-xs text-amber-400 font-medium uppercase tracking-wider">Call</p>
                     <p className="text-2xl font-bold text-white mt-1">{callOnline}</p>
                 </div>
                 <div 
                     onClick={() => setSearch('video')}
-                    className="bg-slate-900 border border-violet-500/20 p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-violet-900/20 transition"
+                    className={`bg-slate-900 border p-4 rounded-2xl shadow-lg cursor-pointer hover:bg-violet-900/20 transition ${search === 'video' ? 'border-violet-500 ring-1 ring-violet-500 bg-violet-950/20' : 'border-violet-500/20'}`}
                 >
                     <p className="text-xs text-violet-400 font-medium uppercase tracking-wider">Video</p>
                     <p className="text-2xl font-bold text-white mt-1">{videoOnline}</p>
                 </div>
             </div>
 
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-                <input
-                    type="text"
-                    placeholder="Search by Name, SYS_ID, or Status (online, offline, chat, call, video)..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50"
-                />
+            <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search by Name, Original Name, Phone, Email, SYS_ID, or Status..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500/50 text-sm"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 shrink-0">
+                        <ArrowUpDown size={16} className="text-emerald-400" />
+                        <span className="text-xs text-slate-400 font-bold uppercase whitespace-nowrap">Sort:</span>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+                        >
+                            <option value="default" className="bg-slate-900">📌 Default (Pinned First)</option>
+                            <option value="online_recent_to_past" className="bg-slate-900">📡 Recent Online: Recent to Past (Newest First)</option>
+                            <option value="online_past_to_recent" className="bg-slate-900">⏳ Recent Online: Past to Recent (Oldest First)</option>
+                            <option value="login_recent_to_past" className="bg-slate-900">🔑 Last Login: Recent to Past (Newest First)</option>
+                            <option value="login_past_to_recent" className="bg-slate-900">⏳ Last Login: Past to Recent (Oldest First)</option>
+                            <option value="followers_desc" className="bg-slate-900">❤️ Followers: High to Low</option>
+                            <option value="followers_asc" className="bg-slate-900">🤍 Followers: Low to High</option>
+                            <option value="pricing_desc" className="bg-slate-900">💰 Pricing: High to Low</option>
+                            <option value="pricing_asc" className="bg-slate-900">🏷️ Pricing: Low to High</option>
+                            <option value="name_asc" className="bg-slate-900">🔤 Name (A - Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                    <span className="text-slate-500 font-semibold uppercase text-[10px] tracking-wider">Quick Filter:</span>
+                    <button 
+                        onClick={() => setSearch('')}
+                        className={`px-3 py-1 rounded-lg font-medium transition ${!search ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`}
+                    >
+                        All ({totalAstros})
+                    </button>
+                    <button 
+                        onClick={() => setSearch('online')}
+                        className={`px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 ${search === 'online' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`}
+                    >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online ({onlineAstros})
+                    </button>
+                    <button 
+                        onClick={() => {
+                            setSearch('recent-online');
+                            setSortBy('online_recent_to_past');
+                        }}
+                        className={`px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 ${search === 'recent-online' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`}
+                    >
+                        <Clock size={12} className="text-cyan-400" /> Recent Online (48h) ({recentOnlineAstros})
+                    </button>
+                    <button 
+                        onClick={() => setSearch('offline')}
+                        className={`px-3 py-1 rounded-lg font-medium transition ${search === 'offline' ? 'bg-slate-800 text-slate-200 border border-slate-600' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'}`}
+                    >
+                        Offline ({offlineAstros})
+                    </button>
+                </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
@@ -234,12 +447,12 @@ export default function MobileAstroDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
-                            {filtered.length === 0 && (
+                            {sortedAstros.length === 0 && (
                                 <tr>
                                     <td colSpan="4" className="p-8 text-center text-slate-500">No astrologers found matching search signature.</td>
                                 </tr>
                             )}
-                            {filtered.map(astro => (
+                            {sortedAstros.map(astro => (
                                 <tr key={astro._id} className="hover:bg-slate-800/30 transition text-slate-300">
                                     <td className="p-5">
                                         <div className="flex items-center gap-4">
@@ -280,7 +493,7 @@ export default function MobileAstroDashboard() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2 mt-2">
+                                                <div className="flex flex-wrap items-center gap-2 mt-2">
                                                     <div className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${astro.isOnline ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-500 border-slate-700'}`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full ${astro.isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
                                                         {astro.isOnline ? 'ONLINE' : 'OFFLINE'}
@@ -292,6 +505,40 @@ export default function MobileAstroDashboard() {
                                                             {astro.isVideoOnline && <span className="bg-violet-500/20 text-violet-400 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Video</span>}
                                                         </div>
                                                     )}
+
+                                                    {/* Last Login Badge */}
+                                                    {(() => {
+                                                        const loginInfo = formatLastLogin(astro.lastLogin || astro.userId?.lastLogin);
+                                                        const onlineInfo = formatLastLogin(astro.lastOnlineAt || astro.userId?.lastOnlineAt);
+                                                        return (
+                                                            <>
+                                                                <div 
+                                                                    className="inline-flex items-center gap-1.5 text-[11px] bg-slate-800/90 hover:bg-slate-800 px-2.5 py-0.5 rounded-md border border-slate-700/80 transition cursor-help"
+                                                                    title={loginInfo.full ? `Last Login: ${loginInfo.full}` : 'No login history found'}
+                                                                >
+                                                                    <LogIn size={11} className={loginInfo.hasLogin ? "text-cyan-400" : "text-slate-500"} />
+                                                                    <span className="text-slate-400 text-[10px] uppercase font-semibold">Last Login:</span>
+                                                                    <span className={loginInfo.hasLogin ? "text-slate-200 font-medium" : "text-slate-500 italic"}>
+                                                                        {loginInfo.formatted}
+                                                                    </span>
+                                                                    {loginInfo.relative && (
+                                                                        <span className="text-[10px] text-cyan-400/90 font-mono font-medium">({loginInfo.relative})</span>
+                                                                    )}
+                                                                </div>
+
+                                                                {!astro.isOnline && onlineInfo.hasLogin && (
+                                                                    <div 
+                                                                        className="inline-flex items-center gap-1 text-[10px] bg-slate-800/50 hover:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700/50 text-slate-400 transition cursor-help"
+                                                                        title={`Last Online: ${onlineInfo.full}`}
+                                                                    >
+                                                                        <Clock size={10} className="text-amber-400/80" />
+                                                                        <span className="text-slate-500 uppercase font-medium">Online:</span>
+                                                                        <span className="text-slate-300 font-mono">{onlineInfo.relative}</span>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         </div>
@@ -353,6 +600,20 @@ export default function MobileAstroDashboard() {
 
                         <div className="shrink-0 mb-4">
                             <h3 className="text-xl font-bold text-white mb-1 pr-6">{editingAstro.displayName || editingAstro.name}</h3>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mb-2">
+                                {editingAstro.userId?.name && (
+                                    <span>Original: <strong className="text-slate-300">{editingAstro.userId.name}</strong></span>
+                                )}
+                                {(() => {
+                                    const loginInfo = formatLastLogin(editingAstro.lastLogin || editingAstro.userId?.lastLogin);
+                                    return (
+                                        <span className="inline-flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-[11px] text-cyan-300" title={loginInfo.full}>
+                                            <LogIn size={11} className="text-cyan-400" />
+                                            Last Login: {loginInfo.formatted} {loginInfo.relative && `(${loginInfo.relative})`}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
                             <p className="text-slate-400 text-xs">Override the Global Platform Fee specifically for this Astrologer.</p>
                         </div>
 
@@ -813,14 +1074,60 @@ function AstroStatsModal({ astro, onClose }) {
                     <X size={24} />
                 </button>
 
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-baseline gap-4 mb-2">
-                        <h3 className="text-2xl font-bold text-white">{astro.displayName || astro.name}</h3>
-                        {activeTab === 'sessions' && (
-                            <p className="text-slate-400 text-sm">Showing session data for the last 3 months.</p>
-                        )}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                    <div>
+                        <div className="flex items-baseline gap-3 mb-1">
+                            <h3 className="text-2xl font-bold text-white">{astro.displayName || astro.name}</h3>
+                            {astro.userId?.name && (
+                                <span className="text-xs text-slate-400">
+                                    (Original: <strong className="text-slate-300">{astro.userId.name}</strong>)
+                                </span>
+                            )}
+                            {activeTab === 'sessions' && (
+                                <p className="text-slate-500 text-xs hidden sm:inline-block">Showing session data for the last 3 months.</p>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
+                            {astro.userId?.phone && (
+                                <span className="inline-flex items-center gap-1 text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                                    <Phone size={11} className="text-emerald-400" /> {astro.userId.phone}
+                                </span>
+                            )}
+                            {astro.userId?.email && (
+                                <span className="inline-flex items-center gap-1 text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                                    <Mail size={11} className="text-blue-400" /> {astro.userId.email}
+                                </span>
+                            )}
+                            {(() => {
+                                const loginInfo = formatLastLogin(astro.lastLogin || astro.userId?.lastLogin);
+                                return (
+                                    <span 
+                                        className="inline-flex items-center gap-1.5 bg-cyan-950/40 border border-cyan-800/50 text-cyan-300 px-2.5 py-0.5 rounded-full font-medium"
+                                        title={loginInfo.full ? `Last Login: ${loginInfo.full}` : 'No login history found'}
+                                    >
+                                        <LogIn size={11} className="text-cyan-400" />
+                                        <span>Last Login:</span>
+                                        <strong className={loginInfo.hasLogin ? "text-cyan-200" : "text-slate-400"}>{loginInfo.formatted}</strong>
+                                        {loginInfo.relative && <span className="text-[10px] text-cyan-400 font-mono">({loginInfo.relative})</span>}
+                                    </span>
+                                );
+                            })()}
+                            {(() => {
+                                const onlineInfo = formatLastLogin(astro.lastOnlineAt || astro.userId?.lastOnlineAt);
+                                return onlineInfo.hasLogin ? (
+                                    <span 
+                                        className="inline-flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full"
+                                        title={`Last Online: ${onlineInfo.full}`}
+                                    >
+                                        <Clock size={11} className="text-amber-400" />
+                                        <span>Last Online:</span>
+                                        <strong className="text-amber-300">{onlineInfo.relative}</strong>
+                                    </span>
+                                ) : null;
+                            })()}
+                        </div>
                     </div>
-                    <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
+                    <div className="flex bg-slate-800 rounded-lg p-1 gap-1 shrink-0">
                         <button
                             onClick={() => setActiveTab('sessions')}
                             className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${activeTab === 'sessions' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}

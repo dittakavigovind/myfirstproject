@@ -174,8 +174,8 @@ exports.getAstrologers = async (req, res) => {
 
         let astrologers = await Astrologer.find(query)
             .sort({ isPinned: -1, pinOrder: 1 })
-            .populate('userId', 'name role missedSessions tdsPercentage pgPercentage') // Populate name, role, missedSessions, tdsPercentage, pgPercentage from User model
-            .select('userId displayName bio isVerified verificationStatus skills languages charges rating image experienceYears gender gallery isOnline isChatOnline isVoiceOnline isVideoOnline isBusy isActive slug location createdAt badgeText isPinned pinOrder pinStartTime pinEndTime features followersCount fakeFollowers commissionRate warningCount violationDetails');
+            .populate('userId', 'name role email phone missedSessions tdsPercentage pgPercentage lastLogin lastOnlineAt') // Populate name, role, email, phone, missedSessions, tds, pg, lastLogin, lastOnlineAt from User model
+            .select('userId displayName bio isVerified verificationStatus skills languages charges rating image experienceYears gender gallery isOnline isChatOnline isVoiceOnline isVideoOnline isBusy isActive slug location createdAt badgeText isPinned pinOrder pinStartTime pinEndTime features followersCount fakeFollowers commissionRate warningCount violationDetails lastOnlineAt lastLogin');
 
         // Filter out those where userId is null (User deleted) or role is NOT 'astrologer'
         astrologers = astrologers.filter(astro => astro.userId && astro.userId.role === 'astrologer');

@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import API from '../../../../lib/api';
 import { useAuth } from '../../../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Mail, Calendar, Shield, Trash2, Save, User as UserIcon, AlertCircle, Sparkles, Star, Phone, Activity } from 'lucide-react';
+import { ArrowLeft, Mail, Calendar, Shield, Trash2, Save, User as UserIcon, AlertCircle, Sparkles, Star, Phone, Activity, LogIn, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -168,7 +168,7 @@ function AdminAstrologerDetailsPage() {
                                 <div className="space-y-4">
                                     {/* Contact Info fetched from userId if populated */}
                                     {astroData.userId && (
-                                        <div className="flex flex-col md:flex-row gap-4 justify-center md:justify-start text-sm text-slate-600">
+                                        <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center md:justify-start text-sm text-slate-600">
                                             <div className="flex items-center gap-2 bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-50">
                                                 <Mail size={16} className="text-blue-500" />
                                                 {astroData.userId.email}
@@ -177,6 +177,12 @@ function AdminAstrologerDetailsPage() {
                                                 <div className="flex items-center gap-2 bg-green-50/50 px-3 py-1.5 rounded-lg border border-green-50">
                                                     <Phone size={16} className="text-green-500" />
                                                     {astroData.userId.phone}
+                                                </div>
+                                            )}
+                                            {(astroData.lastLogin || astroData.userId.lastLogin) && (
+                                                <div className="flex items-center gap-2 bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100 text-indigo-700">
+                                                    <LogIn size={16} className="text-indigo-500" />
+                                                    <span>Last Login: {new Date(astroData.lastLogin || astroData.userId.lastLogin).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                                                 </div>
                                             )}
                                         </div>

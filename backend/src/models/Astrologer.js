@@ -101,6 +101,7 @@ const astrologerSchema = new mongoose.Schema({
     isVideoOnline: { type: Boolean, default: false },
     lastOnlineAt: Date,
     lastOnlineNotificationSentAt: Date,
+    lastLogin: Date,
     totalEarnings: {
         type: Number,
         default: 0,

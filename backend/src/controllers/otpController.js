@@ -211,6 +211,10 @@ exports.verifyWhatsappOtp = async (req, res) => {
             if (astro && astro.isBusy) {
                 return res.status(403).json({ success: false, message: 'You cannot log in from a new device while an active consultation is in progress.' });
             }
+            if (astro) {
+                astro.lastLogin = user.lastLogin;
+                await astro.save();
+            }
         }
 
         await user.save();

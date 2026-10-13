@@ -154,6 +154,11 @@ exports.loginUser = async (req, res) => {
             user.deviceInfo = await getDeviceInfo(req);
             await user.save();
 
+            if (user.role === 'astrologer') {
+                const Astrologer = require('../models/Astrologer');
+                await Astrologer.findOneAndUpdate({ userId: user._id }, { lastLogin: user.lastLogin });
+            }
+
             res.json({
                 _id: user.id,
                 name: user.name,
@@ -360,6 +365,11 @@ exports.verifyEmailOtp = async (req, res) => {
         user.lastLogin = new Date();
         user.deviceInfo = await getDeviceInfo(req);
         await user.save();
+
+        if (user.role === 'astrologer') {
+            const Astrologer = require('../models/Astrologer');
+            await Astrologer.findOneAndUpdate({ userId: user._id }, { lastLogin: user.lastLogin });
+        }
 
         res.json({
             _id: user.id,
