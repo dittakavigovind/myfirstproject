@@ -130,7 +130,7 @@ export default function BlogPostClient({ post: initialPost, slug: propSlug }) {
                             </div>
 
                             {/* Article Text */}
-                            <article className="prose prose-slate prose-lg max-w-none text-slate-600 leading-relaxed font-medium">
+                            <article className="prose prose-slate prose-lg max-w-none text-slate-600 leading-relaxed font-medium blog-article-content">
                                 <div dangerouslySetInnerHTML={{ __html: post.content }}></div>
                             </article>
                         </div>

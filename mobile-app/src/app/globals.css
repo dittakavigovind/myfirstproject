@@ -116,6 +116,11 @@ html.light .header-scrolled {
    BLOG CONTENT TYPOGRAPHY FOR MOBILE APP
    Ensures crystal-clear readability on cosmic dark theme
    ======================================================== */
+.blog-content-rendered {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
 .blog-content-rendered,
 .blog-content-rendered * {
   color: #e2e8f0 !important;
@@ -140,6 +145,7 @@ html.light .header-scrolled {
   line-height: 1.35 !important;
   margin-top: 1.75rem !important;
   margin-bottom: 0.75rem !important;
+  text-align: left !important;
 }
 
 .blog-content-rendered h1 { font-size: 1.5rem !important; }
@@ -148,13 +154,28 @@ html.light .header-scrolled {
 
 .blog-content-rendered p,
 .blog-content-rendered div,
-.blog-content-rendered section {
+.blog-content-rendered section,
+.blog-content-rendered article {
   color: #e2e8f0 !important;
   line-height: 1.8 !important;
+  text-align: justify !important;
+  text-justify: inter-word !important;
 }
 
 .blog-content-rendered p {
   margin-bottom: 1.25rem !important;
+}
+
+.blog-content-rendered .text-center,
+.blog-content-rendered .text-center *,
+.blog-content-rendered center,
+.blog-content-rendered center * {
+  text-align: center !important;
+}
+
+.blog-content-rendered .text-right,
+.blog-content-rendered .text-right * {
+  text-align: right !important;
 }
 
 .blog-content-rendered [class*="uppercase"] {
@@ -181,12 +202,14 @@ html.light .header-scrolled {
   list-style-type: disc !important;
   padding-left: 1.5rem !important;
   margin: 1rem 0 1.25rem 0 !important;
+  text-align: justify !important;
 }
 
 .blog-content-rendered ol {
   list-style-type: decimal !important;
   padding-left: 1.5rem !important;
   margin: 1rem 0 1.25rem 0 !important;
+  text-align: justify !important;
 }
 
 .blog-content-rendered li,
@@ -194,6 +217,7 @@ html.light .header-scrolled {
   color: #cbd5e1 !important;
   margin-bottom: 0.5rem !important;
   line-height: 1.6 !important;
+  text-align: justify !important;
 }
 
 .blog-content-rendered blockquote {
@@ -206,6 +230,7 @@ html.light .header-scrolled {
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
   border-radius: 0 0.5rem 0.5rem 0 !important;
+  text-align: justify !important;
 }
 
 .blog-content-rendered img {
@@ -234,6 +259,7 @@ html.light .header-scrolled {
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   font-weight: 700 !important;
+  text-align: left !important;
 }
 
 /* Light Theme Overrides */

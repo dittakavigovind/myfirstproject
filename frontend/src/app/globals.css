@@ -422,3 +422,29 @@ body {
   background: #fff !important;
   border-color: #fbbf24 !important;
 }
+
+/* ========================================================
+   BLOG ARTICLE CONTENT TYPOGRAPHY & JUSTIFICATION
+   ======================================================== */
+.blog-article-content {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+.blog-article-content p,
+.blog-article-content article,
+.blog-article-content div:not([class*="text-center"]):not([class*="text-right"]):not([class*="flex"]),
+.blog-article-content section:not([class*="text-center"]):not([class*="text-right"]) {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+.blog-article-content .text-center,
+.blog-article-content .text-center * {
+  text-align: center !important;
+}
+
+.blog-article-content .text-right,
+.blog-article-content .text-right * {
+  text-align: right !important;
+}
