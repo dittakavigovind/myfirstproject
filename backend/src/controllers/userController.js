@@ -66,6 +66,7 @@ exports.toggleStatus = async (req, res) => {
         if (turningAnyOn) {
             updates.isOnline = true;
             updates.lastOnlineAt = new Date();
+            updates.consecutiveMissedSessions = 0;
         }
 
         // B) If turning OFF result in ALL 3 channels being OFF -> Master becomes OFF

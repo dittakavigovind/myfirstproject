@@ -107,7 +107,10 @@ export function AuthProvider({ children }) {
             PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
                 console.log('Push Action Performed: ', notification);
                 const data = notification.notification?.data || notification.data || {};
-                if (data.actionLink) {
+                if (data.type === 'incoming_call' && data.roomId) {
+                    window.dispatchEvent(new CustomEvent('start-global-call', { detail: { roomId: data.roomId } }));
+                    router.push('/explore');
+                } else if (data.actionLink) {
                     router.push(data.actionLink);
                 } else {
                     router.push('/notifications');

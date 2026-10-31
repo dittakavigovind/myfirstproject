@@ -33,7 +33,7 @@ const sessionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['initiated', 'active', 'completed', 'terminated', 'failed'],
+        enum: ['initiated', 'active', 'completed', 'terminated', 'failed', 'missed'],
         default: 'initiated'
     },
     startTime: {

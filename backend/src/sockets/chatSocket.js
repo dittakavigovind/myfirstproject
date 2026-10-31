@@ -9,6 +9,7 @@ const Message = require('../models/Message');
 const QueueService = require('../services/QueueService');
 const CryptoUtil = require('../utils/cryptoUtil');
 const AiInsightService = require('../services/AiInsightService');
+const { clearPendingSessionTimer, resetConsecutiveMissed } = require('../controllers/chatController');
 
 const activeSessions = new Map(); // Store interval IDs by roomId
 const disconnectTimers = new Map(); // Store timeout IDs for auto-ending sessions
@@ -116,8 +117,23 @@ module.exports = function (io) {
                 }
 
                 if (session.status === 'initiated') {
-                    // Do not activate session here.
-                    // The session will become active when the astrologer sends the first message.
+                    // If it's an audio or video call, and the astrologer joins, activate session!
+                    if (socket.user.role === 'astrologer' && (session.sessionType === 'audio' || session.sessionType === 'video' || session.sessionType === 'voice')) {
+                        console.log(`[Socket] Astrologer joined call session ${roomId}. Activating call session.`);
+                        clearPendingSessionTimer(roomId);
+                        await resetConsecutiveMissed(socket.user.id);
+                        session.status = 'active';
+                        session.startTime = new Date();
+                        await session.save();
+
+                        startBillingEngine(roomId, session._id, io);
+
+                        // Mark Astrologer as Busy
+                        await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
+                        io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
+
+                        io.to(roomId).emit('session_started', { startTime: session.startTime });
+                    }
                 } else if (session.status === 'active') {
                     const actualElapsedSeconds = session.startTime
                         ? Math.floor((new Date() - session.startTime) / 1000)
@@ -160,6 +176,10 @@ module.exports = function (io) {
                 // If session is initiated, start it!
                 if (session.status === 'initiated') {
                     console.log(`[Socket] Starting billing for session ${roomId}`);
+                    clearPendingSessionTimer(roomId);
+                    if (socket.user.role === 'astrologer') {
+                        await resetConsecutiveMissed(socket.user.id);
+                    }
                     session.status = 'active';
                     session.startTime = new Date();
                     await session.save();
@@ -211,6 +231,10 @@ module.exports = function (io) {
                 const session = await Session.findOne({ roomId });
                 if (session && session.status === 'initiated') {
                     console.log(`[Socket] Starting billing via Firebase trigger for session ${roomId}`);
+                    clearPendingSessionTimer(roomId);
+                    if (socket.user.role === 'astrologer') {
+                        await resetConsecutiveMissed(socket.user.id);
+                    }
                     session.status = 'active';
                     session.startTime = new Date();
                     await session.save();
@@ -308,94 +332,35 @@ module.exports = function (io) {
             if (socket.user.role === 'astrologer') {
                 const astrologerId = socket.astrologerId;
 
-                // Check if they have other active sockets before going completely offline
+                // Check if they have other active sockets before handling disconnect
                 const activeAstroSockets = await io.in(`astro_${astrologerId}`).fetchSockets();
 
                 if (activeAstroSockets.length === 0) {
-                    console.log(`[Socket] Astrologer ${astrologerId} disconnected. Starting 10s offline timer.`);
+                    console.log(`[Socket] Astrologer ${astrologerId} app closed/disconnected. Retaining online status for background FCM push alerts.`);
 
-                    const userId = socket.user.id;
-                    const offlineTimeoutId = setTimeout(async () => {
-                        console.log(`[Socket] 10s passed. Astrologer ${astrologerId} going offline.`);
-
-                        // 1. Redis Status
-                        await QueueService.setAstrologerStatus(astrologerId, 'offline');
-
-                        // 2. MongoDB Status (Real-time availability integrity)
-                        await Astrologer.findByIdAndUpdate(astrologerId, {
-                            isOnline: false,
-                            isChatOnline: false,
-                            isVoiceOnline: false,
-                            isVideoOnline: false,
-                            isBusy: false,
-                            'statusBackup.isChatOnline': false,
-                            'statusBackup.isVoiceOnline': false,
-                            'statusBackup.isVideoOnline': false
-                        });
-
-                        // Sync User model too
-                        await User.findByIdAndUpdate(userId, {
-                            isOnline: false,
-                            isChatOnline: false,
-                            isVoiceOnline: false,
-                            isVideoOnline: false
-                        });
-
-                        // 3. Global Notification
-                        io.emit('astrologer_status_changed', { astrologerId, status: 'offline' });
-
-                        // 5. Close AstrologerSession (Availability history)
-                        const now = new Date();
-                        const availabilitySession = await AstrologerSession.findOne({
-                            astrologerId,
-                            endTime: { $exists: false }
-                        }).sort({ startTime: -1 });
-
-                        if (availabilitySession) {
-                            availabilitySession.endTime = now;
-                            availabilitySession.duration = Math.floor((now - availabilitySession.startTime) / 1000);
-                            await availabilitySession.save();
-                        }
-
-                        // 6. Close AstrologerOnlineSession (Online duration tracking)
-                        const onlineSession = await AstrologerOnlineSession.findOne({
-                            astrologerId,
-                            status: 'active'
-                        }).sort({ createdAt: -1 });
-
-                        if (onlineSession) {
-                            onlineSession.logoutTime = now;
-                            onlineSession.status = 'completed';
-                            onlineSession.totalOnlineMinutes = Math.floor((now - onlineSession.loginTime) / 60000);
-                            await onlineSession.save();
-                        }
-
-                        offlineTimers.delete(astrologerId);
-                    }, 300000); // Increased to 5 minutes (300,000 ms) to allow for background notifications
-
-                    offlineTimers.set(astrologerId, offlineTimeoutId);
-
-                    // 4. Force end active BILLED sessions (Chat/Call)
-                    const activeBilledSessions = await Session.find({
+                    // Only handle active ongoing consultations (NOT newly initiated requests, which have their own 60s ring timeout)
+                    const activeOngoingSessions = await Session.find({
                         astrologerId,
-                        status: { $in: ['active', 'initiated'] }
+                        status: 'active'
                     });
 
-                    // Wait 30 seconds before terminating sessions (Grace Period)
-                    const timeoutId = setTimeout(async () => {
-                        console.log(`[Socket] Grace period ended for ${astrologerId}. Terminating sessions.`);
-                        try {
-                            for (const session of activeBilledSessions) {
-                                console.log(`[Socket] Forcing termination of billed session ${session._id} due to astrologer disconnect`);
-                                await terminateSession(session.roomId, io, 'Astrologer disconnected', 'system');
+                    if (activeOngoingSessions.length > 0) {
+                        // Wait 30 seconds before terminating active ongoing consultations (Grace Period for reconnection)
+                        const timeoutId = setTimeout(async () => {
+                            console.log(`[Socket] Grace period ended for ${astrologerId}. Terminating dropped ongoing sessions.`);
+                            try {
+                                for (const session of activeOngoingSessions) {
+                                    console.log(`[Socket] Forcing termination of active session ${session._id} due to astrologer disconnect`);
+                                    await terminateSession(session.roomId, io, 'Astrologer disconnected', 'system');
+                                }
+                                disconnectTimers.delete(astrologerId);
+                            } catch (err) {
+                                console.error('Error in Astrologer disconnect timeout:', err);
                             }
-                            disconnectTimers.delete(astrologerId);
-                        } catch (err) {
-                            console.error('Error in Astrologer disconnect timeout:', err);
-                        }
-                    }, 30000);
+                        }, 30000);
 
-                    disconnectTimers.set(astrologerId, timeoutId);
+                        disconnectTimers.set(astrologerId, timeoutId);
+                    }
                 }
             }
 
@@ -563,6 +528,7 @@ module.exports = function (io) {
 
     async function terminateSession(roomId, io, reason = 'Terminated', endedBy = 'system') {
         stopBillingEngine(roomId);
+        clearPendingSessionTimer(roomId);
 
         let showSessionEndedBy = { toUser: true, toAstrologer: true };
         try {

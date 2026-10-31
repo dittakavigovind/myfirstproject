@@ -84,6 +84,158 @@ const Astrologer = require('../models/Astrologer');
 const crypto = require('crypto');
 const CryptoUtil = require('../utils/cryptoUtil');
 
+// Map to hold 60-second timeouts for newly initiated sessions waiting for astrologer to answer
+const pendingSessionTimers = new Map();
+
+const clearPendingSessionTimer = (roomId) => {
+    if (pendingSessionTimers.has(roomId)) {
+        clearTimeout(pendingSessionTimers.get(roomId));
+        pendingSessionTimers.delete(roomId);
+        console.log(`[SessionTimeout] Cleared pending timeout for room ${roomId}`);
+    }
+};
+
+const resetConsecutiveMissed = async (userId) => {
+    try {
+        if (userId) {
+            await User.findByIdAndUpdate(userId, { consecutiveMissedSessions: 0 });
+        }
+    } catch (e) {
+        console.error('Error resetting consecutive missed sessions:', e);
+    }
+};
+
+const triggerAutoOfflineForAstrologer = async (astrologerId, astroUserId, io) => {
+    try {
+        console.log(`[AutoOffline] Astrologer (${astrologerId}) missed consecutive requests. Setting to OFFLINE.`);
+
+        await Astrologer.findByIdAndUpdate(astrologerId, {
+            isOnline: false,
+            isChatOnline: false,
+            isVoiceOnline: false,
+            isVideoOnline: false,
+            isBusy: false,
+            'statusBackup.isChatOnline': false,
+            'statusBackup.isVoiceOnline': false,
+            'statusBackup.isVideoOnline': false
+        });
+
+        const updatedUser = await User.findByIdAndUpdate(
+            astroUserId,
+            {
+                isOnline: false,
+                isChatOnline: false,
+                isVoiceOnline: false,
+                isVideoOnline: false,
+                consecutiveMissedSessions: 0
+            },
+            { new: true }
+        );
+
+        // Close active AstrologerOnlineSession
+        const AstrologerOnlineSession = require('../models/AstrologerOnlineSession');
+        const activeOnlineSession = await AstrologerOnlineSession.findOne({
+            astrologerId,
+            status: 'active'
+        });
+        if (activeOnlineSession) {
+            const now = new Date();
+            activeOnlineSession.logoutTime = now;
+            activeOnlineSession.totalOnlineMinutes = Math.floor((now - activeOnlineSession.loginTime) / 60000);
+            activeOnlineSession.status = 'auto_closed';
+            await activeOnlineSession.save();
+        }
+
+        if (io) {
+            io.emit('astrologer_status_changed', {
+                astrologerId: astrologerId.toString(),
+                status: 'offline',
+                isOnline: false,
+                isChatOnline: false,
+                isVoiceOnline: false,
+                isVideoOnline: false,
+                isBusy: false
+            });
+        }
+
+        // Send Push Notification to astrologer informing them
+        if (updatedUser && updatedUser.fcmTokens && updatedUser.fcmTokens.length > 0) {
+            try {
+                const { getMessaging } = require('firebase-admin/messaging');
+                const offlineNotif = {
+                    notification: {
+                        title: 'Switched to Offline',
+                        body: 'You were set to Offline after missing 2 consecutive requests. Open the app to go Online when ready.'
+                    },
+                    data: {
+                        actionLink: '/profile',
+                        type: 'auto_offline'
+                    },
+                    tokens: [...new Set(updatedUser.fcmTokens)]
+                };
+                await getMessaging().sendEachForMulticast(offlineNotif);
+            } catch (fcmErr) {
+                console.error('Failed to send auto-offline FCM:', fcmErr);
+            }
+        }
+    } catch (err) {
+        console.error('Error in triggerAutoOfflineForAstrologer:', err);
+    }
+};
+
+const scheduleSessionTimeout = (roomId, astrologerId, astroUserId, io) => {
+    clearPendingSessionTimer(roomId);
+
+    const timer = setTimeout(async () => {
+        try {
+            pendingSessionTimers.delete(roomId);
+            const currentSession = await Session.findOne({ roomId, status: 'initiated' });
+            if (!currentSession) return; // Answered, declined, or ended already
+
+            console.log(`[SessionTimeout] Astrologer did not answer session ${roomId} in 60s. Marking missed.`);
+
+            currentSession.status = 'missed';
+            currentSession.endTime = new Date();
+            currentSession.terminationReason = 'astrologer_no_answer';
+            currentSession.endedBy = 'system';
+            await currentSession.save();
+
+            // Notify user and room
+            if (io) {
+                const timeoutPayload = {
+                    roomId,
+                    reason: 'Astrologer did not answer. Please try again or choose another astrologer.',
+                    status: 'missed',
+                    endedBy: 'system',
+                    sessionType: currentSession.sessionType
+                };
+                io.to(roomId).emit('session_ended', timeoutPayload);
+                io.to(`user_${currentSession.userId}`).emit('session_declined', timeoutPayload);
+                io.to(`astro_${currentSession.astrologerId}`).emit('session_ended', timeoutPayload);
+            }
+
+            // Unset astrologer busy state
+            await Astrologer.findByIdAndUpdate(astrologerId, { isBusy: false });
+
+            // Increment missedSessions and consecutiveMissedSessions
+            const updatedUser = await User.findByIdAndUpdate(
+                astroUserId,
+                { $inc: { missedSessions: 1, consecutiveMissedSessions: 1 } },
+                { new: true }
+            );
+
+            // CIRCUIT BREAKER: Auto-offline if 2 in a row missed
+            if (updatedUser && (updatedUser.consecutiveMissedSessions || 0) >= 2) {
+                await triggerAutoOfflineForAstrologer(astrologerId, astroUserId, io);
+            }
+        } catch (err) {
+            console.error('Error in session timeout timer callback:', err);
+        }
+    }, 60000); // 60 seconds
+
+    pendingSessionTimers.set(roomId, timer);
+};
+
 // @desc Start a paid chat session
 // @route POST /api/chat/start-paid
 exports.startPaidChat = async (req, res) => {
@@ -114,6 +266,11 @@ exports.startPaidChat = async (req, res) => {
                 console.error(`[StartPaidChat] 400 Error: Astrologer ${astrologer.displayName} is offline for voice.`);
                 return res.status(400).json({ success: false, message: 'Astrologer is currently offline for calls' });
             }
+        } else if (sessionType === 'video') {
+            if (!astrologer.isVideoOnline) {
+                console.error(`[StartPaidChat] 400 Error: Astrologer ${astrologer.displayName} is offline for video.`);
+                return res.status(400).json({ success: false, message: 'Astrologer is currently offline for video' });
+            }
         } else {
             if (!astrologer.isChatOnline) {
                 console.error(`[StartPaidChat] 400 Error: Astrologer ${astrologer.displayName} is offline for chat.`);
@@ -138,7 +295,7 @@ exports.startPaidChat = async (req, res) => {
 
         const pricePerMinute = sessionType === 'audio' 
             ? (astrologer.charges?.callPerMinute || 20) 
-            : (astrologer.charges?.chatPerMinute || 10);
+            : (sessionType === 'video' ? (astrologer.charges?.videoPerMinute || 25) : (astrologer.charges?.chatPerMinute || 10));
 
         const user = await User.findById(userId);
         if (user.walletBalance < (pricePerMinute * 3)) {
@@ -196,25 +353,43 @@ exports.startPaidChat = async (req, res) => {
                 // 2. Send Push Notification
                 const astroUser = await User.findOne({ _id: astrologer.userId }).select('fcmTokens');
                 if (astroUser && astroUser.fcmTokens && astroUser.fcmTokens.length > 0) {
+                    const isCall = sessionType === 'audio' || sessionType === 'video';
+                    const notifTitle = sessionType === 'audio' 
+                        ? 'Incoming Audio Call!' 
+                        : (sessionType === 'video' ? 'Incoming Video Call!' : 'New Chat Request!');
+                    const notifBody = `${user.name || 'A Seeker'} has requested a ${sessionType === 'audio' ? 'call' : (sessionType === 'video' ? 'video call' : 'chat')} with you. Tap to join.`;
+                    const actionLink = isCall
+                        ? `/call/room?id=${roomId}`
+                        : `/chat/room?id=${roomId}`;
+
                     const messagePayload = {
                         notification: {
-                            title: sessionType === 'audio' ? 'New Audio Call Request!' : 'New Chat Request!',
-                            body: `${user.name || 'A Seeker'} has initiated a ${sessionType === 'audio' ? 'call' : 'chat'} with you. Tap to join.`
+                            title: notifTitle,
+                            body: notifBody
                         },
                         data: {
-                            actionLink: sessionType === 'audio' ? `/call/room?id=${roomId}` : `/chat/room?id=${roomId}`,
-                            type: sessionType === 'audio' ? 'incoming_call' : 'incoming_chat'
+                            actionLink: actionLink,
+                            type: isCall ? 'incoming_call' : 'incoming_chat',
+                            roomId: roomId,
+                            sessionType: sessionType,
+                            callerName: user.name || 'A Seeker'
                         },
                         android: {
+                            priority: 'high',
                             notification: {
-                                channelId: sessionType === 'audio' ? 'astro_call_alerts_v1' : 'astro_chat_alerts_v3',
-                                sound: sessionType === 'audio' ? 'call_alert' : 'chat_alert'
+                                channelId: isCall ? 'astro_call_alerts_v1' : 'astro_chat_alerts_v3',
+                                sound: isCall ? 'call_alert' : 'chat_alert',
+                                priority: 'max',
+                                defaultSound: false,
+                                defaultVibrateTimings: true,
+                                visibility: 'public'
                             }
                         },
                         apns: {
                             payload: {
                                 aps: {
-                                    sound: sessionType === 'audio' ? 'call_alert.wav' : 'chat_alert.wav'
+                                    sound: isCall ? 'call_alert.wav' : 'chat_alert.wav',
+                                    contentAvailable: true
                                 }
                             }
                         },
@@ -227,6 +402,9 @@ exports.startPaidChat = async (req, res) => {
         } catch (pushErr) {
             console.error('Failed to send Push Notification for new chat:', pushErr);
         }
+
+        // Schedule 60-second auto-timeout if astrologer does not answer
+        scheduleSessionTimeout(roomId, astrologerId, astrologer.userId, io);
 
         res.status(200).json({ success: true, roomId, session });
     } catch (err) {
@@ -411,6 +589,8 @@ exports.endSessionApi = async (req, res) => {
         const { reason = 'Session ended by ' + req.user.role, astrologerEndReason } = req.body;
         const io = req.app.get('io');
         
+        clearPendingSessionTimer(roomId);
+
         // Find session first to verify ownership
         const session = await Session.findOne({ roomId });
         if (!session) {
@@ -499,6 +679,8 @@ exports.declineSession = async (req, res) => {
         const { roomId } = req.params;
         const io = req.app.get('io');
         
+        clearPendingSessionTimer(roomId);
+
         // Find session
         const session = await Session.findOne({ roomId, status: 'initiated' });
         if (!session) {
@@ -522,8 +704,12 @@ exports.declineSession = async (req, res) => {
             { new: true }
         );
 
-        // Increment missed sessions for the astrologer user
-        await User.findByIdAndUpdate(req.user.id, { $inc: { missedSessions: 1 } });
+        // Increment missed sessions and consecutive missed sessions for the astrologer user
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            { $inc: { missedSessions: 1, consecutiveMissedSessions: 1 } },
+            { new: true }
+        );
 
         // Update Astrologer to not busy
         await Astrologer.findByIdAndUpdate(astrologer._id, { isBusy: false });
@@ -552,6 +738,13 @@ exports.declineSession = async (req, res) => {
             const sockets = await io.in(roomId).fetchSockets();
             sockets.forEach(s => s.leave(roomId));
         }
+
+        // Circuit breaker: auto-offline if 2 in a row missed or declined
+        if (updatedUser && (updatedUser.consecutiveMissedSessions || 0) >= 2) {
+            await triggerAutoOfflineForAstrologer(astrologer._id, astrologer.userId, io);
+        }
+
+        res.status(200).json({ success: true, message: 'Session declined' });
 
         // Update Firestore if using it for background alerts
         try {
@@ -711,3 +904,8 @@ exports.deleteOldChatData = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+exports.clearPendingSessionTimer = clearPendingSessionTimer;
+exports.resetConsecutiveMissed = resetConsecutiveMissed;
+exports.pendingSessionTimers = pendingSessionTimers;
+

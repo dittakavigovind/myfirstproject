@@ -78,6 +78,10 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    consecutiveMissedSessions: {
+        type: Number,
+        default: 0
+    },
     warningCount: {
         type: Number,
         default: 0,
