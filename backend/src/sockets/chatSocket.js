@@ -173,24 +173,26 @@ module.exports = function (io) {
                     return socket.emit('error', 'Session not active');
                 }
 
-                // If session is initiated, start it!
+                // If session is initiated, ONLY start billing if the astrologer sends the first message!
                 if (session.status === 'initiated') {
-                    console.log(`[Socket] Starting billing for session ${roomId}`);
-                    clearPendingSessionTimer(roomId);
                     if (socket.user.role === 'astrologer') {
+                        console.log(`[Socket] Astrologer sent first message. Starting billing for session ${roomId}`);
+                        clearPendingSessionTimer(roomId);
                         await resetConsecutiveMissed(socket.user.id);
+                        session.status = 'active';
+                        session.startTime = new Date();
+                        await session.save();
+
+                        startBillingEngine(roomId, session._id, io);
+
+                        // Mark Astrologer as Busy
+                        await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
+                        io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
+
+                        io.to(roomId).emit('session_started', { startTime: session.startTime });
+                    } else {
+                        console.log(`[Socket] User sent message in initiated session ${roomId}. Waiting for Astrologer response to start billing.`);
                     }
-                    session.status = 'active';
-                    session.startTime = new Date();
-                    await session.save();
-
-                    startBillingEngine(roomId, session._id, io);
-
-                    // Mark Astrologer as Busy
-                    await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
-                    io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
-
-                    io.to(roomId).emit('session_started', { startTime: session.startTime });
                 }
 
                 const senderModel = socket.user.role === 'astrologer' ? 'Astrologer' : 'User';
@@ -226,15 +228,19 @@ module.exports = function (io) {
 
         // Triggered by frontend when Firebase message is sent (to start timer)
         socket.on('start_chat_session', async ({ roomId }) => {
-            console.log(`[Socket] Received start_chat_session for roomId ${roomId}`);
+            console.log(`[Socket] Received start_chat_session for roomId ${roomId} by ${socket.user?.role}`);
             try {
+                // SECURITY & BUSINESS RULE: ONLY the astrologer can trigger billing and timer start!
+                if (socket.user?.role !== 'astrologer') {
+                    console.log(`[Socket] Ignored start_chat_session from user ${socket.user?.id} (${socket.user?.role}). Billing timer only starts when astrologer responds.`);
+                    return;
+                }
+
                 const session = await Session.findOne({ roomId });
                 if (session && session.status === 'initiated') {
-                    console.log(`[Socket] Starting billing via Firebase trigger for session ${roomId}`);
+                    console.log(`[Socket] Starting billing via Astrologer trigger for session ${roomId}`);
                     clearPendingSessionTimer(roomId);
-                    if (socket.user.role === 'astrologer') {
-                        await resetConsecutiveMissed(socket.user.id);
-                    }
+                    await resetConsecutiveMissed(socket.user.id);
                     session.status = 'active';
                     session.startTime = new Date();
                     await session.save();

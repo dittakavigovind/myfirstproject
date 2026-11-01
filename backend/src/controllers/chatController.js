@@ -200,6 +200,22 @@ const scheduleSessionTimeout = (roomId, astrologerId, astroUserId, io) => {
             currentSession.endedBy = 'system';
             await currentSession.save();
 
+            // Update Firestore so real-time onSnapshot listeners in mobile app react immediately
+            try {
+                require('../config/firebase');
+                const { getApps } = require('firebase-admin/app');
+                const { getFirestore } = require('firebase-admin/firestore');
+                if (getApps().length > 0) {
+                    await getFirestore().collection('chat_sessions').doc(roomId).set({
+                        status: 'missed',
+                        terminationReason: 'astrologer_no_answer',
+                        endedAt: Date.now()
+                    }, { merge: true });
+                }
+            } catch (fsErr) {
+                console.error('Failed to update Firestore on session timeout:', fsErr);
+            }
+
             // Notify user and room
             if (io) {
                 const timeoutPayload = {
@@ -313,7 +329,7 @@ exports.startPaidChat = async (req, res) => {
             pricePerMinute,
             sessionType: sessionType,
             status: 'initiated',
-            startTime: new Date()
+            startTime: null
         });
 
         // Emit Socket Event for Real-Time Foreground Alert
@@ -341,11 +357,11 @@ exports.startPaidChat = async (req, res) => {
                         roomId: roomId,
                         astrologerId: astrologerId.toString(),
                         userId: userId.toString(),
-                        status: 'active',
+                        status: 'initiated',
                         createdAt: FieldValue.serverTimestamp(),
                         updatedAt: FieldValue.serverTimestamp()
                     });
-                    console.log(`[StartPaidChat] Firestore room ${roomId} initialized`);
+                    console.log(`[StartPaidChat] Firestore room ${roomId} initialized with status initiated`);
                 } catch (fsErr) {
                     console.error('Failed to initialize Firestore room:', fsErr);
                 }

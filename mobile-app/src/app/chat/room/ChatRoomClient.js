@@ -315,22 +315,36 @@ export default function ChatRoomClient() {
                 const currentStatus = data.status;
                 
                 // Real-time status update from Firestore
-                if (currentStatus === 'completed' || currentStatus === 'terminated') {
+                if (currentStatus === 'completed' || currentStatus === 'terminated' || currentStatus === 'missed' || currentStatus === 'declined') {
                     setIsReadOnly(true);
                     isReadOnlyRef.current = true;
                     setSessionActive(false);
                     
-                    // Fallback: If it transitioned from active/initiated to completed while we were watching, navigate away
+                    let endMsg = "THIS SESSION HAS ENDED";
+                    if (currentStatus === 'declined' || data.terminationReason === 'declined_by_astrologer') {
+                        endMsg = "THIS SESSION HAS BEEN DECLINED BY ASTROLOGER";
+                    } else if (currentStatus === 'missed' || data.terminationReason?.includes('not answer') || data.terminationReason === 'astrologer_no_answer') {
+                        endMsg = "ASTROLOGER DID NOT RESPOND IN TIME";
+                    }
+                    setShowEndedPopup(endMsg);
+                    
+                    // Fallback: If it transitioned from active/initiated to completed/missed while we were watching, navigate away
                     if (previousStatusRef.current === 'active' || previousStatusRef.current === 'initiated') {
                         if (!isEndingSessionRef.current) {
                             if (checkUser) checkUser();
                             if (user.role !== 'astrologer') {
-                                setShowReviewModal(true);
+                                setTimeout(() => {
+                                    setShowEndedPopup(false);
+                                    if (currentStatus === 'missed' || currentStatus === 'declined') {
+                                        router.replace('/explore');
+                                    } else {
+                                        setShowReviewModal(true);
+                                    }
+                                }, 3000);
                             } else {
-                                setShowEndedPopup(true);
                                 setTimeout(() => {
                                     router.replace('/history');
-                                }, 3500);
+                                }, 3000);
                             }
                         }
                     }
@@ -443,7 +457,7 @@ export default function ChatRoomClient() {
                 }
             };
 
-            const handleSessionEnded = ({ reason, endedBy, showSessionEndedBy }) => {
+            const handleSessionEnded = ({ reason, status, endedBy, showSessionEndedBy }) => {
                 if (isEndingSessionRef.current) return;
                 setSessionActive(false);
                 if (checkUser) checkUser();
@@ -455,9 +469,12 @@ export default function ChatRoomClient() {
                     ? (user.role === 'astrologer' ? showSessionEndedBy.toAstrologer : showSessionEndedBy.toUser)
                     : true; // fallback
 
-                if (reason === 'Astrologer declined the session' || reason === 'declined_by_astrologer') {
+                if (reason === 'Astrologer declined the session' || reason === 'declined_by_astrologer' || status === 'declined') {
                     endMsg = "THIS SESSION HAS BEEN DECLINED BY ASTROLOGER";
                     setSessionTerminationReason('declined_by_astrologer');
+                } else if (status === 'missed' || reason?.includes('did not answer') || reason?.includes('not respond')) {
+                    endMsg = "ASTROLOGER DID NOT RESPOND IN TIME";
+                    setSessionTerminationReason('astrologer_no_answer');
                 } else if (canSee && endedBy) {
                     endMsg = `THIS SESSION HAS ENDED BY ${endedBy === 'user' ? 'USER' : endedBy === 'astrologer' ? 'ASTROLOGER' : 'SYSTEM'}`;
                 } else if (reason) {
@@ -468,7 +485,11 @@ export default function ChatRoomClient() {
                 if (user.role !== 'astrologer') {
                     setTimeout(() => {
                         setShowEndedPopup(false);
-                        setShowReviewModal(true);
+                        if (status === 'missed' || status === 'declined' || reason?.includes('did not answer') || reason === 'declined_by_astrologer') {
+                            router.replace('/explore');
+                        } else {
+                            setShowReviewModal(true);
+                        }
                     }, 3500);
                 } else {
                     setTimeout(() => {
@@ -487,6 +508,7 @@ export default function ChatRoomClient() {
             socket.on("session_restored", handleSessionRestored);
             socket.on("timer_update", handleTimerUpdate);
             socket.on("session_ended", handleSessionEnded);
+            socket.on("session_declined", handleSessionEnded);
             socket.on("session_read_only", handleSessionReadOnly);
 
             return () => {
@@ -495,6 +517,7 @@ export default function ChatRoomClient() {
                 socket.off("session_restored", handleSessionRestored);
                 socket.off("timer_update", handleTimerUpdate);
                 socket.off("session_ended", handleSessionEnded);
+                socket.off("session_declined", handleSessionEnded);
                 socket.off("session_read_only", handleSessionReadOnly);
             };
         }
@@ -592,10 +615,10 @@ export default function ChatRoomClient() {
                 }
             }, { merge: true });
 
-            // Emit to backend to start the timer if session is not active
-            if (socket && !sessionActive) {
+            // Emit to backend to start the timer if session is not active ONLY when Astrologer sends message
+            if (user?.role === 'astrologer' && socket && !sessionActive) {
                 socket.emit("start_chat_session", { roomId });
-                // Optimistically start the timer locally so it immediately shows up
+                // Optimistically start the timer locally for astrologer
                 setSessionActive(true);
                 localStartTimeRef.current = Date.now();
                 setDuration(0);
@@ -655,8 +678,8 @@ export default function ChatRoomClient() {
                     createdAt: Date.now()
                 });
                 
-                // Emit to backend to start the timer if session is not active
-                if (socket && !sessionActive) {
+                // Emit to backend to start the timer if session is not active ONLY when Astrologer uploads
+                if (user?.role === 'astrologer' && socket && !sessionActive) {
                     socket.emit("start_chat_session", { roomId });
                     setSessionActive(true);
                     localStartTimeRef.current = Date.now();
@@ -956,9 +979,17 @@ export default function ChatRoomClient() {
                                 : (partner?.displayName || partner?.name || partner?.phone || partner?.mobileNumber || "Astrologer Guide")}
                         </h2>
                         <div className="flex items-center gap-1 mt-0.5">
-                            <span className={`w-1 h-1 rounded-full ${sessionActive ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`} />
-                            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
-                                {sessionActive ? 'Live' : (sessionTerminationReason === 'declined_by_astrologer' || showEndedPopup === 'THIS SESSION HAS BEEN DECLINED BY ASTROLOGER') ? 'Declined' : isReadOnly ? 'Connect Now' : 'Connecting...'}
+                            <span className={`w-1.5 h-1.5 rounded-full ${sessionActive ? 'bg-green-500 animate-pulse' : (sessionTerminationReason === 'declined_by_astrologer' || showEndedPopup?.includes('DECLINED') || showEndedPopup?.includes('NOT RESPOND')) ? 'bg-rose-500' : isReadOnly ? 'bg-slate-500' : 'bg-amber-400 animate-pulse'}`} />
+                            <span className="text-[8px] text-slate-300 font-bold uppercase tracking-wider">
+                                {sessionActive 
+                                    ? 'Live' 
+                                    : (sessionTerminationReason === 'declined_by_astrologer' || showEndedPopup === 'THIS SESSION HAS BEEN DECLINED BY ASTROLOGER') 
+                                        ? 'Declined' 
+                                        : (sessionTerminationReason === 'astrologer_no_answer' || showEndedPopup?.includes('NOT RESPOND'))
+                                            ? 'Missed'
+                                            : isReadOnly 
+                                                ? 'Ended' 
+                                                : (user?.role === 'astrologer' ? 'Reply to Start' : 'Waiting for Astrologer...')}
                             </span>
                         </div>
                     </div>
@@ -979,7 +1010,9 @@ export default function ChatRoomClient() {
                     <div className="flex flex-col items-end mr-1">
                         <div className="flex items-center gap-1 text-[#d97706] bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                             <Clock size={10} className={sessionActive ? "animate-pulse" : ""} />
-                            <span className="text-[11px] font-mono font-black tabular-nums">{formatTime(duration)}</span>
+                            <span className="text-[11px] font-mono font-black tabular-nums">
+                                {sessionActive ? formatTime(duration) : (user?.role === 'astrologer' ? '0:00' : 'Waiting...')}
+                            </span>
                         </div>
                         {remainingBalance !== null && (
                             <span className="text-[7px] text-slate-500 font-bold uppercase">₹{remainingBalance.toFixed(0)}</span>
