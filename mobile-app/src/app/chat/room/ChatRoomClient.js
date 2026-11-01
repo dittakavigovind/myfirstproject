@@ -323,7 +323,7 @@ export default function ChatRoomClient() {
                     let endMsg = "THIS SESSION HAS ENDED";
                     if (currentStatus === 'declined' || data.terminationReason === 'declined_by_astrologer') {
                         endMsg = "THIS SESSION HAS BEEN DECLINED BY ASTROLOGER";
-                    } else if (currentStatus === 'missed' || data.terminationReason?.includes('not answer') || data.terminationReason === 'astrologer_no_answer') {
+                    } else if (currentStatus === 'missed' || (typeof data.terminationReason === 'string' && data.terminationReason.includes('not answer')) || data.terminationReason === 'astrologer_no_answer') {
                         endMsg = "ASTROLOGER DID NOT RESPOND IN TIME";
                     }
                     setShowEndedPopup(endMsg);
@@ -472,7 +472,7 @@ export default function ChatRoomClient() {
                 if (reason === 'Astrologer declined the session' || reason === 'declined_by_astrologer' || status === 'declined') {
                     endMsg = "THIS SESSION HAS BEEN DECLINED BY ASTROLOGER";
                     setSessionTerminationReason('declined_by_astrologer');
-                } else if (status === 'missed' || reason?.includes('did not answer') || reason?.includes('not respond')) {
+                } else if (status === 'missed' || (typeof reason === 'string' && (reason.includes('did not answer') || reason.includes('not respond')))) {
                     endMsg = "ASTROLOGER DID NOT RESPOND IN TIME";
                     setSessionTerminationReason('astrologer_no_answer');
                 } else if (canSee && endedBy) {
@@ -485,7 +485,7 @@ export default function ChatRoomClient() {
                 if (user.role !== 'astrologer') {
                     setTimeout(() => {
                         setShowEndedPopup(false);
-                        if (status === 'missed' || status === 'declined' || reason?.includes('did not answer') || reason === 'declined_by_astrologer') {
+                        if (status === 'missed' || status === 'declined' || (typeof reason === 'string' && reason.includes('did not answer')) || reason === 'declined_by_astrologer') {
                             router.replace('/explore');
                         } else {
                             setShowReviewModal(true);
@@ -800,6 +800,11 @@ export default function ChatRoomClient() {
         }
     };
 
+    const isDeclined = sessionTerminationReason === 'declined_by_astrologer' || 
+                       (typeof showEndedPopup === 'string' && showEndedPopup.includes('DECLINED'));
+    const isMissed = sessionTerminationReason === 'astrologer_no_answer' || 
+                     (typeof showEndedPopup === 'string' && showEndedPopup.includes('NOT RESPOND'));
+
     return (
         <div 
             className="fixed top-0 left-0 w-full z-50 flex flex-col mx-auto bg-cosmic-indigo overflow-hidden sm:max-w-md sm:left-1/2 sm:-translate-x-1/2"
@@ -979,13 +984,13 @@ export default function ChatRoomClient() {
                                 : (partner?.displayName || partner?.name || partner?.phone || partner?.mobileNumber || "Astrologer Guide")}
                         </h2>
                         <div className="flex items-center gap-1 mt-0.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${sessionActive ? 'bg-green-500 animate-pulse' : (sessionTerminationReason === 'declined_by_astrologer' || showEndedPopup?.includes('DECLINED') || showEndedPopup?.includes('NOT RESPOND')) ? 'bg-rose-500' : isReadOnly ? 'bg-slate-500' : 'bg-amber-400 animate-pulse'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${sessionActive ? 'bg-green-500 animate-pulse' : (isDeclined || isMissed) ? 'bg-rose-500' : isReadOnly ? 'bg-slate-500' : 'bg-amber-400 animate-pulse'}`} />
                             <span className="text-[8px] text-slate-300 font-bold uppercase tracking-wider">
                                 {sessionActive 
                                     ? 'Live' 
-                                    : (sessionTerminationReason === 'declined_by_astrologer' || showEndedPopup === 'THIS SESSION HAS BEEN DECLINED BY ASTROLOGER') 
+                                    : isDeclined 
                                         ? 'Declined' 
-                                        : (sessionTerminationReason === 'astrologer_no_answer' || showEndedPopup?.includes('NOT RESPOND'))
+                                        : isMissed
                                             ? 'Missed'
                                             : isReadOnly 
                                                 ? 'Ended' 
