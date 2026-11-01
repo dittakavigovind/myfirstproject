@@ -236,7 +236,7 @@ export default function ChatRoomClient() {
                     }
 
                     // If session is already finished, set to read-only
-                    if (['completed', 'terminated', 'failed', 'missed'].includes(data.session.status)) {
+                    if (['completed', 'terminated', 'failed', 'missed', 'declined'].includes(data.session.status)) {
                         setIsReadOnly(true);
                         isReadOnlyRef.current = true;
                         setSessionActive(false);
@@ -246,9 +246,12 @@ export default function ChatRoomClient() {
                             ? (user.role === 'astrologer' ? data.showSessionEndedBy.toAstrologer : data.showSessionEndedBy.toUser)
                             : true; // fallback
 
-                        if (data.session.terminationReason === 'declined_by_astrologer') {
+                        if (data.session.status === 'declined' || data.session.terminationReason === 'declined_by_astrologer') {
                             endMsg = "THIS SESSION HAS BEEN DECLINED BY ASTROLOGER";
                             setSessionTerminationReason('declined_by_astrologer');
+                        } else if (data.session.status === 'missed' || (typeof data.session.terminationReason === 'string' && data.session.terminationReason.includes('not answer')) || data.session.terminationReason === 'astrologer_no_answer') {
+                            endMsg = "ASTROLOGER DID NOT RESPOND IN TIME";
+                            setSessionTerminationReason('astrologer_no_answer');
                         } else if (canSee && data.session.endedBy) {
                             endMsg = `THIS SESSION HAS ENDED BY ${data.session.endedBy === 'user' ? 'USER' : data.session.endedBy === 'astrologer' ? 'ASTROLOGER' : 'SYSTEM'}`;
                         } else if (data.session.terminationReason) {

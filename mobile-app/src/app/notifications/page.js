@@ -106,7 +106,7 @@ export default function NotificationsPage() {
                 ) : (
                     <AnimatePresence>
                         {notifications.map((n, index) => {
-                            const isRead = n.readBy?.includes(user?._id);
+                            const isRead = Array.isArray(n.readBy) && user?._id ? n.readBy.includes(user._id) : false;
                             return (
                                 <motion.div
                                     key={n._id}
