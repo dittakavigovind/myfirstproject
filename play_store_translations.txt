@@ -1,0 +1,35 @@
+[Language: English (India) - en-IN]
+App Name: Way2Astro: Astrology & Kundli
+Short Description: Talk & Chat with Top Astrologers, Kundli Matching, Daily Horoscope & Panchang.
+Full Description:
+Way2Astro is your premier Vedic astrology and spiritual consultation platform, bringing ancient Jyotish wisdom directly to your fingertips. Connect with verified astrologers anytime via Chat, Audio Call, and Video Call.
+
+🌟 Key Features:
+• Live Astrologer Consultations: Talk or chat live with experienced Vedic astrologers, tarot readers, numerologists, and Vastu experts.
+• Free Kundli & Janam Patrika: Generate accurate Vedic birth charts with planetary positions, dashas, and dosha analysis.
+• Kundli Matching (Gun Milan): Detailed 36-gun matchmaking reports for marriage compatibility.
+• Daily Horoscope (Rashifal): Accurate daily, weekly, and yearly astrological predictions for all 12 zodiac signs.
+• Daily Panchang & Muhurat: Tithi, Nakshatra, Yoga, Karana, Rahu Kaal, and auspicious timings.
+• Online Temple Pooja & Seva: Book authentic rituals and temple sevas at renowned sacred temples across India.
+• Safe, Private & Secure: End-to-end encrypted consultations with 100% privacy and secure wallet payments.
+
+Whether you need guidance on career, marriage, relationships, finance, or health, Way2Astro provides trustworthy astrological insights to help you make informed life decisions.
+
+---
+
+[Language: Hindi (India) - hi-IN]
+App Name: Way2Astro: ज्योतिष एवं कुंडली
+Short Description: सर्वश्रेष्ठ ज्योतिषियों से चैट व कॉल, कुंडली, राशिफल, कुंडली मिलान व पंचांग।
+Full Description:
+Way2Astro आपका विश्वसनीय वैदिक ज्योतिष और आध्यात्मिक परामर्श ऐप है, जो प्राचीन ज्योतिष शास्त्र को आपकी उंगलियों पर लाता है। चैट, ऑडियो कॉल और वीडियो कॉल के माध्यम से देश के शीर्ष और अनुभवी ज्योतिषियों से कभी भी परामर्श प्राप्त करें।
+
+🌟 मुख्य विशेषताएं:
+• लाइव ज्योतिषी परामर्श: अनुभवी वैदिक ज्योतिषियों, टैरो रीडर्स, अंकशास्त्रियों और वास्तु विशेषज्ञों से तुरंत बात या चैट करें।
+• निःशुल्क कुंडली निर्माण: विस्तृत जन्म कुंडली, ग्रह स्थिति, दशा फल, मांगलिक दोष और कालसर्प दोष विश्लेषण प्राप्त करें।
+• कुंडली मिलान (गुण मिलान): विवाह अनुकूलता के लिए 36 गुण मिलान और संपूर्ण अष्टकूट रिपोर्ट।
+• दैनिक राशिफल: सभी 12 राशियों के लिए सटीक दैनिक, साप्ताहिक और वार्षिक भविष्यफल।
+• दैनिक पंचांग और शुभ मुहूर्त: तिथि, नक्षत्र, योग, करण, राहु काल और चौघड़िया मुहूर्त।
+• ऑनलाइन पूजा एवं मंदिर सेवा: भारत के प्रसिद्ध पवित्र मंदिरों में घर बैठे अनुष्ठान और पूजा सेवा बुक करें।
+• 100% सुरक्षित और गोपनीय: पूर्ण गोपनीयता और सुरक्षित वॉलेट भुगतान प्रणाली।
+
+करियर, नौकरी, विवाह, प्रेम संबंध, वित्त या स्वास्थ्य से संबंधित समस्याओं के समाधान के लिए Way2Astro पर ज्योतिषी मार्गदर्शन प्राप्त करें।
