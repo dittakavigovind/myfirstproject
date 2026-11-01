@@ -215,6 +215,18 @@ export default function ChatRoomClient() {
         }
     }, [user, roomId, authLoading]);
 
+    const refreshAstroStatus = async (astroId) => {
+        try {
+            if (!astroId) return;
+            const res = await api.get(`/astro/astrologers/${astroId}`);
+            if (res.data) {
+                setAstrologer(prev => ({ ...(prev || {}), ...res.data }));
+            }
+        } catch (e) {
+            // keep existing populated astrologer data
+        }
+    };
+
     const fetchSessionData = async () => {
         try {
             const { data } = await api.get(`/chat/session/${roomId}/messages`);
@@ -558,7 +570,26 @@ export default function ChatRoomClient() {
         }
         return () => clearInterval(interval);
     }, [sessionActive]);
-        useEffect(scrollToBottom, [messages, isAstroTyping]);
+
+    useEffect(scrollToBottom, [messages, isAstroTyping]);
+
+    // Listen for live status changes of the astrologer (must remain before any early return)
+    useEffect(() => {
+        if (!socket || !astrologer) return;
+        const astroId = astrologer._id || astrologer.id;
+        if (!astroId) return;
+
+        const handleStatusChange = (data) => {
+            if (data.astrologerId === astroId) {
+                setAstrologer(prev => prev ? { ...prev, ...data } : null);
+            }
+        };
+
+        socket.on("astrologer_status_changed", handleStatusChange);
+        return () => {
+            socket.off("astrologer_status_changed", handleStatusChange);
+        };
+    }, [socket, astrologer?._id, astrologer?.id]);
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -828,36 +859,6 @@ export default function ChatRoomClient() {
     const isAstroOnline = Boolean(astrologer?.isOnline && (astrologer?.isChatOnline || astrologer?.isVoiceOnline));
     const isAstroAvailable = Boolean(isAstroOnline && !astrologer?.isBusy);
     const isAstroBusy = Boolean(astrologer?.isBusy);
-
-    const refreshAstroStatus = async (astroId) => {
-        try {
-            if (!astroId) return;
-            const res = await api.get(`/astro/astrologers/${astroId}`);
-            if (res.data) {
-                setAstrologer(prev => ({ ...(prev || {}), ...res.data }));
-            }
-        } catch (e) {
-            // keep existing populated astrologer data
-        }
-    };
-
-    // Listen for live status changes of the astrologer
-    useEffect(() => {
-        if (!socket || !astrologer) return;
-        const astroId = astrologer._id || astrologer.id;
-        if (!astroId) return;
-
-        const handleStatusChange = (data) => {
-            if (data.astrologerId === astroId) {
-                setAstrologer(prev => prev ? { ...prev, ...data } : null);
-            }
-        };
-
-        socket.on("astrologer_status_changed", handleStatusChange);
-        return () => {
-            socket.off("astrologer_status_changed", handleStatusChange);
-        };
-    }, [socket, astrologer?._id, astrologer?.id]);
 
     const handleStartNewConsultation = async (keepHistory = true) => {
         const astroId = astrologer?._id || astrologer?.id;
