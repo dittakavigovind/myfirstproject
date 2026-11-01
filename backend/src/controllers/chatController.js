@@ -256,7 +256,7 @@ const scheduleSessionTimeout = (roomId, astrologerId, astroUserId, io) => {
 // @route POST /api/chat/start-paid
 exports.startPaidChat = async (req, res) => {
     try {
-        const { astrologerId, sessionType = 'chat' } = req.body;
+        const { astrologerId, sessionType = 'chat', previousRoomId } = req.body;
         const userId = req.user.id;
 
         const astrologer = await Astrologer.findById(astrologerId);
@@ -353,7 +353,8 @@ exports.startPaidChat = async (req, res) => {
             if (getApps().length > 0) {
                 // 1. Initialize Firestore Chat Room
                 try {
-                    await getFirestore().collection('chat_sessions').doc(roomId).set({
+                    const firestore = getFirestore();
+                    await firestore.collection('chat_sessions').doc(roomId).set({
                         roomId: roomId,
                         astrologerId: astrologerId.toString(),
                         userId: userId.toString(),
@@ -362,6 +363,83 @@ exports.startPaidChat = async (req, res) => {
                         updatedAt: FieldValue.serverTimestamp()
                     });
                     console.log(`[StartPaidChat] Firestore room ${roomId} initialized with status initiated`);
+
+                    // If previousRoomId is provided, carry over prior messages into new session room
+                    if (previousRoomId) {
+                        try {
+                            const newMessagesCol = firestore
+                                .collection('chat_sessions')
+                                .doc(roomId)
+                                .collection('messages');
+
+                            const prevMessagesSnap = await firestore
+                                .collection('chat_sessions')
+                                .doc(previousRoomId)
+                                .collection('messages')
+                                .orderBy('createdAt', 'asc')
+                                .get();
+
+                            if (!prevMessagesSnap.empty) {
+                                const batch = firestore.batch();
+                                prevMessagesSnap.docs.forEach((docSnap) => {
+                                    const data = docSnap.data();
+                                    const newDocRef = newMessagesCol.doc();
+                                    batch.set(newDocRef, {
+                                        ...data,
+                                        isHistory: true
+                                    });
+                                });
+
+                                const dividerRef = newMessagesCol.doc();
+                                batch.set(dividerRef, {
+                                    senderId: 'system',
+                                    senderRole: 'system',
+                                    text: '━━ Previous Consultation History ━━',
+                                    createdAt: FieldValue.serverTimestamp(),
+                                    isDivider: true
+                                });
+
+                                await batch.commit();
+                                console.log(`[StartPaidChat] Copied ${prevMessagesSnap.size} history messages to room ${roomId}`);
+                            } else {
+                                const prevSession = await Session.findOne({ roomId: previousRoomId });
+                                if (prevSession) {
+                                    const mongoMessages = await Message.find({ sessionId: prevSession._id }).sort({ createdAt: 1 });
+                                    if (mongoMessages && mongoMessages.length > 0) {
+                                        const batch = firestore.batch();
+                                        mongoMessages.forEach((msg) => {
+                                            let content = msg.content;
+                                            if (msg.isEncrypted && msg.iv) {
+                                                content = CryptoUtil.decrypt(msg.content, msg.iv);
+                                            }
+                                            const newDocRef = newMessagesCol.doc();
+                                            batch.set(newDocRef, {
+                                                senderId: msg.sender?.toString() || msg.senderId?.toString(),
+                                                senderRole: msg.senderRole || (msg.sender?.toString() === userId.toString() ? 'user' : 'astrologer'),
+                                                text: content,
+                                                createdAt: msg.createdAt || new Date(),
+                                                isHistory: true
+                                            });
+                                        });
+
+                                        const dividerRef = newMessagesCol.doc();
+                                        batch.set(dividerRef, {
+                                            senderId: 'system',
+                                            senderRole: 'system',
+                                            text: '━━ Previous Consultation History ━━',
+                                            createdAt: FieldValue.serverTimestamp(),
+                                            isDivider: true
+                                        });
+
+                                        await batch.commit();
+                                        console.log(`[StartPaidChat] Copied ${mongoMessages.length} MongoDB history messages to room ${roomId}`);
+                                    }
+                                }
+                            }
+                        } catch (copyErr) {
+                            console.error('[StartPaidChat] Error copying previous messages:', copyErr);
+                        }
+                    }
                 } catch (fsErr) {
                     console.error('Failed to initialize Firestore room:', fsErr);
                 }
@@ -436,7 +514,7 @@ exports.getSessionMetadata = async (req, res) => {
         const session = await Session.findOne({ roomId })
             .populate({
                 path: 'astrologerId',
-                select: 'displayName image charges'
+                select: 'displayName image charges isOnline isChatOnline isVoiceOnline isVideoOnline isBusy features'
             })
             .populate({
                 path: 'userId',
@@ -463,7 +541,7 @@ exports.getSessionMessages = async (req, res) => {
         const session = await Session.findOne({ roomId })
             .populate({
                 path: 'astrologerId',
-                select: 'displayName image charges'
+                select: 'displayName image charges isOnline isChatOnline isVoiceOnline isVideoOnline isBusy features'
             })
             .populate({
                 path: 'userId',

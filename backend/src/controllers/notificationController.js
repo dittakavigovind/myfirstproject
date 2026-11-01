@@ -12,12 +12,21 @@ exports.createNotification = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Title and message are required' });
         }
 
+        // Auto-extract URL if not explicitly provided as actionLink
+        let finalActionLink = actionLink ? actionLink.trim() : '';
+        if (!finalActionLink && message) {
+            const urlMatch = message.match(/(https?:\/\/[^\s]+)/i);
+            if (urlMatch) {
+                finalActionLink = urlMatch[0];
+            }
+        }
+
         const notification = await Notification.create({
             title,
             message,
             targetAudience: targetAudience || 'all',
             targetUsers: targetUsers || [],
-            actionLink,
+            actionLink: finalActionLink,
             sender: req.user._id,
             isPushDispatched: false // Will update below if successful
         });
@@ -39,7 +48,7 @@ exports.createNotification = async (req, res) => {
                         body: message
                     },
                     data: {
-                        actionLink: actionLink || '',
+                        actionLink: finalActionLink || '',
                         notifId: notification._id.toString()
                     }
                 };

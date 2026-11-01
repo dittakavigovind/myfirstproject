@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { Send, Users, Activity, BellRing, Sparkles, AlertCircle, History, User } from 'lucide-react';
+import { Send, Users, Activity, BellRing, Sparkles, AlertCircle, History, User, ExternalLink, Link as LinkIcon } from 'lucide-react';
 
 export default function MobileAdminNotifications() {
     const [notifications, setNotifications] = useState([]);
@@ -13,7 +13,8 @@ export default function MobileAdminNotifications() {
     const [formData, setFormData] = useState({
         title: '',
         message: '',
-        targetAudience: 'all'
+        targetAudience: 'all',
+        actionLink: ''
     });
 
     useEffect(() => {
@@ -44,7 +45,7 @@ export default function MobileAdminNotifications() {
             const res = await API.post('/notifications', formData);
             if (res.data.success) {
                 toast.success("Broadcast dispatched successfully!");
-                setFormData({ title: '', message: '', targetAudience: 'all' });
+                setFormData({ title: '', message: '', targetAudience: 'all', actionLink: '' });
                 fetchNotifications(); // Refresh history
             }
         } catch (err) {
@@ -91,7 +92,7 @@ export default function MobileAdminNotifications() {
                                     value={formData.title} 
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     className="w-full bg-slate-950 border border-slate-800 text-white p-3 rounded-lg focus:ring-2 focus:ring-emerald-500/50"
-                                    placeholder="e.g. Server Maintenance, Discount Offer!"
+                                    placeholder="e.g. Join WhatsApp Channel, Special Update!"
                                     required
                                 />
                             </div>
@@ -105,6 +106,22 @@ export default function MobileAdminNotifications() {
                                     placeholder="The main text of your notification..."
                                     required
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-2">
+                                    Action Link / Direct URL <span className="text-xs text-slate-500">(Optional)</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    value={formData.actionLink} 
+                                    onChange={(e) => setFormData({ ...formData, actionLink: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 text-white p-3 rounded-lg focus:ring-2 focus:ring-emerald-500/50"
+                                    placeholder="e.g. https://whatsapp.com/channel/... or https://forms.gle/..."
+                                />
+                                <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                                    Supports WhatsApp links, Google Forms, websites, or app paths. When tapped, the push notification will open this link directly.
+                                </p>
                             </div>
 
                             <div>
@@ -123,7 +140,7 @@ export default function MobileAdminNotifications() {
                             <button
                                 type="submit"
                                 disabled={sending}
-                                className="w-full flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold transition disabled:opacity-50 mt-4"
+                                className="w-full flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold transition disabled:opacity-50 mt-4 cursor-pointer"
                             >
                                 {sending ? 'Dispatching...' : <><Sparkles size={18} /> Send Broadcast Now</>}
                             </button>
@@ -156,7 +173,7 @@ export default function MobileAdminNotifications() {
                                                 <h4 className="text-white font-bold text-lg truncate">{notif.title}</h4>
                                                 <p className="text-slate-400 text-sm mt-1 break-all whitespace-pre-wrap">{notif.message}</p>
                                                 
-                                                <div className="flex flex-wrap gap-3 mt-3">
+                                                <div className="flex flex-wrap items-center gap-3 mt-3">
                                                     <span className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium tracking-wide">
                                                         To: {notif.targetAudience.toUpperCase()}
                                                     </span>
@@ -169,6 +186,17 @@ export default function MobileAdminNotifications() {
                                                     <span className={`text-xs px-2 py-1 rounded font-medium ${notif.isPushDispatched ? 'bg-emerald-500/20 text-emerald-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
                                                         {notif.isPushDispatched ? 'FCM Sent' : 'In-App Only'}
                                                     </span>
+                                                    {notif.actionLink && (
+                                                        <a
+                                                            href={notif.actionLink}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs px-2.5 py-1 rounded bg-blue-500/20 text-blue-300 font-medium inline-flex items-center gap-1.5 hover:underline max-w-[280px] truncate"
+                                                        >
+                                                            <ExternalLink size={12} className="shrink-0" />
+                                                            <span className="truncate">{notif.actionLink}</span>
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

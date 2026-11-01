@@ -375,6 +375,15 @@ export default function ChatRoomClient() {
                     </div>
                 )}
                 {messages.map((msg, i) => {
+                    if (msg.isDivider || msg.senderId === 'system' || msg.senderRole === 'system') {
+                        return (
+                            <div key={msg.id || i} className="flex items-center justify-center my-3">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                                    {msg.text || msg.content || '━━ Previous Consultation History ━━'}
+                                </span>
+                            </div>
+                        );
+                    }
                     const isMe = msg.senderId === user?._id || msg.senderModel === (user.role === 'astrologer' ? 'Astrologer' : 'User');
                     return (
                         <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>

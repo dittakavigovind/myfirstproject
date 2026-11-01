@@ -6,7 +6,8 @@ import {
     Send, ArrowLeft, Clock, Wallet,
     MoreVertical, Info, AlertCircle, X,
     Calendar, User, Shield, Sparkles, Grid,
-    Check, CheckCheck, Paperclip, Star
+    Check, CheckCheck, Paperclip, Star,
+    MessageSquare, Phone
 } from "lucide-react";
 import { io } from "socket.io-client";
 import { useAuth } from "@/context/AuthContext";
@@ -72,6 +73,11 @@ export default function ChatRoomClient() {
     const [astroEndReason, setAstroEndReason] = useState("");
     const [customAstroReason, setCustomAstroReason] = useState("");
     const [sessionTerminationReason, setSessionTerminationReason] = useState(null);
+
+    // Reconnect / New Consultation from History
+    const [showConnectModal, setShowConnectModal] = useState(false);
+    const [connectLoading, setConnectLoading] = useState(false);
+    const [connectType, setConnectType] = useState('chat'); // 'chat' or 'call'
 
     // Low Balance
     const [showLowBalanceModal, setShowLowBalanceModal] = useState(false);
@@ -217,8 +223,14 @@ export default function ChatRoomClient() {
                     setMessages(data.messages);
                 }
                 if (data.session) {
-                    setAstrologer(data.session.astrologerId || data.session.astrologer);
+                    const rawAstro = data.session.astrologerId || data.session.astrologer;
+                    setAstrologer(rawAstro);
                     setChatUser(data.session.userId);
+
+                    const astroId = rawAstro?._id || rawAstro?.id;
+                    if (astroId && typeof astroId === 'string') {
+                        refreshAstroStatus(astroId);
+                    }
                     
                     if (data.session.status === 'active' && data.session.startTime) {
                         const start = new Date(data.session.startTime).getTime();
@@ -258,6 +270,11 @@ export default function ChatRoomClient() {
                             endMsg = data.session.terminationReason;
                         }
                         setShowEndedPopup(endMsg);
+                    } else {
+                        setIsReadOnly(false);
+                        isReadOnlyRef.current = false;
+                        setShowEndedPopup(false);
+                        setSessionTerminationReason(null);
                     }
                 }
             }
@@ -808,6 +825,117 @@ export default function ChatRoomClient() {
     const isMissed = sessionTerminationReason === 'astrologer_no_answer' || 
                      (typeof showEndedPopup === 'string' && showEndedPopup.includes('NOT RESPOND'));
 
+    const isAstroOnline = Boolean(astrologer?.isOnline && (astrologer?.isChatOnline || astrologer?.isVoiceOnline));
+    const isAstroAvailable = Boolean(isAstroOnline && !astrologer?.isBusy);
+    const isAstroBusy = Boolean(astrologer?.isBusy);
+
+    const refreshAstroStatus = async (astroId) => {
+        try {
+            if (!astroId) return;
+            const res = await api.get(`/astro/astrologers/${astroId}`);
+            if (res.data) {
+                setAstrologer(prev => ({ ...(prev || {}), ...res.data }));
+            }
+        } catch (e) {
+            // keep existing populated astrologer data
+        }
+    };
+
+    // Listen for live status changes of the astrologer
+    useEffect(() => {
+        if (!socket || !astrologer) return;
+        const astroId = astrologer._id || astrologer.id;
+        if (!astroId) return;
+
+        const handleStatusChange = (data) => {
+            if (data.astrologerId === astroId) {
+                setAstrologer(prev => prev ? { ...prev, ...data } : null);
+            }
+        };
+
+        socket.on("astrologer_status_changed", handleStatusChange);
+        return () => {
+            socket.off("astrologer_status_changed", handleStatusChange);
+        };
+    }, [socket, astrologer?._id, astrologer?.id]);
+
+    const handleStartNewConsultation = async (keepHistory = true) => {
+        const astroId = astrologer?._id || astrologer?.id;
+        if (!astroId) return;
+        setConnectLoading(true);
+        try {
+            const chatRate = astrologer.charges?.chatPerMinute || 10;
+            const minRequired = chatRate * 3;
+            if ((user?.walletBalance || 0) < minRequired) {
+                toast.error(`Minimum ₹${minRequired} (3 mins) required. Please recharge.`);
+                setShowConnectModal(false);
+                router.push('/wallet');
+                return;
+            }
+
+            const payload = {
+                astrologerId: astroId,
+                sessionType: 'chat'
+            };
+            if (keepHistory && roomId) {
+                payload.previousRoomId = roomId;
+            }
+
+            const { data } = await api.post('/chat/start-paid', payload);
+            if (data.success && data.roomId) {
+                setShowConnectModal(false);
+                toast.success('Consultation initiated! Connecting...');
+                setIsReadOnly(false);
+                isReadOnlyRef.current = false;
+                setDuration(0);
+                setSessionActive(false);
+                setShowEndedPopup(false);
+                setSessionTerminationReason(null);
+                router.replace(`/chat/room?id=${data.roomId}`);
+            } else {
+                toast.error(data.message || 'Failed to start consultation.');
+            }
+        } catch (err) {
+            console.error('Start consultation error:', err);
+            toast.error(err.response?.data?.message || 'Failed to initiate consultation.');
+        } finally {
+            setConnectLoading(false);
+        }
+    };
+
+    const handleStartCall = async () => {
+        const astroId = astrologer?._id || astrologer?.id;
+        if (!astroId) return;
+        setConnectLoading(true);
+        try {
+            const callRate = astrologer.charges?.callPerMinute || 20;
+            const minRequired = callRate * 3;
+            if ((user?.walletBalance || 0) < minRequired) {
+                toast.error(`Minimum ₹${minRequired} (3 mins) required. Please recharge.`);
+                setShowConnectModal(false);
+                router.push('/wallet');
+                return;
+            }
+
+            const { data } = await api.post('/chat/start-paid', {
+                astrologerId: astroId,
+                sessionType: 'audio'
+            });
+            if (data.success && data.roomId) {
+                setShowConnectModal(false);
+                toast.success('Call initiated!');
+                window.dispatchEvent(new CustomEvent('start-global-call', { detail: { roomId: data.roomId } }));
+            } else {
+                toast.error(data.message || 'Failed to start call.');
+            }
+        } catch (err) {
+            console.error('Start call error:', err);
+            toast.error(err.response?.data?.message || 'Failed to initiate call.');
+        } finally {
+            setConnectLoading(false);
+        }
+    };
+
     return (
         <div 
             className="fixed top-0 left-0 w-full z-50 flex flex-col mx-auto bg-cosmic-indigo overflow-hidden sm:max-w-md sm:left-1/2 sm:-translate-x-1/2"
@@ -1015,17 +1143,51 @@ export default function ChatRoomClient() {
                         </>
                     )}
                     
-                    <div className="flex flex-col items-end mr-1">
-                        <div className="flex items-center gap-1 text-[#d97706] bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                            <Clock size={10} className={sessionActive ? "animate-pulse" : ""} />
-                            <span className="text-[11px] font-mono font-black tabular-nums">
-                                {sessionActive ? formatTime(duration) : (user?.role === 'astrologer' ? '0:00' : 'Waiting...')}
-                            </span>
+                    {isReadOnly ? (
+                        user?.role !== 'astrologer' ? (
+                            isAstroAvailable ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setConnectType('chat');
+                                        setShowConnectModal(true);
+                                    }}
+                                    className="flex items-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/40 active:scale-95 transition-all shadow-sm"
+                                    title="Astrologer is online. Tap to connect!"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Available</span>
+                                </button>
+                            ) : isAstroBusy ? (
+                                <div className="flex items-center gap-1.5 bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/40">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Busy</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1.5 bg-white/5 text-slate-400 px-2.5 py-1 rounded-full border border-white/10">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider">Offline</span>
+                                </div>
+                            )
+                        ) : (
+                            <div className="flex items-center gap-1 text-slate-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                                <Clock size={10} />
+                                <span className="text-[10px] font-mono font-bold tabular-nums">Ended</span>
+                            </div>
+                        )
+                    ) : (
+                        <div className="flex flex-col items-end mr-1">
+                            <div className="flex items-center gap-1 text-[#d97706] bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                                <Clock size={10} className={sessionActive ? "animate-pulse" : ""} />
+                                <span className="text-[11px] font-mono font-black tabular-nums">
+                                    {sessionActive ? formatTime(duration) : (user?.role === 'astrologer' ? '0:00' : 'Waiting...')}
+                                </span>
+                            </div>
+                            {remainingBalance !== null && (
+                                <span className="text-[7px] text-slate-500 font-bold uppercase">₹{remainingBalance.toFixed(0)}</span>
+                            )}
                         </div>
-                        {remainingBalance !== null && (
-                            <span className="text-[7px] text-slate-500 font-bold uppercase">₹{remainingBalance.toFixed(0)}</span>
-                        )}
-                    </div>
+                    )}
                     
                     {!isReadOnly && (
                         <button 
@@ -1191,6 +1353,15 @@ export default function ChatRoomClient() {
                 )}
 
                 {messages.map((msg, i) => {
+                    if (msg.isDivider || msg.senderId === 'system' || msg.senderRole === 'system') {
+                        return (
+                            <div key={msg.id || msg._id || i} className="flex items-center justify-center my-4">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-solar-gold bg-solar-gold/10 px-3.5 py-1 rounded-full border border-solar-gold/25 shadow-sm">
+                                    {msg.text || msg.content || '━━ Previous Consultation History ━━'}
+                                </span>
+                            </div>
+                        );
+                    }
                     const isMe = msg.senderId === (user?.astrologerId || user?._id) || msg.senderModel === (user?.role === 'astrologer' ? 'Astrologer' : 'User');
                     const isSent = msg.status === 'sent';
                     const isDelivered = msg.status === 'delivered';
@@ -1271,9 +1442,61 @@ export default function ChatRoomClient() {
             {/* Input Bar - WhatsApp Style */}
             <div className="flex-none z-30 px-3 pt-2 pb-safe bg-cosmic-indigo/90 backdrop-blur-xl border-t border-white/5">
                 {isReadOnly ? (
-                    <div className="text-center py-4 text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-                        {typeof showEndedPopup === 'string' ? showEndedPopup : "THIS SESSION HAS ENDED"}
-                    </div>
+                    user?.role !== 'astrologer' && isAstroAvailable ? (
+                        <div className="py-2 px-1 flex flex-col gap-2 max-w-md mx-auto">
+                            <div className="flex items-center justify-between text-[11px] px-1 text-slate-300">
+                                <span className="flex items-center gap-1.5 font-bold">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span className="text-emerald-400 uppercase tracking-wider">
+                                        {astrologer?.displayName || 'Astrologer'} is Available
+                                    </span>
+                                </span>
+                                <span className="text-solar-gold font-bold">
+                                    ₹{astrologer?.charges?.chatPerMinute || 10}/min
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setConnectType('chat');
+                                        setShowConnectModal(true);
+                                    }}
+                                    className="flex-1 py-3 px-4 bg-gradient-to-r from-electric-violet to-purple-600 hover:from-purple-600 hover:to-electric-violet text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-electric-violet/25 flex items-center justify-center gap-2 active:scale-98 transition-all"
+                                >
+                                    <MessageSquare size={16} />
+                                    <span>Chat Again</span>
+                                </button>
+                                {astrologer?.isVoiceOnline && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setConnectType('call');
+                                            setShowConnectModal(true);
+                                        }}
+                                        className="py-3 px-4 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-1.5 active:scale-98 transition-all"
+                                    >
+                                        <Phone size={16} />
+                                        <span>Call</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ) : user?.role !== 'astrologer' && isAstroBusy ? (
+                        <div className="py-3.5 px-3 flex items-center justify-between text-slate-400 text-xs max-w-md mx-auto">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                                <span className="text-amber-300 font-bold text-[11px] uppercase tracking-wider">
+                                    {astrologer?.displayName || 'Astrologer'} is in another session
+                                </span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Session Ended</span>
+                        </div>
+                    ) : (
+                        <div className="text-center py-4 text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                            {typeof showEndedPopup === 'string' ? showEndedPopup : "THIS SESSION HAS ENDED"}
+                        </div>
+                    )
                 ) : (
                     <div
                         className="flex items-end gap-2 max-w-md mx-auto mb-2"
@@ -1413,6 +1636,135 @@ export default function ChatRoomClient() {
                                     Close & Continue Chat
                                 </button>
                             </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Reconnect / New Consultation Modal */}
+            <AnimatePresence>
+                {showConnectModal && astrologer && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm"
+                        onClick={() => setShowConnectModal(false)}
+                    >
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-cosmic-indigo border border-white/10 p-6 rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-electric-violet via-purple-500 to-solar-gold" />
+                            
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setShowConnectModal(false)}
+                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+
+                            {/* Astrologer Header */}
+                            <div className="flex items-center gap-3.5 mb-5">
+                                <img
+                                    src={getImageUrl(astrologer.image)}
+                                    alt={astrologer.displayName || "Astrologer"}
+                                    className="w-14 h-14 rounded-2xl object-cover border-2 border-electric-violet/40 shadow-md"
+                                />
+                                <div>
+                                    <div className="flex items-center gap-1.5">
+                                        <h3 className="text-base font-black text-white">{astrologer.displayName}</h3>
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    </div>
+                                    <p className="text-xs text-solar-gold font-bold mt-0.5">
+                                        {connectType === 'call' ? 'Audio Consultation' : 'Chat Consultation'} • ₹{connectType === 'call' ? (astrologer.charges?.callPerMinute || 20) : (astrologer.charges?.chatPerMinute || 10)}/min
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Balance Info */}
+                            <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 mb-5 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Wallet size={18} className="text-solar-gold" />
+                                    <span className="text-xs text-slate-300 font-medium">Your Wallet Balance</span>
+                                </div>
+                                <span className="text-sm font-black text-white">₹{(user?.walletBalance || 0).toFixed(0)}</span>
+                            </div>
+
+                            {/* Low balance check */}
+                            {(() => {
+                                const rate = connectType === 'call' 
+                                    ? (astrologer.charges?.callPerMinute || 20) 
+                                    : (astrologer.charges?.chatPerMinute || 10);
+                                const minRequired = rate * 3;
+                                const hasLowBalance = (user?.walletBalance || 0) < minRequired;
+
+                                if (hasLowBalance) {
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200">
+                                                Minimum balance of ₹{minRequired} (3 minutes) is required to start this consultation.
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setShowConnectModal(false);
+                                                    router.push('/wallet');
+                                                }}
+                                                className="w-full py-3.5 bg-solar-gold hover:bg-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-98"
+                                            >
+                                                Recharge Wallet Now
+                                            </button>
+                                        </div>
+                                    );
+                                }
+
+                                if (connectType === 'call') {
+                                    return (
+                                        <div className="space-y-2.5">
+                                            <button
+                                                onClick={handleStartCall}
+                                                disabled={connectLoading}
+                                                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50"
+                                            >
+                                                <Phone size={16} />
+                                                <span>{connectLoading ? 'Connecting...' : `Call Astro ${astrologer.displayName}`}</span>
+                                            </button>
+                                            <p className="text-[10px] text-slate-400 text-center">
+                                                Timer & billing start only after the astrologer answers the call.
+                                            </p>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={() => handleStartNewConsultation(true)}
+                                            disabled={connectLoading}
+                                            className="w-full py-3.5 bg-electric-violet hover:bg-purple-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-electric-violet/30 flex items-center justify-center gap-2 transition-all active:scale-98 disabled:opacity-50"
+                                        >
+                                            <MessageSquare size={16} />
+                                            <span>{connectLoading ? 'Starting...' : 'Continue Chat (Keep History)'}</span>
+                                        </button>
+                                        <p className="text-[10px] text-slate-400 text-center px-2">
+                                            A new session will be created (0:00 timer & standard billing). Previous messages will remain visible for context.
+                                        </p>
+
+                                        <button
+                                            onClick={() => handleStartNewConsultation(false)}
+                                            disabled={connectLoading}
+                                            className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl border border-white/10 transition-all active:scale-98 disabled:opacity-50"
+                                        >
+                                            Start Fresh Chat (Clear Window)
+                                        </button>
+                                    </div>
+                                );
+                            })()}
                         </motion.div>
                     </motion.div>
                 )}

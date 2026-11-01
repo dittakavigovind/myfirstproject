@@ -111,7 +111,12 @@ export function AuthProvider({ children }) {
                     window.dispatchEvent(new CustomEvent('start-global-call', { detail: { roomId: data.roomId } }));
                     router.push('/explore');
                 } else if (data.actionLink) {
-                    router.push(data.actionLink);
+                    const link = String(data.actionLink).trim();
+                    if (/^(https?:\/\/|whatsapp:\/\/|intent:\/\/)/i.test(link)) {
+                        window.open(link, '_blank');
+                    } else {
+                        router.push(link.startsWith('/') ? link : `/${link}`);
+                    }
                 } else {
                     router.push('/notifications');
                 }
