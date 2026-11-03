@@ -14,7 +14,11 @@ const { clearPendingSessionTimer, resetConsecutiveMissed } = require('../control
 const activeSessions = new Map(); // Store interval IDs by roomId
 const disconnectTimers = new Map(); // Store timeout IDs for auto-ending sessions
 const offlineTimers = new Map(); // Store timeout IDs for 10s grace period before marking offline
-module.exports = function (io) {
+
+let globalIo = null;
+
+function chatSocket(io) {
+    globalIo = io;
     // Middleware for Socket Authentication
     io.use(async (socket, next) => {
         try {
@@ -120,19 +124,7 @@ module.exports = function (io) {
                     // If it's an audio or video call, and the astrologer joins, activate session!
                     if (socket.user.role === 'astrologer' && (session.sessionType === 'audio' || session.sessionType === 'video' || session.sessionType === 'voice')) {
                         console.log(`[Socket] Astrologer joined call session ${roomId}. Activating call session.`);
-                        clearPendingSessionTimer(roomId);
-                        await resetConsecutiveMissed(socket.user.id);
-                        session.status = 'active';
-                        session.startTime = new Date();
-                        await session.save();
-
-                        startBillingEngine(roomId, session._id, io);
-
-                        // Mark Astrologer as Busy
-                        await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
-                        io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
-
-                        io.to(roomId).emit('session_started', { startTime: session.startTime });
+                        await activateSession(session, io);
                     }
                 } else if (session.status === 'active') {
                     const actualElapsedSeconds = session.startTime
@@ -177,19 +169,7 @@ module.exports = function (io) {
                 if (session.status === 'initiated') {
                     if (socket.user.role === 'astrologer') {
                         console.log(`[Socket] Astrologer sent first message. Starting billing for session ${roomId}`);
-                        clearPendingSessionTimer(roomId);
-                        await resetConsecutiveMissed(socket.user.id);
-                        session.status = 'active';
-                        session.startTime = new Date();
-                        await session.save();
-
-                        startBillingEngine(roomId, session._id, io);
-
-                        // Mark Astrologer as Busy
-                        await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
-                        io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
-
-                        io.to(roomId).emit('session_started', { startTime: session.startTime });
+                        await activateSession(session, io);
                     } else {
                         console.log(`[Socket] User sent message in initiated session ${roomId}. Waiting for Astrologer response to start billing.`);
                     }
@@ -239,19 +219,7 @@ module.exports = function (io) {
                 const session = await Session.findOne({ roomId });
                 if (session && session.status === 'initiated') {
                     console.log(`[Socket] Starting billing via Astrologer trigger for session ${roomId}`);
-                    clearPendingSessionTimer(roomId);
-                    await resetConsecutiveMissed(socket.user.id);
-                    session.status = 'active';
-                    session.startTime = new Date();
-                    await session.save();
-
-                    startBillingEngine(roomId, session._id, io);
-
-                    // Mark Astrologer as Busy
-                    await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
-                    io.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
-
-                    io.to(roomId).emit('session_started', { startTime: session.startTime });
+                    await activateSession(session, io);
                 }
             } catch (err) {
                 console.error("Start Session Error:", err);
@@ -393,6 +361,13 @@ module.exports = function (io) {
         });
     });
 
+    // Expose methods on io
+    io.activateSession = (session, startTimeOverride) => activateSession(session, io, startTimeOverride);
+    io.startBillingEngine = (roomId, sessionId) => startBillingEngine(roomId, sessionId, io);
+    io.stopBillingEngine = (roomId) => stopBillingEngine(roomId);
+    io.terminateSession = (roomId, reason, endedBy) => terminateSession(roomId, io, reason, endedBy);
+}
+
     async function performDeduction(roomId, sessionId, io) {
         try {
             const session = await Session.findById(sessionId);
@@ -493,14 +468,17 @@ module.exports = function (io) {
                 ? Math.floor((new Date() - session.startTime) / 1000)
                 : 0;
 
-            io.to(roomId).emit('timer_update', {
-                duration: actualElapsedSeconds,
-                remainingBalance: user.walletBalance,
-                pricePerMinute: pricePerMinute
-            });
+            const socketIo = io || globalIo;
+            if (socketIo) {
+                socketIo.to(roomId).emit('timer_update', {
+                    duration: actualElapsedSeconds,
+                    remainingBalance: user.walletBalance,
+                    pricePerMinute: pricePerMinute
+                });
 
-            if (user.walletBalance <= pricePerMinute * 2) {
-                io.to(roomId).emit('balance_warning', { message: 'Wallet balance is low. Chat will end soon.' });
+                if (user.walletBalance <= pricePerMinute * 2) {
+                    socketIo.to(roomId).emit('balance_warning', { message: 'Wallet balance is low. Chat will end soon.' });
+                }
             }
 
             return true;
@@ -508,6 +486,67 @@ module.exports = function (io) {
             console.error(`Deduction Error [Room ${roomId}]:`, err);
             return false;
         }
+    }
+
+    async function activateSession(session, customIo, startTimeOverride = null) {
+        const socketIo = customIo || io;
+        if (!session) return null;
+        const roomId = session.roomId;
+
+        if (session.status === 'active') {
+            console.log(`[SessionActivate] Session ${roomId} is already active.`);
+            return session;
+        }
+        if (['completed', 'terminated', 'failed', 'missed', 'declined'].includes(session.status)) {
+            console.log(`[SessionActivate] Session ${roomId} is already ended (${session.status}), cannot activate.`);
+            return session;
+        }
+
+        console.log(`[SessionActivate] Activating session ${roomId}`);
+        clearPendingSessionTimer(roomId);
+
+        // Reset consecutive missed sessions for the astrologer
+        try {
+            const astro = await Astrologer.findById(session.astrologerId);
+            if (astro && astro.userId) {
+                await resetConsecutiveMissed(astro.userId);
+            }
+        } catch (e) {
+            console.error('[SessionActivate] Error resetting consecutive missed:', e);
+        }
+
+        const sessionStartTime = startTimeOverride ? new Date(startTimeOverride) : new Date();
+        session.status = 'active';
+        session.startTime = sessionStartTime;
+        await session.save();
+
+        // Start billing engine
+        startBillingEngine(roomId, session._id, socketIo);
+
+        // Mark Astrologer as Busy
+        await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
+        if (socketIo) {
+            socketIo.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
+            socketIo.to(roomId).emit('session_started', { startTime: session.startTime });
+        }
+
+        // Update Firestore chat_sessions doc with status active so mobile / web onSnapshot listeners react instantly
+        try {
+            require('../config/firebase');
+            const { getApps } = require('firebase-admin/app');
+            const { getFirestore } = require('firebase-admin/firestore');
+            if (getApps().length > 0) {
+                await getFirestore().collection('chat_sessions').doc(roomId).set({
+                    status: 'active',
+                    startTime: session.startTime.getTime(),
+                    updatedAt: Date.now()
+                }, { merge: true });
+            }
+        } catch (fsErr) {
+            console.error('[SessionActivate] Error updating Firestore on session activate:', fsErr);
+        }
+
+        return session;
     }
 
     async function startBillingEngine(roomId, sessionId, io) {
@@ -533,6 +572,7 @@ module.exports = function (io) {
     }
 
     async function terminateSession(roomId, io, reason = 'Terminated', endedBy = 'system') {
+        const socketIo = io || globalIo;
         stopBillingEngine(roomId);
         clearPendingSessionTimer(roomId);
 
@@ -573,35 +613,44 @@ module.exports = function (io) {
 
                 if (otherActiveSessions === 0) {
                     const astro = await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: false }, { new: true });
-                    io.emit('astrologer_status_changed', {
-                        astrologerId: session.astrologerId.toString(),
-                        isBusy: false,
-                        isChatOnline: astro.isChatOnline,
-                        isVoiceOnline: astro.isVoiceOnline,
-                        isVideoOnline: astro.isVideoOnline,
-                        isOnline: astro.isOnline
-                    });
+                    if (socketIo) {
+                        socketIo.emit('astrologer_status_changed', {
+                            astrologerId: session.astrologerId.toString(),
+                            isBusy: false,
+                            isChatOnline: astro.isChatOnline,
+                            isVoiceOnline: astro.isVoiceOnline,
+                            isVideoOnline: astro.isVideoOnline,
+                            isOnline: astro.isOnline
+                        });
+                    }
                 }
 
-                io.to(roomId).emit('session_ended', {
-                    reason,
-                    endedBy,
-                    showSessionEndedBy,
-                    totalDuration: session.totalDuration,
-                    totalDeducted: session.totalAmountDeducted
-                });
+                if (socketIo) {
+                    socketIo.to(roomId).emit('session_ended', {
+                        reason,
+                        endedBy,
+                        showSessionEndedBy,
+                        totalDuration: session.totalDuration,
+                        totalDeducted: session.totalAmountDeducted
+                    });
+
+                    // Make all sockets leave the room
+                    const sockets = await socketIo.in(roomId).fetchSockets();
+                    sockets.forEach(s => s.leave(roomId));
+                }
 
                 // Generate AI Insights (asynchronous, don't await so we don't block socket termination)
                 AiInsightService.generateSessionSummary(session._id).catch(err => {
                     console.error("AI Insight Generation Error:", err);
                 });
-
-                // Make all sockets leave the room
-                const sockets = await io.in(roomId).fetchSockets();
-                sockets.forEach(s => s.leave(roomId));
             }
         } catch (err) {
             console.error('Session Termination Error:', err);
         }
     }
-};
+
+module.exports = chatSocket;
+module.exports.activateSession = (session, customIo, startTimeOverride) => activateSession(session, customIo || globalIo, startTimeOverride);
+module.exports.startBillingEngine = (roomId, sessionId, customIo) => startBillingEngine(roomId, sessionId, customIo || globalIo);
+module.exports.stopBillingEngine = (roomId) => stopBillingEngine(roomId);
+module.exports.terminateSession = (roomId, customIo, reason, endedBy) => terminateSession(roomId, customIo || globalIo, reason, endedBy);

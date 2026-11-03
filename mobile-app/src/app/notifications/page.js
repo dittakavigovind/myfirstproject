@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Bell, BellRing, Trash2, Clock, CheckCircle2, Info, X, ExternalLink, ChevronRight } from "lucide-react";
+import { ArrowLeft, Bell, Clock, CheckCircle2, X, ExternalLink, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -68,12 +68,31 @@ export default function NotificationsPage() {
         }
     };
 
-    const getIcon = (audience) => {
-        switch (audience) {
-            case 'astrologers': return <BellRing size={18} className="text-solar-gold" />;
-            case 'users': return <Bell size={18} className="text-blue-400" />;
-            default: return <Info size={18} className="text-electric-violet" />;
-        }
+    // Format date strictly as dd/mm/yyyy
+    const formatDate = (dateString) => {
+        if (!dateString) return "";
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return "";
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    // Format date with time for popup modal: dd/mm/yyyy at hh:mm AM/PM
+    const formatDateTime = (dateString) => {
+        if (!dateString) return "";
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return "";
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        const formattedHours = String(hours).padStart(2, '0');
+        return `${day}/${month}/${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
 
     // Extract first link found in message or explicit actionLink
@@ -156,13 +175,13 @@ export default function NotificationsPage() {
     return (
         <div className="pb-32 animate-in fade-in duration-500 px-4 pt-[var(--safe-area-inset-top)]">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 pt-4">
-                <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between mb-4 pt-2">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => router.back()}
                         className="p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10 active:scale-95 transition-all"
                     >
-                        <ArrowLeft size={20} />
+                        <ArrowLeft size={18} />
                     </button>
                     <div>
                         <h1 className="text-lg font-black text-white uppercase tracking-widest">Inbox</h1>
@@ -178,7 +197,7 @@ export default function NotificationsPage() {
             </div>
 
             {/* Notifications List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <div className="w-8 h-8 rounded-full border-t-2 border-electric-violet animate-spin" />
@@ -199,60 +218,56 @@ export default function NotificationsPage() {
                             return (
                                 <motion.div
                                     key={n._id}
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
+                                    transition={{ delay: index * 0.04 }}
                                     onClick={() => handleNotificationClick(n)}
-                                    className={`relative glass-panel rounded-3xl p-5 border-white/5 transition-all active:scale-[0.98] cursor-pointer hover:border-white/20 ${!isRead ? "bg-white/10 border-electric-violet/30" : "bg-white/5 opacity-80"
+                                    className={`relative glass-panel rounded-2xl p-4 border-white/5 transition-all active:scale-[0.99] cursor-pointer hover:border-white/20 ${!isRead ? "bg-white/10 border-electric-violet/30 shadow-[0_4px_20px_rgba(139,92,246,0.08)]" : "bg-white/5 opacity-85"
                                         }`}
                                 >
-                                    {!isRead && (
-                                        <div className="absolute top-5 right-5 w-2 h-2 bg-solar-gold rounded-full shadow-[0_0_10px_rgba(251,191,36,0.5)]" />
-                                    )}
+                                    {/* Card Header: Title & New Badge (No bulky bell icon) */}
+                                    <div className="flex items-start justify-between gap-3 mb-1.5">
+                                        <h4 className={`text-sm font-bold leading-snug line-clamp-1 flex-1 ${!isRead ? "text-white" : "text-slate-200"}`}>
+                                            {n.title}
+                                        </h4>
+                                        {!isRead && (
+                                            <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-solar-gold/15 text-solar-gold border border-solar-gold/30">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-solar-gold animate-pulse" />
+                                                New
+                                            </span>
+                                        )}
+                                    </div>
 
-                                    <div className="flex gap-4">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${!isRead ? "bg-electric-violet/20" : "bg-slate-800"
-                                            }`}>
-                                            {getIcon(n.targetAudience)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h4 className={`text-sm font-black truncate pr-4 ${!isRead ? "text-white" : "text-slate-300"}`}>
-                                                    {n.title}
-                                                </h4>
+                                    {/* Limited strictly to first 3 lines with full width */}
+                                    <p
+                                        className="text-xs text-slate-400 leading-relaxed mb-3 break-words line-clamp-3"
+                                        style={{
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 3,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden'
+                                        }}
+                                    >
+                                        {n.message}
+                                    </p>
+
+                                    {/* Footer: Date, Seen status & Read More (no wrapping) */}
+                                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.04]">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium tracking-wide">
+                                                <Clock size={11} className="opacity-70" />
+                                                {formatDate(n.createdAt)}
                                             </div>
-
-                                            {/* Limited strictly to first 3 lines */}
-                                            <p
-                                                className="text-xs text-slate-400 leading-relaxed mb-3 break-words line-clamp-3"
-                                                style={{
-                                                    display: '-webkit-box',
-                                                    WebkitLineClamp: 3,
-                                                    WebkitBoxOrient: 'vertical',
-                                                    overflow: 'hidden'
-                                                }}
-                                            >
-                                                {n.message}
-                                            </p>
-
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                                                        <Clock size={10} />
-                                                        {new Date(n.createdAt).toLocaleDateString()}
-                                                    </div>
-                                                    {isRead && (
-                                                        <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-bold uppercase tracking-wider">
-                                                            <CheckCircle2 size={10} />
-                                                            Seen
-                                                        </div>
-                                                    )}
+                                            {isRead && (
+                                                <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium tracking-wide">
+                                                    <CheckCircle2 size={11} />
+                                                    Seen
                                                 </div>
-                                                <span className="text-[10px] text-electric-violet/90 font-bold uppercase tracking-wider flex items-center gap-0.5">
-                                                    Read More <ChevronRight size={12} />
-                                                </span>
-                                            </div>
+                                            )}
                                         </div>
+                                        <span className="text-[10px] text-electric-violet hover:text-purple-300 font-bold uppercase tracking-wider flex items-center gap-0.5 whitespace-nowrap shrink-0">
+                                            Read More <ChevronRight size={12} />
+                                        </span>
                                     </div>
                                 </motion.div>
                             );
@@ -263,7 +278,7 @@ export default function NotificationsPage() {
 
             {/* Bottom Tip */}
             {!loading && notifications.length > 0 && (
-                <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-12 pb-10">
+                <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-8 pb-10">
                     Showing latest celestial alerts
                 </p>
             )}
@@ -284,31 +299,23 @@ export default function NotificationsPage() {
                             exit={{ opacity: 0, scale: 0.92, y: 20 }}
                             transition={{ type: "spring", damping: 25, stiffness: 350 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="relative w-full max-w-md bg-[#0e1329] border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden text-left"
+                            className="relative w-full max-w-md bg-[#0e1329] border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden text-left"
                         >
                             {/* Modal Header */}
                             <div className="flex items-start justify-between gap-3 mb-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-11 h-11 rounded-2xl bg-electric-violet/20 flex items-center justify-center shrink-0 border border-electric-violet/30">
-                                        {getIcon(selectedNotification.targetAudience)}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 inline-block mb-1">
-                                            {selectedNotification.targetAudience === 'astrologers'
-                                                ? 'Astrologer Alert'
-                                                : selectedNotification.targetAudience === 'users'
-                                                ? 'Special Update'
-                                                : 'Announcement'}
+                                <div className="min-w-0">
+                                    <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 inline-block mb-1">
+                                        {selectedNotification.targetAudience === 'astrologers'
+                                            ? 'Astrologer Alert'
+                                            : selectedNotification.targetAudience === 'users'
+                                            ? 'Special Update'
+                                            : 'Announcement'}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                                        <Clock size={11} />
+                                        <span>
+                                            {formatDateTime(selectedNotification.createdAt)}
                                         </span>
-                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-                                            <Clock size={11} />
-                                            <span>
-                                                {new Date(selectedNotification.createdAt).toLocaleString(undefined, {
-                                                    dateStyle: 'medium',
-                                                    timeStyle: 'short'
-                                                })}
-                                            </span>
-                                        </div>
                                     </div>
                                 </div>
                                 <button

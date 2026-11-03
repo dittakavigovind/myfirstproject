@@ -189,8 +189,20 @@ export default function ChatRoomClient() {
             }
 
             snapshot.forEach(document => {
-                msgs.push({ _id: document.id, ...document.data() });
+                const data = document.data();
+                let ts = data.createdAt;
+                if (ts && typeof ts === 'object') {
+                    if (typeof ts.toMillis === 'function') ts = ts.toMillis();
+                    else if (typeof ts.toDate === 'function') ts = ts.toDate().getTime();
+                    else if (ts._seconds !== undefined) ts = ts._seconds * 1000 + Math.floor((ts._nanoseconds || 0) / 1000000);
+                    else if (ts.seconds !== undefined) ts = ts.seconds * 1000 + Math.floor((ts.nanoseconds || 0) / 1000000);
+                } else if (typeof ts === 'string') {
+                    const parsed = new Date(ts).getTime();
+                    if (!isNaN(parsed)) ts = parsed;
+                }
+                msgs.push({ _id: document.id, ...data, createdAt: typeof ts === 'number' ? ts : Date.now() });
             });
+            msgs.sort((a, b) => a.createdAt - b.createdAt);
             setMessages(msgs);
 
             msgs.forEach(msg => {
@@ -206,7 +218,9 @@ export default function ChatRoomClient() {
                 const data = docSnap.data();
                 
                 // Real-time status update from Firestore
-                if (data.status === 'completed' || data.status === 'terminated') {
+                if (data.status === 'active') {
+                    setSessionActive(true);
+                } else if (data.status === 'completed' || data.status === 'terminated') {
                     setIsReadOnly(true);
                     setSessionActive(false);
                 }
@@ -271,8 +285,10 @@ export default function ChatRoomClient() {
                 }
             }, { merge: true });
 
-            if (user.role === 'astrologer' && socket && !sessionActive) {
-                socket.emit("start_chat_session", { roomId });
+            if (user.role === 'astrologer') {
+                if (socket) socket.emit("start_chat_session", { roomId });
+                api.post(`/chat/session/${roomId}/start`).catch(() => {});
+                setSessionActive(true);
             }
         } catch (error) {
             console.error("Error sending message:", error);
@@ -311,6 +327,37 @@ export default function ChatRoomClient() {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const formatDividerDateTime = (timestamp) => {
+        if (!timestamp) return '';
+        let ts = timestamp;
+        if (typeof ts === 'object') {
+            if (typeof ts.toMillis === 'function') ts = ts.toMillis();
+            else if (typeof ts.toDate === 'function') ts = ts.toDate().getTime();
+            else if (ts._seconds !== undefined) ts = ts._seconds * 1000 + Math.floor((ts._nanoseconds || 0) / 1000000);
+            else if (ts.seconds !== undefined) ts = ts.seconds * 1000 + Math.floor((ts.nanoseconds || 0) / 1000000);
+        }
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return '';
+        
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        
+        const yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+        const isYesterday = d.toDateString() === yesterday.toDateString();
+
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (isToday) {
+            return `Today, ${timeStr}`;
+        } else if (isYesterday) {
+            return `Yesterday, ${timeStr}`;
+        } else {
+            const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            return `${dateStr}, ${timeStr}`;
+        }
     };
 
     if (authLoading) return <div className="p-8 text-center">Loading...</div>;
@@ -376,10 +423,29 @@ export default function ChatRoomClient() {
                 )}
                 {messages.map((msg, i) => {
                     if (msg.isDivider || msg.senderId === 'system' || msg.senderRole === 'system') {
+                        let rawText = msg.text || msg.content || '';
+                        let displayText = '';
+
+                        if (rawText && rawText.includes('•')) {
+                            displayText = rawText.replace(/^━━\s*|\s*━━$/g, '').trim();
+                        } else {
+                            let dividerTime = msg.sessionStartTime || msg.startTime;
+                            if (!dividerTime) {
+                                const nextMsg = messages.slice(i + 1).find(m => !m.isHistory && !m.isDivider);
+                                if (nextMsg && nextMsg.createdAt) {
+                                    dividerTime = nextMsg.createdAt;
+                                }
+                            }
+                            const formattedTime = dividerTime ? formatDividerDateTime(dividerTime) : '';
+                            displayText = formattedTime 
+                                ? `New Consultation • ${formattedTime}`
+                                : 'New Consultation';
+                        }
+
                         return (
                             <div key={msg.id || i} className="flex items-center justify-center my-3">
                                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-                                    {msg.text || msg.content || '━━ Previous Consultation History ━━'}
+                                    ━━ {displayText} ━━
                                 </span>
                             </div>
                         );

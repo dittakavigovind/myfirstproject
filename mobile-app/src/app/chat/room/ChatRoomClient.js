@@ -39,6 +39,7 @@ export default function ChatRoomClient() {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [sessionActive, setSessionActive] = useState(false);
+    const serverSessionActiveRef = useRef(false);
     const [duration, setDuration] = useState(0);
     const [remainingBalance, setRemainingBalance] = useState(null);
     const [viewportHeight, setViewportHeight] = useState('100dvh');
@@ -244,19 +245,18 @@ export default function ChatRoomClient() {
                         refreshAstroStatus(astroId);
                     }
                     
-                    if (data.session.status === 'active' && data.session.startTime) {
-                        const start = new Date(data.session.startTime).getTime();
-                        const elapsed = Math.floor((Date.now() - start) / 1000);
-                        setDuration(elapsed);
-                        localStartTimeRef.current = Date.now() - (elapsed * 1000);
-                        setSessionActive(true);
-                    } else if (data.session.totalDuration) {
-                        setDuration(data.session.totalDuration);
-                        localStartTimeRef.current = Date.now() - (data.session.totalDuration * 1000);
-                    }
-
                     if (data.session.status === 'active') {
+                        serverSessionActiveRef.current = true;
                         setSessionActive(true);
+                        if (data.session.startTime) {
+                            const start = new Date(data.session.startTime).getTime();
+                            const elapsed = Math.floor((Date.now() - start) / 1000);
+                            setDuration(elapsed > 0 ? elapsed : 0);
+                            localStartTimeRef.current = Date.now() - (elapsed * 1000);
+                        } else if (data.session.totalDuration) {
+                            setDuration(data.session.totalDuration);
+                            localStartTimeRef.current = Date.now() - (data.session.totalDuration * 1000);
+                        }
                     }
 
                     // If session is already finished, set to read-only
@@ -307,8 +307,20 @@ export default function ChatRoomClient() {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const msgs = [];
             snapshot.forEach(document => {
-                msgs.push({ _id: document.id, ...document.data() });
+                const data = document.data();
+                let ts = data.createdAt;
+                if (ts && typeof ts === 'object') {
+                    if (typeof ts.toMillis === 'function') ts = ts.toMillis();
+                    else if (typeof ts.toDate === 'function') ts = ts.toDate().getTime();
+                    else if (ts._seconds !== undefined) ts = ts._seconds * 1000 + Math.floor((ts._nanoseconds || 0) / 1000000);
+                    else if (ts.seconds !== undefined) ts = ts.seconds * 1000 + Math.floor((ts.nanoseconds || 0) / 1000000);
+                } else if (typeof ts === 'string') {
+                    const parsed = new Date(ts).getTime();
+                    if (!isNaN(parsed)) ts = parsed;
+                }
+                msgs.push({ _id: document.id, ...data, createdAt: typeof ts === 'number' ? ts : Date.now() });
             });
+            msgs.sort((a, b) => a.createdAt - b.createdAt);
             
             // Only update messages if Firebase has them, or if it's an active session
             if (msgs.length > 0 || !isReadOnlyRef.current) {
@@ -317,15 +329,23 @@ export default function ChatRoomClient() {
 
             // Mark unread messages as seen if they belong to the partner
             msgs.forEach(msg => {
-                if (msg.senderId !== user._id && msg.status !== 'seen') {
+                if (msg.senderId !== (user?.astrologerId || user?._id) && msg.status !== 'seen') {
                     updateDoc(doc(db, 'chat_sessions', roomId, 'messages', msg._id), { status: 'seen' })
                         .catch(err => console.error("Failed to update message status:", err));
                 }
             });
 
-            // If we see an astrologer message, the session is active!
-            const hasAstroMessage = msgs.some(m => m.senderModel === 'Astrologer');
+            // If we see an astrologer message that is NOT history and NOT divider, the session is active!
+            const hasAstroMessage = msgs.some(m => 
+                (m.senderModel === 'Astrologer' || m.senderRole === 'astrologer') && 
+                !m.isHistory && 
+                !m.isDivider
+            );
             if (hasAstroMessage && !isReadOnlyRef.current) {
+                if (!serverSessionActiveRef.current && user?.role === 'astrologer') {
+                    if (socket) socket.emit("start_chat_session", { roomId });
+                    api.post(`/chat/session/${roomId}/start`).catch(() => {});
+                }
                 setSessionActive(prev => {
                     if (!prev && !isReadOnlyRef.current) {
                         localStartTimeRef.current = Date.now();
@@ -347,7 +367,16 @@ export default function ChatRoomClient() {
                 const currentStatus = data.status;
                 
                 // Real-time status update from Firestore
-                if (currentStatus === 'completed' || currentStatus === 'terminated' || currentStatus === 'missed' || currentStatus === 'declined') {
+                if (currentStatus === 'active') {
+                    serverSessionActiveRef.current = true;
+                    setSessionActive(true);
+                    if (data.startTime) {
+                        const start = typeof data.startTime === 'number' ? data.startTime : new Date(data.startTime).getTime();
+                        const elapsed = Math.floor((Date.now() - start) / 1000);
+                        setDuration(elapsed > 0 ? elapsed : 0);
+                        localStartTimeRef.current = Date.now() - (elapsed * 1000);
+                    }
+                } else if (currentStatus === 'completed' || currentStatus === 'terminated' || currentStatus === 'missed' || currentStatus === 'declined') {
                     setIsReadOnly(true);
                     isReadOnlyRef.current = true;
                     setSessionActive(false);
@@ -452,12 +481,14 @@ export default function ChatRoomClient() {
             socket.on("connect", joinRoom);
 
             const handleSessionStarted = ({ startTime }) => {
+                serverSessionActiveRef.current = true;
                 setSessionActive(true);
                 setDuration(0); // Always 0 when it just starts
                 localStartTimeRef.current = Date.now();
             };
 
             const handleSessionRestored = ({ startTime, duration: d, actualElapsedSeconds }) => {
+                serverSessionActiveRef.current = true;
                 setSessionActive(true);
                 let currentDuration = d;
                 if (actualElapsedSeconds !== undefined) {
@@ -666,9 +697,15 @@ export default function ChatRoomClient() {
                 }
             }, { merge: true });
 
-            // Emit to backend to start the timer if session is not active ONLY when Astrologer sends message
-            if (user?.role === 'astrologer' && socket && !sessionActive) {
-                socket.emit("start_chat_session", { roomId });
+            // Emit to backend to start the timer if session is not active on server ONLY when Astrologer sends message
+            if (user?.role === 'astrologer' && !serverSessionActiveRef.current) {
+                if (socket) {
+                    socket.emit("start_chat_session", { roomId });
+                }
+                api.post(`/chat/session/${roomId}/start`).catch(err => {
+                    console.log("Start session API fallback:", err?.message);
+                });
+                serverSessionActiveRef.current = true;
                 // Optimistically start the timer locally for astrologer
                 setSessionActive(true);
                 localStartTimeRef.current = Date.now();
@@ -729,9 +766,15 @@ export default function ChatRoomClient() {
                     createdAt: Date.now()
                 });
                 
-                // Emit to backend to start the timer if session is not active ONLY when Astrologer uploads
-                if (user?.role === 'astrologer' && socket && !sessionActive) {
-                    socket.emit("start_chat_session", { roomId });
+                // Emit to backend to start the timer if session is not active on server ONLY when Astrologer uploads
+                if (user?.role === 'astrologer' && !serverSessionActiveRef.current) {
+                    if (socket) {
+                        socket.emit("start_chat_session", { roomId });
+                    }
+                    api.post(`/chat/session/${roomId}/start`).catch(err => {
+                        console.log("Start session API fallback:", err?.message);
+                    });
+                    serverSessionActiveRef.current = true;
                     setSessionActive(true);
                     localStartTimeRef.current = Date.now();
                     setDuration(0);
@@ -744,6 +787,50 @@ export default function ChatRoomClient() {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, "0")}`;
+    };
+
+    const formatMsgTime = (timestamp) => {
+        if (!timestamp) return '';
+        let ts = timestamp;
+        if (typeof ts === 'object') {
+            if (typeof ts.toMillis === 'function') ts = ts.toMillis();
+            else if (typeof ts.toDate === 'function') ts = ts.toDate().getTime();
+            else if (ts._seconds !== undefined) ts = ts._seconds * 1000 + Math.floor((ts._nanoseconds || 0) / 1000000);
+            else if (ts.seconds !== undefined) ts = ts.seconds * 1000 + Math.floor((ts.nanoseconds || 0) / 1000000);
+        }
+        const d = new Date(ts);
+        return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const formatDividerDateTime = (timestamp) => {
+        if (!timestamp) return '';
+        let ts = timestamp;
+        if (typeof ts === 'object') {
+            if (typeof ts.toMillis === 'function') ts = ts.toMillis();
+            else if (typeof ts.toDate === 'function') ts = ts.toDate().getTime();
+            else if (ts._seconds !== undefined) ts = ts._seconds * 1000 + Math.floor((ts._nanoseconds || 0) / 1000000);
+            else if (ts.seconds !== undefined) ts = ts.seconds * 1000 + Math.floor((ts.nanoseconds || 0) / 1000000);
+        }
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return '';
+        
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        
+        const yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+        const isYesterday = d.toDateString() === yesterday.toDateString();
+
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (isToday) {
+            return `Today, ${timeStr}`;
+        } else if (isYesterday) {
+            return `Yesterday, ${timeStr}`;
+        } else {
+            const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            return `${dateStr}, ${timeStr}`;
+        }
     };
 
     const handleShareChart = async (svgNodeString, messageContent = "Astrologer shared a Birth chart.") => {
@@ -1355,10 +1442,29 @@ export default function ChatRoomClient() {
 
                 {messages.map((msg, i) => {
                     if (msg.isDivider || msg.senderId === 'system' || msg.senderRole === 'system') {
+                        let rawText = msg.text || msg.content || '';
+                        let displayText = '';
+
+                        if (rawText && rawText.includes('•')) {
+                            displayText = rawText.replace(/^━━\s*|\s*━━$/g, '').trim();
+                        } else {
+                            let dividerTime = msg.sessionStartTime || msg.startTime;
+                            if (!dividerTime) {
+                                const nextMsg = messages.slice(i + 1).find(m => !m.isHistory && !m.isDivider);
+                                if (nextMsg && nextMsg.createdAt) {
+                                    dividerTime = nextMsg.createdAt;
+                                }
+                            }
+                            const formattedTime = dividerTime ? formatDividerDateTime(dividerTime) : '';
+                            displayText = formattedTime 
+                                ? `New Consultation • ${formattedTime}`
+                                : 'New Consultation';
+                        }
+
                         return (
                             <div key={msg.id || msg._id || i} className="flex items-center justify-center my-4">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-solar-gold bg-solar-gold/10 px-3.5 py-1 rounded-full border border-solar-gold/25 shadow-sm">
-                                    {msg.text || msg.content || '━━ Previous Consultation History ━━'}
+                                    ━━ {displayText} ━━
                                 </span>
                             </div>
                         );
@@ -1398,7 +1504,7 @@ export default function ChatRoomClient() {
                                 <p className="text-[13px] font-medium leading-relaxed mb-1">{msg.content}</p>
                                 <div className={`flex items-center ${isMe ? 'justify-end' : 'justify-start'} gap-1.5 opacity-60`}>
                                     <span className="text-[8px] font-black uppercase tracking-tighter">
-                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {formatMsgTime(msg.createdAt)}
                                     </span>
                                     {isMe && (
                                         <span className="flex items-center">

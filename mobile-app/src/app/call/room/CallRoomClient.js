@@ -309,8 +309,11 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     // Effect to start session specifically when astrologer joins and session isn't active
     useEffect(() => {
-        if (socket && user?.role === 'astrologer' && !sessionActive && !isReadOnlyRef.current) {
-            socket.emit("start_chat_session", { roomId, astrologerId: user._id });
+        if (user?.role === 'astrologer' && !sessionActive && !isReadOnlyRef.current) {
+            if (socket) {
+                socket.emit("start_chat_session", { roomId, astrologerId: user._id });
+            }
+            api.post(`/chat/session/${roomId}/start`).catch(() => {});
         }
     }, [socket, user, roomId, sessionActive]);
 

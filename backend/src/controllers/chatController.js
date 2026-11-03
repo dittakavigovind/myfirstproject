@@ -192,6 +192,61 @@ const scheduleSessionTimeout = (roomId, astrologerId, astroUserId, io) => {
             const currentSession = await Session.findOne({ roomId, status: 'initiated' });
             if (!currentSession) return; // Answered, declined, or ended already
 
+            // SAFETY CHECK: Verify whether the astrologer actually responded in Firestore or MongoDB before marking missed!
+            let astrologerAnswered = false;
+            let astroMsgTime = null;
+
+            try {
+                require('../config/firebase');
+                const { getApps } = require('firebase-admin/app');
+                const { getFirestore } = require('firebase-admin/firestore');
+                if (getApps().length > 0) {
+                    const messagesSnap = await getFirestore()
+                        .collection('chat_sessions')
+                        .doc(roomId)
+                        .collection('messages')
+                        .get();
+
+                    if (!messagesSnap.empty) {
+                        for (const doc of messagesSnap.docs) {
+                            const data = doc.data();
+                            const isAstro = data.senderModel === 'Astrologer' || 
+                                           data.senderRole === 'astrologer' || 
+                                           data.senderId === astrologerId.toString() ||
+                                           data.senderId === astroUserId.toString();
+                            
+                            // Must NOT be a copied history message or divider
+                            if (isAstro && !data.isHistory && !data.isDivider) {
+                                astrologerAnswered = true;
+                                astroMsgTime = data.createdAt;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (fsCheckErr) {
+                console.error('[SessionTimeout] Error checking Firestore for astrologer messages:', fsCheckErr);
+            }
+
+            if (!astrologerAnswered) {
+                // Also check MongoDB Message collection
+                const mongoAstroMsg = await Message.findOne({
+                    sessionId: currentSession._id,
+                    senderModel: 'Astrologer'
+                });
+                if (mongoAstroMsg) {
+                    astrologerAnswered = true;
+                    astroMsgTime = mongoAstroMsg.createdAt;
+                }
+            }
+
+            if (astrologerAnswered) {
+                console.log(`[SessionTimeout] Astrologer DID respond to session ${roomId}. Rescuing session to active!`);
+                const { activateSession } = require('../sockets/chatSocket');
+                await activateSession(currentSession, io, astroMsgTime);
+                return;
+            }
+
             console.log(`[SessionTimeout] Astrologer did not answer session ${roomId} in 60s. Marking missed.`);
 
             currentSession.status = 'missed';
@@ -250,6 +305,17 @@ const scheduleSessionTimeout = (roomId, astrologerId, astroUserId, io) => {
     }, 60000); // 60 seconds
 
     pendingSessionTimers.set(roomId, timer);
+};
+
+const formatConsultationDivider = (date = new Date()) => {
+    try {
+        const d = new Date(date);
+        const day = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' });
+        const time = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase();
+        return `━━ New Consultation • ${day}, ${time} ━━`;
+    } catch (e) {
+        return '━━ New Consultation ━━';
+    }
 };
 
 // @desc Start a paid chat session
@@ -381,22 +447,39 @@ exports.startPaidChat = async (req, res) => {
 
                             if (!prevMessagesSnap.empty) {
                                 const batch = firestore.batch();
+                                let maxCreatedAt = 0;
                                 prevMessagesSnap.docs.forEach((docSnap) => {
                                     const data = docSnap.data();
+                                    let msgTime = 0;
+                                    if (typeof data.createdAt === 'number') msgTime = data.createdAt;
+                                    else if (data.createdAt?._seconds) msgTime = data.createdAt._seconds * 1000;
+                                    else if (data.createdAt?.seconds) msgTime = data.createdAt.seconds * 1000;
+                                    else if (data.createdAt) {
+                                        const d = new Date(data.createdAt).getTime();
+                                        if (!isNaN(d)) msgTime = d;
+                                    }
+                                    if (msgTime > maxCreatedAt) maxCreatedAt = msgTime;
+
                                     const newDocRef = newMessagesCol.doc();
                                     batch.set(newDocRef, {
                                         ...data,
+                                        createdAt: msgTime || Date.now(),
                                         isHistory: true
                                     });
                                 });
 
+                                const dividerTime = maxCreatedAt > 0 ? (maxCreatedAt + 1) : (Date.now() - 1000);
                                 const dividerRef = newMessagesCol.doc();
+                                const dividerLabel = formatConsultationDivider(new Date());
                                 batch.set(dividerRef, {
                                     senderId: 'system',
                                     senderRole: 'system',
-                                    text: '━━ Previous Consultation History ━━',
-                                    createdAt: FieldValue.serverTimestamp(),
-                                    isDivider: true
+                                    content: dividerLabel,
+                                    text: dividerLabel,
+                                    sessionStartTime: Date.now(),
+                                    createdAt: dividerTime,
+                                    isDivider: true,
+                                    isHistory: true
                                 });
 
                                 await batch.commit();
@@ -407,28 +490,39 @@ exports.startPaidChat = async (req, res) => {
                                     const mongoMessages = await Message.find({ sessionId: prevSession._id }).sort({ createdAt: 1 });
                                     if (mongoMessages && mongoMessages.length > 0) {
                                         const batch = firestore.batch();
+                                        let maxCreatedAt = 0;
                                         mongoMessages.forEach((msg) => {
                                             let content = msg.content;
                                             if (msg.isEncrypted && msg.iv) {
                                                 content = CryptoUtil.decrypt(msg.content, msg.iv);
                                             }
+                                            const msgTime = msg.createdAt ? new Date(msg.createdAt).getTime() : 0;
+                                            if (msgTime > maxCreatedAt) maxCreatedAt = msgTime;
+
                                             const newDocRef = newMessagesCol.doc();
                                             batch.set(newDocRef, {
                                                 senderId: msg.sender?.toString() || msg.senderId?.toString(),
                                                 senderRole: msg.senderRole || (msg.sender?.toString() === userId.toString() ? 'user' : 'astrologer'),
+                                                senderModel: msg.senderRole === 'astrologer' || msg.sender?.toString() !== userId.toString() ? 'Astrologer' : 'User',
+                                                content: content,
                                                 text: content,
-                                                createdAt: msg.createdAt || new Date(),
+                                                createdAt: msgTime || Date.now(),
                                                 isHistory: true
                                             });
                                         });
 
+                                        const dividerTime = maxCreatedAt > 0 ? (maxCreatedAt + 1) : (Date.now() - 1000);
                                         const dividerRef = newMessagesCol.doc();
+                                        const dividerLabel = formatConsultationDivider(new Date());
                                         batch.set(dividerRef, {
                                             senderId: 'system',
                                             senderRole: 'system',
-                                            text: '━━ Previous Consultation History ━━',
-                                            createdAt: FieldValue.serverTimestamp(),
-                                            isDivider: true
+                                            content: dividerLabel,
+                                            text: dividerLabel,
+                                            sessionStartTime: Date.now(),
+                                            createdAt: dividerTime,
+                                            isDivider: true,
+                                            isHistory: true
                                         });
 
                                         await batch.commit();
@@ -996,6 +1090,41 @@ exports.deleteOldChatData = async (req, res) => {
     } catch (err) {
         console.error('Delete Old Chat Data Error:', err);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc Start/Activate a session (REST API fallback for socket)
+// @route POST /api/chat/session/:roomId/start
+exports.startSessionApi = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const io = req.app.get('io');
+        const session = await Session.findOne({ roomId });
+        if (!session) {
+            return res.status(404).json({ success: false, message: 'Session not found' });
+        }
+        if (session.status === 'active') {
+            return res.status(200).json({ success: true, session, message: 'Session already active' });
+        }
+        if (session.status !== 'initiated') {
+            return res.status(400).json({ success: false, message: `Session cannot be started from status: ${session.status}` });
+        }
+
+        // Verify that caller is either astrologer or admin or the user assigned as astrologer
+        const isAstrologer = req.user.role === 'astrologer' || 
+                             req.user.role === 'admin' || 
+                             session.astrologerId?.toString() === req.user._id?.toString() ||
+                             session.astrologerId?.toString() === req.user.astrologerId?.toString();
+        if (!isAstrologer) {
+            return res.status(403).json({ success: false, message: 'Only astrologer can start session' });
+        }
+
+        const { activateSession } = require('../sockets/chatSocket');
+        const updatedSession = await activateSession(session, io);
+        return res.status(200).json({ success: true, session: updatedSession });
+    } catch (err) {
+        console.error('Start Session API Error:', err);
+        return res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
