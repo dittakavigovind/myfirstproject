@@ -6,7 +6,7 @@ const moment = require('moment-timezone');
  * @returns {boolean}
  */
 const isValidTimezone = (timezone) => {
-    return !!moment.tz.zone(timezone);
+    return !!(timezone && typeof timezone === 'string' && moment.tz.zone(timezone));
 };
 
 /**
@@ -15,7 +15,8 @@ const isValidTimezone = (timezone) => {
  * @returns {moment.Moment}
  */
 const nowInTimezone = (timezone) => {
-    return moment().tz(timezone);
+    const tz = (timezone && typeof timezone === 'string' && moment.tz.zone(timezone)) ? timezone : 'Asia/Kolkata';
+    return moment().tz(tz);
 };
 
 /**
@@ -25,7 +26,8 @@ const nowInTimezone = (timezone) => {
  * @returns {moment.Moment}
  */
 const getStarOfDayInTimezone = (date, timezone) => {
-    return moment.tz(date, "YYYY-MM-DD", timezone).startOf('day');
+    const tz = (timezone && typeof timezone === 'string' && moment.tz.zone(timezone)) ? timezone : 'Asia/Kolkata';
+    return moment.tz(date, "YYYY-MM-DD", tz).startOf('day');
 };
 
 /**

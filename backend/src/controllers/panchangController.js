@@ -30,17 +30,24 @@ exports.getPanchang = async (req, res) => {
             });
         }
 
-        // 2. ALWAYS start from LOCAL MIDNIGHT
+        // 2. Ensure timezone is a valid IANA timezone string for moment-timezone
+        let validTimezone = "Asia/Kolkata";
+        if (geoData.timezone && typeof geoData.timezone === 'string' && moment.tz.zone(geoData.timezone)) {
+            validTimezone = geoData.timezone;
+        }
+        geoData.timezone = validTimezone;
+
+        // 3. ALWAYS start from LOCAL MIDNIGHT
         const localDate = moment.tz(
             `${date} 00:00:00`,
             "YYYY-MM-DD HH:mm:ss",
             geoData.timezone // Use the location's timezone
         );
 
-        // 3. Convert to UTC for astronomy calculations
+        // 4. Convert to UTC for astronomy calculations
         const utcDate = localDate.clone().utc().toDate();
 
-        // 4. Calculate Panchang
+        // 5. Calculate Panchang
         const panchangRaw = await PanchangService.calculatePanchang(
             utcDate,
             geoData.lat,
@@ -123,6 +130,13 @@ exports.getMonthlyPanchang = async (req, res) => {
                 geoData = { lat: 28.6139, lng: 77.2090, timezone: 'Asia/Kolkata', formattedAddress: 'New Delhi, India' };
             }
         }
+
+        // Ensure timezone is a valid IANA timezone string for moment-timezone
+        let validTimezone = "Asia/Kolkata";
+        if (geoData.timezone && typeof geoData.timezone === 'string' && moment.tz.zone(geoData.timezone)) {
+            validTimezone = geoData.timezone;
+        }
+        geoData.timezone = validTimezone;
 
         const startOfMonth = moment.tz({ year, month, day: 1 }, geoData.timezone);
         const daysInMonth = startOfMonth.daysInMonth();
