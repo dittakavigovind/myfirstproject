@@ -291,11 +291,16 @@ exports.bypassWaitlist = async (req, res) => {
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
     try {
-        const users = await User.find().select('-password').sort({ createdAt: -1 });
-        // Frontend expects ARRAY directly? 
-        // "const allUsers = usersRes.data;" in Line 78 of admin/page.js
-        // If I return res.json(users), then usersRes.data IS the array.
-        res.json(users);
+        const users = await User.find().select('-password').sort({ createdAt: -1 }).lean();
+        const mappedUsers = users.map(u => {
+            if (!u.firstLoginPlatform || u.firstLoginPlatform === 'Unknown') {
+                const ua = (u.deviceInfo?.userAgent || '').toLowerCase();
+                const isApp = ua.includes('; wv') || ua.includes('wv;') || ua.includes('capacitor') || (ua.includes('android') && ua.includes('version/4.0')) || !!u.deviceInfo?.appVersion;
+                u.firstLoginPlatform = isApp ? 'APP' : 'Website';
+            }
+            return u;
+        });
+        res.json(mappedUsers);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
@@ -333,6 +338,12 @@ exports.getUserById = async (req, res) => {
         const astrologerProfile = await Astrologer.findOne({ userId: user._id });
         
         const userData = user.toObject();
+        if (!userData.firstLoginPlatform || userData.firstLoginPlatform === 'Unknown') {
+            const ua = (userData.deviceInfo?.userAgent || '').toLowerCase();
+            const isApp = ua.includes('; wv') || ua.includes('wv;') || ua.includes('capacitor') || (ua.includes('android') && ua.includes('version/4.0')) || !!userData.deviceInfo?.appVersion;
+            userData.firstLoginPlatform = isApp ? 'APP' : 'Website';
+        }
+
         if (astrologerProfile) {
             userData.astrologerProfile = astrologerProfile;
         }
@@ -463,6 +474,15 @@ exports.exportUsersCSV = async (req, res) => {
                 value: (row) => row.phone ? `\t${row.phone}` : ''
             },
             { label: 'Role', value: 'role' },
+            {
+                label: 'First Login Platform',
+                value: (row) => {
+                    if (row.firstLoginPlatform && row.firstLoginPlatform !== 'Unknown') return row.firstLoginPlatform;
+                    const ua = (row.deviceInfo?.userAgent || '').toLowerCase();
+                    const isApp = ua.includes('; wv') || ua.includes('wv;') || ua.includes('capacitor') || (ua.includes('android') && ua.includes('version/4.0')) || !!row.deviceInfo?.appVersion;
+                    return isApp ? 'APP' : 'Website';
+                }
+            },
             {
                 label: 'Joined',
                 value: (row) => {

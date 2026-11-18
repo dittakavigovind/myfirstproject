@@ -177,6 +177,23 @@ export default function AdminFinanceDashboard() {
                 </div>
             </div>
 
+            {/* Search Results Count Bar */}
+            <div className="flex items-center justify-between bg-slate-900/70 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-400">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span>Showing <strong className="text-white">{filteredTransactions.length}</strong> of <strong className="text-slate-400">{transactions.length}</strong> transactions</span>
+                    {searchTerm && (
+                        <span className="bg-indigo-500/20 text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-500/30 text-[11px]">
+                            {filteredTransactions.length} result{filteredTransactions.length === 1 ? '' : 's'} found
+                        </span>
+                    )}
+                </div>
+                {searchTerm && (
+                    <button onClick={() => setSearchTerm('')} className="text-indigo-400 hover:text-indigo-300 underline font-medium cursor-pointer">
+                        Clear search
+                    </button>
+                )}
+            </div>
+
             {/* Data Table */}
             <div className="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">

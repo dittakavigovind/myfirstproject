@@ -1,6 +1,32 @@
 const geoip = require('geoip-lite');
 const axios = require('axios');
 
+exports.getClientPlatform = (req) => {
+    if (!req || !req.headers) return 'Website';
+
+    const clientPlatform = String(req.headers['x-client-platform'] || req.headers['x-platform'] || '').toLowerCase();
+    if (clientPlatform.includes('app')) return 'APP';
+    if (clientPlatform.includes('web')) return 'Website';
+
+    // Explicit app headers
+    if (req.headers['x-app-version'] || req.headers['x-device-make'] || req.headers['x-device-model']) {
+        return 'APP';
+    }
+
+    const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
+    // Android WebView signature (; wv) or Version/4.0 in mobile UA, or Capacitor native bridge
+    if (
+        userAgent.includes('; wv') ||
+        userAgent.includes('wv;') ||
+        userAgent.includes('capacitor') ||
+        (userAgent.includes('android') && userAgent.includes('version/4.0'))
+    ) {
+        return 'APP';
+    }
+
+    return 'Website';
+};
+
 exports.getDeviceInfo = async (req) => {
     const userAgent = req.headers['user-agent'] || '';
 
@@ -9,6 +35,7 @@ exports.getDeviceInfo = async (req) => {
     const deviceModel = req.headers['x-device-model'] || '';
     const deviceMake = req.headers['x-device-make'] || '';
     const appVersion = req.headers['x-app-version'] || '';
+    const platform = exports.getClientPlatform(req);
 
     let os = 'Unknown';
     if (explicitOs) {
@@ -55,6 +82,7 @@ exports.getDeviceInfo = async (req) => {
     }
 
     return {
+        platform,
         os,
         deviceModel,
         deviceMake,

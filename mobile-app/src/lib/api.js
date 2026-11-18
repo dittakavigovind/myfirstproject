@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Preferences } from "@capacitor/preferences";
+import { Capacitor } from "@capacitor/core";
 import toast from "react-hot-toast";
 
 let cachedToken = null;
@@ -21,13 +22,21 @@ const api = axios.create({
     baseURL: API_URL,
     headers: {
         "Content-Type": "application/json",
+        "X-Client-Platform": "app",
     },
 });
 
-// Request interceptor to attach JWT token
+// Request interceptor to attach JWT token and device headers
 api.interceptors.request.use(
     async (config) => {
         try {
+            config.headers = config.headers || {};
+            config.headers["X-Client-Platform"] = "app";
+            if (typeof window !== "undefined" && window.Capacitor) {
+                try {
+                    config.headers["X-Device-OS"] = Capacitor.getPlatform();
+                } catch (_) {}
+            }
             if (!cachedToken) {
                 const { value } = await Preferences.get({ key: "authToken" });
                 cachedToken = value;
@@ -50,18 +59,20 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         if (error.response?.status === 401) {
-            // Unauthorized, clear token
-            const message = error.response?.data?.message;
-            if (error.response?.data?.code === 'SESSION_EXPIRED' || message === 'Session expired. You have logged in from another device.') {
-                if (typeof window !== "undefined") {
-                    toast.error('Session expired. You have logged in from another device.');
-                }
-            }
-
+            const hadToken = !!cachedToken;
             clearApiToken();
             await Preferences.remove({ key: "authToken" });
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new Event("auth-unauthorized"));
+
+            if (hadToken) {
+                const message = error.response?.data?.message;
+                if (error.response?.data?.code === 'SESSION_EXPIRED' || message === 'Session expired. You have logged in from another device.') {
+                    if (typeof window !== "undefined") {
+                        toast.error('Session expired. You have logged in from another device.');
+                    }
+                }
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("auth-unauthorized"));
+                }
             }
         } else if (error.response?.status >= 500) {
             const url = error.config?.url || '';

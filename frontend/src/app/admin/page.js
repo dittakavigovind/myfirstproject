@@ -7,7 +7,7 @@ import API from '../../lib/api';
 import {
     LayoutDashboard, Users, UserCog, Star, FileText, PenTool, Layers, LogOut,
     TrendingUp, DollarSign, Activity, FileCheck, ShieldAlert, Pencil, Trash2, CheckCircle, Sparkles, Phone, Monitor, Settings, Share2, LayoutGrid, X, Loader2,
-    Download, FileDown, Search, Image as ImageIcon
+    Download, FileDown, Search, Image as ImageIcon, Smartphone, Globe
 } from 'lucide-react';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import toast from 'react-hot-toast';
@@ -635,257 +635,297 @@ export default function AdminDashboard() {
             )}
 
             {/* All Members Tab */}
-            {activeTab === 'all-members' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
-                        <div className="flex items-center gap-4">
-                            <h2 className="font-bold text-slate-700">All Portal Members</h2>
-                            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Total: {allMembers.length}</span>
+            {activeTab === 'all-members' && (() => {
+                const filteredMembers = allMembers.filter(u =>
+                    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.phone?.includes(searchTerm) ||
+                    u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (u.firstLoginPlatform || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
+                    u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
+                    (u.createdAt && (() => {
+                        const d = new Date(u.createdAt);
+                        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                    })().includes(searchTerm))
+                );
+
+                return (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <h2 className="font-bold text-slate-700">All Portal Members</h2>
+                                <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full shadow-sm">
+                                    {searchTerm ? `${filteredMembers.length} found` : `${allMembers.length} total`}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-4 flex-1 max-w-md">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search by name, email, phone, platform..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleExportUsers}
+                                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
+                                >
+                                    <FileDown size={18} />
+                                    Download CSV
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4 flex-1 max-w-md">
-                            <div className="relative flex-1">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
+                                <tr>
+                                    <th className="p-4">Name</th>
+                                    <th className="p-4">Email / Phone</th>
+                                    <th className="p-4">Role</th>
+                                    <th className="p-4">First Login</th>
+                                    <th className="p-4">Location</th>
+                                    <th className="p-4">Joined</th>
+                                    <th className="p-4">Interactions</th>
+                                    <th className="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredMembers.length > 0 ? filteredMembers.map(u => (
+                                    <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition group cursor-pointer">
+                                        <td className="p-4 font-medium text-slate-700">{u.name}</td>
+                                        <td className="p-4 text-slate-500">
+                                            {u.email || (
+                                                <span className="text-green-600 font-medium flex items-center gap-1">
+                                                    <Phone size={12} /> {u.phone}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                u.role === 'manager' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                                    u.role === 'astrologer' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                        'bg-slate-50 text-slate-600 border-slate-200'
+                                                }`}>
+                                                {u.role}
+                                            </span>
+                                            {u.isBlocked && (
+                                                <span className="ml-2 px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4">
+                                            {(u.firstLoginPlatform || 'Website') === 'APP' ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm" title="First Login: Mobile App">
+                                                    <Smartphone size={13} className="text-emerald-600" />
+                                                    <span>APP</span>
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 shadow-sm" title="First Login: Website">
+                                                    <Globe size={13} className="text-sky-600" />
+                                                    <span>Website</span>
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-slate-500 font-medium">
+                                            {(() => {
+                                                const loc = u.deviceInfo?.location;
+                                                if (!loc) return <span className="text-slate-300">-</span>;
+                                                if (loc.ip === '127.0.0.1') return 'Local';
+                                                const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
+                                                return [loc.city, countryName].filter(Boolean).join(', ') || loc.ip || '-';
+                                            })()}
+                                        </td>
+                                        <td className="p-4 text-slate-400">
+                                            {(() => {
+                                                const d = new Date(u.createdAt);
+                                                const day = String(d.getDate()).padStart(2, '0');
+                                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                const year = d.getFullYear();
+                                                const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                                return `${day}-${month}-${year}, ${time}`;
+                                            })()}
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-1 text-[10px]">
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Panchang:</span>
+                                                    <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100" title="Views">{userInteractions[u._id]?.PANCHANG?.VIEW || 0}V</span>
+                                                    <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100" title="Shares">{userInteractions[u._id]?.PANCHANG?.SHARE || 0}S</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Calendar:</span>
+                                                    <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100" title="Clicks">{userInteractions[u._id]?.CALENDAR?.CLICK || 0}C</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 flex gap-2 items-center">
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={!u.isBlocked}
+                                                        onChange={() => handleToggleBlock(u._id, u.isBlocked)}
+                                                    />
+                                                    <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                                </label>
+                                            </div>
+                                            {user.role === 'admin' && (
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(u._id); }} className="text-red-500 hover:text-red-700 transition" title="Delete User"><Trash2 size={16} /></button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="8" className="p-8 text-center text-slate-400">
+                                            {searchTerm ? `No members found matching "${searchTerm}" (0 results)` : 'No members found'}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            })()}
+
+            {activeTab === 'users' && (() => {
+                const filteredPlatformUsers = userList.filter(u =>
+                    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.phone?.includes(searchTerm) ||
+                    (u.firstLoginPlatform || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
+                    (u.createdAt && (() => {
+                        const d = new Date(u.createdAt);
+                        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                    })().includes(searchTerm))
+                );
+
+                return (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <h2 className="font-bold text-slate-700">Platform Users</h2>
+                                <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                                    {searchTerm ? `${filteredPlatformUsers.length} found` : `${userList.length} total`}
+                                </span>
+                            </div>
+                            <div className="relative flex-1 max-w-md">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                 <input
                                     type="text"
-                                    placeholder="Search by name, email or phone..."
+                                    placeholder="Search users by name, phone, platform, city..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                                 />
                             </div>
-                            <button
-                                onClick={handleExportUsers}
-                                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
-                            >
-                                <FileDown size={18} />
-                                Download CSV
-                            </button>
                         </div>
-                    </div>
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
-                            <tr>
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Email / Phone</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4">Location</th>
-                                <th className="p-4">Joined</th>
-                                <th className="p-4">Interactions</th>
-                                <th className="p-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {allMembers.filter(u =>
-                                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.phone?.includes(searchTerm) ||
-                                u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
-                                u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
-                                (u.createdAt && (() => {
-                                    const d = new Date(u.createdAt);
-                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-                                })().includes(searchTerm))
-                            ).length > 0 ? allMembers.filter(u =>
-                                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.phone?.includes(searchTerm) ||
-                                u.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (u.isBlocked ? 'blocked' : 'active').includes(searchTerm.toLowerCase()) ||
-                                u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
-                                (u.createdAt && (() => {
-                                    const d = new Date(u.createdAt);
-                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-                                })().includes(searchTerm))
-                            ).map(u => (
-                                <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition group cursor-pointer">
-                                    <td className="p-4 font-medium text-slate-700">{u.name}</td>
-                                    <td className="p-4 text-slate-500">
-                                        {u.email || (
-                                            <span className="text-green-600 font-medium flex items-center gap-1">
-                                                <Phone size={12} /> {u.phone}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                            u.role === 'manager' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                                u.role === 'astrologer' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                    'bg-slate-50 text-slate-600 border-slate-200'
-                                            }`}>
-                                            {u.role}
-                                        </span>
-                                        {u.isBlocked && (
-                                            <span className="ml-2 px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-slate-500 font-medium">
-                                        {(() => {
-                                            const loc = u.deviceInfo?.location;
-                                            if (!loc) return <span className="text-slate-300">-</span>;
-                                            if (loc.ip === '127.0.0.1') return 'Local';
-                                            const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
-                                            return [loc.city, countryName].filter(Boolean).join(', ') || loc.ip || '-';
-                                        })()}
-                                    </td>
-                                    <td className="p-4 text-slate-400">
-                                        {(() => {
-                                            const d = new Date(u.createdAt);
-                                            const day = String(d.getDate()).padStart(2, '0');
-                                            const month = String(d.getMonth() + 1).padStart(2, '0');
-                                            const year = d.getFullYear();
-                                            const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                                            return `${day}-${month}-${year}, ${time}`;
-                                        })()}
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col gap-1 text-[10px]">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Panchang:</span>
-                                                <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100" title="Views">{userInteractions[u._id]?.PANCHANG?.VIEW || 0}V</span>
-                                                <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100" title="Shares">{userInteractions[u._id]?.PANCHANG?.SHARE || 0}S</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Calendar:</span>
-                                                <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100" title="Clicks">{userInteractions[u._id]?.CALENDAR?.CLICK || 0}C</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 flex gap-2 items-center">
-                                        <div onClick={(e) => e.stopPropagation()}>
-                                            <label className="relative inline-flex items-center cursor-pointer scale-75">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={!u.isBlocked}
-                                                    onChange={() => handleToggleBlock(u._id, u.isBlocked)}
-                                                />
-                                                <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-                                            </label>
-                                        </div>
-                                        {user.role === 'admin' && (
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(u._id); }} className="text-red-500 hover:text-red-700 transition" title="Delete User"><Trash2 size={16} /></button>
-                                        )}
-                                    </td>
-                                </tr>
-                            )) : (
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
                                 <tr>
-                                    <td colSpan="6" className="p-8 text-center text-slate-400">No members found</td>
+                                    <th className="p-4">Name</th>
+                                    <th className="p-4">Email / Phone</th>
+                                    <th className="p-4">Role</th>
+                                    <th className="p-4">First Login</th>
+                                    <th className="p-4">Joined</th>
+                                    <th className="p-4">Interactions</th>
+                                    <th className="p-4">Actions</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {activeTab === 'users' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
-                        <h2 className="font-bold text-slate-700">Platform Users</h2>
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Search users..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
-                            />
-                        </div>
-                    </div>
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-slate-100">
-                            <tr>
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Email / Phone</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4">Joined</th>
-                                <th className="p-4">Interactions</th>
-                                <th className="p-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {userList.filter(u =>
-                                u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                u.phone?.includes(searchTerm) ||
-                                u.deviceInfo?.location?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (u.deviceInfo?.location?.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(u.deviceInfo.location.country).toLowerCase() : '').includes(searchTerm.toLowerCase()) ||
-                                (u.createdAt && (() => {
-                                    const d = new Date(u.createdAt);
-                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-                                })().includes(searchTerm))
-                            ).map(u => (
-                                <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
-                                    <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
-                                            {u.profileImage ? (
-                                                <img src={u.profileImage} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-xs font-bold text-slate-400">{u.name?.charAt(0)}</span>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredPlatformUsers.length > 0 ? filteredPlatformUsers.map(u => (
+                                    <tr key={u._id} onClick={() => router.push(`/admin/users/details?username=${u.username || u._id}`)} className="hover:bg-slate-50/50 transition cursor-pointer group">
+                                        <td className="p-4 font-medium text-slate-700 group-hover:text-blue-600 transition-colors flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                                                {u.profileImage ? (
+                                                    <img src={u.profileImage} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-slate-400">{u.name?.charAt(0)}</span>
+                                                )}
+                                            </div>
+                                            {u.name}
+                                        </td>
+                                        <td className="p-4 text-slate-500">
+                                            {u.email || (
+                                                <span className="text-green-600 font-medium flex items-center gap-1">
+                                                    <Phone size={12} /> {u.phone}
+                                                </span>
                                             )}
-                                        </div>
-                                        {u.name}
-                                    </td>
-                                    <td className="p-4 text-slate-500">
-                                        {u.email || (
-                                            <span className="text-green-600 font-medium flex items-center gap-1">
-                                                <Phone size={12} /> {u.phone}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="p-4 flex items-center gap-2">
-                                        <span className="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">User</span>
-                                        {u.isBlocked && (
-                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
-                                        )}
-                                    </td>
-                                    <td className="p-4 text-slate-400">
-                                        {(() => {
-                                            const d = new Date(u.createdAt);
-                                            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-                                        })()}
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col gap-1 text-[10px]">
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Panchang:</span>
-                                                <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100" title="Views">{userInteractions[u._id]?.PANCHANG?.VIEW || 0}V</span>
-                                                <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100" title="Shares">{userInteractions[u._id]?.PANCHANG?.SHARE || 0}S</span>
+                                        </td>
+                                        <td className="p-4 flex items-center gap-2">
+                                            <span className="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">User</span>
+                                            {u.isBlocked && (
+                                                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase tracking-wider">Blocked</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4">
+                                            {(u.firstLoginPlatform || 'Website') === 'APP' ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm" title="First Login: Mobile App">
+                                                    <Smartphone size={13} className="text-emerald-600" />
+                                                    <span>APP</span>
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200 shadow-sm" title="First Login: Website">
+                                                    <Globe size={13} className="text-sky-600" />
+                                                    <span>Website</span>
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-slate-400">
+                                            {(() => {
+                                                const d = new Date(u.createdAt);
+                                                return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                            })()}
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex flex-col gap-1 text-[10px]">
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Panchang:</span>
+                                                    <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100" title="Views">{userInteractions[u._id]?.PANCHANG?.VIEW || 0}V</span>
+                                                    <span className="bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100" title="Shares">{userInteractions[u._id]?.PANCHANG?.SHARE || 0}S</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-slate-500">
+                                                    <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Calendar:</span>
+                                                    <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100" title="Clicks">{userInteractions[u._id]?.CALENDAR?.CLICK || 0}C</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-slate-500">
-                                                <span className="font-bold w-12 text-slate-400 uppercase tracking-tighter">Calendar:</span>
-                                                <span className="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100" title="Clicks">{userInteractions[u._id]?.CALENDAR?.CLICK || 0}C</span>
+                                        </td>
+                                        <td className="p-4 flex gap-2 items-center">
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <label className="relative inline-flex items-center cursor-pointer scale-75">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={!u.isBlocked}
+                                                        onChange={() => handleToggleBlock(u._id, u.isBlocked)}
+                                                    />
+                                                    <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                                </label>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 flex gap-2 items-center">
-                                        <div onClick={(e) => e.stopPropagation()}>
-                                            <label className="relative inline-flex items-center cursor-pointer scale-75">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={!u.isBlocked}
-                                                    onChange={() => handleToggleBlock(u._id, u.isBlocked)}
-                                                />
-                                                <div className="w-9 h-5 bg-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-                                            </label>
-                                        </div>
-                                        {u.role !== 'admin' && (
-                                            <button onClick={() => handleDeleteUser(u._id)} className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded transition">
-                                                <LogOut size={16} />
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )
-            }
+                                            {u.role !== 'admin' && (
+                                                <button onClick={() => handleDeleteUser(u._id)} className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded transition">
+                                                    <LogOut size={16} />
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="7" className="p-8 text-center text-slate-400">
+                                            {searchTerm ? `No users found matching "${searchTerm}" (0 results)` : 'No users found'}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            })()}
 
             {
                 activeTab === 'content' && (
@@ -1140,7 +1180,19 @@ export default function AdminDashboard() {
                     <div>
                         <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
                             <div>
-                                <h2 className="font-bold text-xl text-slate-800">Astrologers Directory</h2>
+                                <div className="flex items-center gap-3">
+                                    <h2 className="font-bold text-xl text-slate-800">Astrologers Directory</h2>
+                                    <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full shadow-sm">
+                                        {searchTerm ? `${astroList.filter(a =>
+                                            a.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            a.skills?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                            a.languages?.some(l => l.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                            a.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            (a.isActive !== false ? 'active' : 'inactive').includes(searchTerm.toLowerCase()) ||
+                                            a.phone?.includes(searchTerm)
+                                        ).length} found` : `${astroList.length} total`}
+                                    </span>
+                                </div>
                                 <p className="text-sm text-slate-500">Manage expert profiles</p>
                             </div>
                             <div className="flex items-center gap-4 flex-1 max-w-2xl justify-end">

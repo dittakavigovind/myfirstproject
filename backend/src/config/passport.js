@@ -16,6 +16,7 @@ passport.use(new GoogleStrategy({
         const name = profile.displayName;
         const profileImage = profile.photos[0]?.value;
         const deviceInfo = await getDeviceInfo(req);
+        const clientPlatform = deviceInfo.platform || 'Website';
 
         // Find or create user
         let user = await User.findOne({ $or: [{ googleId }, { email }] });
@@ -26,6 +27,10 @@ passport.use(new GoogleStrategy({
                 user.googleId = googleId;
                 user.authProvider = 'google';
                 user.emailVerified = true;
+            }
+            if (!user.firstLoginPlatform || user.firstLoginPlatform === 'Unknown') {
+                user.firstLoginPlatform = clientPlatform;
+                if (!user.firstLoginAt) user.firstLoginAt = new Date();
             }
             user.lastLogin = new Date();
             user.deviceInfo = deviceInfo;
@@ -41,6 +46,8 @@ passport.use(new GoogleStrategy({
             authProvider: 'google',
             emailVerified: true,
             profileImage: profileImage || 'default-avatar.png',
+            firstLoginPlatform: clientPlatform,
+            firstLoginAt: new Date(),
             deviceInfo,
             lastLogin: new Date()
         });

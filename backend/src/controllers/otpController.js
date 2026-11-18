@@ -183,12 +183,16 @@ exports.verifyWhatsappOtp = async (req, res) => {
         const phoneVariants = [`+${purePhone}`, purePhone];
 
         let user = await User.findOne({ phone: { $in: phoneVariants } });
+        const deviceInfo = await getDeviceInfo(req);
+        const clientPlatform = deviceInfo.platform || 'Website';
 
         if (!user) {
             user = await User.create({
                 phone: `+${purePhone}`, // Store in E.164 format
                 name: 'User',
-                deviceInfo: await getDeviceInfo(req)
+                firstLoginPlatform: clientPlatform,
+                firstLoginAt: new Date(),
+                deviceInfo
             });
         } else {
             // Ensure phone is normalized to + format if it wasn't
@@ -199,11 +203,15 @@ exports.verifyWhatsappOtp = async (req, res) => {
             if (user.name === 'New User') {
                 user.name = 'User';
             }
+            if (!user.firstLoginPlatform || user.firstLoginPlatform === 'Unknown') {
+                user.firstLoginPlatform = clientPlatform;
+                if (!user.firstLoginAt) user.firstLoginAt = new Date();
+            }
         }
 
         user.sessionVersion = (user.sessionVersion || 0) + 1;
         user.lastLogin = new Date();
-        user.deviceInfo = await getDeviceInfo(req);
+        user.deviceInfo = deviceInfo;
 
         if (user.role === 'astrologer') {
             const Astrologer = require('../models/Astrologer');
@@ -241,6 +249,8 @@ exports.verifyWhatsappOtp = async (req, res) => {
             profileImage: user.profileImage,
             birthDetails: user.birthDetails,
             lastLogin: user.lastLogin,
+            firstLoginPlatform: user.firstLoginPlatform,
+            firstLoginAt: user.firstLoginAt,
             token: generateToken(user._id, user.sessionVersion),
             needsProfileSetup: !isProfileComplete
         });

@@ -433,6 +433,22 @@ export default function MobileAstroDashboard() {
                         Offline ({offlineAstros})
                     </button>
                 </div>
+
+                <div className="flex items-center justify-between bg-slate-900/70 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-400">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span>Showing <strong className="text-white">{filteredAstrologers.length}</strong> of <strong className="text-slate-400">{astrologers.length}</strong> astrologers</span>
+                        {search && (
+                            <span className="bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-500/30 text-[11px]">
+                                {filteredAstrologers.length} result{filteredAstrologers.length === 1 ? '' : 's'} matching &quot;{search}&quot;
+                            </span>
+                        )}
+                    </div>
+                    {search && (
+                        <button onClick={() => setSearch('')} className="text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer">
+                            Clear search
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">

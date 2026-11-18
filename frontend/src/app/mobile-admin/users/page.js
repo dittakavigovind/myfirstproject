@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import API from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { Users, Shield, Ban, CheckCircle, Search, Save, Loader2 } from 'lucide-react';
+import { Users, Shield, Ban, CheckCircle, Search, Save, Loader2, Smartphone, Globe } from 'lucide-react';
 
 export default function MobileUsersDashboard() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [osFilter, setOsFilter] = useState('All');
+    const [platformFilter, setPlatformFilter] = useState('All');
 
     const getImageUrl = (path, gender = null) => {
         if (!path || path.includes('default-avatar.png')) {
@@ -68,6 +69,7 @@ export default function MobileUsersDashboard() {
             (u.email || '').toLowerCase().includes(searchLower) ||
             (u.phone || '').includes(search) ||
             (u.mobileNumber || '').includes(search) ||
+            (u.firstLoginPlatform || '').toLowerCase().includes(searchLower) ||
             (u.deviceInfo?.os || '').toLowerCase().includes(searchLower) ||
             (u.deviceInfo?.deviceMake || '').toLowerCase().includes(searchLower) ||
             (u.deviceInfo?.deviceModel || '').toLowerCase().includes(searchLower) ||
@@ -76,8 +78,9 @@ export default function MobileUsersDashboard() {
         
         const userOs = u.deviceInfo?.os || 'Unknown';
         const matchesOs = osFilter === 'All' || userOs === osFilter;
+        const matchesPlatform = platformFilter === 'All' || (u.firstLoginPlatform || 'Website') === platformFilter;
         
-        return matchesSearch && matchesOs;
+        return matchesSearch && matchesOs && matchesPlatform;
     });
 
     const uniqueOS = ['All', ...new Set(users.map(u => u.deviceInfo?.os || 'Unknown'))];
@@ -87,8 +90,8 @@ export default function MobileUsersDashboard() {
     const roleOptions = ['user', 'astrologer', 'manager', 'admin', 'finance_admin', 'support_admin', 'super_admin'];
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                         <Shield className="text-blue-500" /> Identity & RBAC Engine
@@ -96,27 +99,61 @@ export default function MobileUsersDashboard() {
                     <p className="text-slate-400 mt-2">Manage strict Role-Based Access Controls and explicitly block abusive users.</p>
                 </div>
                 
-                <div className="flex gap-3 w-full md:w-auto">
-                    <div className="relative w-full md:w-72">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">
+                    <div className="relative w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                         <input 
                             type="text" 
-                            placeholder="Search by name, email, phone..." 
+                            placeholder="Search name, phone, platform..." 
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 text-white pl-10 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition"
+                            className="w-full bg-slate-900 border border-slate-800 text-white pl-10 pr-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition text-sm"
                         />
                     </div>
                     <select
+                        value={platformFilter}
+                        onChange={(e) => setPlatformFilter(e.target.value)}
+                        className="bg-slate-900 border border-slate-800 text-slate-300 px-3 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition text-xs font-semibold"
+                        title="Filter by First Login Platform"
+                    >
+                        <option value="All">All Platforms</option>
+                        <option value="APP">📱 App Only</option>
+                        <option value="Website">🌐 Website Only</option>
+                    </select>
+                    <select
                         value={osFilter}
                         onChange={(e) => setOsFilter(e.target.value)}
-                        className="bg-slate-900 border border-slate-800 text-slate-300 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition"
+                        className="bg-slate-900 border border-slate-800 text-slate-300 px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-blue-500/50 outline-none transition text-xs font-semibold"
+                        title="Filter by OS"
                     >
                         {uniqueOS.map(os => (
                             <option key={os} value={os}>{os}</option>
                         ))}
                     </select>
                 </div>
+            </div>
+
+            {/* Live Search Results Counter Bar */}
+            <div className="flex items-center justify-between bg-slate-900/70 border border-slate-800 px-4 py-3 rounded-xl shadow-inner">
+                <div className="flex items-center gap-2.5 text-xs">
+                    <span className="text-slate-400 font-medium">Search Results:</span>
+                    <span className="bg-blue-500/20 text-blue-400 font-bold px-2.5 py-1 rounded-md border border-blue-500/30">
+                        {filteredUsers.length} user{filteredUsers.length === 1 ? '' : 's'} found
+                    </span>
+                    {(search || platformFilter !== 'All' || osFilter !== 'All') && (
+                        <span className="text-slate-500 text-[11px]">
+                            (filtered from {users.length} total)
+                        </span>
+                    )}
+                </div>
+                {(search || platformFilter !== 'All' || osFilter !== 'All') && (
+                    <button
+                        onClick={() => { setSearch(''); setPlatformFilter('All'); setOsFilter('All'); }}
+                        className="text-xs text-blue-400 hover:text-blue-300 underline font-medium transition cursor-pointer"
+                    >
+                        Reset filters
+                    </button>
+                )}
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
@@ -149,27 +186,40 @@ export default function MobileUsersDashboard() {
                                         <div className="text-xs text-slate-500 mt-1">{user.phone || 'No Phone'}</div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        {user.deviceInfo ? (
-                                            <div>
-                                                <div className="text-xs font-bold text-slate-300">{user.deviceInfo.os || 'Unknown OS'}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[120px]">{user.deviceInfo.deviceMake ? `${user.deviceInfo.deviceMake} ` : ''}{user.deviceInfo.deviceModel || '-'}</div>
-                                                <div className="text-[10px] text-slate-600 mt-0.5 flex justify-between">
-                                                    <span>v{user.deviceInfo.appVersion || '-'}</span>
-                                                </div>
-                                                {user.deviceInfo.location && (
-                                                    <div className="text-[10px] text-emerald-500 mt-1 truncate max-w-[150px] font-medium" title={user.deviceInfo.location.ip}>
-                                                        📍 {(() => {
-                                                            const loc = user.deviceInfo.location;
-                                                            if (loc.ip === '127.0.0.1') return 'Local';
-                                                            const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
-                                                            return [loc.city, countryName].filter(Boolean).join(', ') || loc.ip;
-                                                        })()}
-                                                    </div>
+                                        <div>
+                                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                                                {(user.firstLoginPlatform || 'Website') === 'APP' ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm" title="First Login: Mobile App">
+                                                        <Smartphone size={11} /> APP
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm" title="First Login: Website">
+                                                        <Globe size={11} /> Website
+                                                    </span>
                                                 )}
+                                                <span className="text-xs font-bold text-slate-300">{user.deviceInfo?.os || 'Unknown OS'}</span>
                                             </div>
-                                        ) : (
-                                            <span className="text-xs text-slate-600">No Data</span>
-                                        )}
+                                            {user.deviceInfo ? (
+                                                <>
+                                                    <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[120px]">{user.deviceInfo.deviceMake ? `${user.deviceInfo.deviceMake} ` : ''}{user.deviceInfo.deviceModel || '-'}</div>
+                                                    <div className="text-[10px] text-slate-600 mt-0.5 flex justify-between">
+                                                        <span>v{user.deviceInfo.appVersion || '-'}</span>
+                                                    </div>
+                                                    {user.deviceInfo.location && (
+                                                        <div className="text-[10px] text-emerald-500 mt-1 truncate max-w-[150px] font-medium" title={user.deviceInfo.location.ip}>
+                                                            📍 {(() => {
+                                                                const loc = user.deviceInfo.location;
+                                                                if (loc.ip === '127.0.0.1') return 'Local';
+                                                                const countryName = loc.country ? new Intl.DisplayNames(['en'], { type: 'region' }).of(loc.country) : '';
+                                                                return [loc.city, countryName].filter(Boolean).join(', ') || loc.ip;
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <span className="text-[10px] text-slate-600">No hardware info</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="text-emerald-400 font-bold">₹ {user.walletBalance || 0}</div>
@@ -210,7 +260,9 @@ export default function MobileUsersDashboard() {
                             ))}
                             {filteredUsers.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500 font-medium">No users found matching radar sequence.</td>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500 font-medium">
+                                        {search ? `No users found matching "${search}" (0 results).` : 'No users found matching filter criteria.'}
+                                    </td>
                                 </tr>
                             )}
                         </tbody>

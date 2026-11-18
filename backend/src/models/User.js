@@ -91,7 +91,16 @@ const userSchema = new mongoose.Schema({
         email: { type: Number, default: 0 },
         abusive: { type: Number, default: 0 }
     },
+    firstLoginPlatform: {
+        type: String, // 'APP' | 'Website'
+        enum: ['APP', 'Website', 'Unknown'],
+        default: 'Unknown'
+    },
+    firstLoginAt: {
+        type: Date
+    },
     deviceInfo: {
+        platform: String, // 'APP' | 'Website'
         os: String, // e.g., Android, iOS, Windows, Mac
         deviceModel: String,
         deviceMake: String,

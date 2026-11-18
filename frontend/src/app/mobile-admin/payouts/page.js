@@ -172,6 +172,23 @@ export default function PayoutsDashboard() {
                 </div>
             </div>
 
+            {/* Search Results Count Bar */}
+            <div className="flex items-center justify-between bg-slate-900/70 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-400">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span>Showing <strong className="text-white">{filteredPayouts.length}</strong> of <strong className="text-slate-400">{payouts.length}</strong> payouts</span>
+                    {(search || statusFilter !== 'All') && (
+                        <span className="bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded border border-blue-500/30 text-[11px]">
+                            {filteredPayouts.length} result{filteredPayouts.length === 1 ? '' : 's'} found
+                        </span>
+                    )}
+                </div>
+                {(search || statusFilter !== 'All') && (
+                    <button onClick={() => { setSearch(''); setStatusFilter('All'); }} className="text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer">
+                        Reset filters
+                    </button>
+                )}
+            </div>
+
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-300">

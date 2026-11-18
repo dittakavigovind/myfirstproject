@@ -77,6 +77,9 @@ exports.registerUser = async (req, res) => {
         const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
         const verificationTokenExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
+        const deviceInfo = await getDeviceInfo(req);
+        const clientPlatform = deviceInfo.platform || 'Website';
+
         // Create user
         const user = await User.create({
             name: finalName,
@@ -87,7 +90,9 @@ exports.registerUser = async (req, res) => {
             emailVerified: false,
             verificationToken,
             verificationTokenExpire,
-            deviceInfo: await getDeviceInfo(req)
+            firstLoginPlatform: clientPlatform,
+            firstLoginAt: new Date(),
+            deviceInfo
         });
 
         if (user) {
@@ -149,9 +154,15 @@ exports.loginUser = async (req, res) => {
                 });
             }
             // Update sessionVersion and lastLogin
+            const deviceInfo = await getDeviceInfo(req);
+            const clientPlatform = deviceInfo.platform || 'Website';
+            if (!user.firstLoginPlatform || user.firstLoginPlatform === 'Unknown') {
+                user.firstLoginPlatform = clientPlatform;
+                if (!user.firstLoginAt) user.firstLoginAt = new Date();
+            }
             user.sessionVersion = (user.sessionVersion || 0) + 1;
             user.lastLogin = new Date();
-            user.deviceInfo = await getDeviceInfo(req);
+            user.deviceInfo = deviceInfo;
             await user.save();
 
             if (user.role === 'astrologer') {
@@ -264,17 +275,28 @@ exports.verifyOtp = async (req, res) => {
                 return res.status(403).json({ message: 'New user registrations are currently disabled by the Platform Administrator.' });
             }
 
+            const deviceInfo = await getDeviceInfo(req);
+            const clientPlatform = deviceInfo.platform || 'Website';
+
             // Create new incomplete user
             user = await User.create({
                 phone: normalizedPhone,
                 name: 'User', // Placeholder
+                firstLoginPlatform: clientPlatform,
+                firstLoginAt: new Date(),
                 lastLogin: new Date(),
-                deviceInfo: getDeviceInfo(req)
+                deviceInfo
             });
         } else {
+            const deviceInfo = await getDeviceInfo(req);
+            const clientPlatform = deviceInfo.platform || 'Website';
+            if (!user.firstLoginPlatform || user.firstLoginPlatform === 'Unknown') {
+                user.firstLoginPlatform = clientPlatform;
+                if (!user.firstLoginAt) user.firstLoginAt = new Date();
+            }
             user.sessionVersion = (user.sessionVersion || 0) + 1;
             user.lastLogin = new Date();
-            user.deviceInfo = getDeviceInfo(req);
+            user.deviceInfo = deviceInfo;
             await user.save();
         }
 
@@ -358,12 +380,18 @@ exports.verifyEmailOtp = async (req, res) => {
             return res.status(403).json({ message: 'Your account has been disabled. Please contact support.' });
         }
 
+        const deviceInfo = await getDeviceInfo(req);
+        const clientPlatform = deviceInfo.platform || 'Website';
+        if (!user.firstLoginPlatform || user.firstLoginPlatform === 'Unknown') {
+            user.firstLoginPlatform = clientPlatform;
+            if (!user.firstLoginAt) user.firstLoginAt = new Date();
+        }
         user.sessionVersion = (user.sessionVersion || 0) + 1;
         user.emailVerified = true;
         user.verificationToken = undefined;
         user.verificationTokenExpire = undefined;
         user.lastLogin = new Date();
-        user.deviceInfo = await getDeviceInfo(req);
+        user.deviceInfo = deviceInfo;
         await user.save();
 
         if (user.role === 'astrologer') {

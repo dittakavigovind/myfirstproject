@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import API from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Mail, Calendar, Shield, Trash2, Save, User as UserIcon, CheckCircle, AlertCircle, Sparkles, Phone } from 'lucide-react';
+import { ArrowLeft, Mail, Calendar, Shield, Trash2, Save, User as UserIcon, CheckCircle, AlertCircle, Sparkles, Phone, Smartphone, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -346,6 +346,32 @@ function UserDetails() {
                                             <div className="text-slate-300"><Sparkles size={16} /></div>
                                         </div>
                                     )}
+                                    <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">First Login Platform</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                {(userData.firstLoginPlatform || 'Website') === 'APP' ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <Smartphone size={14} className="text-emerald-600" />
+                                                        Mobile App
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                                        <Globe size={14} className="text-sky-600" />
+                                                        Website
+                                                    </span>
+                                                )}
+                                                {userData.firstLoginAt && (
+                                                    <span className="text-xs text-slate-400 font-medium">
+                                                        ({new Date(userData.firstLoginAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })})
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-slate-300">
+                                            {(userData.firstLoginPlatform || 'Website') === 'APP' ? <Smartphone size={20} /> : <Globe size={20} />}
+                                        </div>
+                                    </div>
                                     {userData.deviceInfo && (
                                         <div className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                                             <div>

@@ -137,10 +137,11 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url} [Origin: ${origin || 'N/A'}]`);
 
     // Universal Allow for Dev
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const requestedHeaders = req.headers['access-control-request-headers'];
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.setHeader('Access-Control-Allow-Headers', requestedHeaders || 'Content-Type, Authorization, X-Requested-With, Accept, x-client-platform, x-device-os, x-device-model, x-device-make, x-app-version, x-platform, *');
 
     // Handle preflight
     if (req.method === 'OPTIONS') {
