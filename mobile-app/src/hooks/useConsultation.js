@@ -12,7 +12,7 @@ export function useConsultation() {
     const [error, setError] = useState("");
 
     const startChat = async (astrologerId, chatRate) => {
-        if (!user) {
+        if (!user || user.isGuest) {
             router.push("/auth");
             return;
         }
@@ -40,7 +40,7 @@ export function useConsultation() {
                 setError(data.message || "Failed to start consultation.");
             }
         } catch (err) {
-            console.error("Start Consultation Error:", err);
+            console.warn("Start Consultation Warning:", err);
             setError(err.response?.data?.message || "Cosmic connection failed. Please try again.");
         } finally {
             setLoading(false);
@@ -48,7 +48,7 @@ export function useConsultation() {
     };
 
     const startCall = async (astrologerId, callRate) => {
-        if (!user) {
+        if (!user || user.isGuest) {
             router.push("/auth");
             return;
         }
@@ -75,7 +75,7 @@ export function useConsultation() {
                 setError(data.message || "Failed to start call.");
             }
         } catch (err) {
-            console.error("Start Call Error:", err);
+            console.warn("Start Call Warning:", err);
             setError(err.response?.data?.message || "Cosmic connection failed. Please try again.");
         } finally {
             setLoading(false);

@@ -193,8 +193,9 @@ export default function AstrologerProfileClient() {
     };
 
     const handleFollowToggle = async () => {
-        if (!user) {
+        if (!user || user.isGuest) {
             toast.error("Please login to follow this astrologer.");
+            router.push('/auth');
             return;
         }
         const actualId = astrologer?._id;
@@ -268,7 +269,7 @@ export default function AstrologerProfileClient() {
         : [astrologer.image || astrologer.profileImage];
 
     return (
-        <div className="min-h-screen pb-40 animate-in fade-in duration-700 bg-[#0b1026] text-white">
+        <div className="min-h-screen pb-40 animate-in fade-in duration-700 text-white">
 
             {/* Image Modal Popup */}
             <AnimatePresence>
@@ -278,7 +279,7 @@ export default function AstrologerProfileClient() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setSelectedImage(null)}
-                        className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-6 backdrop-blur-md"
+                        className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-6 backdrop-blur-xl"
                     >
                         <button className="absolute top-10 right-6 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-95 transition-all">
                             <X size={28} />
@@ -301,17 +302,17 @@ export default function AstrologerProfileClient() {
             {/* Error Banner for Consultation */}
             {consultError && (
                 <div
-                    className="fixed left-4 right-4 z-[100] bg-rose-500/20 backdrop-blur-md border border-rose-500/30 text-rose-200 px-5 py-4 rounded-[2rem] flex items-center gap-4 shadow-xl animate-in slide-in-from-top duration-300"
+                    className="fixed left-4 right-4 z-[100] bg-rose-500/25 backdrop-blur-xl border border-rose-500/40 text-rose-200 px-5 py-4 rounded-[2rem] flex items-center gap-4 shadow-xl animate-in slide-in-from-top duration-300"
                     style={{ top: 'calc(var(--safe-area-inset-top) + 4.5rem)' }}
                 >
-                    <MessageCircle size={20} className="text-rose-500" />
+                    <MessageCircle size={20} className="text-rose-400" />
                     <span className="text-sm font-black tracking-tight">{consultError}</span>
                 </div>
             )}
 
             {/* Top Navigation - Seamless & Dynamic sticky */}
             <header
-                className={`fixed top-0 left-0 right-0 z-[60] px-4 flex items-center justify-between transition-all duration-300 ${isScrolled ? 'bg-[#0b1026]/90 backdrop-blur-md header-scrolled' : 'bg-transparent'}`}
+                className={`fixed top-0 left-0 right-0 z-[60] px-4 flex items-center justify-between transition-all duration-300 ${isScrolled ? 'bg-[#050716]/90 backdrop-blur-2xl header-scrolled border-b border-white/5' : 'bg-transparent'}`}
                 style={{
                     paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)',
                     paddingBottom: '0.75rem'
@@ -320,7 +321,7 @@ export default function AstrologerProfileClient() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => router.back()}
-                        className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-900/40 backdrop-blur-xl border border-white/10 active:scale-90 transition-all"
+                        className="w-10 h-10 rounded-full flex items-center justify-center bg-white/[0.06] backdrop-blur-xl border border-white/10 active:scale-90 transition-all"
                     >
                         <ChevronLeft size={20} className="text-white" />
                     </button>
@@ -330,18 +331,18 @@ export default function AstrologerProfileClient() {
                     <button
                         onClick={handleManualRefresh}
                         disabled={refreshing}
-                        className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 active:scale-95 transition-all text-white opacity-80"
+                        className="w-10 h-10 rounded-full flex items-center justify-center bg-white/[0.06] border border-white/10 active:scale-95 transition-all text-white opacity-80"
                     >
                         <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
                     </button>
                     <div className="relative">
-                        <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-900/40 backdrop-blur-xl border border-white/10 active:scale-90 transition-all mr-2">
+                        <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/[0.06] backdrop-blur-xl border border-white/10 active:scale-90 transition-all mr-2">
                             <MoreVertical size={18} className="text-white" />
                         </button>
                         {showMoreMenu && (
                             <>
                                 <div className="fixed inset-0 z-[100]" onClick={() => setShowMoreMenu(false)} />
-                                <div className="absolute right-0 top-12 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[101] overflow-hidden">
+                                <div className="absolute right-0 top-12 w-48 bg-[#0d122e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-[101] overflow-hidden">
                                     <button 
                                         onClick={() => { setShowMoreMenu(false); setShowReportModal(true); }}
                                         className="w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-white/5 border-b border-white/5 flex items-center gap-2"
@@ -350,7 +351,7 @@ export default function AstrologerProfileClient() {
                                     </button>
                                     <button 
                                         onClick={() => { setShowMoreMenu(false); setShowBlockModal(true); }}
-                                        className="w-full text-left px-4 py-3 text-sm text-rose-500 hover:bg-rose-500/10 font-medium flex items-center gap-2"
+                                        className="w-full text-left px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 font-medium flex items-center gap-2"
                                     >
                                         <Ban size={14} /> Block
                                     </button>
@@ -360,7 +361,7 @@ export default function AstrologerProfileClient() {
                     </div>
                     <button
                         onClick={handleShare}
-                        className="h-10 px-4 rounded-full flex items-center gap-2 bg-solar-gold/10 text-solar-gold border border-solar-gold/20 font-black text-[11px] uppercase tracking-wider active:scale-95 transition-all shadow-lg"
+                        className="h-10 px-4 rounded-full flex items-center gap-2 bg-solar-gold/15 text-solar-gold border border-solar-gold/25 font-black text-[11px] uppercase tracking-wider active:scale-95 transition-all shadow-[0_0_15px_rgba(251,191,36,0.15)]"
                     >
                         <Share2 size={16} />
                         Share
@@ -368,15 +369,15 @@ export default function AstrologerProfileClient() {
                 </div>
             </header>
 
-            {/* Identity Section - Compact Horizontal */}
+            {/* Identity Section - Modern iOS Glass Hero */}
             <div
-                className="relative pb-5 px-5 bg-[#0b1026] shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b border-white/5"
-                style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 5rem)' }}
+                className="relative pb-6 px-5 border-b border-white/5"
+                style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 4.75rem)' }}
             >
                 <div className="flex items-center gap-4 mb-5">
                     <div className="relative group shrink-0">
-                        <div className="relative w-16 h-16 rounded-full p-0.5 bg-[#0b1026] shadow-xl">
-                            <div className="w-full h-full rounded-full overflow-hidden border border-white/10 bg-cosmic-indigo flex items-center justify-center">
+                        <div className="relative w-20 h-20 rounded-[24px] p-0.5 bg-gradient-to-br from-white/20 to-white/5 shadow-2xl">
+                            <div className="w-full h-full rounded-[22px] overflow-hidden border border-white/10 bg-[#0c102a] flex items-center justify-center">
                                 <img
                                     src={getImageUrl(astrologer.image || astrologer.profileImage)}
                                     alt={astrologer.displayName}
@@ -388,25 +389,25 @@ export default function AstrologerProfileClient() {
                                 />
                             </div>
                         </div>
-                        <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#0b1026] shadow-lg ${astrologer.isBusy ? 'bg-amber-500' : (astrologer.isChatOnline || astrologer.isVoiceOnline || astrologer.isVideoOnline) ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                        <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#050716] shadow-lg ${astrologer.isBusy ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' : (astrologer.isChatOnline || astrologer.isVoiceOnline || astrologer.isVideoOnline) ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'bg-slate-500'}`} />
                     </div>
 
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                             <h1 className="text-xl font-black text-white leading-tight mb-1 truncate pr-2">{astrologer.displayName || astrologer.name}</h1>
                         </div>
-                        <p className="text-[10px] font-black text-electric-violet tracking-widest uppercase mb-2 truncate">
-                            {Array.isArray(astrologer.skills) ? astrologer.skills.join(", ") : (astrologer.skills || "Vedic")}
+                        <p className="text-[10px] font-black text-electric-violet tracking-widest uppercase mb-2.5 truncate">
+                            {Array.isArray(astrologer.skills) ? astrologer.skills.join(", ") : (astrologer.skills || "Vedic Astrologer")}
                         </p>
 
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                                <Star size={10} className="text-solar-gold fill-solar-gold/50" />
-                                <span className="text-[11px] font-bold text-white">{rating.toFixed(1)}</span>
+                            <div className="flex items-center gap-1.5 bg-white/[0.06] px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                                <Star size={11} className="text-solar-gold fill-solar-gold" />
+                                <span className="text-[11px] font-black text-white">{rating.toFixed(1)}</span>
                             </div>
-                            <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                                <Users size={10} className="text-blue-400" />
-                                <span className="text-[11px] font-bold text-white">{(astrologer.followersCount || 0) + (astrologer.fakeFollowers || 0)}</span>
+                            <div className="flex items-center gap-1.5 bg-white/[0.06] px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                                <Users size={11} className="text-blue-400" />
+                                <span className="text-[11px] font-black text-white">{(astrologer.followersCount || 0) + (astrologer.fakeFollowers || 0)}</span>
                             </div>
                         </div>
                     </div>
@@ -415,12 +416,12 @@ export default function AstrologerProfileClient() {
                 <div className="flex gap-3">
                     <button
                         onClick={handleFollowToggle}
-                        disabled={followLoading || !user}
-                        className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 ${isFollowing ? 'bg-slate-800 text-[#cbd5e1] border border-slate-700' : 'bg-gradient-to-r from-solar-gold to-amber-500 text-black shadow-solar-gold/20'}`}
+                        disabled={followLoading}
+                        className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 ${isFollowing ? 'bg-white/10 text-slate-300 border border-white/15' : 'bg-gradient-to-r from-solar-gold to-amber-500 text-black shadow-solar-gold/20 font-black'}`}
                     >
                         {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
                     </button>
-                    <div className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-1">
+                    <div className="flex-1 py-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center gap-1 backdrop-blur-xl">
                         <span className="text-sm font-black text-white">₹{astrologer.charges?.chatPerMinute || 25}</span>
                         <span className="text-[10px] text-slate-400 font-bold uppercase">/min</span>
                     </div>
@@ -431,7 +432,7 @@ export default function AstrologerProfileClient() {
                     {isBlockedByMe ? (
                         <button
                             onClick={handleUnblockUser}
-                            className="w-full py-3 rounded-xl bg-slate-800 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg border border-slate-700"
+                            className="w-full py-3.5 rounded-2xl bg-white/10 flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg border border-white/15"
                         >
                             <Unlock size={14} className="text-slate-300" />
                             <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Unblock to Interact</span>
@@ -439,7 +440,7 @@ export default function AstrologerProfileClient() {
                     ) : isBlockedByThem ? (
                         <button
                             disabled
-                            className="w-full py-3 rounded-xl bg-rose-500/10 flex items-center justify-center gap-2 shadow-lg border border-rose-500/20 opacity-80"
+                            className="w-full py-3.5 rounded-2xl bg-rose-500/10 flex items-center justify-center gap-2 shadow-lg border border-rose-500/20 opacity-80"
                         >
                             <Ban size={14} className="text-rose-400" />
                             <span className="text-xs font-black text-rose-400 uppercase tracking-widest">Unavailable</span>
@@ -450,10 +451,10 @@ export default function AstrologerProfileClient() {
                                 <button
                                     disabled={initiating}
                                     onClick={() => startChat(astrologer._id, astrologer.charges?.chatPerMinute || 25)}
-                                    className="flex-1 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg border border-white/10"
+                                    className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/25 border border-white/15"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <MessageCircle size={12} className="text-white" />
+                                        <MessageCircle size={14} className="text-white" />
                                         <span className="text-xs font-black text-white leading-none">Chat</span>
                                     </div>
                                     <span className="text-[8px] font-bold text-white/80 uppercase tracking-widest mt-1">
@@ -465,10 +466,10 @@ export default function AstrologerProfileClient() {
                                 <button
                                     disabled={initiating}
                                     onClick={() => startCall(astrologer._id, astrologer.charges?.callPerMinute || 25)}
-                                    className="flex-1 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg border border-white/10"
+                                    className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/25 border border-white/15"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <Phone size={12} className="text-white" />
+                                        <Phone size={14} className="text-white" />
                                         <span className="text-xs font-black text-white leading-none">Call</span>
                                     </div>
                                     <span className="text-[8px] font-bold text-white/80 uppercase tracking-widest mt-1">
@@ -503,18 +504,18 @@ export default function AstrologerProfileClient() {
             <div className="px-5">
 
                 {/* Bio / Description */}
-                <div className="mb-6">
-                    <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                <div className="mb-6 rounded-[24px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-5 shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 flex items-center gap-2">
                         <Award size={14} className="text-solar-gold" />
                         Cosmic Bio
                     </h3>
                     <div className="relative">
-                        <p className={`text-sm text-slate-300 leading-relaxed opacity-90 transition-all duration-300 ${!isBioExpanded ? 'line-clamp-3' : ''}`}>
+                        <p className={`text-xs sm:text-sm text-slate-300 leading-relaxed opacity-95 transition-all duration-300 ${!isBioExpanded ? 'line-clamp-3' : ''}`}>
                             {astrologer.bio || `${astrologer.displayName} is a famous cosmic guide with deep expertise in planetary movements and sacred remedies.`}
                         </p>
                         <button
                             onClick={() => setIsBioExpanded(!isBioExpanded)}
-                            className="flex items-center gap-1 text-[10px] font-black text-blue-400 uppercase tracking-wider mt-2 active:scale-95 transition-all"
+                            className="flex items-center gap-1 text-[10px] font-black text-electric-violet uppercase tracking-wider mt-2.5 active:scale-95 transition-all"
                         >
                             {isBioExpanded ? 'Read Less' : 'Read More'}
                             {isBioExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -525,27 +526,27 @@ export default function AstrologerProfileClient() {
                 {/* Gallery - Horizontal List if exists */}
                 {galleryImages.length > 0 && (
                     <div className="mb-6">
-                        <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 pl-1">
+                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 flex items-center gap-2 pl-1">
                             <Users size={14} className="text-blue-400" />
                             Sacred Gallery
                         </h3>
-                        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x no-scrollbar -mx-5 px-5">
+                        <div className="flex gap-3.5 overflow-x-auto pb-4 hide-scrollbar snap-x no-scrollbar -mx-5 px-5">
                             {galleryImages.map((img, i) => (
                                 <div
                                     key={i}
                                     onClick={() => setSelectedImage(img)}
-                                    className="flex-shrink-0 w-48 aspect-[4/3] rounded-[2rem] glass-panel border border-white/10 overflow-hidden snap-start relative group active:scale-95 transition-all shadow-xl shadow-black/20"
+                                    className="flex-shrink-0 w-48 aspect-[4/3] rounded-[24px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 overflow-hidden snap-start relative group active:scale-95 transition-all shadow-xl shadow-black/30"
                                 >
                                     <img
                                         src={getImageUrl(img)}
-                                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                                        className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
                                         onError={(e) => {
                                             e.target.onerror = null;
                                             e.target.src = getImageUrl(null, astrologer?.gender);
                                         }}
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                                        <span className="text-[10px] font-bold text-white/50 group-hover:text-white transition-colors">Visual Insight {i + 1}</span>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3.5">
+                                        <span className="text-[10px] font-bold text-white/70 group-hover:text-white transition-colors">Visual Insight {i + 1}</span>
                                     </div>
                                 </div>
                             ))}
@@ -555,19 +556,19 @@ export default function AstrologerProfileClient() {
 
 
                 {/* Reviews Section */}
-                <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-sm font-black text-white uppercase tracking-wider">User Reviews</h2>
-                    {reviews.length > 0 && <button className="text-[10px] text-slate-400 font-bold">View All</button>}
+                <div className="flex items-center justify-between mb-3 px-1">
+                    <h2 className="text-xs font-black text-white uppercase tracking-wider">Seeker Reviews</h2>
+                    {reviews.length > 0 && <span className="text-[10px] text-slate-400 font-bold">{reviews.length} Verified</span>}
                 </div>
 
-                <div className="space-y-2 pb-6">
+                <div className="space-y-2.5 pb-6">
                     {reviews.length === 0 ? (
-                        <p className="text-xs text-slate-500 italic">No reviews yet.</p>
+                        <p className="text-xs text-slate-500 italic px-2">No reviews yet.</p>
                     ) : (
                         reviews.map((rev) => (
-                            <div key={rev._id} className="glass-panel rounded-2xl p-3 border border-white/5">
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <div className="flex items-center gap-2">
+                            <div key={rev._id} className="rounded-[22px] p-4 bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2.5">
                                         {rev.reviewerGender === 'Male' ? (
                                             <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" alt="Male Avatar" className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0" />
                                         ) : rev.reviewerGender === 'Female' ? (
@@ -575,19 +576,18 @@ export default function AstrologerProfileClient() {
                                         ) : rev.profileImage ? (
                                             <img src={getImageUrl(rev.profileImage)} alt={rev.reviewerName} className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0" />
                                         ) : (
-                                            <div className="w-8 h-8 rounded-full bg-electric-violet/10 flex items-center justify-center text-electric-violet text-xs font-black shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-electric-violet/15 flex items-center justify-center text-electric-violet text-xs font-black shrink-0 border border-electric-violet/20">
                                                 {rev.reviewerName.charAt(0).toUpperCase()}
                                             </div>
                                         )}
-                                        <span className="text-[11px] font-black text-white">{rev.reviewerName}</span>
+                                        <span className="text-xs font-black text-white">{rev.reviewerName}</span>
                                     </div>
-                                    <div className="flex items-center gap-0.5">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} size={8} className={i < rev.rating ? "text-solar-gold fill-solar-gold" : "text-slate-800"} />
-                                        ))}
+                                    <div className="flex items-center gap-0.5 bg-solar-gold/10 px-2 py-0.5 rounded-full border border-solar-gold/20">
+                                        <Star size={9} className="text-solar-gold fill-solar-gold" />
+                                        <span className="text-[10px] font-bold text-solar-gold ml-0.5">{rev.rating || 5}</span>
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 leading-relaxed font-medium">{rev.comment}</p>
+                                <p className="text-xs text-slate-300 leading-relaxed font-normal">{rev.comment}</p>
                             </div>
                         ))
                     )}

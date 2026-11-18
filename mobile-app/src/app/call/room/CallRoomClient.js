@@ -14,10 +14,20 @@ import UserKundliModal from "../../chat/room/UserKundliModal";
 import { maskUserName } from "@/utils/maskUtils";
 import { getImageUrl } from "@/lib/utils";
 
-let AgoraRTC;
-if (typeof window !== "undefined") {
-    AgoraRTC = require("agora-rtc-sdk-ng");
-}
+let AgoraRTC = null;
+const getAgoraRTC = () => {
+    if (!AgoraRTC && typeof window !== "undefined") {
+        try {
+            AgoraRTC = require("agora-rtc-sdk-ng");
+            if (AgoraRTC && typeof AgoraRTC.setLogLevel === 'function') {
+                AgoraRTC.setLogLevel(3);
+            }
+        } catch (e) {
+            console.warn("AgoraRTC load failed:", e);
+        }
+    }
+    return AgoraRTC;
+};
 
 export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }) {
     const { user, checkUser } = useAuth();
@@ -118,7 +128,23 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     const initAgoraCall = async () => {
         try {
-            if (!AgoraRTC || clientRef.current) return;
+            // Check if environment supports WebRTC in a secure context
+            // iOS Safari requires HTTPS or localhost for WebRTC audio tracks
+            const isSecure = typeof window !== 'undefined' && (
+                window.isSecureContext ||
+                window.location.hostname === 'localhost' ||
+                window.location.hostname === '127.0.0.1' ||
+                (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform())
+            );
+
+            if (!isSecure) {
+                setConnectionState("HTTPS Required for WebRTC");
+                toast.error("Audio calls in browser require HTTPS or native iOS app build.", { duration: 5000 });
+                return;
+            }
+
+            const Agora = getAgoraRTC();
+            if (!Agora || clientRef.current) return;
             setConnectionState("Initializing call...");
             const { data } = await api.post('/agora/token', {
                 channelName: roomId,
@@ -150,7 +176,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                 console.error("Background mode error", e);
             }
 
-            const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+            const client = Agora.createClient({ mode: "rtc", codec: "vp8" });
             clientRef.current = client;
 
             client.on("user-published", async (remoteUser, mediaType) => {
@@ -189,7 +215,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
             let localAudioTrack;
             try {
-                localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                localAudioTrack = await Agora.createMicrophoneAudioTrack();
                 localAudioTrackRef.current = localAudioTrack;
                 await client.publish([localAudioTrack]);
             } catch (micError) {
@@ -207,9 +233,14 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
             }
 
         } catch (error) {
-            console.error("Agora Error:", error);
-            toast.error("Call connection failed.");
-            setConnectionState(`Failed: ${error.message || "Unknown error"}`);
+            console.warn("Agora Notice:", error);
+            if (error?.code === "WEB_SECURITY_RESTRICT" || error?.message?.includes("WEB_SECURITY_RESTRICT")) {
+                toast.error("Safari requires HTTPS for audio calls over Wi-Fi. In the native iOS app this runs securely via capacitor://localhost.");
+                setConnectionState("Security Restriction (Use HTTPS / Native iOS)");
+            } else {
+                toast.error("Call connection notice: " + (error?.message || "Check connection"));
+                setConnectionState(`Status: ${error?.message || "Failed"}`);
+            }
         }
     };
 
@@ -386,41 +417,46 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     if (loading) {
         return (
-            <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center text-white z-50">
-                <Loader2 className="animate-spin text-electric-violet mb-4" size={40} />
-                <p>Loading Call Environment...</p>
+            <div className="fixed inset-0 bg-[#050716] flex flex-col items-center justify-center text-white z-50">
+                <div className="w-10 h-10 rounded-full border-2 border-electric-violet border-t-transparent animate-spin mb-4" />
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Connecting Cosmic Channel...</p>
             </div>
         );
     }
-
-    
 
     const partner = user?.role === 'astrologer' ? callData?.userId : callData?.astrologerId;
     const partnerImage = getImageUrl(partner?.image || partner?.profileImage, partner?.gender);
 
     return (
-        <div className="fixed inset-0 bg-slate-900 flex flex-col z-[100] text-white">
-            {/* Top Header Bar */}
-            <div className="absolute top-[env(safe-area-inset-top,20px)] left-0 right-0 px-4 flex items-center justify-between z-[999] pointer-events-none">
+        <div className="fixed inset-0 bg-[#050716] flex flex-col z-[100] text-white overflow-hidden">
+            {/* Ambient Background Nebulae */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Top Header Bar with Safe Area */}
+            <div 
+                className="absolute left-0 right-0 px-5 flex items-center justify-between z-[999] pointer-events-none"
+                style={{ top: 'calc(var(--safe-area-inset-top) + 0.75rem)' }}
+            >
                 <div className="flex items-center gap-3 pointer-events-auto">
                     {onMinimize && (
                         <button 
                             onClick={onMinimize} 
-                            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md active:scale-95"
+                            className="w-10 h-10 rounded-[16px] bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 flex items-center justify-center backdrop-blur-2xl active:scale-90 transition-all shadow-lg"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
                         </button>
                     )}
                     
                     <div className="flex flex-col">
-                        <h2 className="text-lg font-bold leading-tight">
+                        <h2 className="text-base font-black text-white leading-tight tracking-tight">
                             {user?.role === 'astrologer'
-                                ? maskUserName(callData?.userId?.name || 'User')
-                                : (callData?.astrologerId?.displayName || 'Astrologer')}
+                                ? maskUserName(callData?.userId?.name || 'Seeker')
+                                : (callData?.astrologerId?.displayName || 'Astrologer Guide')}
                         </h2>
-                        <p className={`text-sm ${sessionActive ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
-                            {sessionActive ? formatTime(duration) : connectionState}
-                        </p>
+                        <span className="text-[10px] text-amber-300 font-bold uppercase tracking-widest mt-0.5">
+                            Encrypted Audio Consultation
+                        </span>
                     </div>
                 </div>
 
@@ -429,13 +465,15 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                     <div className="flex gap-2 pointer-events-auto">
                         <button
                             onClick={() => setShowKundli(true)}
-                            className="bg-electric-violet/20 border border-electric-violet/30 text-electric-violet w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg active:scale-95 transition-transform"
+                            className="bg-electric-violet/20 border border-electric-violet/40 text-electric-violet w-10 h-10 rounded-[16px] flex items-center justify-center backdrop-blur-2xl shadow-lg active:scale-90 transition-all"
+                            title="Kundli Chart"
                         >
                             <Grid size={18} />
                         </button>
                         <button
                             onClick={() => setShowAIInsights(true)}
-                            className="bg-electric-violet/20 border border-electric-violet/30 text-electric-violet w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg active:scale-95 transition-transform"
+                            className="bg-solar-gold/20 border border-solar-gold/40 text-solar-gold w-10 h-10 rounded-[16px] flex items-center justify-center backdrop-blur-2xl shadow-lg active:scale-90 transition-all"
+                            title="AI Insights"
                         >
                             <Sparkles size={18} />
                         </button>
@@ -443,49 +481,80 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                 )}
             </div>
 
-            {/* Header / Info */}
-            <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="w-32 h-32 rounded-full bg-slate-800 shadow-2xl flex items-center justify-center mb-8 relative overflow-hidden border-4 border-slate-700">
-                    <img src={partnerImage} alt="Avatar" className="w-full h-full object-cover" />
+            {/* Center Stage: Partner Squircle Avatar & Call State */}
+            <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+                <div className="relative mb-6">
+                    {/* Glowing pulse ring */}
                     {sessionActive && remoteUserJoined && (
-                        <div className="absolute inset-0 border-4 border-emerald-500 rounded-full animate-pulse" />
+                        <div className="absolute -inset-3 rounded-[44px] bg-gradient-to-tr from-emerald-500/40 via-violet-500/30 to-amber-500/40 blur-xl animate-pulse pointer-events-none" />
+                    )}
+                    <div className="w-36 h-36 rounded-[38px] bg-slate-900/90 shadow-2xl flex items-center justify-center relative overflow-hidden border-2 border-white/20 backdrop-blur-xl">
+                        <img src={partnerImage} alt="Avatar" className="w-full h-full object-cover" />
+                        {sessionActive && remoteUserJoined && (
+                            <div className="absolute inset-0 border-2 border-emerald-400 rounded-[38px] pointer-events-none" />
+                        )}
+                    </div>
+                </div>
+
+                {/* Live Timer or State Capsule */}
+                <div className="mb-2">
+                    {sessionActive ? (
+                        <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 backdrop-blur-2xl shadow-lg">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-base font-mono font-black tracking-widest tabular-nums">
+                                {formatTime(duration)}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-slate-300 backdrop-blur-2xl">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                            <span className="text-xs font-bold tracking-wider">
+                                {connectionState}
+                            </span>
+                        </div>
                     )}
                 </div>
 
                 {isReadOnly && (
-                    <div className="mt-4 px-6 py-2 bg-rose-500/20 text-rose-300 rounded-full flex items-center gap-2">
-                        <AlertCircle size={18} />
+                    <div className="mt-4 px-5 py-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-full flex items-center gap-2 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
+                        <AlertCircle size={16} />
                         Call Ended
                     </div>
                 )}
             </div>
 
-            {/* Controls (WhatsApp Style) */}
-            <div className="bg-slate-950 pb-safe pt-6 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-                <div className="max-w-md mx-auto px-12 pb-10">
-                    <div className="flex items-center justify-between">
+            {/* Apple Liquid Glass Controls Capsule */}
+            <div className="pb-safe px-6 pb-8 relative z-20">
+                <div className="max-w-md mx-auto p-4 rounded-[36px] bg-[#090d24]/90 backdrop-blur-3xl border border-white/10 shadow-[0_12px_48px_rgba(0,0,0,0.6)]">
+                    <div className="flex items-center justify-around">
 
+                        {/* Speaker Toggle */}
                         <button
                             onClick={toggleSpeaker}
                             disabled={isReadOnly}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isSpeakerOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-800/50 text-slate-400'}`}
+                            className={`w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-200 active:scale-90 shadow-md border ${isSpeakerOn ? 'bg-white/15 text-white border-white/20' : 'bg-white/5 text-slate-400 border-white/5'}`}
+                            title="Speaker"
                         >
-                            {isSpeakerOn ? <Volume2 size={24} /> : <VolumeX size={24} />}
+                            {isSpeakerOn ? <Volume2 size={22} /> : <VolumeX size={22} />}
                         </button>
 
+                        {/* End Call / Leave Pill */}
                         <button
                             onClick={isReadOnly ? handleLeaveRoom : endCall}
-                            className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${isReadOnly ? 'bg-slate-700 hover:bg-slate-600' : 'bg-rose-500 hover:bg-rose-600'}`}
+                            className={`w-20 h-16 rounded-[26px] flex items-center justify-center shadow-xl transition-all duration-200 active:scale-90 ${isReadOnly ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-gradient-to-r from-rose-600 to-red-500 text-white shadow-rose-500/30'}`}
+                            title="End Call"
                         >
-                            <PhoneOff size={32} className="text-white" />
+                            <PhoneOff size={28} />
                         </button>
 
+                        {/* Mute Toggle */}
                         <button
                             onClick={toggleMute}
                             disabled={isReadOnly}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${!isMuted ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-500/20 text-rose-500'}`}
+                            className={`w-14 h-14 rounded-[22px] flex items-center justify-center transition-all duration-200 active:scale-90 shadow-md border ${!isMuted ? 'bg-white/15 text-white border-white/20' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}
+                            title="Mute"
                         >
-                            {!isMuted ? <Mic size={24} /> : <MicOff size={24} />}
+                            {!isMuted ? <Mic size={22} /> : <MicOff size={22} />}
                         </button>
 
                     </div>

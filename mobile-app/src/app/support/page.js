@@ -17,59 +17,60 @@ export default function SupportPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0b1026] text-white p-5 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 overflow-y-auto">
+        <div className="min-h-screen text-white p-5 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-28 pt-safe overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-2 mt-2">
+            <div className="flex items-center gap-3 mb-2 pt-2">
                 <button 
                     onClick={() => router.back()}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all text-white hover:bg-white/10"
+                    className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center active:scale-90 transition-all text-white/80 hover:text-white backdrop-blur-xl"
+                    aria-label="Back"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <h1 className="text-xl font-black tracking-wide">Support & Legal</h1>
+                <div>
+                    <h1 className="text-xl font-black tracking-tight">Support & Legal</h1>
+                    <p className="text-[10px] text-slate-400 font-medium">Assistance & Policies</p>
+                </div>
             </div>
 
-            {/* Email Support */}
-            <CosmicCard className="p-6 bg-gradient-to-br from-[#1a1438] to-[#0b1026] border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.4)] relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-electric-violet/10 rounded-full blur-2xl transition-all" />
-                <div className="flex flex-col items-center text-center space-y-4 relative z-10">
-                    <div className="w-16 h-16 rounded-full bg-electric-violet/10 flex items-center justify-center border border-electric-violet/20 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-                        <Mail size={32} className="text-electric-violet" />
+            {/* Email Support Card */}
+            <div className="p-6 rounded-[28px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.35)] relative overflow-hidden">
+                <div className="absolute -right-6 -top-6 w-32 h-32 bg-electric-violet/15 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex flex-col items-center text-center space-y-3.5 relative z-10">
+                    <div className="w-16 h-16 rounded-[22px] bg-electric-violet/15 flex items-center justify-center border border-electric-violet/30 shadow-[0_0_20px_rgba(139,92,246,0.25)]">
+                        <Mail size={28} className="text-electric-violet" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-white mb-1">Contact Support</h2>
-                        <p className="text-xs text-slate-400 mb-5">We usually respond within 24-48 hours.</p>
+                        <h2 className="text-lg font-black text-white mb-1">Direct Helpdesk</h2>
+                        <p className="text-xs text-slate-400 mb-4">Our celestial team typically responds within 24 hours.</p>
                         <a 
                             href="mailto:info@way2astro.com"
-                            className="inline-flex items-center justify-center w-full max-w-[240px] py-3.5 rounded-2xl bg-gradient-to-r from-electric-violet to-fuchsia-600 text-sm font-black text-white shadow-lg shadow-electric-violet/25 active:scale-95 transition-all"
+                            className="inline-flex items-center justify-center w-full px-6 py-3.5 rounded-2xl bg-gradient-to-r from-electric-violet to-purple-600 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-electric-violet/25 active:scale-95 transition-all border border-white/15"
                         >
                             info@way2astro.com
                         </a>
                     </div>
                 </div>
-            </CosmicCard>
+            </div>
 
-            {/* Legal Links */}
+            {/* Apple Inset Grouped Table */}
             <div>
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2">Legal & Information</h3>
-                <div className="space-y-3">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Legal Documents</h3>
+                <div className="rounded-[24px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] divide-y divide-white/5">
                     {supportLinks.map((item, i) => (
-                        <motion.div
+                        <div
                             key={i}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
                             onClick={() => router.push(item.route)}
-                            className="glass-panel p-4 rounded-xl flex items-center justify-between cursor-pointer group hover:bg-white/5 transition-colors border border-white/5"
+                            className="p-4 flex items-center justify-between cursor-pointer group active:bg-white/[0.08] transition-colors"
                         >
-                            <div className="flex items-center gap-4">
-                                <div className={`p-2.5 rounded-xl ${item.bg} ${item.color}`}>
-                                    <item.icon size={20} strokeWidth={2} />
+                            <div className="flex items-center gap-3.5">
+                                <div className={`p-2.5 rounded-2xl ${item.bg} ${item.color} shadow-sm border border-white/5`}>
+                                    <item.icon size={18} strokeWidth={2} />
                                 </div>
-                                <span className="text-white font-medium text-base">{item.label}</span>
+                                <span className="text-white font-bold text-sm">{item.label}</span>
                             </div>
-                            <ChevronRight size={20} className="text-slate-500 group-hover:text-white transition-colors" />
-                        </motion.div>
+                            <ChevronRight size={16} className="text-slate-500 group-hover:text-white transition-colors" />
+                        </div>
                     ))}
                 </div>
             </div>

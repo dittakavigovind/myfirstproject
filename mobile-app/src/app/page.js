@@ -1,7 +1,25 @@
 "use client";
 
 import CosmicCard from "@/components/CosmicCard";
-import { Sparkles, Moon, Sun, Star, MessageCircle, Phone, FileText, ArrowRight, Heart, BookOpen, Scroll, Calendar } from "lucide-react";
+import { 
+  Sparkles, 
+  Moon, 
+  Sun, 
+  Star, 
+  MessageCircle, 
+  Phone, 
+  FileText, 
+  ArrowRight, 
+  Heart, 
+  BookOpen, 
+  Scroll, 
+  Calendar, 
+  ChevronRight,
+  Globe,
+  Clock,
+  ShieldAlert,
+  LayoutGrid
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
@@ -24,6 +42,7 @@ export default function Home() {
   const [sessionCounts, setSessionCounts] = useState({});
   const [siteSettings, setSiteSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bannerError, setBannerError] = useState(false);
 
   // Determine user's sign or default to Aries
   const userSign = user?.birthDetails?.moonSign ? user.birthDetails.moonSign.toLowerCase() : "aries";
@@ -63,7 +82,7 @@ export default function Home() {
   }, [user, router, socket]);
 
   useEffect(() => {
-    if (user && user.role !== 'astrologer') {
+    if (user && user.role !== 'astrologer' && !user.isGuest) {
       const pollInterval = setInterval(pollAstrologers, 15000);
 
       // Fetch following list
@@ -71,7 +90,7 @@ export default function Home() {
         if (res.data && res.data.success && res.data.following) {
           setFollowingIds(res.data.following.map(a => a._id || a.id));
         }
-      }).catch(err => console.error("Failed to fetch following", err));
+      }).catch(err => console.warn("Failed to fetch following", err));
 
       // Fetch chat history for most interacted
       api.get("/chat/history").then(res => {
@@ -85,7 +104,7 @@ export default function Home() {
           });
           setSessionCounts(counts);
         }
-      }).catch(err => console.error("Failed to fetch chat history", err));
+      }).catch(err => console.warn("Failed to fetch chat history", err));
 
       return () => clearInterval(pollInterval);
     }
@@ -129,7 +148,7 @@ export default function Home() {
         setBlogs(blogRes.data.data);
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.warn("Notice: Error fetching dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -143,7 +162,7 @@ export default function Home() {
         setAstrologers(astroRes.data.data);
       }
     } catch (error) {
-      console.error("Silent polling error:", error);
+      console.warn("Silent polling notice:", error);
     }
   };
 
@@ -217,73 +236,144 @@ export default function Home() {
   return (
     <div className="space-y-4 animate-in fade-in duration-500 overflow-x-hidden">
 
-      {/* Welcome & Compact Horoscope Ticker */}
-      <div className="pt-2 flex flex-col gap-3">
+      {/* Welcome & Clickable Rasi Indicator */}
+      <div className="pt-2 flex items-center justify-between">
         <div>
-          <h1 className="text-[23px] font-bold text-white leading-tight">Hello, {user?.name?.split(' ')[0] || "Seeker"} ✨</h1>
-          <p className="text-sm text-slate-400">Your cosmic journey continues.</p>
+          <h1 className="text-2xl font-black text-white tracking-tight leading-tight">
+            Hello, {user?.name?.split(' ')[0] || "Seeker"} ✨
+          </h1>
+          <p className="text-xs text-slate-400 font-medium tracking-wide">
+            The cosmos is aligned in your favor today.
+          </p>
         </div>
-
-        {/* Ultra-compact Horoscope Ticker */}
-        {loading ? (
-          <div className="h-10 w-full rounded-xl bg-white/5 animate-pulse" />
-        ) : horoscope && horoscope.signs && horoscope.signs[userSign] ? (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
-            onClick={() => router.push(`/horoscope?sign=${userSign}`)}
-            className="glass-panel border-electric-violet/30 bg-electric-violet/10 rounded-xl px-3 py-2 flex items-center gap-2 cursor-pointer active:scale-95 transition-all overflow-hidden relative"
-          >
-            {/* Subtle background glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-electric-violet/10 to-transparent pointer-events-none" />
-
-            <span className="text-solar-gold animate-pulse shrink-0"><Sparkles size={16} /></span>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-[13px] leading-snug text-white line-clamp-2">
-                <span className="font-bold">{displaySign} Insight:</span> <span className="font-normal text-slate-300 ml-1">{horoscope.signs[userSign].prediction}</span>
-              </p>
-            </div>
-            <ArrowRight size={14} className="text-electric-violet shrink-0 ml-1" />
-          </motion.div>
-        ) : null}
+        <motion.button
+          type="button"
+          onClick={() => router.push(`/horoscope?sign=${userSign}`)}
+          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.04 }}
+          className="px-3 py-1 rounded-full bg-violet-500/10 hover:bg-violet-500/20 active:bg-violet-500/30 border border-amber-400/30 hover:border-amber-400/60 backdrop-blur-md flex items-center gap-1.5 shadow-[0_0_12px_rgba(251,191,36,0.15)] cursor-pointer select-none transition-all group"
+          title={`View ${displaySign} Daily Horoscope & Predictions`}
+          aria-label={`View ${displaySign} Daily Horoscope & Predictions`}
+        >
+          <span className="relative flex h-2 w-2 items-center justify-center">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-400 animate-blink shadow-[0_0_8px_rgba(251,191,36,0.9)]" />
+          </span>
+          <span className="text-[10px] font-bold text-amber-300 group-hover:text-amber-200 uppercase tracking-wider transition-colors">
+            {displaySign}
+          </span>
+          <ChevronRight size={10} className="text-amber-400/70 group-hover:text-amber-300 group-hover:translate-x-0.5 transition-all -mr-0.5" />
+        </motion.button>
       </div>
 
-      {/* Quick Actions (Floating Neon Circles) */}
-      <div className="flex justify-between items-start px-1 py-2 mt-1">
-        {[
-          { label: "Chat", route: "/explore", icon: MessageCircle, color: "text-blue-400", bg: "bg-blue-500/20 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]", hideForAstro: true },
-          { label: "Call", route: "/explore", icon: Phone, color: "text-green-400", bg: "bg-green-500/20 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.15)]", hideForAstro: true },
-          {
-            label: "Kundli",
-            route: (birthDetails && birthDetails.date)
-              ? `/kundli/result?name=${encodeURIComponent(birthDetails.name)}&date=${birthDetails.date}&time=${birthDetails.time}&lat=${birthDetails.lat}&lng=${birthDetails.lng}&tz=${birthDetails.timezone}&place=${encodeURIComponent(birthDetails.place)}`
-              : "/kundli",
-            icon: Scroll,
-            color: "text-solar-gold",
-            bg: "bg-solar-gold/20 border border-solar-gold/30 shadow-[0_0_15px_rgba(251,191,36,0.15)]"
-          },
-          { label: "Panchang", route: "/panchang", icon: Calendar, color: "text-orange-400", bg: "bg-orange-500/20 border border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.15)]" },
-          { label: "Match", route: "/matchmaking", icon: Heart, color: "text-pink-400", bg: "bg-pink-500/20 border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)]" }
-        ].filter(action => !(user?.role === 'astrologer' && action.hideForAstro)).map((action, i) => (
-          <motion.button
-            key={action.label}
-            onClick={() => router.push(action.route)}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 + (i * 0.05), type: "spring", stiffness: 200 }}
-            className="flex flex-col items-center gap-1.5 active:scale-90 transition-all group w-[60px]"
-          >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${action.bg} ${action.color} backdrop-blur-md relative overflow-hidden`}>
-              {/* Glossy reflection */}
-              <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-full pointer-events-none" />
-              <action.icon size={20} strokeWidth={2} />
-            </div>
-            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{action.label}</span>
-          </motion.button>
-        ))}
+      {/* Quick Action Squircles (Two Rows of Astrological Services) */}
+      <div className="space-y-2.5 pt-1">
+        {/* Row 1: Primary Communication & Core Charts */}
+        <div className="grid grid-cols-5 gap-2 px-0.5">
+          {[
+            { label: "Chat", route: "/explore", icon: MessageCircle, color: "text-blue-300", bg: "from-blue-500/20 to-indigo-500/20 border-blue-400/30 shadow-[0_4px_20px_rgba(59,130,246,0.2)]", hideForAstro: true },
+            { label: "Call", route: "/explore", icon: Phone, color: "text-emerald-300", bg: "from-emerald-500/20 to-teal-500/20 border-emerald-400/30 shadow-[0_4px_20px_rgba(16,185,129,0.2)]", hideForAstro: true },
+            {
+              label: "Kundli",
+              route: (birthDetails && birthDetails.date)
+                ? `/kundli/result?name=${encodeURIComponent(birthDetails.name)}&date=${birthDetails.date}&time=${birthDetails.time}&lat=${birthDetails.lat}&lng=${birthDetails.lng}&tz=${birthDetails.timezone}&place=${encodeURIComponent(birthDetails.place)}`
+                : "/kundli",
+              icon: Scroll,
+              color: "text-amber-300",
+              bg: "from-amber-500/20 to-yellow-500/20 border-amber-400/30 shadow-[0_4px_20px_rgba(251,191,36,0.2)]"
+            },
+            { label: "Panchang", route: "/panchang", icon: Calendar, color: "text-orange-300", bg: "from-orange-500/20 to-red-500/20 border-orange-400/30 shadow-[0_4px_20px_rgba(249,115,22,0.2)]" },
+            { label: "Match", route: "/matchmaking", icon: Heart, color: "text-pink-300", bg: "from-pink-500/20 to-rose-500/20 border-pink-400/30 shadow-[0_4px_20px_rgba(244,63,94,0.2)]" }
+          ].filter(action => !(user?.role === 'astrologer' && action.hideForAstro)).map((action, i) => (
+            <motion.button
+              key={action.label}
+              onClick={() => router.push(action.route)}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.04 + (i * 0.03), type: "spring", stiffness: 350, damping: 25 }}
+              className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform group"
+            >
+              <div className={`w-[52px] h-[52px] rounded-[20px] flex items-center justify-center bg-gradient-to-b ${action.bg} border backdrop-blur-xl relative overflow-hidden transition-all group-hover:shadow-lg`}>
+                {/* Top glass reflection */}
+                <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                <action.icon size={22} strokeWidth={2} className={`${action.color} drop-shadow-sm`} />
+              </div>
+              <span className="text-[11px] font-semibold text-slate-300 group-hover:text-white tracking-tight transition-colors">
+                {action.label}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Row 2: Live Planets, Dasha, Dosha, Hora, Choghadiya & More Services */}
+        <div className="grid grid-cols-6 gap-1.5 px-0.5 pt-0.5">
+          {[
+            {
+              label: "Live Planets",
+              route: "/calculators/gochar",
+              icon: Globe,
+              color: "text-purple-300",
+              bg: "from-purple-500/20 to-indigo-500/20 border-purple-400/30 shadow-[0_4px_20px_rgba(168,85,247,0.2)]"
+            },
+            {
+              label: "Dasha",
+              route: "/calculators/dasha",
+              icon: Clock,
+              color: "text-cyan-300",
+              bg: "from-cyan-500/20 to-teal-500/20 border-cyan-400/30 shadow-[0_4px_20px_rgba(6,182,212,0.2)]"
+            },
+            {
+              label: "Dosha",
+              route: "/dosha",
+              icon: ShieldAlert,
+              color: "text-rose-300",
+              bg: "from-rose-500/20 to-red-500/20 border-rose-400/30 shadow-[0_4px_20px_rgba(244,63,94,0.2)]"
+            },
+            {
+              label: "Hora",
+              route: "/calculators/hora-muhurat",
+              icon: Sun,
+              color: "text-amber-300",
+              bg: "from-amber-500/20 to-orange-500/20 border-amber-400/30 shadow-[0_4px_20px_rgba(251,191,36,0.2)]"
+            },
+            {
+              label: "Choghadiya",
+              route: "/calculators/choghadiya",
+              icon: Sparkles,
+              color: "text-emerald-300",
+              bg: "from-emerald-500/20 to-teal-500/20 border-emerald-400/30 shadow-[0_4px_20px_rgba(16,185,129,0.2)]"
+            },
+            {
+              label: "More",
+              route: "/services",
+              icon: LayoutGrid,
+              color: "text-fuchsia-300",
+              bg: "from-fuchsia-500/20 to-pink-500/20 border-fuchsia-400/30 shadow-[0_4px_20px_rgba(217,70,239,0.2)]"
+            }
+          ].map((action, i) => (
+            <motion.button
+              key={action.label}
+              onClick={() => router.push(action.route)}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.08 + (i * 0.025), type: "spring", stiffness: 350, damping: 25 }}
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform group"
+            >
+              <div className={`w-[46px] h-[46px] sm:w-[50px] sm:h-[50px] rounded-[18px] flex items-center justify-center bg-gradient-to-b ${action.bg} border backdrop-blur-xl relative overflow-hidden transition-all group-hover:shadow-lg`}>
+                {/* Top glass reflection */}
+                <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                <action.icon size={20} strokeWidth={2} className={`${action.color} drop-shadow-sm`} />
+              </div>
+              <span className="text-[9.5px] sm:text-[10.5px] font-semibold text-slate-300 group-hover:text-white tracking-tight text-center leading-tight line-clamp-1 truncate max-w-full">
+                {action.label}
+              </span>
+            </motion.button>
+          ))}
+        </div>
       </div>
 
       {/* Promotional Banner */}
-      {promoEnabled && promoBannerUrl && (
+      {promoEnabled && promoBannerUrl && !bannerError && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -303,6 +393,7 @@ export default function Home() {
             <img
               src={getImageUrl(promoBannerUrl)}
               alt="Promotion"
+              onError={() => setBannerError(true)}
               className="w-full h-auto object-contain"
             />
           </div>
@@ -310,56 +401,73 @@ export default function Home() {
       )}
 
       {user?.role !== 'astrologer' && (
-        <div className="pt-2">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <Sparkles size={16} className="text-solar-gold" />
-              Astrologers
+        <div className="pt-3">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              Live Astrologers
             </h3>
-            <button onClick={() => router.push("/explore")} className="text-xs text-electric-violet font-semibold active:scale-95 transition-all">View All</button>
+            <button 
+              onClick={() => router.push("/explore")} 
+              className="text-xs text-violet-400 font-bold flex items-center gap-1 active:scale-95 transition-all"
+            >
+              View All <ArrowRight size={12} />
+            </button>
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-t-2 border-electric-violet animate-spin" />
+            <div className="flex justify-center py-6">
+              <div className="w-6 h-6 rounded-full border-2 border-violet-500/20 border-t-violet-400 animate-spin" />
             </div>
           ) : astrologers.length > 0 ? (
-            <div className="grid grid-cols-4 gap-y-4 gap-x-2 pt-2 pb-2 px-1">
+            <div className="grid grid-cols-4 gap-y-4 gap-x-2.5 pt-1 pb-2">
               {sortedAstrologers.slice(0, 20).map((astro) => (
                 <div
                   key={astro._id}
                   onClick={() => router.push(`/astrologer?id=${astro.slug || astro._id}`)}
-                  className="flex flex-col items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform cursor-pointer group"
                 >
                   <div className="relative">
                     {astro.badgeText && (
-                      <div className="absolute -top-1.5 -right-2 bg-solar-gold text-black text-[7px] font-black uppercase px-1.5 py-[2px] rounded-full z-20 shadow-md border border-[#0F172A] whitespace-nowrap">
+                      <div className="absolute -top-1 -right-2 bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-[7px] font-black uppercase px-1.5 py-[1.5px] rounded-full z-20 shadow-md border border-[#050716] whitespace-nowrap">
                         {astro.badgeText}
                       </div>
                     )}
-                    <div className={`absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[#0F172A] shadow-sm z-10 ${astro.isBusy ? 'bg-amber-500' : (astro.isChatOnline || astro.isVoiceOnline || astro.isVideoOnline) ? 'bg-green-500' : 'bg-slate-500'
-                      }`} />
-                    <div className="w-16 h-16 rounded-full bg-slate-800/50 border-[2.5px] border-electric-violet/40 overflow-hidden shadow-lg p-[2px]">
+                    
+                    {/* Status Dot */}
+                    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-[#050716] z-10 ${
+                      astro.isBusy ? 'bg-amber-400' : (astro.isChatOnline || astro.isVoiceOnline || astro.isVideoOnline) ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-slate-500'
+                    }`} />
+                    
+                    {/* Avatar Ring */}
+                    <div className="w-[62px] h-[62px] rounded-[22px] bg-gradient-to-tr from-violet-500/40 via-purple-500/30 to-amber-400/40 p-[2px] shadow-md group-hover:scale-105 transition-transform">
+                      <div className="w-full h-full rounded-[20px] bg-[#0c102a] overflow-hidden">
                         <img
-                        src={getImageUrl(astro.image || astro.profileImage, astro.gender)}
-                        alt={astro.displayName || astro.name}
-                        className="w-full h-full rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = getImageUrl(null, astro.gender);
-                        }}
-                      />
+                          src={getImageUrl(astro.image || astro.profileImage, astro.gender)}
+                          alt={astro.displayName || astro.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = getImageUrl(null, astro.gender);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
+                  
                   <div className="text-center w-full px-0.5">
-                    <p className="text-[10px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">{astro.displayName || astro.name}</p>
-                    <p className="text-[9px] text-solar-gold font-bold">₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min</p>
+                    <p className="text-[11px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis leading-tight">
+                      {astro.displayName || astro.name}
+                    </p>
+                    <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded-md bg-amber-400/10 text-[9px] text-amber-300 font-extrabold tracking-tight">
+                      ₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/m
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 text-center py-2">No live astrologers right now.</p>
+            <p className="text-xs text-slate-400 text-center py-4">No live astrologers right now.</p>
           )}
         </div>
       )}

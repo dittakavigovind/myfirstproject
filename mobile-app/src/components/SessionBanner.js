@@ -25,7 +25,7 @@ export default function SessionBanner() {
     const isChatPage = pathname.includes("/chat/") || pathname.includes("/call/");
 
     useEffect(() => {
-        if (user && !isChatPage) {
+        if (user && !user.isGuest && !isChatPage) {
             checkActiveSession();
             const interval = setInterval(checkActiveSession, 30000); // Check every 30s
             return () => clearInterval(interval);
@@ -82,7 +82,7 @@ export default function SessionBanner() {
                 setActiveSession(null);
             }
         } catch (err) {
-            console.error("Failed to check active session", err);
+            console.warn("Notice: check active session:", err?.message || err);
         }
     };
 

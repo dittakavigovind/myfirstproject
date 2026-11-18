@@ -11,13 +11,15 @@ import StandardResultHeader from '../../../components/calculators/StandardResult
 import PageContentSection from '../../../components/common/PageContentSection';
 import LocationSearch from '../../../components/LocationSearch';
 import KundliChart from '../../../components/KundliChart';
-import { PieChart, List } from 'lucide-react';
+import CosmicSolarUniverse from '../../../components/CosmicSolarUniverse';
+import { PieChart, List, Globe } from 'lucide-react';
 
 export default function TransitPage() {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [viewMode, setViewMode] = useState('chart'); // 'table' or 'chart'
+    const [viewMode, setViewMode] = useState('cosmos'); // 'cosmos', 'chart' or 'table'
+    const [chartStyle, setChartStyle] = useState('north'); // 'north' or 'south'
 
     // Default location: New Delhi
     const [location, setLocation] = useState({
@@ -212,43 +214,83 @@ export default function TransitPage() {
                                     </div>
                                 </div>
 
-                                {/* View Toggle */}
+                                {/* View Toggle: Cosmos vs Chart vs Table */}
                                 <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10 w-full sm:w-auto">
                                     <button
-                                        onClick={() => setViewMode('chart')}
-                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${viewMode === 'chart'
+                                        onClick={() => setViewMode('cosmos')}
+                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'cosmos'
                                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
                                             : 'text-white/40 hover:text-white/60 hover:bg-white/5'
                                             }`}
                                     >
-                                        <PieChart size={18} /> Chart
+                                        <span>🪐</span> Solar Cosmos
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('chart')}
+                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'chart'
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                                            : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                                            }`}
+                                    >
+                                        <PieChart size={16} /> Chart
                                     </button>
                                     <button
                                         onClick={() => setViewMode('table')}
-                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${viewMode === 'table'
+                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${viewMode === 'table'
                                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
                                             : 'text-white/40 hover:text-white/60 hover:bg-white/5'
                                             }`}
                                     >
-                                        <List size={18} /> Table
+                                        <List size={16} /> Table
                                     </button>
                                 </div>
                             </div>
 
                             <AnimatePresence mode="wait">
-                                {viewMode === 'chart' ? (
+                                {viewMode === 'cosmos' ? (
+                                    <motion.div
+                                        key="cosmos"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="w-full max-w-[500px] mx-auto"
+                                    >
+                                        <CosmicSolarUniverse planets={result?.planets || {}} />
+                                    </motion.div>
+                                ) : viewMode === 'chart' ? (
                                     <motion.div
                                         key="chart"
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
-                                        className="h-[500px] w-full max-w-[500px] mx-auto"
+                                        className="space-y-4 max-w-[500px] mx-auto"
                                     >
-                                        <KundliChart
-                                            planets={result?.planets || {}}
-                                            ascendantSign={result?.planets?.Ascendant?.sign || 1}
-                                            style="north"
-                                        />
+                                        <div className="flex items-center justify-between px-2">
+                                            <span className="text-xs font-bold text-white/60">
+                                                {chartStyle === 'north' ? 'North Indian Diamond Chart' : 'South Indian Square Chart'}
+                                            </span>
+                                            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                                                <button
+                                                    onClick={() => setChartStyle('north')}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${chartStyle === 'north' ? 'bg-amber-400 text-slate-900 shadow font-black' : 'text-white/60 hover:text-white'}`}
+                                                >
+                                                    North
+                                                </button>
+                                                <button
+                                                    onClick={() => setChartStyle('south')}
+                                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${chartStyle === 'south' ? 'bg-amber-400 text-slate-900 shadow font-black' : 'text-white/60 hover:text-white'}`}
+                                                >
+                                                    South
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="h-[460px] w-full">
+                                            <KundliChart
+                                                planets={result?.planets || {}}
+                                                ascendantSign={result?.planets?.Ascendant?.sign || 1}
+                                                style={chartStyle}
+                                            />
+                                        </div>
                                     </motion.div>
                                 ) : (
                                     <motion.div
@@ -270,6 +312,9 @@ export default function TransitPage() {
                                             <tbody className="divide-y divide-white/5">
                                                 {Object.entries(result?.planets || {}).map(([name, data], idx) => {
                                                     if (name === 'Ascendant' || name === 'As') return null; // Don't list Ascendant in planets table usually
+                                                    const deg = Math.floor(data.longitude % 30);
+                                                    const min = Math.floor((data.longitude % 1) * 60);
+
                                                     return (
                                                         <motion.tr
                                                             key={name}
@@ -287,8 +332,8 @@ export default function TransitPage() {
                                                             <td className="py-5 font-medium text-indigo-100/80">
                                                                 {getSignName(data.sign)}
                                                             </td>
-                                                            <td className="py-5 font-mono text-sm text-white/40">
-                                                                {(data.longitude % 30).toFixed(2)}°
+                                                            <td className="py-5 font-mono text-sm font-bold text-amber-300">
+                                                                {deg}° {min}&apos;
                                                             </td>
                                                             <td className="py-5">
                                                                 {data.retrograde ? (

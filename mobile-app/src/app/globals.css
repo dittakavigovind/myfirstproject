@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cosmic-indigo: #0b1026;
+  --color-cosmic-indigo: #070a1e;
   --color-electric-violet: #8b5cf6;
-  --color-solar-gold: #facc15;
-  --color-glass: rgba(255, 255, 255, 0.05);
-  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-solar-gold: #fbbf24;
+  --color-glass: rgba(255, 255, 255, 0.06);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
 
-  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-poppins), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
 :root {
-  --background: #0b1026;
+  --background: #050716;
   --foreground: #f8fafc;
-  /* Safe Area Insets for Mobile Devices */
+  /* Safe Area Insets for all Apple iPhones (SE, Mini, Notch, Dynamic Island, Plus, Max) */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  height: 100%;
 }
 
 html, body {
@@ -29,37 +38,88 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Subtle stars/noise overlay could go here, but simple background for now */
-  background-image: radial-gradient(circle at 50% 0%, #1a1b41 0%, #0b1026 50%);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(251, 191, 36, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 0% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 45%);
   background-attachment: fixed;
+  background-color: #050716;
   height: 100%;
   overflow: hidden;
   width: 100%;
 }
 
+/* Touch & Interaction rules for iOS */
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent accidental callout on interactive controls */
+button, nav, .interactive-pill {
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Glassmorphism Utilities */
 .glass-panel {
   background: var(--color-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--color-glass-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
 }
 
+/* Live Blink Animation for Active Indicators */
+@keyframes live-blink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+}
+
+.animate-blink {
+  animation: live-blink 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Universal iPhone Safe Area Utility Classes */
 .pt-safe {
-  padding-top: var(--safe-area-inset-top);
+  padding-top: max(var(--safe-area-inset-top), 10px);
 }
 
 .pb-safe {
-  padding-bottom: var(--safe-area-inset-bottom);
+  padding-bottom: max(var(--safe-area-inset-bottom), 12px);
+}
+
+.pl-safe {
+  padding-left: var(--safe-area-inset-left);
+}
+
+.pr-safe {
+  padding-right: var(--safe-area-inset-right);
+}
+
+.px-safe {
+  padding-left: max(var(--safe-area-inset-left), 1rem);
+  padding-right: max(var(--safe-area-inset-right), 1rem);
+}
+
+/* Momentum scrolling for iOS scroll containers */
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
 }
 
 /* LIGHT THEME OVERRIDES */

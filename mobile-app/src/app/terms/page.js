@@ -4,19 +4,21 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function TermsAndConditionsPage() {
     return (
-        <main className="min-h-screen bg-[#0b1026] text-slate-300 pb-24">
-            <div className="flex items-center gap-4 px-5 z-50 relative sticky top-0 bg-[#0b1026] py-4 border-b border-white/5">
+        <main className="min-h-screen text-slate-300 pb-28 pt-safe">
+            <div className="flex items-center gap-3 px-5 z-50 relative sticky top-0 bg-[#050716]/80 backdrop-blur-2xl py-3.5 border-b border-white/5">
                 <button 
                     onClick={() => window.history.back()}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all text-white hover:bg-white/10"
+                    className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center active:scale-90 transition-all text-white/80 hover:text-white backdrop-blur-xl"
+                    aria-label="Back"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <h3 className="text-xl font-bold text-white m-0">Terms & Conditions</h3>
+                <h3 className="text-xl font-black text-white m-0 tracking-tight">Terms & Conditions</h3>
             </div>
             
-            <div className="px-5 py-6 text-sm text-justify leading-relaxed">
-                <p className="mb-6 text-slate-400">Last Updated: June 16, 2026</p>
+            <div className="px-5 py-6">
+                <div className="rounded-[28px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3)] text-sm leading-relaxed text-slate-200 space-y-4">
+                    <p className="text-solar-gold font-bold text-xs">Last Updated: June 16, 2026</p>
 
                 <h3 className="text-lg font-bold text-white mt-6 mb-2">1. Introduction</h3>
                 <p className="mb-4">This Website and Mobile Application, Way2Astro (“Platform”, “App”, “we”, “us”, “our”, or “Company”) is owned and operated by Go Digital Media and Solutions. These Terms and Conditions (“Agreement”) govern your access to and use of our platform through which astrology consultations, horoscope services, Kundli reports, spiritual advisory services, and related services (“Services”) are made available.</p>
@@ -92,7 +94,8 @@ export default function TermsAndConditionsPage() {
                 <h3 className="text-lg font-bold text-white mt-6 mb-2">11. Termination</h3>
                 <p className="mb-4">We may suspend or terminate accounts without prior notice for violations, security concerns, or legal compliance. Unused credits may lapse as per policy.</p>
 
-                <p className="mb-4 mt-8 font-bold text-center">Owned & Operated by Go Digital Media and Solutions<br/>info@way2astro.com | Hyderabad, India</p>
+                <p className="mb-4 mt-8 font-bold text-center text-slate-400">Owned & Operated by Go Digital Media and Solutions<br/>info@way2astro.com | Hyderabad, India</p>
+                </div>
             </div>
         </main>
     );

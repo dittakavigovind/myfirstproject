@@ -112,15 +112,27 @@ export default function KundliFormPage() {
             `}</style>
 
             {/* Header */}
-            <div className="pt-6 px-4">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors mb-4"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <h1 className="text-3xl font-black text-white">Create <span className="text-solar-gold underline underline-offset-8 decoration-solar-gold/30">Kundli</span></h1>
-                <p className="text-slate-400 text-sm mt-3">Hello {welcomeName}, enter birth details to reveal your celestial map.</p>
+            <div className="pt-2 px-1">
+                <div className="flex items-center gap-3.5 mb-5">
+                    <button
+                        onClick={() => router.back()}
+                        className="w-10 h-10 rounded-2xl backdrop-blur-xl bg-white/[0.06] border border-white/12 flex items-center justify-center text-white active:scale-90 transition-all shadow-sm"
+                        aria-label="Back"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                        <h1 className="text-base font-extrabold text-white tracking-tight leading-none">Free Kundli</h1>
+                        <p className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase mt-1">Vedic Birth Chart</p>
+                    </div>
+                </div>
+
+                <div className="mb-4">
+                    <h2 className="text-2xl font-black text-white tracking-tight">
+                        Generate Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500">Celestial Map</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 font-medium mt-1">Hello {welcomeName}, enter birth details to reveal your planetary placements.</p>
+                </div>
             </div>
 
             <form onSubmit={handleSubmit} className="px-4 mt-8 space-y-6">
@@ -216,15 +228,15 @@ export default function KundliFormPage() {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={loading}
-                    className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${loading
+                    className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg ${loading
                         ? 'bg-slate-800 text-slate-500'
-                        : 'bg-gradient-to-r from-electric-violet to-cosmic-indigo text-white shadow-xl shadow-electric-violet/20'
+                        : 'bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 text-white shadow-[0_8px_25px_rgba(124,58,237,0.4)] active:scale-[0.98]'
                         }`}
                 >
                     {loading ? (
                         <div className="w-5 h-5 border-2 border-slate-500 border-t-white rounded-full animate-spin" />
                     ) : (
-                        <>Generate Horoscope <ChevronRight size={18} /></>
+                        <>Generate Kundli <ChevronRight size={18} /></>
                     )}
                 </motion.button>
             </form>

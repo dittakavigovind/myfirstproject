@@ -7,7 +7,7 @@ import {
     MoreVertical, Info, AlertCircle, X,
     Calendar, User, Shield, Sparkles, Grid,
     Check, CheckCheck, Paperclip, Star,
-    MessageSquare, Phone
+    MessageSquare, Phone, Reply, Smile
 } from "lucide-react";
 import { io } from "socket.io-client";
 import { useAuth } from "@/context/AuthContext";
@@ -28,6 +28,17 @@ import { auth, db, storage } from "@/lib/firebase";
 import { signInWithCustomToken } from "firebase/auth";
 import { collection, doc, onSnapshot, query, orderBy, setDoc, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
+const ASTRO_EMOJIS = [
+    "⭐", "🌟", "✨", "🌙", "☀️", "🪐", "🔮", "🕉️",
+    "🪔", "🙏", "📿", "🧿", "♈", "♉", "♊", "♋",
+    "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"
+];
+
+const EXPRESSION_EMOJIS = [
+    "😊", "😇", "🥰", "😍", "🤩", "🤔", "🤫", "🥺",
+    "🤍", "❤️", "💖", "💐", "🌺", "👍", "👏", "🙌"
+];
 
 export default function ChatRoomClient() {
     const searchParams = useSearchParams();
@@ -96,6 +107,55 @@ export default function ChatRoomClient() {
     const [showReportModal, setShowReportModal] = useState(false);
     const [showBlockModal, setShowBlockModal] = useState(false);
     const [reportForm, setReportForm] = useState({ reason: '', description: '' });
+
+    // Reply / Quote state
+    const [replyingTo, setReplyingTo] = useState(null);
+    // Emoji Picker state
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+    const handleStartReply = (msg) => {
+        if (isReadOnly) return;
+        const isTargetMe = msg.senderId === (user?.astrologerId || user?._id) || msg.senderModel === (user?.role === 'astrologer' ? 'Astrologer' : 'User');
+        const targetSenderName = isTargetMe 
+            ? 'You' 
+            : (msg.senderModel === 'Astrologer' 
+                ? (astrologer?.displayName || 'Astrologer') 
+                : (chatUser?.name || 'Seeker'));
+        
+        let snippet = msg.content || '';
+        if (!snippet && msg.mediaUrl) {
+            snippet = msg.mediaType?.startsWith('image/') ? '📷 Image' : '📄 File';
+        }
+
+        setReplyingTo({
+            id: msg._id,
+            content: snippet,
+            senderModel: msg.senderModel || (isTargetMe ? (user?.role === 'astrologer' ? 'Astrologer' : 'User') : (user?.role === 'astrologer' ? 'User' : 'Astrologer')),
+            senderName: targetSenderName,
+            mediaUrl: msg.mediaUrl || null,
+            mediaType: msg.mediaType || null
+        });
+
+        setShowEmojiPicker(false);
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
+        }, 50);
+    };
+
+    const handleEmojiSelect = (emoji) => {
+        setNewMessage(prev => prev + emoji);
+        if (inputRef.current) {
+            inputRef.current.focus();
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.style.height = 'inherit';
+                    inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+                }
+            }, 10);
+        }
+    };
 
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
@@ -680,15 +740,30 @@ export default function ChatRoomClient() {
             inputRef.current.focus(); // Synchronously ensure focus remains
         }
 
+        const currentReply = replyingTo ? {
+            id: replyingTo.id || null,
+            content: replyingTo.content || '',
+            senderModel: replyingTo.senderModel || '',
+            senderName: replyingTo.senderName || '',
+            mediaUrl: replyingTo.mediaUrl || null,
+            mediaType: replyingTo.mediaType || null
+        } : null;
+        setReplyingTo(null);
+        setShowEmojiPicker(false);
+
         try {
             const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
-            await addDoc(messagesRef, {
+            const messagePayload = {
                 content: content,
                 senderId: user.astrologerId || user._id || user.id || "unknown",
                 senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                 status: 'sent',
                 createdAt: Date.now()
-            });
+            };
+            if (currentReply) {
+                messagePayload.replyTo = currentReply;
+            }
+            await addDoc(messagesRef, messagePayload);
 
             const roomRef = doc(db, 'chat_sessions', roomId);
             await setDoc(roomRef, {
@@ -756,7 +831,7 @@ export default function ChatRoomClient() {
             async () => {
                 const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                 const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
-                await addDoc(messagesRef, {
+                const filePayload = {
                     content: file.type.startsWith('image/') ? '📷 Image attached' : '📄 File attached',
                     mediaUrl: downloadURL,
                     mediaType: file.type,
@@ -764,7 +839,19 @@ export default function ChatRoomClient() {
                     senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                     status: 'sent',
                     createdAt: Date.now()
-                });
+                };
+                if (replyingTo) {
+                    filePayload.replyTo = {
+                        id: replyingTo.id || null,
+                        content: replyingTo.content || '',
+                        senderModel: replyingTo.senderModel || '',
+                        senderName: replyingTo.senderName || '',
+                        mediaUrl: replyingTo.mediaUrl || null,
+                        mediaType: replyingTo.mediaType || null
+                    };
+                    setReplyingTo(null);
+                }
+                await addDoc(messagesRef, filePayload);
                 
                 // Emit to backend to start the timer if session is not active on server ONLY when Astrologer uploads
                 if (user?.role === 'astrologer' && !serverSessionActiveRef.current) {
@@ -840,7 +927,7 @@ export default function ChatRoomClient() {
             const mediaUrl = `data:image/svg+xml;base64,${base64SVG}`;
             
             const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
-            await addDoc(messagesRef, {
+            const chartPayload = {
                 content: messageContent,
                 mediaUrl: mediaUrl,
                 mediaType: 'image/svg+xml',
@@ -848,7 +935,17 @@ export default function ChatRoomClient() {
                 senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                 status: 'sent',
                 createdAt: Date.now()
-            });
+            };
+            if (replyingTo) {
+                chartPayload.replyTo = {
+                    id: replyingTo.id || null,
+                    content: replyingTo.content || '',
+                    senderModel: replyingTo.senderModel || '',
+                    senderName: replyingTo.senderName || ''
+                };
+                setReplyingTo(null);
+            }
+            await addDoc(messagesRef, chartPayload);
             toast.success("Kundali chart shared!");
             setShowKundli(false); // Optionally close modal
         } catch (error) {
@@ -948,6 +1045,12 @@ export default function ChatRoomClient() {
     const isAstroBusy = Boolean(astrologer?.isBusy);
 
     const handleStartNewConsultation = async (keepHistory = true) => {
+        if (!user || user.isGuest) {
+            setShowConnectModal(false);
+            toast.error("Please sign in to start a consultation.");
+            router.push("/auth");
+            return;
+        }
         const astroId = astrologer?._id || astrologer?.id;
         if (!astroId) return;
         setConnectLoading(true);
@@ -984,7 +1087,7 @@ export default function ChatRoomClient() {
                 toast.error(data.message || 'Failed to start consultation.');
             }
         } catch (err) {
-            console.error('Start consultation error:', err);
+            console.warn('Start consultation notice:', err);
             toast.error(err.response?.data?.message || 'Failed to initiate consultation.');
         } finally {
             setConnectLoading(false);
@@ -992,6 +1095,12 @@ export default function ChatRoomClient() {
     };
 
     const handleStartCall = async () => {
+        if (!user || user.isGuest) {
+            setShowConnectModal(false);
+            toast.error("Please sign in to start a consultation.");
+            router.push("/auth");
+            return;
+        }
         const astroId = astrologer?._id || astrologer?.id;
         if (!astroId) return;
         setConnectLoading(true);
@@ -1017,7 +1126,7 @@ export default function ChatRoomClient() {
                 toast.error(data.message || 'Failed to start call.');
             }
         } catch (err) {
-            console.error('Start call error:', err);
+            console.warn('Start call notice:', err);
             toast.error(err.response?.data?.message || 'Failed to initiate call.');
         } finally {
             setConnectLoading(false);
@@ -1429,7 +1538,12 @@ export default function ChatRoomClient() {
             )}
 
             {/* Messages Area */}
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 relative scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div 
+                ref={scrollContainerRef} 
+                onScroll={() => { if (showEmojiPicker) setShowEmojiPicker(false); }}
+                className="flex-1 overflow-y-auto overscroll-none p-4 space-y-4 relative scroll-smooth" 
+                style={{ WebkitOverflowScrolling: 'touch' }}
+            >
                 {messages.length === 0 && !isAstroTyping && (
                     <div className="text-center py-20 opacity-30 select-none">
                         <div className="w-16 h-16 bg-white/5 rounded-full mx-auto flex items-center justify-center mb-4">
@@ -1476,48 +1590,105 @@ export default function ChatRoomClient() {
                     
                     return (
                         <motion.div
-                            key={i}
+                            key={msg._id || i}
+                            id={`msg-${msg._id || i}`}
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                            className={`flex items-end gap-1.5 group ${isMe ? 'justify-end' : 'justify-start'}`}
                         >
-                            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl relative shadow-2xl transition-all ${isMe
-                                ? 'bg-gradient-to-br from-electric-violet to-purple-600 text-[#ffffff] rounded-tr-none border border-white/10'
-                                : 'glass-panel bg-white/5 border border-white/10 text-slate-100 rounded-tl-none'
-                                }`}>
-                                {msg.mediaUrl && (
-                                    <div className="mb-2 rounded-xl overflow-hidden">
-                                        {msg.mediaType?.startsWith('image/') ? (
-                                            <img 
-                                                src={msg.mediaUrl} 
-                                                alt="attachment" 
-                                                className="w-full h-auto max-h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity" 
-                                                onClick={() => setSelectedImage(msg.mediaUrl)}
-                                            />
-                                        ) : (
-                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="text-sm underline flex items-center gap-1">
-                                                <Paperclip size={14} /> Download File
-                                            </a>
+                            <div className={`flex items-center gap-1.5 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                <motion.div
+                                    drag={!isReadOnly ? "x" : false}
+                                    dragDirectionLock={true}
+                                    dragConstraints={{ left: 0, right: 0 }}
+                                    dragElastic={0.25}
+                                    onDragEnd={(e, info) => {
+                                        if (info.offset.x > 40) {
+                                            handleStartReply(msg);
+                                        }
+                                    }}
+                                    className={`w-full px-4 py-2.5 rounded-2xl relative shadow-2xl transition-all ${isMe
+                                        ? 'bg-gradient-to-br from-electric-violet to-purple-600 text-[#ffffff] rounded-tr-none border border-white/10'
+                                        : 'glass-panel bg-white/5 border border-white/10 text-slate-100 rounded-tl-none'
+                                    }`}
+                                >
+                                    {/* Quoted Message Preview inside bubble */}
+                                    {msg.replyTo && (
+                                        <div 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (msg.replyTo.id) {
+                                                    const el = document.getElementById(`msg-${msg.replyTo.id}`);
+                                                    if (el) {
+                                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                        el.classList.add('ring-2', 'ring-solar-gold');
+                                                        setTimeout(() => el.classList.remove('ring-2', 'ring-solar-gold'), 1500);
+                                                    }
+                                                }
+                                            }}
+                                            className={`mb-2 p-2 rounded-xl text-left cursor-pointer transition-colors border-l-4 ${
+                                                isMe 
+                                                    ? 'bg-black/25 hover:bg-black/35 border-solar-gold text-white' 
+                                                    : 'bg-white/10 hover:bg-white/15 border-electric-violet text-slate-100'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                                                <span className={`text-[10px] font-bold tracking-tight truncate ${isMe ? 'text-solar-gold' : 'text-purple-300'}`}>
+                                                    {msg.replyTo.senderName || (msg.replyTo.senderModel === 'Astrologer' ? 'Astrologer' : 'Seeker')}
+                                                </span>
+                                                <Reply size={10} className="opacity-60 shrink-0" />
+                                            </div>
+                                            <p className="text-[11px] opacity-80 truncate line-clamp-1 select-none">
+                                                {msg.replyTo.content || (msg.replyTo.mediaUrl ? 'Attachment' : '')}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {msg.mediaUrl && (
+                                        <div className="mb-2 rounded-xl overflow-hidden">
+                                            {msg.mediaType?.startsWith('image/') ? (
+                                                <img 
+                                                    src={msg.mediaUrl} 
+                                                    alt="attachment" 
+                                                    className="w-full h-auto max-h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity" 
+                                                    onClick={() => setSelectedImage(msg.mediaUrl)}
+                                                />
+                                            ) : (
+                                                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="text-sm underline flex items-center gap-1">
+                                                    <Paperclip size={14} /> Download File
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+                                    <p className="text-[13px] font-medium leading-relaxed mb-1">{msg.content}</p>
+                                    <div className={`flex items-center ${isMe ? 'justify-end' : 'justify-start'} gap-1.5 opacity-60`}>
+                                        <span className="text-[8px] font-black uppercase tracking-tighter">
+                                            {formatMsgTime(msg.createdAt)}
+                                        </span>
+                                        {isMe && (
+                                            <span className="flex items-center">
+                                                {isSeen ? (
+                                                    <CheckCheck size={12} className="text-sky-300" />
+                                                ) : isDelivered ? (
+                                                    <CheckCheck size={12} className="text-white/70" />
+                                                ) : (
+                                                    <Check size={12} className="text-white/50" />
+                                                )}
+                                            </span>
                                         )}
                                     </div>
+                                </motion.div>
+
+                                {!isReadOnly && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleStartReply(msg)}
+                                        title="Reply"
+                                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white shrink-0 self-center"
+                                    >
+                                        <Reply size={13} />
+                                    </button>
                                 )}
-                                <p className="text-[13px] font-medium leading-relaxed mb-1">{msg.content}</p>
-                                <div className={`flex items-center ${isMe ? 'justify-end' : 'justify-start'} gap-1.5 opacity-60`}>
-                                    <span className="text-[8px] font-black uppercase tracking-tighter">
-                                        {formatMsgTime(msg.createdAt)}
-                                    </span>
-                                    {isMe && (
-                                        <span className="flex items-center">
-                                            {isSeen ? (
-                                                <CheckCheck size={12} className="text-sky-300" />
-                                            ) : isDelivered ? (
-                                                <CheckCheck size={12} className="text-white/70" />
-                                            ) : (
-                                                <Check size={12} className="text-white/50" />
-                                            )}
-                                        </span>
-                                    )}
-                                </div>
                             </div>
                         </motion.div>
                     );
@@ -1605,60 +1776,157 @@ export default function ChatRoomClient() {
                         </div>
                     )
                 ) : (
-                    <div
-                        className="flex items-end gap-2 max-w-md mx-auto mb-2"
-                    >
-                        <div className="flex-1 glass-panel border-white/10 rounded-[24px] p-1.5 flex items-center shadow-2xl min-h-[48px] overflow-hidden">
+                    <div className="max-w-md mx-auto mb-2">
+                        {/* Replying Preview Banner */}
+                        <AnimatePresence>
+                            {replyingTo && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 8, height: 0 }}
+                                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                    exit={{ opacity: 0, y: 8, height: 0 }}
+                                    className="mb-2 bg-slate-900/90 border border-white/10 rounded-2xl p-2.5 flex items-center justify-between gap-3 shadow-xl backdrop-blur-md"
+                                >
+                                    <div className="flex items-center gap-2.5 overflow-hidden flex-1 border-l-4 border-solar-gold pl-2.5">
+                                        <Reply size={15} className="text-solar-gold shrink-0" />
+                                        <div className="overflow-hidden flex-1 text-left">
+                                            <p className="text-[11px] font-bold text-solar-gold leading-tight">
+                                                Replying to {replyingTo.senderName}
+                                            </p>
+                                            <p className="text-xs text-slate-300 truncate leading-snug">
+                                                {replyingTo.content}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReplyingTo(null)}
+                                        className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                                    >
+                                        <X size={15} />
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Quick Emoji Picker Drawer */}
+                        <AnimatePresence>
+                            {showEmojiPicker && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                                    className="mb-2 bg-slate-900/95 border border-white/15 rounded-2xl p-3 shadow-2xl backdrop-blur-xl"
+                                >
+                                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+                                        <span className="text-[11px] font-bold uppercase tracking-wider text-solar-gold flex items-center gap-1.5">
+                                            <Sparkles size={13} /> Emojis & Astro Icons
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEmojiPicker(false)}
+                                            className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="max-h-44 overflow-y-auto space-y-2 pr-1">
+                                        <div>
+                                            <p className="text-[9px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Astro & Cosmic</p>
+                                            <div className="grid grid-cols-8 gap-1 text-xl">
+                                                {ASTRO_EMOJIS.map((emoji) => (
+                                                    <button
+                                                        key={emoji}
+                                                        type="button"
+                                                        onClick={() => handleEmojiSelect(emoji)}
+                                                        className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 active:scale-90 transition transform"
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] text-slate-400 font-bold mb-1 uppercase tracking-wider">Expressions & Blessings</p>
+                                            <div className="grid grid-cols-8 gap-1 text-xl">
+                                                {EXPRESSION_EMOJIS.map((emoji) => (
+                                                    <button
+                                                        key={emoji}
+                                                        type="button"
+                                                        onClick={() => handleEmojiSelect(emoji)}
+                                                        className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/10 active:scale-90 transition transform"
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1 glass-panel border-white/10 rounded-[24px] p-1.5 flex items-center shadow-2xl min-h-[48px] overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="p-2 text-slate-400 hover:text-white transition-colors"
+                                    title="Attach File"
+                                >
+                                    <Paperclip size={20} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEmojiPicker(prev => !prev)}
+                                    className={`p-2 transition-colors ${showEmojiPicker ? 'text-solar-gold' : 'text-slate-400 hover:text-white'}`}
+                                    title="Emojis"
+                                >
+                                    <Smile size={20} />
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    onChange={handleFileUpload}
+                                    accept="image/*,.pdf,.doc,.docx"
+                                />
+                                <textarea
+                                    ref={inputRef}
+                                    rows={1}
+                                    value={newMessage}
+                                    onChange={(e) => {
+                                        handleTyping(e);
+                                        e.target.style.height = 'inherit';
+                                        e.target.style.height = `${e.target.scrollHeight}px`;
+                                    }}
+                                    placeholder="Ask the stars..."
+                                    className="flex-1 bg-transparent border-none outline-none text-white px-2 py-2 text-sm placeholder:text-slate-500 font-medium resize-none max-h-32"
+                                    onFocus={() => {
+                                        setTimeout(() => scrollToBottom(), 100);
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSend(e);
+                                        }
+                                    }}
+                                />
+                            </div>
                             <button
                                 type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-2 text-slate-400 hover:text-white transition-colors"
+                                disabled={!newMessage.trim()}
+                                onPointerDown={(e) => {
+                                    e.preventDefault(); // Prevents input from losing focus
+                                    if (newMessage.trim()) handleSend(e);
+                                }}
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${newMessage.trim()
+                                    ? 'bg-electric-violet text-white shadow-lg shadow-electric-violet/40 scale-100 rotate-0'
+                                    : 'bg-white/10 text-slate-600 scale-90 -rotate-12'
+                                    }`}
                             >
-                                <Paperclip size={20} />
+                                <Send size={20} className={newMessage.trim() ? "translate-x-0.5" : ""} />
                             </button>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                onChange={handleFileUpload}
-                                accept="image/*,.pdf,.doc,.docx"
-                            />
-                            <textarea
-                                ref={inputRef}
-                                rows={1}
-                                value={newMessage}
-                                onChange={(e) => {
-                                    handleTyping(e);
-                                    e.target.style.height = 'inherit';
-                                    e.target.style.height = `${e.target.scrollHeight}px`;
-                                }}
-                                placeholder="Ask the stars..."
-                                className="flex-1 bg-transparent border-none outline-none text-white px-2 py-2 text-sm placeholder:text-slate-500 font-medium resize-none max-h-32"
-                                onFocus={() => {
-                                    setTimeout(() => scrollToBottom(), 100);
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSend(e);
-                                    }
-                                }}
-                            />
                         </div>
-                        <button
-                            type="button"
-                            disabled={!newMessage.trim()}
-                            onPointerDown={(e) => {
-                                e.preventDefault(); // Prevents input from losing focus
-                                if (newMessage.trim()) handleSend(e);
-                            }}
-                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${newMessage.trim()
-                                ? 'bg-electric-violet text-white shadow-lg shadow-electric-violet/40 scale-100 rotate-0'
-                                : 'bg-white/10 text-slate-600 scale-90 -rotate-12'
-                                }`}
-                        >
-                            <Send size={20} className={newMessage.trim() ? "translate-x-0.5" : ""} />
-                        </button>
                     </div>
                 )}
             </div>

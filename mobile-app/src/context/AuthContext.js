@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
                 registerPushNotifications();
             }
         } catch (error) {
-            console.error("Failed to authenticate user on load", error);
+            console.warn("Failed to authenticate user on load", error);
         } finally {
             setLoading(false);
         }

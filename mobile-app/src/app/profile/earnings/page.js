@@ -76,41 +76,49 @@ export default function EarningsPage() {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     return (
-        <div className="min-h-screen bg-cosmic-indigo pb-24">
+        <div className="min-h-screen pb-28 pt-safe">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-4 px-4 pt-4">
-                <button onClick={() => router.back()} className="p-2 rounded-full bg-white/5 text-white">
-                    <ArrowLeft size={20} />
+            <div className="flex items-center gap-3 mb-4 px-4 pt-3">
+                <button 
+                    onClick={() => router.back()} 
+                    className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center active:scale-90 transition-all text-white/80 hover:text-white backdrop-blur-xl"
+                    aria-label="Back"
+                >
+                    <ArrowLeft size={18} />
                 </button>
-                <h1 className="text-xl font-bold text-white uppercase tracking-widest">Earnings</h1>
+                <div>
+                    <h1 className="text-xl font-black text-white tracking-tight">Earnings</h1>
+                    <p className="text-[10px] text-slate-400 font-medium">Payouts & Revenue</p>
+                </div>
             </div>
 
             <div className="px-4">
-                {/* Total Earnings Card */}
-                <CosmicCard className="bg-gradient-to-tr from-cosmic-indigo to-electric-violet/20 border-white/10 p-5 mb-4">
-                    <p className="text-slate-400 text-sm font-medium mb-1">Total Net Earnings</p>
+                {/* Total Earnings Holographic Card */}
+                <div className="rounded-[28px] bg-gradient-to-br from-[#1a1740] via-[#101332] to-[#07091a] border border-white/15 p-6 mb-5 shadow-2xl relative overflow-hidden">
+                    <div className="absolute -right-8 -top-8 w-32 h-32 bg-solar-gold/15 rounded-full blur-2xl pointer-events-none" />
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">Total Net Earnings</p>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-white">₹{stats.total.toLocaleString()}</span>
+                        <span className="text-4xl font-black text-white tracking-tight">₹{stats.total.toLocaleString()}</span>
                     </div>
-                </CosmicCard>
+                </div>
 
                 {/* Today's Breakdown */}
-                <div className="mb-4">
-                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest pl-1 mb-3">Today's Performance</h3>
-                    <div className="glass-panel p-5 rounded-2xl border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-                        <div className="space-y-4">
+                <div className="mb-5">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2.5">Today's Performance</h3>
+                    <div className="p-5 rounded-[24px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+                        <div className="space-y-3.5">
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-400 text-sm font-medium">Today's Gross</span>
-                                <span className="text-white font-bold">₹{stats.todayGross}</span>
+                                <span className="text-slate-400 text-xs font-medium">Today's Gross</span>
+                                <span className="text-white font-bold text-sm">₹{stats.todayGross}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-400 text-sm font-medium">Platform Share</span>
-                                <span className="text-red-400 font-bold">- ₹{stats.todayPlatform}</span>
+                                <span className="text-slate-400 text-xs font-medium">Platform Share</span>
+                                <span className="text-rose-400 font-bold text-sm">- ₹{stats.todayPlatform}</span>
                             </div>
                             <div className="h-px bg-white/5 w-full" />
                             <div className="flex justify-between items-center">
-                                <span className="text-emerald-400 font-bold uppercase tracking-tighter">Your Net Earnings</span>
-                                <span className="text-emerald-400 text-xl font-black">₹{stats.todayNet}</span>
+                                <span className="text-emerald-400 font-black text-xs uppercase tracking-wider">Your Net Earnings</span>
+                                <span className="text-emerald-400 text-2xl font-black">₹{stats.todayNet}</span>
                             </div>
                         </div>
                     </div>
@@ -118,41 +126,50 @@ export default function EarningsPage() {
 
                 {/* Date-wise Performance */}
                 <div className="mb-6">
-                    <div className="flex border-b border-white/10 mb-4">
+                    {/* Apple Segmented Capsule */}
+                    <div className="flex bg-black/40 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/10 mb-4 shadow-inner">
                         <button 
                             onClick={() => setExpandedSection('7days')}
-                            className={`flex-1 pb-3 text-sm font-bold uppercase tracking-widest transition-all ${expandedSection === '7days' ? 'text-solar-gold border-b-2 border-solar-gold' : 'text-slate-500'}`}
+                            className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-200 ${
+                                expandedSection === '7days' 
+                                ? 'bg-gradient-to-r from-solar-gold to-amber-500 text-black shadow-lg shadow-solar-gold/20' 
+                                : 'text-slate-400 font-bold hover:text-white'
+                            }`}
                         >
                             Last 7 Days
                         </button>
                         <button 
                             onClick={() => setExpandedSection('month')}
-                            className={`flex-1 pb-3 text-sm font-bold uppercase tracking-widest transition-all ${expandedSection === 'month' ? 'text-solar-gold border-b-2 border-solar-gold' : 'text-slate-500'}`}
+                            className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all duration-200 ${
+                                expandedSection === 'month' 
+                                ? 'bg-gradient-to-r from-solar-gold to-amber-500 text-black shadow-lg shadow-solar-gold/20' 
+                                : 'text-slate-400 font-bold hover:text-white'
+                            }`}
                         >
                             Last Month
                         </button>
                     </div>
 
-                    <div className="glass-panel p-4 rounded-2xl border-white/5 bg-white/5">
+                    <div className="p-5 rounded-[24px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
                         <div className="flex justify-between items-center mb-4">
-                            <span className="text-slate-300 text-sm font-semibold">Total Net Earnings</span>
-                            <span className="text-emerald-400 font-black text-lg">
+                            <span className="text-slate-300 text-xs font-bold uppercase tracking-wider">Period Total</span>
+                            <span className="text-emerald-400 font-black text-xl">
                                 ₹{calculateTotal(expandedSection === '7days' ? stats.last7Days : stats.lastMonth)}
                             </span>
                         </div>
                         
                         {expandedSection === '7days' ? (
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
                                 {stats.last7Days.length === 0 ? (
-                                    <p className="text-slate-500 text-xs text-center py-4">No earnings found for this period.</p>
+                                    <p className="text-slate-500 text-xs text-center py-6">No earnings logged for this period.</p>
                                 ) : (
                                     stats.last7Days.map((day, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
-                                            <div className="flex items-center gap-2">
-                                                <CalendarDays size={14} className="text-slate-400" />
-                                                <span className="text-slate-200 text-sm font-medium">{new Date(day._id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                                        <div key={idx} className="flex justify-between items-center p-3.5 rounded-2xl bg-white/[0.03] border border-white/5">
+                                            <div className="flex items-center gap-2.5">
+                                                <CalendarDays size={14} className="text-solar-gold" />
+                                                <span className="text-slate-200 text-xs font-bold">{new Date(day._id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
                                             </div>
-                                            <span className="text-emerald-400 font-bold text-sm">₹{day.net.toFixed(2)}</span>
+                                            <span className="text-emerald-400 font-black text-sm">₹{day.net.toFixed(2)}</span>
                                         </div>
                                     ))
                                 )}
@@ -160,20 +177,20 @@ export default function EarningsPage() {
                         ) : (
                             <div 
                                 onClick={() => setShowCalendar(true)}
-                                className="py-6 flex flex-col items-center justify-center text-center opacity-70 cursor-pointer hover:opacity-100 transition-opacity"
+                                className="py-8 flex flex-col items-center justify-center text-center cursor-pointer hover:opacity-80 transition-opacity"
                             >
-                                <CalendarCheck size={32} className="text-solar-gold mb-2" />
-                                <p className="text-slate-300 text-xs font-medium uppercase tracking-widest">Monthly Summary</p>
-                                <p className="text-solar-gold text-[10px] mt-1 underline decoration-solar-gold/50">Tap to view calendar</p>
+                                <div className="w-14 h-14 rounded-2xl bg-solar-gold/15 border border-solar-gold/30 flex items-center justify-center mb-2.5 shadow-[0_0_20px_rgba(251,191,36,0.2)]">
+                                    <CalendarCheck size={28} className="text-solar-gold" />
+                                </div>
+                                <p className="text-white text-xs font-black uppercase tracking-widest">Monthly Calendar</p>
+                                <p className="text-solar-gold text-[10px] mt-1 font-bold">Tap to inspect daily breakdown</p>
                             </div>
                         )}
                     </div>
                 </div>
 
-
-
                 <div className="mt-8 mb-4 text-center">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 italic">For any queries please contact</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 italic">For payout queries, reach us at</p>
                     <a href="mailto:info@way2astro.com" className="text-xs text-solar-gold font-bold">info@way2astro.com</a>
                 </div>
             </div>

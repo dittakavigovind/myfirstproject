@@ -20,8 +20,10 @@ export default function Chat() {
     const [toastMessage, setToastMessage] = useState("");
 
     useEffect(() => {
-        if (user) {
+        if (user && !user.isGuest) {
             fetchConversations();
+        } else {
+            setLoading(false);
         }
     }, [user]);
 
@@ -47,7 +49,7 @@ export default function Chat() {
                 setConversations([]);
             }
         } catch (err) {
-            console.error("Failed to fetch conversations", err);
+            console.warn("Failed to fetch conversations", err);
         } finally {
             setLoading(false);
         }
@@ -89,60 +91,64 @@ export default function Chat() {
             </div>
 
             {/* Search */}
-            <div className="glass-panel rounded-xl flex items-center px-4 py-3 border border-white/10 shadow-lg">
-                <Search size={18} className="text-slate-400 mr-3" />
+            <div className="rounded-2xl backdrop-blur-xl bg-white/[0.06] flex items-center px-4 py-2.5 border border-white/12 focus-within:border-violet-400/60 focus-within:ring-2 focus-within:ring-violet-500/20 transition-all shadow-sm">
+                <Search size={18} className="text-slate-400 mr-2.5 shrink-0" />
                 <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search conversations..."
-                    className="bg-transparent border-none outline-none text-white w-full text-sm placeholder:text-slate-500"
+                    className="bg-transparent border-none outline-none text-white w-full text-sm placeholder:text-slate-500 font-medium"
                 />
             </div>
 
             {/* Conversation List */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
                 {filteredConversations.map((chat) => {
                     const partner = getChatPartner(chat);
                     return (
                         <div key={chat._id} className="flex flex-col">
                             <div 
                                 onClick={() => setExpandedPartnerId(expandedPartnerId === partner._id ? null : partner._id)}
-                                className={`glass-panel rounded-xl p-4 flex gap-4 items-center relative overflow-hidden group cursor-pointer ${expandedPartnerId === partner._id ? 'border-electric-violet/50 bg-white/10' : 'border-white/10'}`}
+                                className={`rounded-[24px] backdrop-blur-2xl p-3.5 flex gap-3.5 items-center relative overflow-hidden group cursor-pointer border transition-all active:scale-[0.98] ${
+                                    expandedPartnerId === partner._id 
+                                        ? 'border-violet-400/50 bg-violet-600/15 shadow-[0_4px_20px_rgba(139,92,246,0.2)]' 
+                                        : 'border-white/12 bg-white/[0.05] hover:bg-white/[0.08]'
+                                }`}
                             >
-                                {/* Highlight on touch/hover */}
-                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                {/* Top specular rim light */}
+                                <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
 
-                                <div className="relative">
-                                    <div className="w-14 h-14 rounded-full overflow-hidden border border-white/20 bg-white/5 flex items-center justify-center">
+                                <div className="relative shrink-0">
+                                    <div className="w-[52px] h-[52px] rounded-[18px] overflow-hidden border border-white/15 bg-[#0c102a] flex items-center justify-center shadow-sm">
                                         {partner.profileImage ? (
                                             <img src={partner.profileImage} alt={partner.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            <User size={24} className="text-slate-500" />
+                                            <User size={22} className="text-slate-400" />
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <h3 className="text-white font-bold text-base truncate">{partner.name}</h3>
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                    <div className="flex justify-between items-center mb-0.5">
+                                        <h3 className="text-white font-bold text-sm truncate tracking-tight">{partner.name}</h3>
+                                        <span className="text-[10px] text-slate-400 font-semibold tracking-tight">
                                             {chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ""}
                                         </span>
                                     </div>
-                                    <p className="text-sm truncate font-medium text-slate-400">
+                                    <p className="text-xs truncate font-medium text-slate-400">
                                         {chat.status === 'active' ? (
-                                            <span className="text-emerald-400 flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                                Live Session
+                                            <span className="text-emerald-300 flex items-center gap-1.5 font-bold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                                                Live Consultation
                                             </span>
                                         ) : chat.status === 'initiated' ? (
-                                            <span className="text-amber-400 flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                            <span className="text-amber-300 flex items-center gap-1.5 font-bold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                                                 Connecting...
                                             </span>
                                         ) : (
-                                            <span className="capitalize text-slate-500 text-xs">Tap to view recent sessions</span>
+                                            <span className="capitalize text-slate-400 text-xs">Tap to view session history</span>
                                         )}
                                     </p>
                                 </div>

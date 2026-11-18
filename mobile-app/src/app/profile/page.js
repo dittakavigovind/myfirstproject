@@ -247,25 +247,27 @@ export default function Profile() {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Profile Header */}
-            <CosmicCard className="p-4 bg-gradient-to-br from-[#1a1438] to-[#0b1026] border-white/10 relative overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
-                {/* Clean background without decorative blurs */}
+            <div className="relative rounded-[28px] p-5 overflow-hidden backdrop-blur-2xl bg-gradient-to-br from-violet-900/40 via-[#0e1132] to-[#070a1e] border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.5)]">
+                {/* Top specular rim light */}
+                <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
                 <div className="flex justify-between items-center mb-4 relative z-10">
                     <button
                         onClick={handleRefresh}
                         disabled={refreshing}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 active:scale-95 transition-all text-white hover:bg-white/10 shadow-lg"
+                        className="w-9 h-9 rounded-2xl flex items-center justify-center bg-white/[0.06] border border-white/12 active:scale-90 transition-all text-white shadow-sm"
+                        aria-label="Refresh Profile"
                     >
-                        <RefreshCw size={14} className={refreshing ? "animate-spin text-electric-violet" : "text-slate-300"} />
+                        <RefreshCw size={15} className={refreshing ? "animate-spin text-amber-300" : "text-slate-300"} />
                     </button>
 
                     {isAstrologer && (
-                        <div className="flex items-center gap-2 bg-[#0b1026]/60 backdrop-blur-xl px-2.5 py-1.5 rounded-xl border border-white/10 shadow-lg">
-                            <span className={`relative flex h-2 w-2`}>
-                                {user?.isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
-                                <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.isOnline ? 'bg-green-500' : 'bg-slate-500'}`}></span>
+                        <div className="flex items-center gap-2 bg-black/30 backdrop-blur-xl px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
+                            <span className="relative flex h-2 w-2">
+                                {user?.isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                                <span className={`relative inline-flex rounded-full h-2 w-2 ${user?.isOnline ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-slate-500'}`}></span>
                             </span>
-                            <span className="text-[10px] font-black uppercase text-white tracking-widest mr-1">{user?.isOnline ? "Online" : "Offline"}</span>
+                            <span className="text-[10px] font-extrabold uppercase text-white tracking-wider mr-1">{user?.isOnline ? "Online" : "Offline"}</span>
                             <Toggle
                                 enabled={user?.isOnline && user?.isActive !== false}
                                 onChange={(val) => {
@@ -282,12 +284,11 @@ export default function Profile() {
                 </div>
 
                 <div className="relative z-10 space-y-4">
-                    {/* Avatar & Info Horizontal Row */}
-                    <div className="flex items-center gap-4">
-                        <div className="relative group shrink-0">
-                            {/* Removed glowing ring */}
-                            <div className="relative w-16 h-16 rounded-full p-0.5 bg-[#0b1026] shadow-xl">
-                                <div className="w-full h-full rounded-full overflow-hidden border border-white/10 bg-cosmic-indigo flex items-center justify-center">
+                    {/* Avatar & Info Row */}
+                    <div className="flex items-center gap-3.5">
+                        <div className="relative shrink-0">
+                            <div className="w-[66px] h-[66px] rounded-[24px] bg-gradient-to-tr from-violet-500 via-purple-500 to-amber-400 p-[2px] shadow-lg">
+                                <div className="w-full h-full rounded-[22px] overflow-hidden bg-[#0c102a] flex items-center justify-center">
                                     {user?.profileImage ? (
                                         <img src={getImageUrl(user.profileImage, user.gender)} alt={displayName} className="w-full h-full object-cover" />
                                     ) : (
@@ -298,20 +299,20 @@ export default function Profile() {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-xl font-black text-white mb-0.5 truncate tracking-tight">
+                            <h2 className="text-xl font-extrabold text-white mb-0.5 truncate tracking-tight">
                                 {displayName} ✨
                             </h2>
-                            <p className="text-electric-violet text-[11px] font-bold tracking-wide truncate">{user?.phone || "+91 9948505111"}</p>
+                            <p className="text-amber-300 text-xs font-semibold tracking-tight truncate">{user?.phone || "+91 9948505111"}</p>
 
-                            {/* Inline Stats */}
+                            {/* Inline Stats for Astrologer */}
                             {isAstrologer && (
-                                <div className="flex items-center gap-3 mt-1.5">
-                                    <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <div className="flex items-center gap-1 bg-white/[0.06] px-2 py-0.5 rounded-lg border border-white/10">
                                         <Heart size={10} className="text-rose-400 fill-rose-400/50" />
                                         <span className="text-[11px] font-bold text-white">{(user?.followersCount || 0) + (user?.fakeFollowers || 0)}</span>
                                     </div>
-                                    <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                                        <Star size={10} className="text-solar-gold fill-solar-gold/50" />
+                                    <div className="flex items-center gap-1 bg-white/[0.06] px-2 py-0.5 rounded-lg border border-white/10">
+                                        <Star size={10} className="text-amber-400 fill-amber-400/50" />
                                         <span className="text-[11px] font-bold text-white">{typeof user?.rating === 'number' ? Number(user.rating).toFixed(1) : "4.9"}</span>
                                     </div>
                                 </div>
@@ -323,14 +324,14 @@ export default function Profile() {
                     <div className="flex w-full gap-2">
                         <button
                             onClick={() => router.push('/profile/edit')}
-                            className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-white transition-all active:scale-95 shadow-sm"
+                            className="flex-1 py-2.5 rounded-2xl bg-white/[0.07] hover:bg-white/[0.12] border border-white/15 text-xs font-bold text-white transition-all active:scale-[0.98] shadow-sm"
                         >
                             Edit Profile
                         </button>
                         {isAstrologer && (
                             <button
                                 onClick={() => setShowPricingModal(true)}
-                                className="flex-1 py-2 rounded-lg bg-gradient-to-r from-electric-violet to-fuchsia-600 text-[11px] font-black text-white shadow-md shadow-electric-violet/25 active:scale-95 transition-all"
+                                className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-xs font-extrabold text-white shadow-md shadow-violet-600/30 active:scale-[0.98] transition-all"
                             >
                                 ₹{user?.chatPrice || 15}/min
                             </button>
@@ -379,7 +380,7 @@ export default function Profile() {
                         </div>
                     )}
                 </div>
-            </CosmicCard>
+            </div>
 
             {/* Today's Stats for Astrologers */}
             {isAstrologer && todayStats && (
@@ -467,35 +468,36 @@ export default function Profile() {
 
 
 
-            {/* Menu List */}
-            <div className="space-y-3">
+            {/* Apple Grouped Menu Card */}
+            <div className="rounded-[26px] bg-white/[0.05] border border-white/12 backdrop-blur-2xl overflow-hidden divide-y divide-white/[0.07] shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
                 {(isAstrologer ? astroMenuItems : userMenuItems).map((item, i) => (
-                    <motion.div
+                    <div
                         key={i}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
                         onClick={() => item.onClick ? item.onClick() : item.route && router.push(item.route)}
-                        className="glass-panel p-4 rounded-xl flex items-center justify-between cursor-pointer group hover:bg-white/5 transition-colors"
+                        className="px-4 py-3.5 flex items-center justify-between cursor-pointer group hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors"
                     >
-                        <div className="flex items-center gap-4">
-                            <div className={`p-2.5 rounded-xl ${item.bg} ${item.color}`}>
-                                <item.icon size={20} strokeWidth={2} />
+                        <div className="flex items-center gap-3.5">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.bg} ${item.color} shadow-sm shrink-0`}>
+                                <item.icon size={18} strokeWidth={2} />
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-white font-medium text-base">{item.label}</span>
+                                <span className="text-white font-semibold text-sm tracking-tight">{item.label}</span>
                                 {item.badge && (
-                                    <span className="text-[10px] font-black text-white bg-red-500 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+                                    <span className="text-[9px] font-black text-white bg-rose-500 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                                         {item.badge}
                                     </span>
                                 )}
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            {item.value && <span className="text-electric-violet font-bold bg-electric-violet/10 px-3 py-1 rounded-lg text-sm">{item.value}</span>}
-                            <ChevronRight size={20} className="text-slate-500 group-hover:text-white transition-colors" />
+                            {item.value && (
+                                <span className="text-amber-300 font-extrabold bg-amber-400/10 border border-amber-400/20 px-2.5 py-0.5 rounded-lg text-xs">
+                                    {item.value}
+                                </span>
+                            )}
+                            <ChevronRight size={18} className="text-slate-500 group-hover:text-white transition-colors" />
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
             </div>
 

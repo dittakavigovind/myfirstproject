@@ -7,11 +7,22 @@ import { useRouter } from 'next/navigation';
 import { SERVER_BASE } from '../../../lib/urlHelper';
 import api from '../../../lib/api';
 import toast from 'react-hot-toast';
-import { X } from 'lucide-react';
+import { X, Reply, Smile, Sparkles } from 'lucide-react';
 
 import { auth, db } from '../../../lib/firebase';
 import { signInWithCustomToken } from "firebase/auth";
 import { collection, doc, onSnapshot, query, orderBy, setDoc, updateDoc, addDoc } from "firebase/firestore";
+
+const ASTRO_EMOJIS = [
+    "⭐", "🌟", "✨", "🌙", "☀️", "🪐", "🔮", "🕉️",
+    "🪔", "🙏", "📿", "🧿", "♈", "♉", "♊", "♋",
+    "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"
+];
+
+const EXPRESSION_EMOJIS = [
+    "😊", "😇", "🥰", "😍", "🤩", "🤔", "🤫", "🥺",
+    "🤍", "❤️", "💖", "💐", "🌺", "👍", "👏", "🙌"
+];
 
 export default function ChatRoomClient() {
     const [roomId, setRoomId] = useState(null);
@@ -27,8 +38,47 @@ export default function ChatRoomClient() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [firebaseReady, setFirebaseReady] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const messagesEndRef = useRef(null);
+    const inputRef = useRef(null);
+
+    const handleStartReply = (msg) => {
+        if (isReadOnly) return;
+        const isTargetMe = msg.senderId === user?._id || msg.senderModel === (user?.role === 'astrologer' ? 'Astrologer' : 'User');
+        const targetSenderName = isTargetMe 
+            ? 'You' 
+            : (msg.senderModel === 'Astrologer' ? 'Astrologer' : 'Seeker');
+        
+        let snippet = msg.content || '';
+        if (!snippet && msg.mediaUrl) {
+            snippet = msg.mediaType?.startsWith('image/') ? '📷 Image' : '📄 File';
+        }
+
+        setReplyingTo({
+            id: msg._id,
+            content: snippet,
+            senderModel: msg.senderModel || (isTargetMe ? (user?.role === 'astrologer' ? 'Astrologer' : 'User') : (user?.role === 'astrologer' ? 'User' : 'Astrologer')),
+            senderName: targetSenderName,
+            mediaUrl: msg.mediaUrl || null,
+            mediaType: msg.mediaType || null
+        });
+
+        setShowEmojiPicker(false);
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+            }
+        }, 50);
+    };
+
+    const handleEmojiSelect = (emoji) => {
+        setNewMessage(prev => prev + emoji);
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -268,15 +318,30 @@ export default function ChatRoomClient() {
         const content = newMessage;
         setNewMessage('');
 
+        const currentReply = replyingTo ? {
+            id: replyingTo.id || null,
+            content: replyingTo.content || '',
+            senderModel: replyingTo.senderModel || '',
+            senderName: replyingTo.senderName || '',
+            mediaUrl: replyingTo.mediaUrl || null,
+            mediaType: replyingTo.mediaType || null
+        } : null;
+        setReplyingTo(null);
+        setShowEmojiPicker(false);
+
         try {
             const messagesRef = collection(db, 'chat_sessions', roomId, 'messages');
-            await addDoc(messagesRef, {
+            const messagePayload = {
                 content: content,
                 senderId: user.astrologerId || user._id,
                 senderModel: user.role === 'astrologer' ? 'Astrologer' : 'User',
                 status: 'sent',
                 createdAt: Date.now()
-            });
+            };
+            if (currentReply) {
+                messagePayload.replyTo = currentReply;
+            }
+            await addDoc(messagesRef, messagePayload);
 
             const roomRef = doc(db, 'chat_sessions', roomId);
             await setDoc(roomRef, {
@@ -452,27 +517,72 @@ export default function ChatRoomClient() {
                     }
                     const isMe = msg.senderId === user?._id || msg.senderModel === (user.role === 'astrologer' ? 'Astrologer' : 'User');
                     return (
-                        <div key={i} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[75%] p-3 rounded-2xl shadow-sm ${isMe ? 'bg-purple-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
-                                }`}>
-                                {msg.mediaUrl && (
-                                    <div className="mb-2">
-                                        {msg.mediaType?.startsWith('image/') ? (
-                                            <img 
-                                                src={msg.mediaUrl} 
-                                                alt="attachment" 
-                                                className="max-h-48 rounded cursor-pointer hover:opacity-90 transition-opacity" 
-                                                onClick={() => setSelectedImage(msg.mediaUrl)}
-                                            />
-                                        ) : (
-                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="underline">Download File</a>
-                                        )}
-                                    </div>
+                        <div key={msg._id || i} id={`msg-${msg._id || i}`} className={`flex items-end gap-1.5 group ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`flex items-center gap-1.5 max-w-[75%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                <div className={`w-full p-3 rounded-2xl shadow-sm ${isMe ? 'bg-purple-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'
+                                    }`}>
+                                    {/* Quoted Message Preview */}
+                                    {msg.replyTo && (
+                                        <div 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (msg.replyTo.id) {
+                                                    const el = document.getElementById(`msg-${msg.replyTo.id}`);
+                                                    if (el) {
+                                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                        el.classList.add('ring-2', 'ring-purple-400');
+                                                        setTimeout(() => el.classList.remove('ring-2', 'ring-purple-400'), 1500);
+                                                    }
+                                                }
+                                            }}
+                                            className={`mb-2 p-2 rounded-xl text-left cursor-pointer transition-colors border-l-4 ${
+                                                isMe 
+                                                    ? 'bg-black/20 hover:bg-black/30 border-amber-300 text-white' 
+                                                    : 'bg-gray-100 hover:bg-gray-200 border-purple-500 text-gray-800'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                                                <span className={`text-[10px] font-bold tracking-tight truncate ${isMe ? 'text-amber-200' : 'text-purple-600'}`}>
+                                                    {msg.replyTo.senderName || (msg.replyTo.senderModel === 'Astrologer' ? 'Astrologer' : 'Seeker')}
+                                                </span>
+                                                <Reply size={10} className="opacity-60 shrink-0" />
+                                            </div>
+                                            <p className="text-[11px] opacity-80 truncate line-clamp-1 select-none">
+                                                {msg.replyTo.content || (msg.replyTo.mediaUrl ? 'Attachment' : '')}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {msg.mediaUrl && (
+                                        <div className="mb-2">
+                                            {msg.mediaType?.startsWith('image/') ? (
+                                                <img 
+                                                    src={msg.mediaUrl} 
+                                                    alt="attachment" 
+                                                    className="max-h-48 rounded cursor-pointer hover:opacity-90 transition-opacity" 
+                                                    onClick={() => setSelectedImage(msg.mediaUrl)}
+                                                />
+                                            ) : (
+                                                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="underline">Download File</a>
+                                            )}
+                                        </div>
+                                    )}
+                                    <p className="text-sm">{msg.content}</p>
+                                    <p className={`text-[10px] mt-1 ${isMe ? 'text-purple-200' : 'text-gray-400'}`}>
+                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+
+                                {!isReadOnly && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleStartReply(msg)}
+                                        title="Reply"
+                                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 shrink-0 self-center"
+                                    >
+                                        <Reply size={13} />
+                                    </button>
                                 )}
-                                <p className="text-sm">{msg.content}</p>
-                                <p className={`text-[10px] mt-1 ${isMe ? 'text-purple-200' : 'text-gray-400'}`}>
-                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
                             </div>
                         </div>
                     );
@@ -498,22 +608,107 @@ export default function ChatRoomClient() {
                         This session has ended.
                     </div>
                 ) : (
-                    <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex gap-3">
-                        <input
-                            type="text"
-                            value={newMessage}
-                            onChange={handleTyping}
-                            placeholder="Type your message..."
-                            className="flex-1 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                        />
-                        <button
-                            type="submit"
-                            disabled={!newMessage.trim()}
-                            className="px-6 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-all flex items-center gap-2"
-                        >
-                            Send
-                        </button>
-                    </form>
+                    <div className="max-w-4xl mx-auto space-y-2">
+                        {/* Replying Preview Banner */}
+                        {replyingTo && (
+                            <div className="bg-purple-50 border border-purple-200 rounded-xl p-2.5 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5 overflow-hidden flex-1 border-l-4 border-purple-600 pl-2.5">
+                                    <Reply size={15} className="text-purple-600 shrink-0" />
+                                    <div className="overflow-hidden flex-1 text-left">
+                                        <p className="text-[11px] font-bold text-purple-700 leading-tight">
+                                            Replying to {replyingTo.senderName}
+                                        </p>
+                                        <p className="text-xs text-gray-600 truncate leading-snug">
+                                            {replyingTo.content}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setReplyingTo(null)}
+                                    className="p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+                                >
+                                    <X size={15} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Quick Emoji Picker Drawer */}
+                        {showEmojiPicker && (
+                            <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-lg">
+                                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-gray-100">
+                                    <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                                        <Sparkles size={13} /> Emojis & Astro Icons
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEmojiPicker(false)}
+                                        className="p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                                    <div>
+                                        <p className="text-[9px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Astro & Cosmic</p>
+                                        <div className="grid grid-cols-12 gap-1 text-xl">
+                                            {ASTRO_EMOJIS.map((emoji) => (
+                                                <button
+                                                    key={emoji}
+                                                    type="button"
+                                                    onClick={() => handleEmojiSelect(emoji)}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 active:scale-90 transition transform"
+                                                >
+                                                    {emoji}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] text-gray-400 font-bold mb-1 uppercase tracking-wider">Expressions & Blessings</p>
+                                        <div className="grid grid-cols-12 gap-1 text-xl">
+                                            {EXPRESSION_EMOJIS.map((emoji) => (
+                                                <button
+                                                    key={emoji}
+                                                    type="button"
+                                                    onClick={() => handleEmojiSelect(emoji)}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-50 active:scale-90 transition transform"
+                                                >
+                                                    {emoji}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(prev => !prev)}
+                                className={`p-3 rounded-xl border transition-colors ${showEmojiPicker ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-gray-50 text-gray-500 border-gray-200 hover:text-purple-600'}`}
+                                title="Emojis"
+                            >
+                                <Smile size={20} />
+                            </button>
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={newMessage}
+                                onChange={handleTyping}
+                                placeholder="Type your message..."
+                                className="flex-1 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!newMessage.trim()}
+                                className="px-6 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-all flex items-center gap-2"
+                            >
+                                Send
+                            </button>
+                        </form>
+                    </div>
                 )}
             </div>
 

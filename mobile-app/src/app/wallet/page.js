@@ -29,10 +29,14 @@ export default function WalletPage() {
     const [plans, setPlans] = useState([]);
 
     useEffect(() => {
-        fetchHistory();
+        if (user && !user.isGuest) {
+            fetchHistory();
+            if (checkUser) checkUser();
+        } else {
+            setLoading(false);
+        }
         fetchPlans();
-        if (checkUser) checkUser();
-    }, []);
+    }, [user]);
 
     const fetchPlans = async () => {
         try {
@@ -42,7 +46,7 @@ export default function WalletPage() {
                 if (res.data.gst) setGstConfig(res.data.gst);
             }
         } catch (error) {
-            console.error('Failed to fetch wallet plans:', error);
+            console.warn('Failed to fetch wallet plans:', error);
         }
     };
 
@@ -76,7 +80,7 @@ export default function WalletPage() {
                 setHistory(grouped);
             }
         } catch (error) {
-            console.error('Failed to fetch wallet history:', error);
+            console.warn('Failed to fetch wallet history:', error);
         } finally {
             setLoading(false);
         }
@@ -186,45 +190,63 @@ export default function WalletPage() {
     return (
         <div className="pb-40 animate-in fade-in duration-500 px-4">
             {/* Minimal Sub-header with Back Button */}
-            <div className="flex items-center gap-4 mb-6 pt-2">
+            <div className="flex items-center gap-3.5 mb-5 pt-2">
                 <button 
                     onClick={() => router.back()}
-                    className="p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10 active:scale-95 transition-all"
+                    className="w-10 h-10 rounded-2xl backdrop-blur-xl bg-white/[0.06] border border-white/12 flex items-center justify-center text-white active:scale-90 transition-all shadow-sm"
+                    aria-label="Back"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <h1 className="text-sm font-black text-white uppercase tracking-widest">My Wallet</h1>
+                <div>
+                    <h1 className="text-base font-extrabold text-white tracking-tight leading-none">Cosmic Wallet</h1>
+                    <p className="text-[10px] text-violet-300 font-semibold tracking-wider uppercase mt-1">Recharge & Balance</p>
+                </div>
             </div>
 
-            {/* Balance Card */}
-            <div className="mt-2">
-                <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-indigo-600 to-electric-violet p-6 flex flex-col gap-4 shadow-2xl shadow-indigo-500/20">
-                    <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+            {/* Apple Wallet Style Holographic Balance Card */}
+            <div className="mt-1">
+                <div className="relative rounded-[28px] overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-700 to-[#0e1138] p-6 flex flex-col justify-between shadow-[0_20px_50px_rgba(79,70,229,0.3)] border border-white/20">
+                    {/* Top specular rim light */}
+                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+                    
+                    {/* Background glows */}
+                    <div className="absolute top-[-30%] right-[-15%] w-56 h-56 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-[-30%] left-[-15%] w-56 h-56 bg-fuchsia-500/20 rounded-full blur-3xl pointer-events-none" />
+
                     <div className="flex justify-between items-start relative z-10">
                         <div>
-                            <p className="text-indigo-100/60 text-[10px] font-black uppercase tracking-widest mb-1">Total Balance</p>
-                            <h2 className="text-3xl font-black text-white leading-none">₹{user?.walletBalance || 0}</h2>
+                            <span className="text-violet-200/80 text-[10px] font-extrabold uppercase tracking-[0.2em] block mb-1">
+                                Available Balance
+                            </span>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-bold text-amber-300">₹</span>
+                                <h2 className="text-4xl font-black text-white tracking-tight leading-none">{user?.walletBalance || 0}</h2>
+                            </div>
                         </div>
-                        <div className="w-10 h-10 bg-white/20 rounded-xl backdrop-blur-md flex items-center justify-center text-white">
-                            <Wallet size={20} />
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.12] backdrop-blur-xl border border-white/20 flex items-center justify-center text-amber-300 shadow-inner">
+                            <Wallet size={22} />
                         </div>
                     </div>
 
-                    <div className="flex relative z-10">
-                        <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md">
-                            <ShieldCheck size={12} className="text-emerald-400" />
-                            <span className="text-[9px] font-bold text-white uppercase tracking-wider">Safe & Secure</span>
+                    <div className="flex items-center justify-between relative z-10 mt-6 pt-4 border-t border-white/10">
+                        <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
+                            <ShieldCheck size={13} className="text-emerald-300" />
+                            <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider">Instant & Secured</span>
                         </div>
+                        <span className="text-[10px] font-semibold text-violet-200/70">Way2Astro Credits</span>
                     </div>
                 </div>
             </div>
 
             {/* Recharge Plans */}
-            <div className="mt-10">
-                <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-1 flex items-center gap-2">
-                    <Plus size={14} className="text-solar-gold" /> Recharge Credits
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
+            <div className="mt-8">
+                <div className="flex items-center justify-between mb-3.5 px-1">
+                    <h3 className="text-xs font-extrabold text-slate-300 uppercase tracking-[0.18em] flex items-center gap-2">
+                        <Sparkles size={14} className="text-amber-400" /> Select Recharge Pack
+                    </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
                     {plans.map((plan) => (
                         <button
                             key={plan._id}
@@ -232,31 +254,31 @@ export default function WalletPage() {
                                 setSelectedPlan(plan._id);
                                 setCustomAmount(plan.amount.toString());
                             }}
-                            className={`relative p-4 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden ${
+                            className={`relative p-4 rounded-[24px] border transition-all duration-200 text-left overflow-hidden active:scale-[0.98] ${
                                 selectedPlan === plan._id
-                                    ? 'border-solar-gold bg-solar-gold/10 scale-[1.02] shadow-[0_0_20px_rgba(255,215,0,0.15)]'
-                                    : 'border-white/5 bg-white/5 hover:bg-white/10'
+                                    ? 'border-amber-400/80 bg-amber-400/10 shadow-[0_0_25px_rgba(251,191,36,0.2)]'
+                                    : 'border-white/10 bg-white/[0.05] hover:bg-white/[0.08]'
                             }`}
                         >
                             {selectedPlan === plan._id && (
-                                <div className="absolute inset-0 bg-gradient-to-tr from-solar-gold/20 to-transparent" />
+                                <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
                             )}
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-2">
-                                    <h4 className="text-white font-black text-xl">₹{plan.amount}</h4>
+                                    <h4 className="text-white font-extrabold text-xl tracking-tight">₹{plan.amount}</h4>
                                     {plan.tag && (
-                                        <span className="px-2 py-1 rounded-full bg-gradient-to-r from-solar-gold to-amber-500 text-[10px] font-black text-black uppercase tracking-widest shadow-lg shadow-solar-gold/20">
+                                        <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-[9px] font-black text-black uppercase tracking-wider shadow-sm">
                                             {plan.tag}
                                         </span>
                                     )}
                                 </div>
                                 <div className="flex justify-between items-end">
-                                    <p className={`text-sm font-bold ${selectedPlan === plan._id ? 'text-solar-gold' : 'text-slate-400'}`}>
+                                    <p className={`text-xs font-semibold ${selectedPlan === plan._id ? 'text-amber-300' : 'text-slate-400'}`}>
                                         {plan.label}
                                     </p>
                                     {plan.bonus > 0 && (
-                                        <div className="flex items-center gap-1 text-xs font-black text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg">
-                                            <Sparkles size={12} />
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-400/15 border border-emerald-400/30 px-2 py-0.5 rounded-md">
+                                            <Sparkles size={10} />
                                             +₹{plan.bonus}
                                         </div>
                                     )}
@@ -268,12 +290,16 @@ export default function WalletPage() {
 
                 <div 
                     onClick={() => setSelectedPlan('custom')}
-                    className={`mt-3 relative glass-panel p-3 pl-5 rounded-[2.5rem] border-white/5 cursor-pointer transition-all duration-300 flex items-center justify-between ${selectedPlan === 'custom' ? 'ring-2 ring-solar-gold bg-solar-gold/10' : 'bg-white/5 hover:bg-white/10'}`}
+                    className={`mt-3 relative p-2.5 pl-4 rounded-full border transition-all duration-200 flex items-center justify-between ${
+                        selectedPlan === 'custom' 
+                            ? 'border-amber-400/80 bg-amber-400/10 shadow-[0_0_20px_rgba(251,191,36,0.2)]' 
+                            : 'border-white/10 bg-white/[0.05]'
+                    }`}
                 >
                     <div className="flex-1">
-                        <p className={`text-[10px] font-bold uppercase tracking-tighter mb-1 ${selectedPlan === 'custom' ? 'text-solar-gold/80' : 'text-slate-500'}`}>Custom Amount</p>
-                        <div className="flex items-center">
-                            <span className={`text-xl font-black mr-1 ${selectedPlan === 'custom' ? 'text-solar-gold' : 'text-white'}`}>₹</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-none">Custom Recharge</span>
+                        <div className="flex items-center mt-0.5">
+                            <span className="text-lg font-bold text-amber-300 mr-1">₹</span>
                             <input
                                 type="number"
                                 value={customAmount}
@@ -281,8 +307,8 @@ export default function WalletPage() {
                                     setCustomAmount(e.target.value);
                                     setSelectedPlan('custom');
                                 }}
-                                placeholder="Enter amount"
-                                className={`bg-transparent text-xl font-black outline-none w-full placeholder:text-white/20 ${selectedPlan === 'custom' ? 'text-solar-gold' : 'text-white'}`}
+                                placeholder="Enter custom amount"
+                                className="bg-transparent text-base font-extrabold outline-none w-full text-white placeholder:text-slate-500 placeholder:text-xs placeholder:font-normal"
                             />
                         </div>
                     </div>
@@ -293,9 +319,9 @@ export default function WalletPage() {
                             handleRechargeClick();
                         }}
                         disabled={getRechargeAmount() <= 0 || processing}
-                        className="h-12 px-8 rounded-full bg-indigo-600 text-white font-black text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                        className="h-11 px-6 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-xs tracking-wider shadow-[0_4px_16px_rgba(124,58,237,0.4)] flex items-center justify-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
                     >
-                        {processing ? '...' : 'Pay'}
+                        {processing ? '...' : 'Recharge'}
                     </button>
                 </div>
             </div>

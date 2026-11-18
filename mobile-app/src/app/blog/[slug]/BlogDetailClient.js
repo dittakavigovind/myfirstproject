@@ -55,69 +55,74 @@ export default function BlogDetail({ params }) {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center p-6 bg-cosmic-indigo">
-                <div className="w-8 h-8 rounded-full border-t-2 border-electric-violet animate-spin" />
+            <div className="min-h-screen flex items-center justify-center p-6">
+                <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-electric-violet animate-spin" />
             </div>
         );
     }
 
     if (!blog) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-cosmic-indigo text-center">
-                <h2 className="text-xl font-bold text-white mb-4">Blog Post Not Found</h2>
-                <button onClick={() => router.back()} className="px-6 py-2 rounded-xl glass-pill text-white">Go Back</button>
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-20 h-20 rounded-[28px] bg-white/[0.04] border border-white/10 backdrop-blur-xl flex items-center justify-center text-slate-500 mx-auto mb-4">
+                    <Sparkles size={36} />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">Blog Post Not Found</h2>
+                <button onClick={() => router.back()} className="px-6 py-3 rounded-full bg-gradient-to-r from-solar-gold to-amber-500 text-black font-black text-xs uppercase tracking-widest shadow-lg">Go Back</button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen pb-20 animate-in fade-in duration-500">
+        <div className="min-h-screen pb-24 animate-in fade-in duration-500 px-4 pt-safe">
             {/* Header */}
-            <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden mb-5 shadow-xl">
+            <div className="relative h-64 sm:h-72 w-full rounded-[28px] overflow-hidden mb-5 shadow-2xl border border-white/10 mt-3">
                 {blog.featuredImage ? (
                     <img src={blog.featuredImage} alt={blog.title} className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-cosmic-indigo" />
+                    <div className="w-full h-full bg-gradient-to-br from-[#12163b] to-[#07091a]" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-cosmic-indigo/80 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050716] via-transparent to-black/30" />
                 
                 <button 
                     onClick={() => router.back()}
-                    className="absolute top-4 left-4 p-2.5 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/10 active:scale-95 transition-all z-20"
+                    className="absolute top-4 left-4 w-10 h-10 bg-black/40 backdrop-blur-xl rounded-full text-white border border-white/15 flex items-center justify-center active:scale-90 transition-all z-20 shadow-lg"
+                    aria-label="Back"
                 >
                     <ArrowLeft size={18} />
                 </button>
 
                 <button 
                     onClick={handleShare}
-                    className="absolute top-4 right-4 p-2.5 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/10 active:scale-95 transition-all z-20"
+                    className="absolute top-4 right-4 w-10 h-10 bg-black/40 backdrop-blur-xl rounded-full text-white border border-white/15 flex items-center justify-center active:scale-90 transition-all z-20 shadow-lg"
+                    aria-label="Share"
                 >
-                    <Share2 size={18} />
+                    <Share2 size={16} />
                 </button>
             </div>
 
             {/* Content Container */}
             <div className="space-y-4 px-1">
                 {/* Category & Date */}
-                <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-electric-violet bg-electric-violet/10 px-3 py-1 rounded-full uppercase tracking-widest">
+                <div className="flex items-center gap-2.5">
+                    <span className="text-[9px] font-black text-solar-gold bg-solar-gold/15 border border-solar-gold/30 px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-md">
                         {blog.categories?.[0]?.name || "Astrology"}
                     </span>
-                    <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                        <Calendar size={12} />
+                    <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                        <Calendar size={12} className="opacity-70" />
                         {new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                 </div>
 
-                <h1 className="text-2xl font-black text-white leading-tight mb-4">{blog.title}</h1>
+                <h1 className="text-2xl font-black text-white leading-tight tracking-tight mb-4">{blog.title}</h1>
 
                 {/* Author Info */}
-                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                    <div className="w-10 h-10 rounded-full bg-electric-violet/20 flex items-center justify-center text-electric-violet">
-                        <User size={20} />
+                <div className="flex items-center gap-3 p-3.5 rounded-[20px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-sm">
+                    <div className="w-10 h-10 rounded-2xl bg-electric-violet/15 border border-electric-violet/25 flex items-center justify-center text-electric-violet">
+                        <User size={18} />
                     </div>
                     <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none mb-1">Written By</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">Author</p>
                         <p className="text-sm font-bold text-white leading-none">{blog.author?.name || "Way2Astro Team"}</p>
                     </div>
                 </div>

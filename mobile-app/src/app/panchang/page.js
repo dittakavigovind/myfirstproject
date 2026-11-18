@@ -98,25 +98,32 @@ export default function PanchangPage() {
                 }
             `}</style>
             {/* Header */}
-            <div className="pt-6 px-4">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors mb-4"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <h1 className="text-3xl font-black text-white">Daily <span className="text-solar-gold decoration-solar-gold/30 underline underline-offset-8">Panchang</span></h1>
-                <p className="text-slate-400 text-sm mt-2">Auspicious timings and planetary positions.</p>
+            <div className="pt-2 px-1">
+                <div className="flex items-center gap-3.5 mb-5">
+                    <button
+                        onClick={() => router.back()}
+                        className="w-10 h-10 rounded-2xl backdrop-blur-xl bg-white/[0.06] border border-white/12 flex items-center justify-center text-white active:scale-90 transition-all shadow-sm"
+                        aria-label="Back"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                        <h1 className="text-base font-extrabold text-white tracking-tight leading-none">Daily Panchang</h1>
+                        <p className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase mt-1">Vedic Solar & Lunar Almanac</p>
+                    </div>
+                </div>
             </div>
 
             {/* Inputs Section */}
-            <div className="px-4 mt-6">
-                <div className="flex flex-col gap-4 pl-3 border-l border-solar-gold/20 py-1">
+            <div className="px-1 mt-2">
+                <div className="rounded-[24px] p-4 backdrop-blur-2xl bg-white/[0.05] border border-white/12 shadow-[0_12px_36px_rgba(0,0,0,0.35)] flex flex-col gap-3.5 relative overflow-hidden">
+                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+                    
                     <div className="flex-1">
-                        <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Location</label>
-                        <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-solar-gold transition-colors">
-                            <MapPin className="text-slate-500 group-focus-within:text-solar-gold mr-2 mb-1" size={16} />
-                            <div className="flex-1 -mb-1">
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">Location</label>
+                        <div className="relative flex items-center bg-white/[0.05] rounded-xl px-3 py-2 border border-white/10">
+                            <MapPin className="text-amber-400 mr-2 shrink-0" size={15} />
+                            <div className="flex-1">
                                 <LocationSearch
                                     onLocationSelect={handleLocationSelect}
                                     defaultValue={place}
@@ -128,14 +135,14 @@ export default function PanchangPage() {
                     </div>
 
                     <div className="flex-1">
-                        <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Date</label>
-                        <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-solar-gold transition-colors">
-                            <Calendar className="text-slate-500 group-focus-within:text-solar-gold mr-2 mb-1" size={16} />
+                        <label className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">Date</label>
+                        <div className="relative flex items-center bg-white/[0.05] rounded-xl px-3 py-2 border border-white/10">
+                            <Calendar className="text-violet-400 mr-2 shrink-0" size={15} />
                             <input
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
-                                className="w-full bg-transparent text-white placeholder:text-white/20 focus:outline-none transition-colors text-[13px] font-medium py-1"
+                                className="w-full bg-transparent text-white focus:outline-none text-xs font-semibold"
                             />
                         </div>
                     </div>
@@ -281,13 +288,13 @@ export default function PanchangPage() {
 
 function SunCard({ label, val, icon: Icon, color, bg }) {
     return (
-        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${bg} ${color} shrink-0`}>
-                <Icon size={16} />
+        <div className="backdrop-blur-xl bg-white/[0.05] border border-white/12 p-3.5 rounded-[22px] flex items-center gap-3 shadow-sm">
+            <div className={`p-2.5 rounded-xl ${bg} ${color} shrink-0`}>
+                <Icon size={18} />
             </div>
             <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
-                <p className="text-[13px] font-black text-white leading-tight">{val || "--:--"}</p>
+                <p className="text-[14px] font-black text-white leading-tight">{val || "--:--"}</p>
             </div>
         </div>
     );
@@ -295,23 +302,23 @@ function SunCard({ label, val, icon: Icon, color, bg }) {
 
 function ElementCard({ label, value, sub, start, end, icon: Icon, color }) {
     return (
-        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex items-center justify-between">
+        <div className="backdrop-blur-xl bg-white/[0.05] border border-white/12 p-3.5 rounded-[22px] flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-lg bg-white/5 ${color}`}>
-                    <Icon size={16} />
+                <div className={`p-2 rounded-xl bg-white/[0.06] ${color}`}>
+                    <Icon size={17} />
                 </div>
                 <div>
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{label}</h4>
+                    <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{label}</h4>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[13px] font-black text-white">{value}</span>
-                        {sub && <span className="text-[9px] px-1.5 py-0.5 bg-white/10 rounded text-slate-400 font-bold">{sub}</span>}
+                        <span className="text-[13px] font-bold text-white">{value}</span>
+                        {sub && <span className="text-[10px] px-2 py-0.5 bg-white/10 rounded-md text-amber-300 font-bold">{sub}</span>}
                     </div>
                 </div>
             </div>
             {(start && end) && (
                 <div className="text-right">
-                    <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">From {start}</div>
-                    <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">To {end}</div>
+                    <div className="text-[9px] font-bold text-slate-400 tabular-nums">From {start}</div>
+                    <div className="text-[9px] font-bold text-slate-400 tabular-nums mt-0.5">To {end}</div>
                 </div>
             )}
         </div>
@@ -321,13 +328,13 @@ function ElementCard({ label, value, sub, start, end, icon: Icon, color }) {
 function WideMuhurta({ label, start, end, type }) {
     const isGood = type === "good";
     return (
-        <div className={`bg-white/5 p-3 rounded-2xl flex items-center justify-between border-l-[3px] ${isGood ? 'border-l-emerald-500' : 'border-l-red-500'}`}>
+        <div className={`backdrop-blur-xl bg-white/[0.05] border border-white/12 p-3.5 rounded-[22px] flex items-center justify-between border-l-4 ${isGood ? 'border-l-emerald-400' : 'border-l-rose-400'} shadow-sm`}>
             <div>
-                {label && <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>}
-                <h4 className="text-[13px] font-black text-white">{isGood ? "Auspicious" : "Avoid Working"}</h4>
+                {label && <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>}
+                <h4 className="text-[13px] font-black text-white">{isGood ? "Auspicious Timing" : "Inauspicious Period"}</h4>
             </div>
-            <div className={`px-3 py-1.5 rounded-xl ${isGood ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'} border ${isGood ? 'border-emerald-500/20' : 'border-red-500/20'}`}>
-                <span className="text-[11px] font-black tabular-nums">{start} - {end}</span>
+            <div className={`px-3 py-1.5 rounded-xl ${isGood ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30' : 'bg-rose-500/15 text-rose-300 border-rose-400/30'} border font-mono font-bold text-xs`}>
+                <span>{start} - {end}</span>
             </div>
         </div>
     );

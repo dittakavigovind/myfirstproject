@@ -1,0 +1,125 @@
+name: iOS Build & Cloud Packaging
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile-app/**'
+      - '.github/workflows/ios-build.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'mobile-app/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+    inputs:
+      build_configuration:
+        description: 'Build Configuration (Release or Debug)'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      deploy_testflight:
+        description: 'Deploy to TestFlight (Requires Apple Developer Secrets)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-ios:
+    name: Build Native iOS App
+    runs-on: macos-14
+
+    defaults:
+      run:
+        working-directory: ./mobile-app
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: './mobile-app/package-lock.json'
+
+      - name: Print Xcode Version
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install NPM Dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Build Next.js Web Bundle
+        run: |
+          npm run build
+
+      - name: Sync Capacitor iOS
+        run: |
+          npx cap sync ios
+
+      - name: Resolve Swift Package Manager Dependencies
+        working-directory: ./mobile-app/ios/App
+        run: |
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj
+
+      - name: Build Xcode Archive (.xcarchive)
+        working-directory: ./mobile-app/ios/App
+        run: |
+          CONFIG="${{ inputs.build_configuration || 'Release' }}"
+          mkdir -p build
+          
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration "$CONFIG" \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Way2Astro.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Package .IPA (Unsigned)
+        working-directory: ./mobile-app/ios/App
+        run: |
+          cd build
+          mkdir -p Payload
+          cp -r Way2Astro.xcarchive/Products/Applications/App.app Payload/
+          zip -qr Way2Astro-iOS.ipa Payload
+          echo "IPA Size:"
+          ls -lh Way2Astro-iOS.ipa
+
+      - name: Upload .IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Way2Astro-iOS-IPA
+          path: ./mobile-app/ios/App/build/Way2Astro-iOS.ipa
+          retention-days: 14
+
+      - name: Upload Xcode Archive (.xcarchive)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Way2Astro-XCArchive
+          path: ./mobile-app/ios/App/build/Way2Astro.xcarchive
+          retention-days: 7
+
+      - name: Upload to TestFlight (Optional - when secrets configured)
+        if: ${{ inputs.deploy_testflight == true && env.APP_STORE_CONNECT_KEY != '' }}
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        working-directory: ./mobile-app/ios/App
+        run: |
+          echo "Apple Developer Secrets detected. Ready for TestFlight upload."
+          # xcrun altool --upload-app -f build/Way2Astro-iOS.ipa --type ios --apiKey "$KEY_ID" --apiIssuer "$ISSUER_ID"
+

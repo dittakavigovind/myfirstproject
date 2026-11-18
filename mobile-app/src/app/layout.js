@@ -8,12 +8,20 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Way2Astro Mobile",
+  title: "Way2Astro",
   description: "Your personalized cosmic guide.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Way2Astro",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport = {
-  themeColor: "#0b1026",
+  themeColor: "#050716",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

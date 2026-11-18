@@ -4,19 +4,21 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function AstrologerTermsPage() {
     return (
-        <main className="min-h-screen bg-[#0b1026] text-slate-300 pb-24">
-            <div className="flex items-center gap-4 px-5 z-50 relative sticky top-0 bg-[#0b1026] py-4 border-b border-white/5">
+        <main className="min-h-screen text-slate-300 pb-28 pt-safe">
+            <div className="flex items-center gap-3 px-5 z-50 relative sticky top-0 bg-[#050716]/80 backdrop-blur-2xl py-3.5 border-b border-white/5">
                 <button 
                     onClick={() => window.history.back()}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all text-white hover:bg-white/10"
+                    className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center active:scale-90 transition-all text-white/80 hover:text-white backdrop-blur-xl"
+                    aria-label="Back"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <h3 className="text-xl font-bold text-white m-0">Astrologer Terms</h3>
+                <h3 className="text-xl font-black text-white m-0 tracking-tight">Astrologer Terms</h3>
             </div>
             
-            <div className="px-5 py-6 text-sm text-justify leading-relaxed">
-                <h3 className="text-lg font-bold text-white mt-6 mb-2">1. Introduction</h3>
+            <div className="px-5 py-6">
+                <div className="rounded-[28px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3)] text-sm leading-relaxed text-slate-200 space-y-4">
+                    <h3 className="text-base font-black text-solar-gold mb-1">1. Introduction</h3>
                 <p className="mb-4">These Terms and Conditions (“Agreement”) govern the relationship between Go Digital Media and Solutions (“Company”, “Way2Astro”, “Platform”, “we”, “us”) and any astrologer, consultant, practitioner, coach, advisor, or professional (“Service Provider” or “Astrologer”) who registers to provide astrology consultation services on Way2Astro.com.</p>
                 <p className="mb-4">The Company provides astrology consultations, spiritual advisory services, horoscope analysis, life guidance, and allied services (“Consultation Services”) through its website and applications.</p>
                 <p className="mb-4">By registering as a Service Provider, you confirm that you have read and understood this Agreement, agree to be legally bound by these Terms, and acknowledge that you are acting as an independent contractor. If you do not agree, you must not register or provide services on the Platform.</p>
@@ -82,7 +84,8 @@ export default function AstrologerTermsPage() {
                 <h3 className="text-lg font-bold text-white mt-6 mb-2">20. Acceptance</h3>
                 <p className="mb-4">By registering as a Service Provider on Way2Astro.com, you confirm legal capacity to contract, accept independent contractor status, and agree to revenue share terms and platform rules.</p>
                 
-                <p className="mb-4 mt-8 font-bold text-center">Owned & Operated by Go Digital Media and Solutions<br/>legal@way2astro.com | Hyderabad, India</p>
+                <p className="mb-4 mt-8 font-bold text-center text-slate-400">Owned & Operated by Go Digital Media and Solutions<br/>legal@way2astro.com | Hyderabad, India</p>
+                </div>
             </div>
         </main>
     );

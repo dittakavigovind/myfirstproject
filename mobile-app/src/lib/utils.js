@@ -6,8 +6,8 @@ export function cn(...inputs) {
 }
 
 export const getImageUrl = (path, gender = null) => {
-    if (!path || path.includes('default-avatar.png')) {
-        return gender === 'female' ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" : "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+    if (!path || path.includes('default-avatar.png') || path.includes('default-avatar')) {
+        return gender === 'female' ? "/default-avatar-female.svg" : "/default-avatar.svg";
     }
     const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://192.168.29.133:5000";
     

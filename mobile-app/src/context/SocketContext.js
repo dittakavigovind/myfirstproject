@@ -46,7 +46,7 @@ export function SocketProvider({ children }) {
     };
 
     useEffect(() => {
-        if (!user) {
+        if (!user || user.isGuest) {
             if (socket) {
                 socket.disconnect();
                 setSocket(null);

@@ -4,19 +4,21 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
     return (
-        <main className="min-h-screen bg-[#0b1026] text-slate-300 pb-24">
-            <div className="flex items-center gap-4 px-5 z-50 relative sticky top-0 bg-[#0b1026] py-4 border-b border-white/5">
+        <main className="min-h-screen text-slate-300 pb-28 pt-safe">
+            <div className="flex items-center gap-3 px-5 z-50 relative sticky top-0 bg-[#050716]/80 backdrop-blur-2xl py-3.5 border-b border-white/5">
                 <button 
                     onClick={() => window.history.back()}
-                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all text-white hover:bg-white/10"
+                    className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center active:scale-90 transition-all text-white/80 hover:text-white backdrop-blur-xl"
+                    aria-label="Back"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <h3 className="text-xl font-bold text-white m-0">Privacy Policy</h3>
+                <h3 className="text-xl font-black text-white m-0 tracking-tight">Privacy Policy</h3>
             </div>
             
-            <div className="px-5 py-6 text-sm text-justify leading-relaxed">
-                <h3 className="text-lg font-bold text-white mt-6 mb-2">1. Introduction</h3>
+            <div className="px-5 py-6">
+                <div className="rounded-[28px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3)] text-sm leading-relaxed text-slate-200 space-y-4">
+                    <h3 className="text-base font-black text-solar-gold mb-1">1. Introduction</h3>
                 <p className="mb-4">Way2Astro.com (“we”, “our”, “us”, or “Website”) is owned and operated by Go Digital Media and Solutions. We are committed to protecting the privacy of all users including visitors, registered users, customers, and astrologers who use our platform.</p>
                 <p className="mb-4">This Privacy Policy explains how we collect, use, process, store, and safeguard your personal information when you access or use Way2Astro.com. By using this Website, you agree to the terms of this Privacy Policy.</p>
 
@@ -68,6 +70,7 @@ export default function PrivacyPolicyPage() {
 
                 <h3 className="text-lg font-bold text-white mt-6 mb-2">16. Grievance Officer</h3>
                 <p className="mb-4">In accordance with the Information Technology Act, 2000: Company is Go Digital Media and Solutions, Website is Way2Astro.com, and Email is info@way2astro.com. The Grievance Officer will respond to complaints within 7–15 working days.</p>
+                </div>
             </div>
         </main>
     );

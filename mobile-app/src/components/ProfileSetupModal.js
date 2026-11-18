@@ -31,7 +31,7 @@ export default function ProfileSetupModal() {
         if (user) {
             // Astrologers handle their profile setup differently in their profile edit section.
             // This modal is mainly for regular seekers to set up their birth details.
-            if (user.role === 'astrologer') {
+            if (user.role === 'astrologer' || user.isGuest) {
                 setIsOpen(false);
                 return;
             }

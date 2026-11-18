@@ -96,7 +96,10 @@ function HoraContent() {
         const cityName = place.split(',')[0].trim();
         document.title = `${t('todayHoraMuhurat', lang)} - ${dateStr} - ${cityName} | Way2Astro`;
         
-        const newUrl = `/today-hora-muhurat?city=${encodeURIComponent(cityName)}&date=${date.toISOString().split('T')[0]}`;
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+        const localIsoDate = localDate.toISOString().split('T')[0];
+        const newUrl = `/today-hora-muhurat?city=${encodeURIComponent(cityName)}&date=${localIsoDate}`;
         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
     }, [date, place, lang]);
 
@@ -107,7 +110,11 @@ function HoraContent() {
     const fetchHora = async () => {
         setLoading(true);
         try {
-            const dateStr = date.toISOString().split('T')[0];
+            // Fix: Construct local YYYY-MM-DD manually to avoid UTC conversion shift
+            const offset = date.getTimezoneOffset();
+            const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+            const dateStr = localDate.toISOString().split('T')[0];
+
             const payload = {
                 date: dateStr,
                 lat: coords.lat,

@@ -76,32 +76,34 @@ export default function KundliResultContent() {
     const d1AscendantSign = Math.floor(data.houses.ascendant / 30) + 1;
 
     return (
-        <div className="min-h-screen pb-24 animate-in fade-in duration-700">
+        <div className="min-h-screen pb-28 animate-in fade-in duration-700 pt-safe">
             {/* Header */}
-            <div className="pt-6 px-4 flex items-center justify-between">
+            <div className="pt-3 px-4 flex items-center justify-between">
                 <button
                     onClick={() => router.back()}
-                    className="p-2 bg-white/5 rounded-full text-slate-400"
+                    className="w-10 h-10 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/80 hover:text-white active:scale-90 transition-all"
+                    aria-label="Back"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={18} />
                 </button>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <div className="text-right">
-                        <h1 className="text-xl font-black text-white">{name}'s Chart</h1>
-                        <p className="text-[10px] text-solar-gold font-bold uppercase tracking-widest">Personal Horoscope</p>
+                        <h1 className="text-lg font-black text-white">{name}'s Chart</h1>
+                        <p className="text-[10px] text-solar-gold font-bold uppercase tracking-widest">Personal Kundli</p>
                     </div>
                     <button
                         onClick={() => router.push('/kundli')}
-                        className="p-2 bg-white/5 rounded-xl text-slate-400 border border-white/5 active:scale-95 transition-all"
+                        className="w-10 h-10 rounded-full bg-white/[0.06] backdrop-blur-xl border border-white/10 flex items-center justify-center text-slate-300 hover:text-white active:scale-90 transition-all"
+                        aria-label="Edit birth details"
                     >
-                        <Edit2 size={18} />
+                        <Edit2 size={16} />
                     </button>
                 </div>
             </div>
 
             {/* Top Stats Bar */}
-            <div className="px-4 mt-6 overflow-x-auto">
-                <div className="flex gap-3 pb-2 min-w-max">
+            <div className="px-4 mt-5 overflow-x-auto hide-scrollbar">
+                <div className="flex gap-2.5 pb-2 min-w-max">
                     <QuickStat label="Lagna" val={SIGNS[d1AscendantSign - 1]} />
                     <QuickStat label="Rashi" val={SIGNS[data.planets.Moon.sign - 1]} />
                     <QuickStat label="Nakshatra" val={data.dashas.birthNakshatra} />
@@ -110,13 +112,14 @@ export default function KundliResultContent() {
             </div>
 
             {/* Interactive Chart Section */}
-            <div className="px-4 mt-6">
-                <div className="glass-panel p-5 rounded-[2.5rem] border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+            <div className="px-4 mt-5">
+                <div className="p-5 rounded-[28px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+                    <div className="flex justify-between items-center mb-5">
+                        <h2 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
                             <Star size={14} className="text-solar-gold" /> Birth Chart (D1)
                         </h2>
-                        <div className="flex bg-white/10 p-1 rounded-xl">
+                        {/* iOS Segmented Control */}
+                        <div className="flex bg-black/40 backdrop-blur-xl p-1 rounded-full border border-white/10">
                             <ChartToggle active={chartStyle === 'north'} label="North" onClick={() => setChartStyle('north')} />
                             <ChartToggle active={chartStyle === 'south'} label="South" onClick={() => setChartStyle('south')} />
                         </div>
@@ -134,8 +137,8 @@ export default function KundliResultContent() {
 
             {/* Planetary Positions */}
             <div className="px-4 mt-8">
-                <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-1">Planetary Alignments</h3>
-                <div className="space-y-3">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3.5 ml-1">Planetary Alignments</h3>
+                <div className="space-y-2.5">
                     {Object.entries(data.planets).map(([name, p]) => (
                         <PlanetRow 
                             key={name} 
@@ -149,11 +152,11 @@ export default function KundliResultContent() {
             </div>
 
             {/* Vimshottari Dasha */}
-            <div className="px-4 mt-10">
-                <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-1 flex items-center gap-2">
+            <div className="px-4 mt-8">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3.5 ml-1 flex items-center gap-2">
                     <Sparkles size={14} className="text-electric-violet" /> Vimshottari Mahadasha
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {data.dashas.list.map((dasha, idx) => {
                         const isCurrent = new Date() >= new Date(dasha.start) && new Date() <= new Date(dasha.end);
                         return (
@@ -170,8 +173,8 @@ export default function KundliResultContent() {
             </div>
 
             {/* Footer / Disclaimer */}
-            <div className="px-6 py-10 opacity-40 text-center">
-                <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+            <div className="px-6 py-8 opacity-40 text-center">
+                <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
                     Calculated using Swiss Ephemeris. House System: Placidus/Shripati. Ayanamsa: Lahiri.
                 </p>
             </div>
@@ -183,8 +186,8 @@ export default function KundliResultContent() {
 
 function QuickStat({ label, val }) {
     return (
-        <div className="glass-panel py-2 px-4 rounded-full border-white/5 whitespace-nowrap">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter mr-2">{label}</span>
+        <div className="py-1.5 px-3.5 rounded-full bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-sm whitespace-nowrap flex items-center">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-2">{label}</span>
             <span className="text-xs font-black text-white">{val}</span>
         </div>
     );
@@ -194,7 +197,11 @@ function ChartToggle({ active, label, onClick }) {
     return (
         <button
             onClick={onClick}
-            className={`px-4 py-1.5 text-[10px] font-black rounded-lg transition-all ${active ? 'bg-electric-violet text-white shadow-lg' : 'text-slate-400'}`}
+            className={`px-3.5 py-1 text-[10px] font-black rounded-full transition-all duration-200 ${
+                active 
+                    ? 'bg-electric-violet text-white shadow-[0_0_12px_rgba(139,92,246,0.4)]' 
+                    : 'text-slate-400 hover:text-white'
+            }`}
         >
             {label}
         </button>
@@ -204,34 +211,34 @@ function ChartToggle({ active, label, onClick }) {
 function PlanetRow({ name, sign, longitude, relation }) {
     const getRelColor = (r) => {
         const rel = r?.toLowerCase() || '';
-        if (rel.includes('friend')) return 'text-emerald-400';
-        if (rel.includes('enemy')) return 'text-rose-400';
-        if (rel.includes('own')) return 'text-solar-gold';
-        return 'text-slate-400';
+        if (rel.includes('friend')) return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
+        if (rel.includes('enemy')) return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
+        if (rel.includes('own')) return 'text-solar-gold bg-solar-gold/10 border-solar-gold/20';
+        return 'text-slate-400 bg-white/5 border-white/10';
     };
 
     const deg = Math.floor(longitude % 30);
     const min = Math.floor((longitude % 1) * 60);
 
     return (
-        <div className="glass-panel p-4 rounded-2xl flex items-center justify-between border-white/5">
+        <div className="p-3.5 rounded-[20px] bg-white/[0.03] backdrop-blur-xl border border-white/10 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.2)]">
             <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[11px] font-black text-electric-violet">
+                <div className="w-9 h-9 rounded-2xl bg-electric-violet/15 border border-electric-violet/25 flex items-center justify-center text-xs font-black text-electric-violet shadow-sm">
                     {name.substring(0, 2)}
                 </div>
                 <div>
-                    <p className="text-xs font-black text-white">{name}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase">{sign}</p>
+                    <p className="text-xs font-black text-white leading-tight">{name}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{sign}</p>
                 </div>
             </div>
 
             {/* In-between: Degrees and Minutes */}
             <div className="flex flex-col items-center">
-                <span className="text-sm font-black text-white">{deg}° {min}'</span>
-                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter">Longitude</span>
+                <span className="text-xs font-black text-white">{deg}° {min}'</span>
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Longitude</span>
             </div>
 
-            <div className={`text-[10px] font-black uppercase tracking-widest ${getRelColor(relation)}`}>
+            <div className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${getRelColor(relation)}`}>
                 {relation || 'Neutral'}
             </div>
         </div>
@@ -245,20 +252,28 @@ function DashaCard({ lord, start, end, isCurrent }) {
     };
 
     return (
-        <div className={`glass-panel p-5 rounded-[2rem] border-white/5 relative overflow-hidden ${isCurrent ? 'ring-2 ring-electric-violet ring-offset-4 ring-offset-[#0b1026]' : ''}`}>
+        <div className={`p-4.5 rounded-[22px] border transition-all relative overflow-hidden backdrop-blur-2xl ${
+            isCurrent 
+                ? 'bg-[#101438]/90 border-electric-violet/50 shadow-[0_0_25px_rgba(139,92,246,0.25)] ring-1 ring-electric-violet/40' 
+                : 'bg-white/[0.03] border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+        }`}>
             {isCurrent && (
-                <div className="absolute top-4 right-5 px-3 py-1 bg-electric-violet text-[8px] font-black text-white rounded-full uppercase tracking-widest">
-                    Active Now
+                <div className="absolute top-3.5 right-4 px-2.5 py-0.5 bg-electric-violet/30 border border-electric-violet/50 text-[8px] font-black text-electric-violet rounded-full uppercase tracking-wider shadow-[0_0_10px_rgba(139,92,246,0.3)]">
+                    Active Period
                 </div>
             )}
-            <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${isCurrent ? 'bg-electric-violet text-white shadow-lg' : 'bg-white/5 text-slate-400'}`}>
+            <div className="flex items-center gap-3.5">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-base shadow-lg ${
+                    isCurrent 
+                        ? 'bg-gradient-to-tr from-electric-violet to-purple-600 text-white' 
+                        : 'bg-white/[0.06] text-slate-300 border border-white/10'
+                }`}>
                     {lord.charAt(0)}
                 </div>
                 <div>
                     <h4 className="text-sm font-black text-white">{lord} Mahadasha</h4>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-                        {formatD(start)} - {formatD(end)}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                        {formatD(start)} — {formatD(end)}
                     </p>
                 </div>
             </div>

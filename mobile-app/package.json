@@ -11,6 +11,8 @@
     "deploy-android": "npm run sync-branding && npx cap sync android && cd android && .\\gradlew assembleDebug && C:\\Users\\DELL\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe install -r app/build/outputs/apk/debug/app-debug.apk && C:\\Users\\DELL\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe shell monkey -p com.way2astro.mobile -c android.intent.category.LAUNCHER 1",
     "build:android:debug": "npm run build && npx cap sync android && cd android && .\\gradlew assembleDebug",
     "build:android:release": "npm run sync-branding && npm run build && npx cap sync android && cd android && .\\gradlew bundleRelease",
+    "sync:ios": "npm run build && npx cap sync ios",
+    "open:ios": "npx cap open ios",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -55,7 +57,8 @@
   },
   "overrides": {
     "brace-expansion": "^5.0.8",
-    "fast-xml-parser": "^5.10.1",
-    "sharp": "^0.35.3"
+    "fast-xml-parser": "^5.12.0",
+    "sharp": "^0.35.3",
+    "websocket-driver": "^0.8.0"
   }
 }

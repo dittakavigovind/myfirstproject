@@ -75,15 +75,15 @@ export default function HoroscopeDetailContent() {
             <main className="relative z-10 px-4 space-y-6">
 
                 {/* Date / Title */}
-                <div className="text-center">
-                    <p className="text-electric-violet font-semibold text-sm mb-1 uppercase tracking-widest">
-                        {horoscope ? new Date(horoscope.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "Today"}
-                    </p>
-                    <h2 className="text-2xl font-bold text-white">{horoscope?.title || "Cosmic Alignment"}</h2>
+                <div className="text-center pt-2">
+                    <span className="inline-block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-400/20 text-amber-300 font-extrabold text-[10px] uppercase tracking-widest mb-1.5 shadow-sm">
+                        {horoscope ? new Date(horoscope.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) : "Today"}
+                    </span>
+                    <h2 className="text-2xl font-black text-white tracking-tight">{horoscope?.title || "Cosmic Alignment"}</h2>
                 </div>
 
                 {/* Zodiac Selector */}
-                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x">
+                <div className="flex gap-2.5 overflow-x-auto pb-2 hide-scrollbar snap-x px-1">
                     {zodiacData.map((sign) => {
                         const isActive = activeSign === sign.id;
                         return (
@@ -91,13 +91,13 @@ export default function HoroscopeDetailContent() {
                                 key={sign.id}
                                 ref={activeSign === sign.id ? activeSignRef : null}
                                 onClick={() => setActiveSign(sign.id)}
-                                className={`snap-center flex-shrink-0 px-5 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all duration-300 ${isActive
-                                        ? 'bg-gradient-to-br from-electric-violet to-indigo-600 shadow-[0_4px_20px_rgba(139,92,246,0.4)] scale-100 border border-white/20'
-                                        : 'glass-panel text-slate-400 scale-95 hover:bg-white/5 border border-white/5'
+                                className={`snap-center flex-shrink-0 px-4 py-3 rounded-[22px] flex flex-col items-center gap-1 transition-all duration-200 active:scale-90 ${isActive
+                                        ? 'bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 shadow-[0_6px_22px_rgba(139,92,246,0.4)] border border-violet-400/50 scale-100'
+                                        : 'bg-white/[0.05] text-slate-400 border border-white/10 hover:border-white/20'
                                     }`}
                             >
-                                <span className={`text-2xl ${isActive ? 'text-white' : ''}`}>{sign.icon}</span>
-                                <span className={`text-[10px] font-bold tracking-wider uppercase ${isActive ? 'text-white' : ''}`}>{sign.name}</span>
+                                <span className={`text-2xl ${isActive ? 'text-white' : 'text-amber-300/80'}`}>{sign.icon}</span>
+                                <span className={`text-[10px] font-bold tracking-wider uppercase ${isActive ? 'text-white' : 'text-slate-400'}`}>{sign.name}</span>
                             </button>
                         )
                     })}

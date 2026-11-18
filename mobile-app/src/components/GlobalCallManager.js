@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import CallRoomClient from '@/app/call/room/CallRoomClient';
+import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+
+const CallRoomClient = dynamic(() => import('@/app/call/room/CallRoomClient'), {
+    ssr: false,
+    loading: () => <div className="flex items-center justify-center h-full text-white">Loading Call Interface...</div>
+});
 
 export default function GlobalCallManager() {
     const [roomId, setRoomId] = useState(null);

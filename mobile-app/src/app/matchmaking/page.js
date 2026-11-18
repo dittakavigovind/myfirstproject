@@ -113,27 +113,40 @@ export default function MatchmakingPage() {
             `}</style>
 
             {/* Header */}
-            <div className="pt-6 px-4">
-                <button
-                    onClick={() => router.back()}
-                    className="p-2 bg-white/5 rounded-full text-white/40 mb-4"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <h1 className="text-3xl font-black text-white">
-                    Gun <span className="text-rose-400 underline underline-offset-8 decoration-rose-400/30">Milan</span>
-                </h1>
-                <p className="text-slate-400 text-sm mt-3">Enter details of both partners to check ashtakoot compatibility.</p>
+            <div className="pt-2 px-1">
+                <div className="flex items-center gap-3.5 mb-5">
+                    <button
+                        onClick={() => router.back()}
+                        className="w-10 h-10 rounded-2xl backdrop-blur-xl bg-white/[0.06] border border-white/12 flex items-center justify-center text-white active:scale-90 transition-all shadow-sm"
+                        aria-label="Back"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                        <h1 className="text-base font-extrabold text-white tracking-tight leading-none">Gun Milan</h1>
+                        <p className="text-[10px] text-rose-300 font-semibold tracking-wider uppercase mt-1">Ashtakoot Compatibility</p>
+                    </div>
+                </div>
+
+                <div className="mb-4">
+                    <h2 className="text-2xl font-black text-white tracking-tight">
+                        Calculate <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">Celestial Match</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 font-medium mt-1">Enter birth details of both partners to check 36 Guna compatibility.</p>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-4 mt-8 space-y-8">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-6">
                 {/* Boy's Section */}
-                <div className="space-y-3">
-                    <h2 className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Boy's Details
-                    </h2>
+                <div className="rounded-[26px] p-5 backdrop-blur-2xl bg-white/[0.05] border border-blue-500/20 shadow-[0_12px_36px_rgba(59,130,246,0.15)] relative overflow-hidden space-y-3">
+                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400/30 to-transparent pointer-events-none" />
+                    
+                    <h3 className="text-xs font-extrabold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" /> 
+                        Groom / Boy's Details
+                    </h3>
 
-                    <div className="space-y-3 pl-3 border-l border-blue-500/20 py-1">
+                    <div className="space-y-3 pt-1">
                         <InputGroup
                             label="Full Name"
                             icon={User}
@@ -141,7 +154,7 @@ export default function MatchmakingPage() {
                             onChange={v => setBoy({ ...boy, name: v })}
                             placeholder="Enter Boy's Name"
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <InputGroup
                                 label="Birth Date"
                                 icon={Calendar}
@@ -158,10 +171,10 @@ export default function MatchmakingPage() {
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Place of Birth</label>
-                            <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-blue-400 transition-colors">
-                                <MapPin className="text-slate-500 group-focus-within:text-blue-400 mr-2 mb-1" size={16} />
-                                <div className="flex-1 -mb-1">
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">Place of Birth</label>
+                            <div className="relative flex items-center bg-white/[0.05] rounded-xl px-3 py-1 border border-white/10">
+                                <MapPin className="text-blue-400 mr-2 shrink-0" size={15} />
+                                <div className="flex-1">
                                     <LocationSearch
                                         onLocationSelect={loc => setBoy({ ...boy, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
                                         defaultValue={boy.place}
@@ -174,43 +187,46 @@ export default function MatchmakingPage() {
                 </div>
 
                 {/* Girl's Section */}
-                <div className="space-y-3">
-                    <h2 className="text-xs font-black text-rose-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Girl's Details
-                    </h2>
+                <div className="rounded-[26px] p-5 backdrop-blur-2xl bg-white/[0.05] border border-rose-500/20 shadow-[0_12px_36px_rgba(244,63,94,0.15)] relative overflow-hidden space-y-3">
+                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-rose-400/30 to-transparent pointer-events-none" />
 
-                    <div className="space-y-3 pl-3 border-l border-rose-500/20 py-1">
+                    <h3 className="text-xs font-extrabold text-rose-300 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]" /> 
+                        Bride / Girl's Details
+                    </h3>
+
+                    <div className="space-y-3 pt-1">
                         <InputGroup
                             label="Full Name"
                             icon={User}
+                            color="rose"
                             value={girl.name}
                             onChange={v => setGirl({ ...girl, name: v })}
                             placeholder="Enter Girl's Name"
-                            color="rose"
                         />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <InputGroup
                                 label="Birth Date"
                                 icon={Calendar}
                                 type="date"
+                                color="rose"
                                 value={girl.date}
                                 onChange={v => setGirl({ ...girl, date: v })}
-                                color="rose"
                             />
                             <InputGroup
                                 label="Birth Time"
                                 icon={Clock}
                                 type="time"
+                                color="rose"
                                 value={girl.time}
                                 onChange={v => setGirl({ ...girl, time: v })}
-                                color="rose"
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 block mb-1">Place of Birth</label>
-                            <div className="relative group flex items-end border-b border-white/10 pb-1 focus-within:border-rose-400 transition-colors">
-                                <MapPin className="text-slate-500 group-focus-within:text-rose-400 mr-2 mb-1" size={16} />
-                                <div className="flex-1 -mb-1">
+                            <label className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">Place of Birth</label>
+                            <div className="relative flex items-center bg-white/[0.05] rounded-xl px-3 py-1 border border-white/10">
+                                <MapPin className="text-rose-400 mr-2 shrink-0" size={15} />
+                                <div className="flex-1">
                                     <LocationSearch
                                         onLocationSelect={loc => setGirl({ ...girl, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
                                         defaultValue={girl.place}

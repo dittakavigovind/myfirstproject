@@ -6,11 +6,18 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'https',
+    iosScheme: 'https',
     hostname: 'localhost'
+  },
+  ios: {
+    contentInset: 'always',
+    backgroundColor: '#050716',
+    preferredContentMode: 'mobile',
+    scrollEnabled: true,
   },
   plugins: {
     PushNotifications: {
-      presentationOptions: ["badge"],
+      presentationOptions: ["badge", "sound", "alert"],
     },
     Keyboard: {
       resize: "native",
@@ -19,7 +26,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 500,
       launchAutoHide: true,
-      backgroundColor: "#ffffffff",
+      backgroundColor: "#050716",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,

@@ -56,7 +56,7 @@ export default function Explore() {
     }, [user, authLoading, socket]);
 
     useEffect(() => {
-        if (user && user.role !== 'astrologer') {
+        if (user && user.role !== 'astrologer' && !user.isGuest) {
             const pollInterval = setInterval(fetchAstrologersSilent, 15000);
             
             // Fetch following list
@@ -64,7 +64,7 @@ export default function Explore() {
                 if (res.data && res.data.success && res.data.following) {
                     setFollowingIds(res.data.following.map(a => a._id || a.id));
                 }
-            }).catch(err => console.error("Failed to fetch following", err));
+            }).catch(err => console.warn("Failed to fetch following", err));
 
             // Fetch chat history for most interacted
             api.get("/chat/history").then(res => {
@@ -78,7 +78,7 @@ export default function Explore() {
                     });
                     setSessionCounts(counts);
                 }
-            }).catch(err => console.error("Failed to fetch chat history", err));
+            }).catch(err => console.warn("Failed to fetch chat history", err));
 
             return () => clearInterval(pollInterval);
         }
@@ -280,43 +280,44 @@ export default function Explore() {
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden pt-6">
 
             {/* Search and Filter */}
-            <div className="flex gap-3">
-                <div className="flex-1 glass-panel rounded-xl flex items-center px-4 py-2.5 border border-white/10 active:border-electric-violet/50 transition-all">
-                    <Search size={18} className="text-slate-500 mr-2" />
+            <div className="flex gap-2.5">
+                <div className="flex-1 rounded-2xl backdrop-blur-xl bg-white/[0.06] flex items-center px-4 py-2.5 border border-white/12 focus-within:border-violet-400/60 focus-within:ring-2 focus-within:ring-violet-500/20 transition-all shadow-sm">
+                    <Search size={18} className="text-slate-400 mr-2.5 shrink-0" />
                     <input
                         type="text"
                         placeholder="Search astrologers, skills..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-transparent border-none outline-none text-white w-full text-sm placeholder:text-slate-500"
+                        className="bg-transparent border-none outline-none text-white w-full text-sm placeholder:text-slate-500 font-medium"
                     />
                     {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="text-slate-500 hover:text-white">
+                        <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-white p-1">
                             <X size={16} />
                         </button>
                     )}
                 </div>
                 <button 
                     onClick={() => setIsFilterModalOpen(true)}
-                    className="glass-panel rounded-xl px-4 flex items-center justify-center text-electric-violet border border-white/5 relative"
+                    className="w-12 h-12 rounded-2xl backdrop-blur-xl bg-white/[0.06] flex items-center justify-center text-violet-400 border border-white/12 relative active:scale-90 transition-all shadow-sm shrink-0"
+                    aria-label="Filter"
                 >
                     <Filter size={18} />
                     {(advancedFilters.skills.length > 0 || advancedFilters.languages.length > 0 || advancedFilters.genders.length > 0 || advancedFilters.sortBy !== "Popularity") && (
-                        <div className="absolute top-2 right-3 w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
+                        <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] animate-pulse" />
                     )}
                 </button>
             </div>
 
             {/* Specialty Pills */}
-            <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar -mx-1 px-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar -mx-1 px-1">
                 {["All", "Tarot", "Vedic", "Numerology", "Vastu", "Palmistry"].map((tag) => (
                     <button
                         key={tag}
                         onClick={() => setSelectedFilter(tag)}
-                        className={`whitespace-nowrap px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-wider transition-all duration-300 border ${
+                        className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold tracking-tight transition-all duration-200 border active:scale-95 ${
                             selectedFilter === tag 
-                            ? 'bg-electric-violet text-white border-electric-violet shadow-lg shadow-electric-violet/20 scale-105' 
-                            : 'bg-white/5 text-slate-400 border-white/5 hover:border-white/20 active:scale-95'
+                            ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-violet-400/40 shadow-[0_4px_16px_rgba(139,92,246,0.35)] scale-[1.02]' 
+                            : 'bg-white/[0.05] text-slate-400 border-white/10 hover:border-white/20 hover:text-slate-200'
                         }`}
                     >
                         {tag}
@@ -369,47 +370,58 @@ export default function Explore() {
                                     </span>
                                 </div>
                             )}
-                            <div className="flex gap-2.5 relative z-0 items-center">
+                            <div className="flex gap-3 relative z-0 items-center">
                                 {/* Left Column: Avatar & Stars */}
-                                <div className="flex flex-col items-center flex-shrink-0 w-[60px]">
-                                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 p-0.5 relative">
-                                        <img 
-                                            src={getImageUrl(astro.image || astro.profileImage, astro.gender)} 
-                                            alt={astro.displayName || astro.name} 
-                                            className="w-full h-full rounded-full object-cover"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = getImageUrl(null, astro.gender);
-                                            }}
-                                        />
+                                <div className="flex flex-col items-center flex-shrink-0 w-[64px]">
+                                    <div className="relative">
+                                        <div className="w-[58px] h-[58px] rounded-[22px] bg-gradient-to-tr from-violet-500/40 via-purple-500/30 to-amber-400/40 p-[2px] shadow-sm">
+                                            <div className="w-full h-full rounded-[20px] bg-[#0c102a] overflow-hidden">
+                                                <img 
+                                                    src={getImageUrl(astro.image || astro.profileImage, astro.gender)} 
+                                                    alt={astro.displayName || astro.name} 
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = getImageUrl(null, astro.gender);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        {/* Status Dot */}
+                                        <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#050716] ${
+                                            astro.isBusy ? 'bg-amber-400' : (astro.isChatOnline || astro.isVoiceOnline || astro.isVideoOnline) ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]' : 'bg-slate-500'
+                                        }`} />
                                     </div>
+
                                     <div className="flex items-center mt-1.5 gap-[1px]">
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} size={8} className={i < Math.floor(astro.rating || 4.5) ? "text-solar-gold fill-solar-gold" : "text-slate-600 fill-slate-600"} />
+                                            <Star key={i} size={9} className={i < Math.floor(astro.rating || 4.5) ? "text-amber-400 fill-amber-400" : "text-slate-600 fill-slate-600"} />
                                         ))}
                                     </div>
-                                    <p className="text-[8px] text-slate-500 mt-0.5 font-medium">{astro.orders || '5k+'} orders</p>
+                                    <p className="text-[9px] text-slate-400 mt-0.5 font-semibold">{astro.orders || '5k+'} orders</p>
                                 </div>
 
                                 {/* Center Info */}
                                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                    <div className="flex justify-start items-center gap-1.5">
-                                        <h3 className="text-white font-bold text-[13px] truncate">{astro.displayName || astro.name}</h3>
-                                        <div className="w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg flex-shrink-0">
-                                            <Check size={8} strokeWidth={3} className="text-white" />
+                                    <div className="flex items-center gap-1.5">
+                                        <h3 className="text-white font-extrabold text-[14px] truncate tracking-tight">{astro.displayName || astro.name}</h3>
+                                        <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center flex-shrink-0">
+                                            <Check size={9} strokeWidth={3} className="text-emerald-300" />
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                                        {Array.isArray(astro.skills) ? astro.skills.slice(0, 3).join(", ") : (astro.skills || "Expert")}
+                                    <p className="text-[11px] text-slate-300 font-medium mt-0.5 truncate">
+                                        {Array.isArray(astro.skills) ? astro.skills.slice(0, 3).join(", ") : (astro.skills || "Vedic, Tarot")}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                                        {Array.isArray(astro.languages) ? astro.languages.join(", ") : "English, Hindi, Telugu"}
+                                        {Array.isArray(astro.languages) ? astro.languages.join(", ") : "English, Hindi"}
                                     </p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">Exp: {astro.experienceYears || astro.experience || "5"} Yrs</p>
+                                    <p className="text-[10px] text-violet-300/80 font-medium mt-0.5">Exp: {astro.experienceYears || astro.experience || "5"} Years</p>
                                     
-                                    <div className="mt-1 flex items-baseline gap-1.5">
+                                    <div className="mt-1.5 flex items-baseline gap-1.5">
                                         <span className="text-slate-500 line-through text-[10px]">₹{Math.floor((astro.charges?.chatPerMinute || astro.chatRate || 25) * 1.5)}</span>
-                                        <span className="text-rose-400 font-bold text-[12px]">₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min</span>
+                                        <span className="px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 text-amber-300 font-extrabold text-[11px] tracking-tight">
+                                            ₹{astro.charges?.chatPerMinute || astro.chatRate || 25}/min
+                                        </span>
                                     </div>
                                 </div>
 
@@ -422,14 +434,14 @@ export default function Explore() {
                                                 e.stopPropagation();
                                                 startChat(astro._id, astro.charges?.chatPerMinute || astro.chatRate || 25);
                                             }}
-                                            className={`w-[68px] py-1.5 rounded-lg border flex flex-col items-center justify-center transition-all ${
+                                            className={`w-[74px] py-2 rounded-2xl border flex flex-col items-center justify-center transition-all shadow-sm ${
                                                 (astro.isChatOnline && !astro.isBusy) 
-                                                    ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10 active:scale-95' 
-                                                    : 'border-white/10 text-slate-400 bg-white/5'
+                                                    ? 'border-emerald-400/40 text-emerald-300 bg-emerald-500/15 shadow-[0_2px_12px_rgba(16,185,129,0.25)] active:scale-90' 
+                                                    : 'border-white/10 text-slate-400 bg-white/[0.04]'
                                             }`}
                                         >
-                                            <span className="text-[10px] font-bold leading-none mb-1">Chat</span>
-                                            <span className={`text-[8px] leading-none ${astro.isBusy ? 'text-amber-400' : (!astro.isChatOnline ? 'text-slate-400' : '')}`}>
+                                            <span className="text-[11px] font-bold leading-none mb-1">Chat</span>
+                                            <span className={`text-[9px] font-semibold leading-none ${astro.isBusy ? 'text-amber-400' : (!astro.isChatOnline ? 'text-slate-500' : 'text-emerald-400')}`}>
                                                 {astro.isBusy ? 'Busy' : (!astro.isChatOnline ? 'Offline' : 'Online')}
                                             </span>
                                         </button>
@@ -441,14 +453,14 @@ export default function Explore() {
                                                 e.stopPropagation();
                                                 startCall(astro._id, astro.charges?.callPerMinute || astro.callRate || 25);
                                             }}
-                                            className={`w-[68px] py-1.5 rounded-lg border flex flex-col items-center justify-center transition-all ${
+                                            className={`w-[74px] py-2 rounded-2xl border flex flex-col items-center justify-center transition-all shadow-sm ${
                                                 (astro.isVoiceOnline && !astro.isBusy) 
-                                                    ? 'border-blue-500/50 text-blue-400 bg-blue-500/10 active:scale-95' 
-                                                    : 'border-white/10 text-slate-400 bg-white/5'
+                                                    ? 'border-blue-400/40 text-blue-300 bg-blue-500/15 shadow-[0_2px_12px_rgba(59,130,246,0.25)] active:scale-90' 
+                                                    : 'border-white/10 text-slate-400 bg-white/[0.04]'
                                             }`}
                                         >
-                                            <span className="text-[10px] font-bold leading-none mb-1">Call</span>
-                                            <span className={`text-[8px] leading-none ${astro.isBusy ? 'text-amber-400' : (!astro.isVoiceOnline ? 'text-slate-400' : '')}`}>
+                                            <span className="text-[11px] font-bold leading-none mb-1">Call</span>
+                                            <span className={`text-[9px] font-semibold leading-none ${astro.isBusy ? 'text-amber-400' : (!astro.isVoiceOnline ? 'text-slate-500' : 'text-blue-400')}`}>
                                                 {astro.isBusy ? 'Busy' : (!astro.isVoiceOnline ? 'Offline' : 'Online')}
                                             </span>
                                         </button>

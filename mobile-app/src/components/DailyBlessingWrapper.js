@@ -16,8 +16,8 @@ export default function DailyBlessingWrapper() {
         // Only run logic on the client side, wait for auth to finish loading
         if (typeof window === 'undefined' || loading) return;
         
-        // Exclude astrologers if logged in
-        if (user && user.role === 'astrologer') return;
+        // Exclude astrologers and guests if logged in
+        if (user && (user.role === 'astrologer' || user.isGuest)) return;
 
         // Only trigger on the main home screen to prevent interrupting deep links or sub-pages
         if (pathname !== '/') return;
@@ -42,7 +42,7 @@ export default function DailyBlessingWrapper() {
                     }
                 }
             } catch (error) {
-                console.error("Failed to check daily blessing", error);
+                console.warn("Failed to check daily blessing", error);
                 // Fail silently, don't block app startup
             }
         };

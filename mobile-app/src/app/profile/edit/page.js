@@ -101,18 +101,19 @@ export default function EditProfile() {
     const isAdmin = user?.role === 'admin';
 
     return (
-        <div className="min-h-screen bg-[#0b1026] pb-40">
+        <div className="min-h-screen pb-40 pt-safe">
             {/* Header */}
-            <div className="sticky top-0 z-50 bg-[#0b1026]/80 backdrop-blur-2xl border-b border-white/5 pt-[var(--safe-area-inset-top)]">
+            <div className="sticky top-0 z-50 bg-[#050716]/80 backdrop-blur-2xl border-b border-white/5">
                 <div className="flex items-center px-4 h-16 relative">
                     <button 
                         onClick={() => router.back()}
-                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 active:scale-95 transition-all z-10"
+                        className="w-10 h-10 rounded-full bg-white/[0.06] flex items-center justify-center border border-white/10 active:scale-90 transition-all z-10 text-white/80 hover:text-white"
+                        aria-label="Back"
                     >
-                        <ChevronLeft size={20} className="text-white" />
+                        <ChevronLeft size={20} />
                     </button>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h1 className="text-lg font-black text-white tracking-tight">Edit Profile</h1>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <h1 className="text-base font-black text-white tracking-tight">Edit Profile</h1>
                     </div>
                 </div>
             </div>
@@ -120,10 +121,10 @@ export default function EditProfile() {
             <form onSubmit={handleSave} className="p-5 space-y-6">
                 
                 {/* Photo Upload Section */}
-                <CosmicCard className="p-6 flex flex-col items-center justify-center space-y-4">
+                <div className="p-6 rounded-[28px] bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col items-center justify-center space-y-4">
                     <div className="relative group">
-                        <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-electric-violet to-solar-gold shadow-xl shadow-electric-violet/20">
-                            <div className="w-full h-full rounded-full overflow-hidden bg-cosmic-indigo border-2 border-[#0b1026] relative">
+                        <div className="w-24 h-24 rounded-[26px] p-0.5 bg-gradient-to-tr from-electric-violet via-fuchsia-500 to-solar-gold shadow-xl shadow-electric-violet/25">
+                            <div className="w-full h-full rounded-[24px] overflow-hidden bg-[#0c102a] border border-white/10 relative">
                                 {formData.profileImage ? (
                                     <img 
                                         src={getImageUrl(formData.profileImage, user?.gender)} 
@@ -139,7 +140,7 @@ export default function EditProfile() {
                                 )}
                                 
                                 {uploading && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                                         <Loader2 size={24} className="text-white animate-spin" />
                                     </div>
                                 )}
@@ -150,7 +151,8 @@ export default function EditProfile() {
                             type="button"
                             onClick={handleImageClick}
                             disabled={uploading}
-                            className="absolute bottom-0 right-0 w-8 h-8 bg-electric-violet rounded-full flex items-center justify-center border-2 border-[#0b1026] shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                            className="absolute -bottom-1 -right-1 w-9 h-9 bg-electric-violet rounded-full flex items-center justify-center border-2 border-[#050716] shadow-lg active:scale-90 transition-all disabled:opacity-50"
+                            aria-label="Upload photo"
                         >
                             <Camera size={14} className="text-white" />
                         </button>
@@ -172,8 +174,8 @@ export default function EditProfile() {
                             className="hidden"
                         />
                     </div>
-                    <p className="text-xs text-slate-400 font-medium">Tap the camera icon to upload a photo</p>
-                </CosmicCard>
+                    <p className="text-xs text-slate-400 font-medium">Tap camera icon to update photo</p>
+                </div>
 
                 {/* Form Fields */}
                 <div className="space-y-4">
@@ -185,7 +187,7 @@ export default function EditProfile() {
                             value={formData.displayName}
                             onChange={handleChange}
                             disabled={!isAdmin}
-                            className={`w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-4 font-medium focus:outline-none focus:border-electric-violet focus:ring-1 focus:ring-electric-violet/50 transition-all ${!isAdmin ? 'text-slate-400 opacity-60 cursor-not-allowed' : 'text-white'}`}
+                            className={`w-full h-14 bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl px-4 font-bold focus:outline-none focus:border-electric-violet focus:ring-1 focus:ring-electric-violet/50 transition-all ${!isAdmin ? 'text-slate-400 opacity-60 cursor-not-allowed' : 'text-white'}`}
                             placeholder="Enter your name"
                             required
                         />
@@ -200,7 +202,7 @@ export default function EditProfile() {
                                 value={formData.bio}
                                 onChange={handleChange}
                                 rows={4}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-medium focus:outline-none focus:border-electric-violet focus:ring-1 focus:ring-electric-violet/50 transition-all resize-none"
+                                className="w-full bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-white font-medium focus:outline-none focus:border-electric-violet focus:ring-1 focus:ring-electric-violet/50 transition-all resize-none leading-relaxed"
                                 placeholder="Tell users about your experience and expertise..."
                             />
                         </div>
@@ -208,18 +210,18 @@ export default function EditProfile() {
                 </div>
 
                 {/* Save Button */}
-                <div className="pt-6">
+                <div className="pt-4">
                     <button 
                         type="submit"
                         disabled={saving}
-                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-electric-violet to-cosmic-indigo flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-[0_10px_20px_rgba(79,70,229,0.3)] border border-white/10"
+                        className="w-full h-14 rounded-2xl bg-gradient-to-r from-solar-gold to-amber-500 text-black flex items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-solar-gold/20 font-black text-xs uppercase tracking-widest"
                     >
                         {saving ? (
-                            <Loader2 size={24} className="text-white animate-spin" />
+                            <Loader2 size={22} className="animate-spin text-black" />
                         ) : (
-                            <div className="flex items-center gap-2 text-white font-black text-sm uppercase tracking-widest">
-                                <Save size={18} />
-                                Save Profile
+                            <div className="flex items-center gap-2">
+                                <Save size={16} />
+                                <span>Save Changes</span>
                             </div>
                         )}
                     </button>
