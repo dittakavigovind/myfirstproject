@@ -21,6 +21,23 @@ export default function MobileLayout({ children }) {
     const isProfile = pathname === "/astrologer";
     const isSpecialPage = pathname === "/auth" || pathname.startsWith("/chat/") || pathname.startsWith("/call/");
 
+    // Configure Android / iOS status bar icons to always be bright white
+    useEffect(() => {
+        const setupStatusBar = async () => {
+            if (typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform()) {
+                try {
+                    const { StatusBar, Style } = await import("@capacitor/status-bar");
+                    await StatusBar.setStyle({ style: Style.Dark }); // Style.Dark sets light/white text & icons on dark background
+                    await StatusBar.setBackgroundColor({ color: "#050716" });
+                    await StatusBar.show();
+                } catch (e) {
+                    console.error("Status bar configuration error:", e);
+                }
+            }
+        };
+        setupStatusBar();
+    }, []);
+
     // Handle Hardware Back Button & Edge Swipe in Capacitor
     useEffect(() => {
         let listenerObj = null;
