@@ -14,7 +14,8 @@ import {
     IndianRupee,
     LayoutGrid,
     PhoneCall,
-    History
+    History,
+    Calculator
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -29,6 +30,7 @@ const navItems = [
 
 const astroItems = [
     { name: "Profile", href: "/profile", icon: Crown },
+    { name: "Tools", href: "/services", icon: Calculator },
     { name: "Chats", href: "/chat", icon: MessageSquareText },
     { name: "History", href: "/history", icon: History },
     { name: "Earnings", href: "/profile/earnings", icon: IndianRupee },
@@ -71,7 +73,23 @@ export default function BottomNav() {
                 <div className={`absolute inset-0 opacity-25 pointer-events-none ${isAstro ? 'bg-gradient-to-r from-amber-500/0 via-amber-500/15 to-amber-500/0' : 'bg-gradient-to-r from-violet-500/0 via-violet-500/15 to-violet-500/0'}`}></div>
 
                 {items.map((item, idx) => {
-                    const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                    let isActive = false;
+                    if (item.href === "/") {
+                        isActive = pathname === "/";
+                    } else if (item.href === "/profile") {
+                        isActive = pathname === "/profile" || pathname === "/profile/";
+                    } else if (item.href === "/services") {
+                        isActive = pathname.startsWith("/services") || 
+                                   pathname.startsWith("/kundli") || 
+                                   pathname.startsWith("/panchang") || 
+                                   pathname.startsWith("/calculators") || 
+                                   pathname.startsWith("/dosha") || 
+                                   pathname.startsWith("/matchmaking") || 
+                                   pathname.startsWith("/arudha-lagna") ||
+                                   pathname.startsWith("/love-calculator");
+                    } else {
+                        isActive = pathname.startsWith(item.href);
+                    }
                     const Icon = item.icon;
 
                     return (
