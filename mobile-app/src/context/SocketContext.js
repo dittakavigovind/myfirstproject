@@ -67,7 +67,7 @@ export function SocketProvider({ children }) {
                     token = localStorage.getItem("authToken");
                 }
             }
-            const BACKEND_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://192.168.29.133:5000";
+            const BACKEND_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://api.way2astro.com";
 
             newSocket = io(BACKEND_URL, {
                 auth: { token }

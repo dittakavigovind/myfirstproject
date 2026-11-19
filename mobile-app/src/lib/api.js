@@ -15,8 +15,8 @@ export const clearApiToken = () => {
 
 export const getApiToken = () => cachedToken;
 
-// Use environment variable for the API URL, fallback to local IP if not set
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.29.133:5000/api";
+// Use environment variable for the API URL, fallback to production API if not set
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.way2astro.com/api";
 
 const api = axios.create({
     baseURL: API_URL,

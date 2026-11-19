@@ -9,7 +9,7 @@ export const getImageUrl = (path, gender = null) => {
     if (!path || path.includes('default-avatar.png') || path.includes('default-avatar')) {
         return gender === 'female' ? "/default-avatar-female.svg" : "/default-avatar.svg";
     }
-    const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://192.168.29.133:5000";
+    const backendUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "https://api.way2astro.com";
     
     // If it's a backend upload, ensure it uses the current backend URL instead of the one saved in DB
     if (path.includes('/api/uploads/')) {
