@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
-import { Lock, ArrowRight, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { Lock, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { TermsModal, PrivacyModal } from "./LegalModals";
 
 export default function AuthPage() {
@@ -127,13 +127,18 @@ export default function AuthPage() {
                 <div className="text-center mb-8">
                     <div className="relative inline-flex items-center justify-center mb-5">
                         {/* Outer Glow Halo */}
-                        <div className="absolute inset-0 rounded-[28px] bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-amber-400 blur-xl opacity-50 animate-pulse" />
+                        <div className="absolute inset-0 rounded-[28px] bg-gradient-to-tr from-amber-500/50 via-rose-500/30 to-amber-300/40 blur-xl opacity-75 animate-pulse" />
                         
-                        {/* Squircle Badge */}
-                        <div className="relative w-20 h-20 rounded-[26px] bg-gradient-to-b from-white/15 to-white/5 p-[1px] shadow-2xl backdrop-blur-xl">
-                            <div className="w-full h-full rounded-[25px] bg-[#0c102b]/90 flex items-center justify-center border border-white/10">
-                                <Sparkles size={34} className="text-amber-300 drop-shadow-[0_2px_12px_rgba(251,191,36,0.6)]" />
-                            </div>
+                        {/* Squircle App Icon Badge */}
+                        <div className="relative w-20 h-20 rounded-[26px] bg-gradient-to-b from-white/20 to-white/5 p-[1.5px] shadow-[0_12px_36px_rgba(249,115,22,0.35)] backdrop-blur-xl">
+                            <img
+                                src="/icons/app-icon.webp"
+                                alt="Way2Astro"
+                                width={80}
+                                height={80}
+                                className="w-full h-full rounded-[24px] object-cover"
+                                loading="eager"
+                            />
                         </div>
                     </div>
 

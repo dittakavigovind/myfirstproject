@@ -33,6 +33,18 @@ import {
 // ALL MAPPED 100% TO NATIVE SCREENS
 const ALL_SERVICES = [
     {
+        id: "transit",
+        title: "Live Planets",
+        desc: "GOCHAR NOW",
+        icon: Activity,
+        badge: "LIVE",
+        badgeColor: "bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.4)]",
+        blink: true,
+        color: "orange",
+        href: "/calculators/gochar",
+        category: "charts",
+    },
+    {
         id: "mater-data",
         title: "Master Data",
         desc: "FULL REPORT",
@@ -113,17 +125,6 @@ const ALL_SERVICES = [
         color: "emerald",
         href: "/calculators/choghadiya",
         category: "muhurat",
-    },
-    {
-        id: "transit",
-        title: "Live Planets",
-        desc: "GOCHAR NOW",
-        icon: Activity,
-        badge: "LIVE PLANETS",
-        badgeColor: "bg-rose-500/20 text-rose-300 border-rose-400/40",
-        color: "blue",
-        href: "/calculators/gochar",
-        category: "planets",
     },
     {
         id: "dasha",
@@ -445,7 +446,11 @@ export default function ServicesPage() {
                                     transition={{ duration: 0.25, delay: Math.min(index * 0.02, 0.3) }}
                                     whileTap={{ scale: 0.93 }}
                                     onClick={() => handleServiceClick(service)}
-                                    className="rounded-[22px] p-3 flex flex-col items-center justify-between min-h-[120px] text-center cursor-pointer select-none relative overflow-hidden backdrop-blur-2xl bg-white/[0.05] border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:border-violet-400/40 active:border-amber-400/50 group transition-all"
+                                    className={`rounded-[22px] p-3 flex flex-col items-center justify-between min-h-[120px] text-center cursor-pointer select-none relative overflow-hidden backdrop-blur-2xl bg-white/[0.05] border shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:border-violet-400/40 active:border-amber-400/50 group transition-all ${
+                                        service.blink 
+                                            ? "border-orange-500/40 shadow-[0_8px_25px_rgba(249,115,22,0.18)]" 
+                                            : "border-white/10"
+                                    }`}
                                 >
                                     {/* Top specular rim light */}
                                     <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
@@ -453,7 +458,13 @@ export default function ServicesPage() {
                                     {/* Top Badge (if present) */}
                                     <div className="w-full flex justify-end h-4">
                                         {service.badge && (
-                                            <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-full border ${service.badgeColor} uppercase tracking-wider leading-none shadow-sm`}>
+                                            <span className={`inline-flex items-center gap-1 text-[7px] font-black px-1.5 py-0.5 rounded-full border ${service.badgeColor} uppercase tracking-wider leading-none shadow-sm ${service.blink ? 'animate-pulse' : ''}`}>
+                                                {service.blink && (
+                                                    <span className="relative flex h-1.5 w-1.5">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500" />
+                                                    </span>
+                                                )}
                                                 {service.badge}
                                             </span>
                                         )}

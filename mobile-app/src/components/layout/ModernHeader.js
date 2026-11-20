@@ -81,7 +81,7 @@ export default function ModernHeader() {
                 { name: "Daily Panchang & Muhurat", route: "/panchang", icon: Calendar },
                 { name: "Daily Horoscope", route: "/horoscope", icon: PlayCircle, badge: "CHECK", badgeColor: "bg-blue-500/20 text-blue-300 border-blue-400/40" },
                 { name: "Hora & Choghadiya Muhurat", route: "/calculators/hora-muhurat", icon: Sparkles, badge: "NEW", badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-400/40" },
-                { name: "Live Planets (Gochar)", route: "/calculators/gochar", icon: Activity, badge: "LIVE", badgeColor: "bg-rose-500/20 text-rose-300 border-rose-400/40" },
+                { name: "Live Planets (Gochar)", route: "/calculators/gochar", icon: Activity, badge: "LIVE", badgeColor: "bg-orange-500/20 text-orange-400 border-orange-500/40 animate-pulse" },
                 { name: "Dasha & Planetary Periods", route: "/calculators/dasha-periods", icon: Clock },
                 { name: "Ashtakavarga Strengths", route: "/calculators/ashtakavarga", icon: Star },
                 { name: "Arudha Lagna (Reputation)", route: "/arudha-lagna", icon: Shield },
@@ -195,10 +195,14 @@ export default function ModernHeader() {
                         >
                             <div className="p-6 border-b border-white/10 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-amber-400 p-[1.5px]">
-                                        <div className="w-full h-full rounded-[14px] bg-[#0c102b] flex items-center justify-center">
-                                            <Sparkles size={20} className="text-amber-300" />
-                                        </div>
+                                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500/40 via-amber-400/30 to-rose-500/30 p-[1px] shadow-[0_4px_16px_rgba(249,115,22,0.3)] shrink-0">
+                                        <img 
+                                            src="/icons/app-icon.webp" 
+                                            alt="Way2Astro" 
+                                            width={40} 
+                                            height={40} 
+                                            className="w-full h-full rounded-[15px] object-cover" 
+                                        />
                                     </div>
                                     <div>
                                         <h2 className="text-base font-extrabold text-white leading-none">Way2Astro</h2>
