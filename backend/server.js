@@ -166,26 +166,48 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const { checkMaintenanceMode } = require('./src/middleware/appConfigMiddleware');
 app.use('/api', checkMaintenanceMode);
 
-// Static Files - Serving via /api prefix for Hostinger proxy reliability
-app.get('/api/uploads/:name', (req, res) => {
-    const filePath = path.join(app.get('UPLOAD_ROOT'), req.params.name);
+// Helper for serving uploads with dynamic format fallback (e.g. .jpg requested for a .webp image)
+const serveUploadFile = (fileName, res, next = null) => {
+    const uploadRoot = app.get('UPLOAD_ROOT');
+    const filePath = path.join(uploadRoot, fileName);
+
     if (fs.existsSync(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         return res.sendFile(filePath);
     }
+
+    // If a .jpg/.jpeg/.png is requested but only .webp exists on disk (essential for WhatsApp/OG previews)
+    if (fileName && fileName.match(/\.(jpe?g|png)$/i)) {
+        const webpName = fileName.replace(/\.(jpe?g|png)$/i, '.webp');
+        const webpPath = path.join(uploadRoot, webpName);
+        if (fs.existsSync(webpPath)) {
+            try {
+                const sharp = require('sharp');
+                const isPng = /\.png$/i.test(fileName);
+                res.setHeader('Content-Type', isPng ? 'image/png' : 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+                const stream = isPng ? sharp(webpPath).png() : sharp(webpPath).jpeg({ quality: 85 });
+                return stream.pipe(res);
+            } catch (err) {
+                console.error("On-the-fly image conversion error:", err);
+            }
+        }
+    }
+
+    if (typeof next === 'function') {
+        return next();
+    }
     res.status(404).send('File not found');
+};
+
+// Static Files - Serving via /api prefix for Hostinger proxy reliability
+app.get('/api/uploads/:name', (req, res) => {
+    serveUploadFile(req.params.name, res);
 });
 
 // Explicit route for standard /uploads (backup)
 app.get('/uploads/:name', (req, res, next) => {
-    const fileName = req.params.name;
-    const filePath = path.join(app.get('UPLOAD_ROOT'), fileName);
-
-    if (fs.existsSync(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        return res.sendFile(filePath);
-    }
-    next();
+    serveUploadFile(req.params.name, res, next);
 });
 
 // Original static for other files (if any)
@@ -456,6 +478,11 @@ app.use(async (req, res, next) => {
             ogImage = `${protocol}://${host}/uploads/${ogImage}`;
         }
 
+        // Convert .webp to .jpg for Open Graph and Twitter crawlers (WhatsApp/FB requirement)
+        if (ogImage && ogImage.includes('.webp')) {
+            ogImage = ogImage.replace(/\.webp($|\?)/i, '.jpg$1');
+        }
+
         // Clean up the text replacing newlines/quotes that break HTML tags
         if (ogTitle) ogTitle = ogTitle.replace(/[\n\r]+/g, ' ').trim();
         if (ogDescription) ogDescription = ogDescription.replace(/[\n\r]+/g, ' ').trim();
@@ -474,8 +501,13 @@ app.use(async (req, res, next) => {
             <meta property="og:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
             <meta property="og:description" content="${ogDescription.replace(/"/g, '&quot;')}" />
             <meta property="og:image" content="${ogImage}" />
+            <meta property="og:image:secure_url" content="${ogImage}" />
+            <meta property="og:image:type" content="image/jpeg" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
             <meta property="og:url" content="${ogUrl}" />
-            <meta property="og:type" content="website" />
+            <meta property="og:type" content="article" />
+            <meta property="og:site_name" content="Way2Astro" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content="${ogTitle.replace(/"/g, '&quot;')}" />
             <meta name="twitter:description" content="${ogDescription.replace(/"/g, '&quot;')}" />

@@ -54,6 +54,11 @@ export async function generateMetadata({ params }) {
                 }
             }
 
+            // Convert .webp to .jpg for Open Graph and Twitter crawlers (WhatsApp/FB requirement)
+            const ogImageUrl = imageUrl.includes('.webp')
+                ? imageUrl.replace(/\.webp($|\?)/i, '.jpg$1')
+                : imageUrl;
+
             return {
                 title,
                 description,
@@ -62,7 +67,16 @@ export async function generateMetadata({ params }) {
                     title,
                     description,
                     url: `${baseUrl}/blog/article/${slug}/`,
-                    images: [imageUrl],
+                    images: [
+                        {
+                            url: ogImageUrl,
+                            secureUrl: ogImageUrl,
+                            width: 1200,
+                            height: 630,
+                            type: 'image/jpeg',
+                            alt: title,
+                        }
+                    ],
                     type: 'article',
                     siteName: 'Way2Astro',
                 },
@@ -70,7 +84,7 @@ export async function generateMetadata({ params }) {
                     card: 'summary_large_image',
                     title,
                     description,
-                    images: [imageUrl],
+                    images: [ogImageUrl],
                 },
             };
         }

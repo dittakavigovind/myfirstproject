@@ -6,6 +6,7 @@ import api from "@/lib/api";
 import { ArrowLeft, Calendar, User, Share2, Sparkles } from "lucide-react";
 import { cleanBlogContent } from "@/lib/blogHelper";
 import ToTopButton from "@/components/ToTopButton";
+import { Share } from "@capacitor/share";
 
 function BlogDetailContent() {
     const router = useRouter();
@@ -34,26 +35,36 @@ function BlogDetailContent() {
         }
     };
 
-    const handleShare = () => {
+    const handleShare = async () => {
         if (!blog) return;
         const shareDomain = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://way2astro.com';
         const blogSlug = blog.slug || slug || '';
-        const shareUrl = `${shareDomain.replace(/\/+$/, '')}/blog/article/${blogSlug}`;
+        const shareUrl = `${shareDomain.replace(/\/+$/, '')}/blog/article/${blogSlug}/`;
         const shareText = `Read this wisdom on Way2Astro: ${blog.title}`;
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
         
-        if (navigator.share) {
-            navigator.share({
-                title: blog.title,
-                text: shareText,
-                url: shareUrl
-            }).catch((err) => {
-                if (err && err.name !== 'AbortError') {
-                    window.open(whatsappUrl, '_blank');
-                }
-            });
-        } else {
+        const shareOptions = {
+            title: blog.title,
+            text: shareText,
+            url: shareUrl,
+            dialogTitle: 'Share Article'
+        };
+
+        try {
+            const canShare = await Share.canShare().catch(() => ({ value: false }));
+            if (canShare && canShare.value) {
+                await Share.share(shareOptions);
+                return;
+            }
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                await navigator.share(shareOptions);
+                return;
+            }
             window.open(whatsappUrl, '_blank');
+        } catch (err) {
+            if (err && err.name !== 'AbortError') {
+                window.open(whatsappUrl, '_blank');
+            }
         }
     };
 
