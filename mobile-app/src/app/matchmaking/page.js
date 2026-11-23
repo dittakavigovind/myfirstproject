@@ -40,6 +40,9 @@ export default function MatchmakingPage() {
 
     // Pre-fill based on current user / birth details
     useEffect(() => {
+        if (typeof window !== "undefined") {
+            window.scrollTo(0, 0);
+        }
         if (isInitialized && birthDetails && birthDetails.date) {
             const details = {
                 name: birthDetails.name || user?.name || "",
@@ -138,7 +141,7 @@ export default function MatchmakingPage() {
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-6">
                 {/* Boy's Section */}
-                <div className="rounded-[26px] p-5 backdrop-blur-2xl bg-white/[0.05] border border-blue-500/20 shadow-[0_12px_36px_rgba(59,130,246,0.15)] relative overflow-hidden space-y-3">
+                <div className="rounded-[26px] p-5 backdrop-blur-2xl bg-white/[0.05] border border-blue-500/20 shadow-[0_12px_36px_rgba(59,130,246,0.15)] relative z-20 space-y-3">
                     <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-blue-400/30 to-transparent pointer-events-none" />
                     
                     <h3 className="text-xs font-extrabold text-blue-300 uppercase tracking-wider flex items-center gap-2">
@@ -170,24 +173,20 @@ export default function MatchmakingPage() {
                                 onChange={v => setBoy({ ...boy, time: v })}
                             />
                         </div>
-                        <div className="flex-1">
+                        <div className="space-y-1">
                             <label className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">Place of Birth</label>
-                            <div className="relative flex items-center bg-white/[0.05] rounded-xl px-3 py-1 border border-white/10">
-                                <MapPin className="text-blue-400 mr-2 shrink-0" size={15} />
-                                <div className="flex-1">
-                                    <LocationSearch
-                                        onLocationSelect={loc => setBoy({ ...boy, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
-                                        defaultValue={boy.place}
-                                        variant="underline"
-                                    />
-                                </div>
-                            </div>
+                            <LocationSearch
+                                onLocationSelect={loc => setBoy({ ...boy, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
+                                defaultValue={boy.place}
+                                placeholder="Search city of birth..."
+                                showLeftIcon={true}
+                            />
                         </div>
                     </div>
                 </div>
 
                 {/* Girl's Section */}
-                <div className="rounded-[26px] p-5 backdrop-blur-2xl bg-white/[0.05] border border-rose-500/20 shadow-[0_12px_36px_rgba(244,63,94,0.15)] relative overflow-hidden space-y-3">
+                <div className="rounded-[26px] p-5 backdrop-blur-2xl bg-white/[0.05] border border-rose-500/20 shadow-[0_12px_36px_rgba(244,63,94,0.15)] relative z-10 space-y-3">
                     <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-rose-400/30 to-transparent pointer-events-none" />
 
                     <h3 className="text-xs font-extrabold text-rose-300 uppercase tracking-wider flex items-center gap-2">
@@ -222,18 +221,14 @@ export default function MatchmakingPage() {
                                 onChange={v => setGirl({ ...girl, time: v })}
                             />
                         </div>
-                        <div className="flex-1">
+                        <div className="space-y-1">
                             <label className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1">Place of Birth</label>
-                            <div className="relative flex items-center bg-white/[0.05] rounded-xl px-3 py-1 border border-white/10">
-                                <MapPin className="text-rose-400 mr-2 shrink-0" size={15} />
-                                <div className="flex-1">
-                                    <LocationSearch
-                                        onLocationSelect={loc => setGirl({ ...girl, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
-                                        defaultValue={girl.place}
-                                        variant="underline"
-                                    />
-                                </div>
-                            </div>
+                            <LocationSearch
+                                onLocationSelect={loc => setGirl({ ...girl, place: loc.formattedAddress, lat: loc.lat, lng: loc.lng, tz: loc.timezone || 5.5 })}
+                                defaultValue={girl.place}
+                                placeholder="Search city of birth..."
+                                showLeftIcon={true}
+                            />
                         </div>
                     </div>
                 </div>

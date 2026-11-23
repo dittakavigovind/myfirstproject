@@ -8,6 +8,7 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     const [query, setQuery] = useState(defaultValue);
     const [suggestions, setSuggestions] = useState([]);
     const [searching, setSearching] = useState(false);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [error, setError] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
     const wrapperRef = useRef(null);
@@ -32,23 +33,33 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     const debounceTimer = useRef(null);
 
     const fetchSuggestions = async (input) => {
-        if (!input || input.length < 3) {
+        const trimmed = input ? input.trim() : '';
+        if (trimmed.length < 2) {
             setSuggestions([]);
             setShowDropdown(false);
+            setLoadingSuggestions(false);
             return;
         }
 
+        setLoadingSuggestions(true);
         try {
             const url = restrictCountry
-                ? `/astro/search-locations?query=${encodeURIComponent(input)}&country=${restrictCountry}`
-                : `/astro/search-locations?query=${encodeURIComponent(input)}`;
+                ? `/astro/search-locations?query=${encodeURIComponent(trimmed)}&country=${restrictCountry}`
+                : `/astro/search-locations?query=${encodeURIComponent(trimmed)}`;
             const res = await api.get(url);
-            if (res.data.success) {
+            if (res.data.success && Array.isArray(res.data.data)) {
                 setSuggestions(res.data.data);
-                setShowDropdown(true);
+                setShowDropdown(res.data.data.length > 0);
+            } else {
+                setSuggestions([]);
+                setShowDropdown(false);
             }
         } catch (err) {
             console.error(err);
+            setSuggestions([]);
+            setShowDropdown(false);
+        } finally {
+            setLoadingSuggestions(false);
         }
     };
 
@@ -59,9 +70,10 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
 
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-        if (!val) {
+        if (!val || val.trim().length === 0) {
             setSuggestions([]);
             setShowDropdown(false);
+            setLoadingSuggestions(false);
             if (onLocationSelect) {
                 onLocationSelect({
                     formattedAddress: '',
@@ -77,9 +89,17 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
             return;
         }
 
+        if (val.trim().length < 2) {
+            setSuggestions([]);
+            setShowDropdown(false);
+            setLoadingSuggestions(false);
+            return;
+        }
+
+        setLoadingSuggestions(true);
         debounceTimer.current = setTimeout(() => {
             fetchSuggestions(val);
-        }, 300);
+        }, 250);
     };
 
     const handleSelectLocation = async (placeName, placeId = null) => {
@@ -153,23 +173,23 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
     const inputClasses = `${inputBaseHeader} ${showLeftIcon ? (variant === 'underline' ? 'pl-8' : 'pl-11') : 'pl-0'}`;
 
     const dropdownClasses = darkMode
-        ? "absolute top-full left-0 z-[100] w-full bg-slate-900 border border-white/10 mt-2 rounded-[1.5rem] shadow-2xl max-h-60 overflow-y-auto backdrop-blur-xl p-2"
-        : "absolute top-full left-0 z-[100] w-full bg-white border border-slate-100 mt-2 rounded-[1.5rem] shadow-2xl shadow-solar-gold/10 max-h-80 overflow-y-auto overflow-x-hidden p-2";
+        ? "absolute top-full left-0 z-[200] w-full min-w-[260px] bg-slate-900/95 border border-white/15 mt-1.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] max-h-60 overflow-y-auto backdrop-blur-2xl p-1.5 divide-y divide-white/[0.05]"
+        : "absolute top-full left-0 z-[200] w-full min-w-[260px] bg-white border border-slate-200 mt-1.5 rounded-2xl shadow-2xl shadow-solar-gold/10 max-h-80 overflow-y-auto overflow-x-hidden p-1.5 divide-y divide-slate-100";
 
     const itemClasses = darkMode
-        ? "px-5 py-3 hover:bg-white/10 cursor-pointer text-sm text-slate-300 hover:text-white transition-colors rounded-xl mb-1"
-        : "px-5 py-3 hover:bg-solar-gold/5 cursor-pointer text-sm text-slate-600 font-bold transition-all rounded-xl hover:text-solar-gold mb-1";
+        ? "px-3.5 py-2.5 hover:bg-white/10 active:bg-white/15 cursor-pointer text-xs font-semibold text-slate-200 hover:text-white transition-colors rounded-xl flex items-center gap-2.5"
+        : "px-3.5 py-2.5 hover:bg-solar-gold/5 cursor-pointer text-xs text-slate-700 font-bold transition-all rounded-xl hover:text-solar-gold flex items-center gap-2.5";
 
     const buttonClasses = darkMode
-        ? "absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-electric-violet transition-colors"
+        ? "absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-electric-violet transition-colors"
         : "absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-solar-gold transition-all active:scale-90";
 
     return (
         <div className="relative h-full w-full flex items-center" ref={wrapperRef}>
             <div className="relative w-full h-full group">
                 {showLeftIcon && (
-                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-slate-500 group-focus-within:text-electric-violet' : 'text-slate-400 group-focus-within:text-solar-gold'} transition-colors pointer-events-none z-10`}>
-                        <MapPin size={18} />
+                    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${darkMode ? 'text-slate-400 group-focus-within:text-electric-violet' : 'text-slate-400 group-focus-within:text-solar-gold'} transition-colors pointer-events-none z-10`}>
+                        <MapPin size={17} />
                     </div>
                 )}
                 <input
@@ -190,13 +210,13 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                     <button
                         type="button"
                         onClick={() => handleManualSearch()}
-                        disabled={searching}
+                        disabled={searching || loadingSuggestions}
                         className={buttonClasses}
                     >
-                        {searching ? (
-                            <Loader2 size={18} className="animate-spin" />
+                        {searching || loadingSuggestions ? (
+                            <Loader2 size={17} className="animate-spin text-purple-400" />
                         ) : (
-                            <Search size={18} />
+                            <Search size={17} />
                         )}
                     </button>
                 )}
@@ -206,11 +226,12 @@ export default function LocationSearch({ onLocationSelect, placeholder = "Search
                 <ul className={dropdownClasses}>
                     {suggestions.map((place) => (
                         <li
-                            key={place.place_id}
+                            key={place.place_id || place.description}
                             onClick={() => handleSelectLocation(place.description, place.place_id)}
                             className={itemClasses}
                         >
-                            {place.description}
+                            <MapPin size={14} className="text-solar-gold shrink-0 opacity-80" />
+                            <span className="truncate">{place.description}</span>
                         </li>
                     ))}
                 </ul>

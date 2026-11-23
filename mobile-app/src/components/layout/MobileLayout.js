@@ -21,6 +21,28 @@ export default function MobileLayout({ children }) {
     const isProfile = pathname === "/astrologer";
     const isSpecialPage = pathname === "/auth" || pathname.startsWith("/chat/") || pathname.startsWith("/call/");
 
+    // Always reset scroll to top whenever pathname changes
+    useEffect(() => {
+        const resetScroll = () => {
+            const container = document.getElementById("main-scroll-container");
+            if (container) {
+                container.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+        };
+
+        resetScroll();
+        const rAF = requestAnimationFrame(resetScroll);
+        const timer = setTimeout(resetScroll, 60);
+
+        return () => {
+            cancelAnimationFrame(rAF);
+            clearTimeout(timer);
+        };
+    }, [pathname]);
+
     // Configure Android / iOS status bar icons to always be bright white
     useEffect(() => {
         const setupStatusBar = async () => {
@@ -78,7 +100,7 @@ export default function MobileLayout({ children }) {
     return (
         <div 
             className={`relative h-full flex flex-col max-w-md mx-auto overflow-hidden shadow-2xl shadow-electric-violet/5`}
-            style={{ paddingTop: isProfile || isSpecialPage ? 'var(--safe-area-inset-top)' : 'calc(var(--safe-area-inset-top) + 4rem)' }}
+            style={{ paddingTop: isProfile || isSpecialPage ? 'var(--safe-area-inset-top)' : 'calc(var(--safe-area-inset-top) + 4.5rem)' }}
         >
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-electric-violet/20 blur-[100px] pointer-events-none" />
             <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-solar-gold/10 blur-[100px] pointer-events-none" />

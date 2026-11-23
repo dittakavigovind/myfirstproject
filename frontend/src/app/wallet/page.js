@@ -49,6 +49,7 @@ export default function WalletPage() {
 
     const handleAddMoney = async (e) => {
         e.preventDefault();
+        if (processing) return;
         if (!amount || isNaN(amount) || amount <= 0) {
             toast.error('Please enter a valid amount');
             return;
@@ -66,9 +67,10 @@ export default function WalletPage() {
             }
 
             // 2. Open Razorpay Checkout
+            const totalPayPaise = Math.round((orderData.totalAmount || orderData.amount) * 100);
             const options = {
                 key: orderData.key_id,
-                amount: orderData.amount * 100, // Amount in paise
+                amount: totalPayPaise, // Amount in paise
                 currency: orderData.currency,
                 name: "Way2Astro",
                 description: "Wallet Recharge",

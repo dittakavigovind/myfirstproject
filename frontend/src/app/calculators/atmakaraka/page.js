@@ -5,7 +5,7 @@ import SmartInputForm from '@/components/SmartInputForm';
 import CosmicLoader from '@/components/CosmicLoader';
 import API from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Crown, Heart, Users, Shield, Briefcase, Baby, User, AlertCircle } from 'lucide-react';
+import { Star, Crown, Heart, Users, Shield, Briefcase, Baby, User, AlertCircle, Send, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AtmakarakaCalculator() {
@@ -34,6 +34,34 @@ export default function AtmakarakaCalculator() {
             toast.error(msg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleShare = async () => {
+        if (!result?.karakas) return;
+        const ak = result.karakas.find(k => k.key === 'AK');
+        const amk = result.karakas.find(k => k.key === 'AmK');
+        const dk = result.karakas.find(k => k.key === 'DK');
+        const shareText = `My Jaimini Karakas: Atmakaraka (Soul) is ${ak?.planet || 'Sun'}, Amatyakaraka (Career) is ${amk?.planet || 'Venus'}, and Darakaraka (Spouse) is ${dk?.planet || 'Jupiter'}! Calculate your Karakas on Way2Astro:`;
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://way2astro.com/calculators/atmakaraka';
+
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'My Jaimini Karakas Analysis',
+                    text: `${shareText}\n${shareUrl}`,
+                    url: shareUrl
+                });
+                return;
+            } catch (e) {
+                if (e?.name === 'AbortError') return;
+            }
+        }
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            toast.success("Jaimini Karakas copied to clipboard!");
+        } else {
+            toast.success("Jaimini Karakas ready!");
         }
     };
 
@@ -145,48 +173,71 @@ export default function AtmakarakaCalculator() {
                                     className="space-y-6"
                                 >
                                     {/* Highlight Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {/* Atmakaraka Card */}
-                                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2rem] p-8 border border-amber-100 relative overflow-hidden group hover:shadow-lg transition-all">
+                                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2rem] p-6 md:p-8 border border-amber-100 relative overflow-hidden group hover:shadow-lg transition-all">
                                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                                <Crown size={120} className="text-amber-600" />
+                                                <Crown size={100} className="text-amber-600" />
                                             </div>
                                             <div className="relative z-10">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">Soul Planet</span>
                                                 </div>
-                                                <h3 className="text-3xl font-black text-slate-800 mb-1">Atmakaraka</h3>
-                                                <div className="text-sm font-medium text-amber-600 mb-6">(AK)</div>
+                                                <h3 className="text-2xl font-black text-slate-800 mb-1">Atmakaraka</h3>
+                                                <div className="text-sm font-medium text-amber-600 mb-4">(AK)</div>
 
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <div className="text-5xl font-black text-amber-600">
+                                                <div className="flex items-center gap-4 mb-3">
+                                                    <div className="text-4xl font-black text-amber-600">
                                                         {result.karakas.find(k => k.key === 'AK')?.planet}
                                                     </div>
                                                 </div>
-                                                <p className="text-slate-600 text-sm leading-relaxed">
-                                                    Represents your true self, soul's purpose, and the deepest lessons you are here to learn in this lifetime.
+                                                <p className="text-slate-600 text-xs leading-relaxed">
+                                                    Represents your true self, soul's purpose, and the primary spiritual lessons in this lifetime.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Amatyakaraka Card */}
+                                        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-[2rem] p-6 md:p-8 border border-purple-100 relative overflow-hidden group hover:shadow-lg transition-all">
+                                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                                <Briefcase size={100} className="text-purple-600" />
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider">Career Planet</span>
+                                                </div>
+                                                <h3 className="text-2xl font-black text-slate-800 mb-1">Amatyakaraka</h3>
+                                                <div className="text-sm font-medium text-purple-600 mb-4">(AmK)</div>
+
+                                                <div className="flex items-center gap-4 mb-3">
+                                                    <div className="text-4xl font-black text-purple-600">
+                                                        {result.karakas.find(k => k.key === 'AmK')?.planet}
+                                                    </div>
+                                                </div>
+                                                <p className="text-slate-600 text-xs leading-relaxed">
+                                                    Signifies worldly career, status, intellect, professional achievements, and public vocation.
                                                 </p>
                                             </div>
                                         </div>
 
                                         {/* Darakaraka Card */}
-                                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[2rem] p-8 border border-indigo-100 relative overflow-hidden group hover:shadow-lg transition-all">
+                                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[2rem] p-6 md:p-8 border border-indigo-100 relative overflow-hidden group hover:shadow-lg transition-all">
                                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                                <Heart size={120} className="text-indigo-600" />
+                                                <Heart size={100} className="text-indigo-600" />
                                             </div>
                                             <div className="relative z-10">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider">Spouse Planet</span>
                                                 </div>
-                                                <h3 className="text-3xl font-black text-slate-800 mb-1">Darakaraka</h3>
-                                                <div className="text-sm font-medium text-indigo-600 mb-6">(DK)</div>
+                                                <h3 className="text-2xl font-black text-slate-800 mb-1">Darakaraka</h3>
+                                                <div className="text-sm font-medium text-indigo-600 mb-4">(DK)</div>
 
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <div className="text-5xl font-black text-indigo-600">
+                                                <div className="flex items-center gap-4 mb-3">
+                                                    <div className="text-4xl font-black text-indigo-600">
                                                         {result.karakas.find(k => k.key === 'DK')?.planet}
                                                     </div>
                                                 </div>
-                                                <p className="text-slate-600 text-sm leading-relaxed">
+                                                <p className="text-slate-600 text-xs leading-relaxed">
                                                     Signifies your spouse, business partners, and the nature of your most intimate relationships.
                                                 </p>
                                             </div>
@@ -239,6 +290,22 @@ export default function AtmakarakaCalculator() {
                                                 </tbody>
                                             </table>
                                         </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                                        <button
+                                            onClick={() => setResult(null)}
+                                            className="flex-1 py-4 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                        >
+                                            <RefreshCw size={16} /> Calculate Again
+                                        </button>
+                                        <button
+                                            onClick={handleShare}
+                                            className="flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                                        >
+                                            <Send size={16} /> Share Karakas
+                                        </button>
                                     </div>
                                 </motion.div>
                             ) : (

@@ -37,11 +37,15 @@ export function AuthProvider({ children }) {
                 const response = await api.get("/auth/me");
                 setUser(response.data);
                 
-                // Fetch unread count for the bell badge
-                const notifRes = await api.get("/notifications/my");
-                if (notifRes.data.success) {
-                    setUser(prev => ({ ...prev, unreadNotifications: notifRes.data.unreadCount }));
-                }
+                // Fetch unread count for the bell badge silently
+                api.get("/notifications/my", {
+                    headers: { 'X-Silent-Error': 'true' },
+                    silent: true
+                }).then(notifRes => {
+                    if (notifRes.data && notifRes.data.success) {
+                        setUser(prev => ({ ...prev, unreadNotifications: notifRes.data.unreadCount }));
+                    }
+                }).catch(err => console.warn("Notifications badge fetch notice:", err));
 
                 registerPushNotifications();
             }

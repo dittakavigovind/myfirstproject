@@ -2,7 +2,8 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import API from '../../../../lib/api';
-import { RefreshCw, Heart, Briefcase, Calendar, ArrowLeft, AlertCircle } from 'lucide-react';
+import { RefreshCw, Heart, Briefcase, Calendar, ArrowLeft, AlertCircle, Share2, Sparkles } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const MarriageCareerResultContent = () => {
     const searchParams = useSearchParams();
@@ -85,54 +86,102 @@ const MarriageCareerResultContent = () => {
 
     if (!data) return null;
 
-    const PredictionTable = ({ periods, type }) => (
-        <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
-            <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time Period</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Dasha / Antar</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Strength</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reason</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
-                    {periods.map((period, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                {period.start} <span className="text-slate-400 mx-2">to</span> {period.end}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-semibold text-xs border border-indigo-100">
-                                    {period.mahadasha}
-                                </span>
-                                <span className="mx-1 text-slate-400">/</span>
-                                <span className="px-2 py-1 rounded bg-purple-50 text-purple-700 font-semibold text-xs border border-purple-100">
-                                    {period.antardasha}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${period.strength === 'Very High' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                                    }`}>
-                                    {period.strength}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate" title={period.reason}>
-                                {period.reason}
-                            </td>
-                        </tr>
-                    ))}
-                    {periods.length === 0 && (
+    const handleShare = async () => {
+        if (!data) return;
+        const topMarriage = data.marriage?.[0];
+        const topCareer = data.career?.[0];
+
+        let shareText = `🔮 Vedic Marriage & Career Timing (${searchParams.get('name') || 'Way2Astro'}):\n`;
+        if (data.meta?.seventhLord) shareText += `💍 7th Lord (Marriage): ${data.meta.seventhLord}\n`;
+        if (data.meta?.tenthLord) shareText += `💼 10th Lord (Career): ${data.meta.tenthLord}\n`;
+        if (topMarriage) shareText += `\n💍 Favorable Marriage: ${topMarriage.mahadasha}-${topMarriage.antardasha} (${topMarriage.start} to ${topMarriage.end}) [${topMarriage.strength}]\n`;
+        if (topCareer) shareText += `💼 Favorable Career: ${topCareer.mahadasha}-${topCareer.antardasha} (${topCareer.start} to ${topCareer.end}) [${topCareer.strength}]\n`;
+        shareText += `\nCheck your auspicious timings on Way2Astro:`;
+
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://way2astro.com/calculators/marriage-career';
+
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Marriage & Career Timing Analysis',
+                    text: `${shareText}\n${shareUrl}`,
+                    url: shareUrl
+                });
+                return;
+            } catch (e) {
+                if (e?.name === 'AbortError') return;
+            }
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            toast.success("Timing analysis copied to clipboard!");
+        } else {
+            toast.success("Timing analysis ready!");
+        }
+    };
+
+    const PredictionTable = ({ periods, type }) => {
+        const now = new Date();
+        return (
+            <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
+                <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-50">
                         <tr>
-                            <td colSpan="4" className="px-6 py-8 text-center text-slate-500">
-                                No highly specific periods found in the near future.
-                            </td>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time Period</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Dasha / Antar</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Strength</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reason</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-    );
+                    </thead>
+                    <tbody className="bg-white divide-y divide-slate-200">
+                        {periods.map((period, idx) => {
+                            const isCurrent = now >= new Date(period.start) && now <= new Date(period.end);
+                            return (
+                                <tr key={idx} className={`transition-colors ${isCurrent ? 'bg-purple-50/60 font-medium' : 'hover:bg-slate-50'}`}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span>{period.start} <span className="text-slate-400 mx-1">to</span> {period.end}</span>
+                                            {isCurrent && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 animate-pulse">
+                                                    <Sparkles size={10} /> Active Now
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                        <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-semibold text-xs border border-indigo-100">
+                                            {period.mahadasha}
+                                        </span>
+                                        <span className="mx-1 text-slate-400">/</span>
+                                        <span className="px-2 py-1 rounded bg-purple-50 text-purple-700 font-semibold text-xs border border-purple-100">
+                                            {period.antardasha}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${period.strength === 'Very High' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                                            }`}>
+                                            {period.strength}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate" title={period.reason}>
+                                        {period.reason}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {periods.length === 0 && (
+                            <tr>
+                                <td colSpan="4" className="px-6 py-8 text-center text-slate-500">
+                                    No highly specific periods found in the near future.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
@@ -144,7 +193,12 @@ const MarriageCareerResultContent = () => {
                         Back
                     </button>
                     <h1 className="text-xl font-bold text-slate-900">Timeline Analysis</h1>
-                    <div className="w-20"></div> {/* Spacer */}
+                    <button
+                        onClick={handleShare}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-sm hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-100 transition-all active:scale-95"
+                    >
+                        <Share2 size={16} /> Share
+                    </button>
                 </div>
             </header>
 

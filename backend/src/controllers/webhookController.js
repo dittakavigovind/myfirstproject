@@ -80,6 +80,7 @@ exports.handleRazorpayWebhook = async (req, res) => {
         if (event === 'payment.captured') {
             const orderId = payload.order_id;
             const paymentId = payload.id;
+            const method = payload.method;
             
             // Check if transaction exists and is pending
             const transaction = await Transaction.findOne({ orderId });
@@ -90,6 +91,9 @@ exports.handleRazorpayWebhook = async (req, res) => {
                 // Fulfill payment without creating a duplicate transaction
                 transaction.status = 'success';
                 transaction.paymentId = paymentId;
+                if (method) {
+                    transaction.paymentMethod = method;
+                }
                 transaction.description = 'Wallet Recharge via Hook';
                 await transaction.save();
 

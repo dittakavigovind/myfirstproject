@@ -41,6 +41,10 @@ const transactionSchema = new mongoose.Schema({
     orderId: { // Razorpay/Stripe Order ID
         type: String,
     },
+    paymentMethod: { // upi, card, netbanking, wallet, etc.
+        type: String,
+        default: null
+    },
     referenceModel: {
         type: String,
         enum: ['Consultation', 'Report', 'ECommerce', 'Recharge', 'Session', 'WalletRecharge', 'AstrologerPayout'],

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, CheckCircle2, Star, Zap, ArrowRight, X } from 'lucide-react';
+import { Sparkles, RefreshCw, ArrowLeft, Send, User, Calendar, Clock, MapPin, CheckCircle2, Star, Zap, ArrowRight, X, Share2, Shield, Info } from 'lucide-react';
 import Link from 'next/link';
 import DatePicker from "react-datepicker";
 import CustomDateInput from '../../../components/common/CustomDateInput';
@@ -16,6 +16,113 @@ import StandardResultHeader from '../../../components/calculators/StandardResult
 
 import PageContentSection from '../../../components/common/PageContentSection';
 import { useBirthDetails } from '../../../context/BirthDetailsContext';
+
+const YOGINI_DETAILS = {
+    "Mangala": {
+        nature: "Supreme Benefic (Shubha)",
+        deity: "Goddess Mangala (Durga)",
+        theme: "Auspicious Celebrations, Peace of Mind & Prosperity",
+        coreMeaning: "Mangala is ruled by the Moon and brings auspicious ceremonies, inner mental peace, and family happiness. Obstacles diminish, spiritual interests blossom, and health and reputation flourish.",
+        effects: [
+            "Auspicious ceremonies, marriages, or family celebrations",
+            "Inner mental peace and relief from emotional anxiety",
+            "Spiritual inclination and divine protection",
+            "Favorable recognition from peers and elders"
+        ],
+        remedies: "Worship Goddess Durga or Parvati, chant 'Om Dum Durgayei Namaha', offer white flowers or milk sweets on Mondays."
+    },
+    "Pingala": {
+        nature: "Challenging & Transformative (Pitta / Agni)",
+        deity: "Goddess Pingala (Surya Shakti)",
+        theme: "Vitality Trials, Leadership Tests & High Energy",
+        coreMeaning: "Pingala is ruled by the Sun and tests endurance, physical vitality, and patience. While it can cause heat, restlessness, or friction with authority, it grants tremendous determination and leadership victory when guided constructively.",
+        effects: [
+            "High ambition and strong drive to conquer challenges",
+            "Tests of ego, patience, and authority relations",
+            "Health watch: manage stress, acidity, and physical fatigue",
+            "Eventual triumph over adversaries through willpower"
+        ],
+        remedies: "Recite Aditya Hridaya Stotram or Gayatri Mantra, offer water (Arghya) to Lord Surya at sunrise, donate jaggery or wheat on Sundays."
+    },
+    "Dhanya": {
+        nature: "Abundant Benefic (Dhana & Vriddhi)",
+        deity: "Goddess Dhanya (Lakshmi / Annapurna)",
+        theme: "Financial Abundance, Educational Honors & Divine Grace",
+        coreMeaning: "Dhanya is ruled by Jupiter and signifies a rich golden harvest in life. Wealth accumulates steadily, intellectual wisdom expands, virtuous mentors appear, and long-standing ambitions reach fruition.",
+        effects: [
+            "Steady rise in income, savings, and assets",
+            "Academic or professional honors and career elevation",
+            "Blessings from spiritual mentors and family elders",
+            "Birth of children or joyful family milestones"
+        ],
+        remedies: "Worship Lord Vishnu and Goddess Annapurna, chant 'Om Namo Bhagavate Vasudevaya', feed cows, donate yellow lentils or books on Thursdays."
+    },
+    "Bhramari": {
+        nature: "Turbulent & Restless (Chala / Motion)",
+        deity: "Goddess Bhramari (The Sacred Bee Goddess)",
+        theme: "Travel, Relocation, Dynamic Changes & Resilience",
+        coreMeaning: "Bhramari is ruled by Mars and brings wanderlust, rapid changes, travels, or relocations. It creates high physical energy and ambition, but requires discipline to avoid hasty decisions or scattered expenses.",
+        effects: [
+            "Frequent journeys, relocations, or foreign exploration",
+            "Fluctuating fortunes requiring careful financial budgeting",
+            "High stamina and courage to face unfamiliar environments",
+            "Dynamic personal transformation through new experiences"
+        ],
+        remedies: "Recite Hanuman Chalisa, worship Lord Kartikeya, practice patience before big moves, donate red lentils on Tuesdays."
+    },
+    "Bhadrika": {
+        nature: "Deeply Auspicious & Protective (Kalyana)",
+        deity: "Goddess Bhadrika (Bhadrakali / Saraswati)",
+        theme: "Career Advancement, Sharp Intellect & Faithful Friends",
+        coreMeaning: "Bhadrika is ruled by Mercury and represents auspicious welfare and refined intelligence. Career status ascends, commercial ventures succeed, and true friends provide crucial support.",
+        effects: [
+            "Rapid career advancement, promotions, and status rise",
+            "Intellectual clarity, successful examinations, and business wins",
+            "Strengthening of helpful friendships and professional networks",
+            "Domestic happiness and sound health recovery"
+        ],
+        remedies: "Worship Goddess Saraswati and Lord Ganesha, chant 'Om Gam Ganapataye Namaha', feed green vegetables to cows on Wednesdays."
+    },
+    "Ulka": {
+        nature: "Karmic Purification & Discipline (Tapas)",
+        deity: "Goddess Ulka (Chandi)",
+        theme: "Patience, Hard Labor, Karmic Clearance & Inner Strength",
+        coreMeaning: "Ulka is ruled by Saturn and acts like a fiery cleansing meteor burning off past karma. It requires hard work, patience, and humility. Those who stay steady emerge with permanent inner resilience and wisdom.",
+        effects: [
+            "Heavy workloads requiring persistent, uncomplaining effort",
+            "Delays in long-term goals that test your endurance",
+            "Health watch: care for joints, bones, teeth, and fatigue",
+            "Profound spiritual maturation and karmic liberation"
+        ],
+        remedies: "Recite Hanuman Chalisa or Shani Stotram, light a mustard oil lamp under a Peepal tree on Saturday evenings, serve the elderly and disadvantaged."
+    },
+    "Siddha": {
+        nature: "Crown Jewel of Yogini (Sarva Siddhi / Supreme Fulfillment)",
+        deity: "Goddess Siddha (Maha Lakshmi / Tripurasundari)",
+        theme: "Total Success, Desires Fulfilled, Wealth, Romance & Renown",
+        coreMeaning: "Siddha is ruled by Venus and is regarded as the most prosperous and joyful period in Yogini Dasha. Noble endeavors succeed effortlessly, wealth and luxuries arrive, romance blossoms, and heartfelt aspirations are fulfilled.",
+        effects: [
+            "Material prosperity, acquisition of vehicles, jewelry, and luxury",
+            "Marital bliss, romantic fulfillment, and high social charm",
+            "Artistic, creative, and professional public acclaim",
+            "Effortless fulfillment of long-cherished dreams (Siddhi)"
+        ],
+        remedies: "Worship Goddess Maha Lakshmi and Lalita Tripurasundari, chant 'Om Shreem Mahalakshmiyei Namaha', wear clean light/pastel clothing on Fridays, respect women and donate sweets."
+    },
+    "Sankata": {
+        nature: "Crucial Karmic Crucible & Deep Awakening",
+        deity: "Goddess Sankata (Vankal Mata / Maha Kali)",
+        theme: "Unpredictable Shifts, Attachment Release & Spiritual Power",
+        coreMeaning: "Sankata is the longest Yogini period (8 years) ruled by Rahu. It brings unexpected plot twists, shifts in lifestyle, and tests that shatter false illusions. Through spiritual surrender and faith, it transforms into an impenetrable shield of divine grace.",
+        effects: [
+            "Sudden changes in surroundings, career direction, or relationships",
+            "Mental turbulence pushing you toward deeper spiritual inquiry",
+            "Awakening of intuition and profound occult or philosophical insight",
+            "Immense spiritual strength discovered after weathering storms"
+        ],
+        remedies: "Worship Goddess Durga or Maha Kali, recite Durga Chalisa, feed stray dogs on Saturdays, perform Rahu charitable donations (coconut, black sesame)."
+    }
+};
 
 export default function YoginiDashaCalculator() {
     // Use BirthDetailsContext
@@ -145,6 +252,62 @@ export default function YoginiDashaCalculator() {
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         return `${day}-${month}-${d.getFullYear()}`;
+    };
+
+    const handleShareYoginiDasha = async () => {
+        if (!result?.list) return;
+        const currentDasha = result.list.find(y => {
+            const now = new Date();
+            return now >= new Date(y.start) && now <= new Date(y.end);
+        }) || result.list[0];
+
+        const shareText = `🔮 My Yogini Dasha: Current period is ${currentDasha?.name} (${currentDasha?.lord}) from ${formatDate(currentDasha?.start)} to ${formatDate(currentDasha?.end)}! Birth Nakshatra: ${result.birthNakshatra || 'Vedic'}. Check your Yogini Dasha on Way2Astro:`;
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://way2astro.com/calculators/yogini-dasha';
+
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            try {
+                await navigator.share({
+                    title: `My Yogini Dasha Analysis (${currentDasha?.name})`,
+                    text: `${shareText}\n${shareUrl}`,
+                    url: shareUrl
+                });
+                return;
+            } catch (e) {
+                if (e?.name === 'AbortError') return;
+            }
+        }
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            toast.success("Yogini Dasha copied to clipboard!");
+        } else {
+            toast.success("Yogini Dasha ready!");
+        }
+    };
+
+    const handleShareSpecificYogini = async (dasha) => {
+        if (!dasha) return;
+        const info = YOGINI_DETAILS[dasha.name] || {};
+        const shareText = `🔮 My Yogini Dasha - ${dasha.name} (${dasha.lord}) [${formatDate(dasha.start)} to ${formatDate(dasha.end)}]:\n• Nature: ${info.nature || 'Vedic Cycle'}\n• Core Theme: ${info.theme || info.coreMeaning || 'Significant life cycle'}\nCheck yours on Way2Astro:`;
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://way2astro.com/calculators/yogini-dasha';
+
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            try {
+                await navigator.share({
+                    title: `${dasha.name} Yogini Dasha Analysis`,
+                    text: `${shareText}\n${shareUrl}`,
+                    url: shareUrl
+                });
+                return;
+            } catch (e) {
+                if (e?.name === 'AbortError') return;
+            }
+        }
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            toast.success(`${dasha.name} Dasha details copied to clipboard!`);
+        } else {
+            toast.success("Copied to clipboard!");
+        }
     };
 
     return (
@@ -311,40 +474,137 @@ export default function YoginiDashaCalculator() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
-                                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
                                         onClick={() => setSelectedDashaForAnalysis(null)}
                                     >
                                         <motion.div
-                                            initial={{ scale: 0.9, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            exit={{ scale: 0.9, opacity: 0 }}
+                                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
                                             onClick={(e) => e.stopPropagation()}
-                                            className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 max-w-lg w-full shadow-2xl overflow-y-auto max-h-[80vh]"
+                                            className="bg-[#0f1222] border border-purple-500/30 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl overflow-y-auto max-h-[85vh] relative"
                                         >
-                                            <div className="flex justify-between items-start mb-6">
+                                            <div className="flex justify-between items-start mb-6 pb-4 border-b border-white/10">
                                                 <div>
-                                                    <h3 className="text-2xl font-black text-white flex items-center gap-2">
-                                                        {selectedDashaForAnalysis.name} ({selectedDashaForAnalysis.lord}) Analysis
-                                                    </h3>
-                                                    <p className="text-white/40 text-sm mt-1 font-medium bg-white/5 inline-block px-3 py-1 rounded-md">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-2xl font-black text-white">
+                                                            {selectedDashaForAnalysis.name} Dasha
+                                                        </h3>
+                                                        {(() => {
+                                                            const isCur = new Date() >= new Date(selectedDashaForAnalysis.start) && new Date() <= new Date(selectedDashaForAnalysis.end);
+                                                            return isCur ? (
+                                                                <span className="text-[10px] bg-purple-500/25 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-400/40 uppercase font-black tracking-wider animate-pulse flex items-center gap-1">
+                                                                    <Sparkles size={10} /> Current Period
+                                                                </span>
+                                                            ) : null;
+                                                        })()}
+                                                    </div>
+                                                    <p className="text-purple-200/80 text-sm mt-1 font-semibold">
+                                                        Governed by {selectedDashaForAnalysis.lord} • {selectedDashaForAnalysis.duration} Years Cycle
+                                                    </p>
+                                                    <p className="text-white/40 text-xs mt-1 font-medium bg-white/5 inline-block px-3 py-1 rounded-md">
                                                         {formatDate(selectedDashaForAnalysis.start)} — {formatDate(selectedDashaForAnalysis.end)}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => setSelectedDashaForAnalysis(null)}
-                                                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                                    className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
                                                 >
-                                                    <X size={20} className="text-white/60" />
+                                                    <X size={22} />
                                                 </button>
                                             </div>
 
-                                            <div className="space-y-6">
-                                                <div className="pl-4 border-l-4 border-indigo-500 bg-white/5 p-4 rounded-r-xl">
-                                                    <p className="text-sm font-bold text-white leading-relaxed">
-                                                        Your Birth Nakshatra is <span className="uppercase text-indigo-400">{result.birthNakshatra}</span>.
+                                            <div className="space-y-6 text-left">
+                                                <div className="pl-4 border-l-4 border-purple-500 bg-white/5 p-3.5 rounded-r-xl">
+                                                    <p className="text-xs font-bold text-white/90 leading-relaxed">
+                                                        Birth Nakshatra: <span className="uppercase text-purple-300 font-extrabold">{result.birthNakshatra}</span>
                                                     </p>
                                                 </div>
-                                                {/* Yogini specific interpretation could be added here if available */}
+
+                                                {(() => {
+                                                    const info = YOGINI_DETAILS[selectedDashaForAnalysis.name] || {};
+                                                    return (
+                                                        <div className="space-y-5">
+                                                            {/* Nature & Deity */}
+                                                            {info.nature && (
+                                                                <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-transparent border border-purple-400/25">
+                                                                    <span className="text-[10px] text-amber-300 font-black uppercase tracking-wider block">
+                                                                        Cosmic Nature & Presiding Deity
+                                                                    </span>
+                                                                    <p className="text-sm font-bold text-white mt-1">
+                                                                        {info.nature} • {info.deity || selectedDashaForAnalysis.lord}
+                                                                    </p>
+                                                                    {info.theme && (
+                                                                        <p className="text-xs text-purple-200/80 font-medium mt-1">
+                                                                            {info.theme}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Core Meaning */}
+                                                            <div className="space-y-1.5">
+                                                                <span className="text-xs text-purple-300 font-black uppercase tracking-wider block">
+                                                                    Core Meaning & Astrological Influence
+                                                                </span>
+                                                                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed bg-white/5 p-4 rounded-2xl border border-white/5 font-medium">
+                                                                    {info.coreMeaning || "This Yogini period brings vital life lessons and karmic outcomes according to its planetary archetype."}
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Key Effects / Manifestations */}
+                                                            {info.effects && info.effects.length > 0 && (
+                                                                <div className="space-y-2">
+                                                                    <span className="text-xs text-amber-300 font-black uppercase tracking-wider block">
+                                                                        Key Themes & Manifestations
+                                                                    </span>
+                                                                    <div className="space-y-2">
+                                                                        {info.effects.map((eff, i) => (
+                                                                            <div key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2.5 bg-white/[0.04] p-3 rounded-xl border border-white/5">
+                                                                                <span className="text-purple-400 font-bold">•</span>
+                                                                                <span>{eff}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Spiritual Remedies */}
+                                                            {info.remedies && (
+                                                                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-400/20 space-y-1.5">
+                                                                    <span className="text-xs text-amber-300 font-black uppercase tracking-wider flex items-center gap-2">
+                                                                        <Shield size={14} /> Recommended Spiritual Remedies
+                                                                    </span>
+                                                                    <p className="text-xs sm:text-sm text-amber-100/90 leading-relaxed font-medium">
+                                                                        {info.remedies}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Sub-Periods Explorer Button inside Modal */}
+                                                            {selectedDashaForAnalysis.subPeriods && selectedDashaForAnalysis.subPeriods.length > 0 && viewStack.length === 0 && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const target = selectedDashaForAnalysis;
+                                                                        setSelectedDashaForAnalysis(null);
+                                                                        handleCardClick(target);
+                                                                    }}
+                                                                    className="w-full py-3.5 bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                                                                >
+                                                                    Explore {selectedDashaForAnalysis.name} Sub-Periods (Antardashas) <ArrowRight size={14} />
+                                                                </button>
+                                                            )}
+
+                                                            {/* Share button in modal */}
+                                                            <button
+                                                                onClick={() => handleShareSpecificYogini(selectedDashaForAnalysis)}
+                                                                className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-purple-500/20"
+                                                            >
+                                                                <Share2 size={16} /> Share {selectedDashaForAnalysis.name} Dasha Summary
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </motion.div>
                                     </motion.div>
@@ -383,12 +643,20 @@ export default function YoginiDashaCalculator() {
                                             ))}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => { setResult(null); setViewStack([]); }}
-                                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all flex items-center gap-2 text-sm"
-                                    >
-                                        <RefreshCw size={16} /> New Check
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={handleShareYoginiDasha}
+                                            className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 text-sm shadow-lg shadow-purple-500/20"
+                                        >
+                                            <Share2 size={16} /> Share Dasha
+                                        </button>
+                                        <button
+                                            onClick={() => { setResult(null); setViewStack([]); }}
+                                            className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all flex items-center gap-2 text-sm"
+                                        >
+                                            <RefreshCw size={16} /> New Check
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Current Level Table */}
@@ -405,39 +673,77 @@ export default function YoginiDashaCalculator() {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/5 text-white">
-                                                {(currentViewData || []).map((dasha, idx) => (
-                                                    <tr
-                                                        key={idx}
-                                                        onClick={() => viewStack.length === 0 ? handleCardClick(dasha) : setSelectedDashaForAnalysis(dasha)}
-                                                        className="hover:bg-white/5 transition-colors cursor-pointer group"
-                                                    >
-                                                        <td className="p-6">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 font-bold text-lg group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                                                                    {dasha.name.charAt(0)}
+                                                {(currentViewData || []).map((dasha, idx) => {
+                                                    const isCurrent = new Date() >= new Date(dasha.start) && new Date() <= new Date(dasha.end);
+                                                    return (
+                                                        <tr
+                                                            key={idx}
+                                                            onClick={() => setSelectedDashaForAnalysis(dasha)}
+                                                            className={`transition-colors cursor-pointer group ${
+                                                                isCurrent 
+                                                                    ? 'bg-purple-900/30 hover:bg-purple-900/40 border-l-4 border-l-purple-500' 
+                                                                    : 'hover:bg-white/5'
+                                                            }`}
+                                                        >
+                                                            <td className="p-6">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg transition-all ${
+                                                                        isCurrent 
+                                                                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30' 
+                                                                            : 'bg-indigo-500/20 text-indigo-300 group-hover:bg-indigo-500 group-hover:text-white'
+                                                                    }`}>
+                                                                        {dasha.name.charAt(0)}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="font-bold text-lg">{dasha.name}</span>
+                                                                            {isCurrent && (
+                                                                                <span className="bg-purple-500/30 text-purple-200 border border-purple-400/50 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider animate-pulse flex items-center gap-1">
+                                                                                    <Sparkles size={10} /> Current
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="text-sm text-white/40">{dasha.lord}</div>
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <div className="font-bold text-lg">{dasha.name}</div>
-                                                                    <div className="text-sm text-white/40">{dasha.lord}</div>
+                                                            </td>
+                                                            <td className="p-6 font-medium text-white/80">
+                                                                {dasha.duration} Years
+                                                            </td>
+                                                            <td className="p-6 text-indigo-200/80 font-mono text-sm">
+                                                                {formatDate(dasha.start)}
+                                                            </td>
+                                                            <td className="p-6 text-indigo-200/80 font-mono text-sm">
+                                                                {formatDate(dasha.end)}
+                                                            </td>
+                                                            <td className="p-6 text-right">
+                                                                <div className="inline-flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedDashaForAnalysis(dasha);
+                                                                        }}
+                                                                        className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 text-xs font-bold transition-all flex items-center gap-1.5"
+                                                                    >
+                                                                        <Info size={14} /> Summary
+                                                                    </button>
+                                                                    {dasha.subPeriods && dasha.subPeriods.length > 0 && viewStack.length === 0 && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleCardClick(dasha);
+                                                                            }}
+                                                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-indigo-600/50 text-white/60 hover:text-white text-xs font-bold transition-all"
+                                                                            title="View Sub-periods"
+                                                                        >
+                                                                            <ArrowRight size={16} />
+                                                                        </button>
+                                                                    )}
                                                                 </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="p-6 font-medium text-white/80">
-                                                            {dasha.duration} Years
-                                                        </td>
-                                                        <td className="p-6 text-indigo-200/80 font-mono text-sm">
-                                                            {formatDate(dasha.start)}
-                                                        </td>
-                                                        <td className="p-6 text-indigo-200/80 font-mono text-sm">
-                                                            {formatDate(dasha.end)}
-                                                        </td>
-                                                        <td className="p-6 text-right">
-                                                            <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/5 group-hover:bg-indigo-500 transition-colors">
-                                                                <ArrowRight size={16} className="text-white/40 group-hover:text-white" />
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>

@@ -152,13 +152,18 @@ function MoonSignCalculatorContent() {
                 const sign = signs[moonData.sign - 1];
 
                 const nakshatraName = res.data.data.dashas?.birthNakshatra || '-';
-                const pada = res.data.data.charts?.D9?.Moon?.nakshatraPada || '';
-                const nakshatraWithPada = pada ? `${nakshatraName}-${pada}` : nakshatraName;
+                let pada = res.data.data.charts?.D9?.Moon?.nakshatraPada || res.data.data.planets?.Moon?.nakshatraPada;
+                if (!pada && moonData.longitude > 0) {
+                    pada = Math.floor((moonData.longitude % (40 / 3)) / (10 / 3)) + 1;
+                }
+                if (!pada || pada < 1 || pada > 4) pada = 1;
+                const nakshatraWithPada = `${nakshatraName} - Pada ${pada}`;
 
                 // Construct details from available dasha/panchang data
                 const details = [
                     { item: 'Rashi', value: sign },
-                    { item: 'Nakshatra', value: nakshatraWithPada },
+                    { item: 'Nakshatra', value: nakshatraName },
+                    { item: 'Paada (Charan)', value: `Pada ${pada}` },
                     { item: 'Tithi', value: res.data.data.panchang?.tithi || '-' },
                     { item: 'Vara', value: res.data.data.panchang?.vara || '-' },
                     { item: 'Degree', value: `${(moonData.longitude % 30).toFixed(2)}°` },
@@ -167,6 +172,8 @@ function MoonSignCalculatorContent() {
 
                 setResult({
                     sign: sign,
+                    nakshatra: nakshatraName,
+                    pada: pada,
                     details: details
                 });
             } else {
@@ -178,6 +185,31 @@ function MoonSignCalculatorContent() {
             toast.error(errorMsg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleShare = async () => {
+        if (!result) return;
+        const shareText = `My Vedic Moon Sign is ${result.sign} Rashi${result.nakshatra ? ` (${result.nakshatra} - Pada ${result.pada})` : ''}! Calculate your Rashi on Way2Astro:`;
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://way2astro.com/calculators/moon-sign-calculator';
+
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            try {
+                await navigator.share({
+                    title: `My Vedic Moon Sign is ${result.sign} Rashi`,
+                    text: `${shareText}\n${shareUrl}`,
+                    url: shareUrl
+                });
+                return;
+            } catch (e) {
+                if (e?.name === 'AbortError') return;
+            }
+        }
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            toast.success("Rashi details copied to clipboard!");
+        } else {
+            toast.success("Rashi details ready!");
         }
     };
 
@@ -358,7 +390,10 @@ function MoonSignCalculatorContent() {
                                 >
                                     <RefreshCw size={20} /> New Calculation
                                 </button>
-                                <button className="flex-1 bg-indigo-600 text-white font-bold py-5 rounded-2xl hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20">
+                                <button
+                                    onClick={handleShare}
+                                    className="flex-1 bg-indigo-600 text-white font-bold py-5 rounded-2xl hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20 active:scale-[0.98] cursor-pointer"
+                                >
                                     <Send size={20} /> Share My Rashi
                                 </button>
                             </div>

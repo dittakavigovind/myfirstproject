@@ -25,9 +25,13 @@ import {
     List,
     MapPin,
     Send,
+    Share2,
+    Crown,
     Compass,
-    Shield
+    Shield,
+    X
 } from "lucide-react";
+import { Share } from "@capacitor/share";
 import { useBirthDetails } from "@/context/BirthDetailsContext";
 import LocationSearch from "@/components/LocationSearch";
 import CosmicCard from "@/components/CosmicCard";
@@ -61,6 +65,338 @@ const ASCENDANT_DATA = {
     "Capricorn": { lord: "Saturn", element: "Earth", symbol: "♑ The Sea-Goat", traits: "Disciplined mastery, strategic ambition, enduring patience, structured authority, grounded wisdom." },
     "Aquarius": { lord: "Saturn & Rahu", element: "Air", symbol: "♒ The Water-Bearer", traits: "Visionary reformer, unconventional intellect, humanitarian values, original independent spirit." },
     "Pisces": { lord: "Jupiter & Neptune", element: "Water", symbol: "♓ The Fishes", traits: "Compassionate mystic, poetic intuition, spiritual transcendence, boundless creative empathy." }
+};
+
+const RASHI_DATA = {
+    "Aries": {
+        sanskrit: "Mesha (మేషం / मेष)",
+        lord: "Mars (Mangal)",
+        element: "Fire (Agni)",
+        quality: "Chara (Movable)",
+        symbol: "♈ The Ram",
+        deity: "Lord Kartikeya / Agni",
+        traits: "Courageous, energetic, enthusiastic, and fiercely independent. Driven by pioneering passion and a dynamic natural spirit."
+    },
+    "Taurus": {
+        sanskrit: "Vrishabha (వృషభం / वृषभ)",
+        lord: "Venus (Shukra)",
+        element: "Earth (Prithvi)",
+        quality: "Sthira (Fixed)",
+        symbol: "♉ The Bull",
+        deity: "Goddess Lakshmi",
+        traits: "Grounded, patient, aesthetically appreciative, and deeply loyal. Values inner peace, enduring stability, comfort, and security."
+    },
+    "Gemini": {
+        sanskrit: "Mithuna (మిథునం / मिथुन)",
+        lord: "Mercury (Budh)",
+        element: "Air (Vayu)",
+        quality: "Dvisvabhava (Dual)",
+        symbol: "♊ The Twins",
+        deity: "Lord Vishnu",
+        traits: "Quick-witted, articulate, curious, and intellectually versatile. Highly adaptable mind with a vibrant talent for expression and communication."
+    },
+    "Cancer": {
+        sanskrit: "Karka (కర్కాటకం / कर्क)",
+        lord: "Moon (Chandra)",
+        element: "Water (Jal)",
+        quality: "Chara (Movable)",
+        symbol: "♋ The Crab",
+        deity: "Goddess Parvati / Shiva",
+        traits: "Deeply empathetic, intuitive, nurturing, and emotionally profound. Protected by the Moon's own home sign, blessed with sensitive wisdom."
+    },
+    "Leo": {
+        sanskrit: "Simha (సింహం / सिंह)",
+        lord: "Sun (Surya)",
+        element: "Fire (Agni)",
+        quality: "Sthira (Fixed)",
+        symbol: "♌ The Lion",
+        deity: "Lord Surya / Shiva",
+        traits: "Regal presence, magnanimous heart, radiant dignity, and natural leadership. Generous, brave, loyal, and creatively expressive."
+    },
+    "Virgo": {
+        sanskrit: "Kanya (కన్య / कन्या)",
+        lord: "Mercury (Budh)",
+        element: "Earth (Prithvi)",
+        quality: "Dvisvabhava (Dual)",
+        symbol: "♍ The Maiden",
+        deity: "Lord Vishnu",
+        traits: "Analytical intellect, practical precision, thoughtful service, and meticulous discernment. Possesses high standards and healing intuition."
+    },
+    "Libra": {
+        sanskrit: "Tula (తుల / तुला)",
+        lord: "Venus (Shukra)",
+        element: "Air (Vayu)",
+        quality: "Chara (Movable)",
+        symbol: "♎ The Scales",
+        deity: "Goddess Lakshmi",
+        traits: "Harmonious, diplomatic, charming, and justice-seeking. Strives for peace, refined aesthetics, emotional equilibrium, and mutual respect."
+    },
+    "Scorpio": {
+        sanskrit: "Vrischika (వృశ్చికం / वृश्चिक)",
+        lord: "Mars & Ketu",
+        element: "Water (Jal)",
+        quality: "Sthira (Fixed)",
+        symbol: "♏ The Scorpion",
+        deity: "Lord Shiva / Kartikeya",
+        traits: "Intense, penetrating intuition, magnetic willpower, and profound emotional depth. Possesses extraordinary resilience and transformative strength."
+    },
+    "Sagittarius": {
+        sanskrit: "Dhanu (ధనుస్సు / धनु)",
+        lord: "Jupiter (Guru)",
+        element: "Fire (Agni)",
+        quality: "Dvisvabhava (Dual)",
+        symbol: "♐ The Archer",
+        deity: "Lord Dakshinamurthy",
+        traits: "Optimistic, philosophical truth-seeker, generous, and visionary. Guided by righteous dharma, higher wisdom, and spiritual exploration."
+    },
+    "Capricorn": {
+        sanskrit: "Makara (మకరం / मकर)",
+        lord: "Saturn (Shani)",
+        element: "Earth (Prithvi)",
+        quality: "Chara (Movable)",
+        symbol: "♑ The Sea-Goat",
+        deity: "Lord Shani / Brahma",
+        traits: "Disciplined, strategic, patient, and emotionally resilient. Builds enduring success through methodical perseverance and grounded maturity."
+    },
+    "Aquarius": {
+        sanskrit: "Kumbha (కుంభం / कुम्भ)",
+        lord: "Saturn & Rahu",
+        element: "Air (Vayu)",
+        quality: "Sthira (Fixed)",
+        symbol: "♒ The Water-Bearer",
+        deity: "Lord Shiva",
+        traits: "Visionary reformer, humanitarian spirit, original thinker, and independent mind. Champions equality, unconventional insight, and progress."
+    },
+    "Pisces": {
+        sanskrit: "Meena (మీనం / मीन)",
+        lord: "Jupiter (Guru)",
+        element: "Water (Jal)",
+        quality: "Dvisvabhava (Dual)",
+        symbol: "♓ The Fishes",
+        deity: "Lord Vishnu / Shiva",
+        traits: "Compassionate mystic, boundless imagination, spiritual sensitivity, and intuitive empathy. Attuned to poetic inspiration and higher planes."
+    }
+};
+
+const JAIMINI_PLANET_MEANINGS = {
+    AK: {
+        "Sun": {
+            title: "Soul of Leadership & Humility",
+            summary: "The Sun as Atmakaraka represents a soul whose destiny is leadership, high authority, and spiritual self-realization. The paramount soul lesson is mastering the ego—learning to lead with pure humility, compassion, and selflessness without pride.",
+            keywords: ["Leadership", "Self-Realization", "Humility", "Vitality", "Soul Authority"]
+        },
+        "Moon": {
+            title: "Soul of Empathy & Compassion",
+            summary: "The Moon as Atmakaraka indicates a soul whose supreme evolution is emotional mastery and universal love. Your spiritual lesson is cultivating unwavering inner peace, emotional equanimity, and boundless empathy without becoming overwhelmed by life's changes.",
+            keywords: ["Emotional Peace", "Universal Compassion", "Intuition", "Nurturing", "Calm Mind"]
+        },
+        "Mars": {
+            title: "Soul of Courage & Righteous Action",
+            summary: "Mars as Atmakaraka indicates a powerful soul born for decisive, courageous action. The primary karmic test is controlling anger, passion, and impatience, practicing Ahimsa (non-injury in word and deed), and dedicating your formidable drive to protecting others.",
+            keywords: ["Righteous Courage", "Self-Discipline", "Ahimsa", "Determination", "Protection"]
+        },
+        "Mercury": {
+            title: "Soul of Truth & Intellectual Wisdom",
+            summary: "Mercury as Atmakaraka indicates a soul gifted with razor-sharp analytical intelligence. Your core spiritual lesson is practicing truthful and mindful communication (Satya), avoiding deceit, and utilizing your intellect to uncover sacred truth.",
+            keywords: ["Truthful Speech", "Intellectual Wisdom", "Mindfulness", "Clear Discernment"]
+        },
+        "Jupiter": {
+            title: "Soul of Higher Dharma & Divine Grace",
+            summary: "Jupiter as Atmakaraka indicates a highly evolved, spiritually benevolent soul. Your path involves honoring spiritual teachers and elders, imparting divine wisdom without dogma or judgment, and walking the path of unconditional righteousness.",
+            keywords: ["Spiritual Dharma", "Sacred Wisdom", "Generosity", "Mentorship", "Grace"]
+        },
+        "Venus": {
+            title: "Soul of Pure Devotion & Sensory Mastery",
+            summary: "Venus as Atmakaraka indicates an aesthetically gifted soul deeply connected to beauty and love. The core karmic lesson is self-restraint—mastering sensory desires, practicing marital fidelity, and elevating romantic love into divine devotion (Bhakti).",
+            keywords: ["Divine Devotion", "Sensory Control", "Purity", "Artistic Grace", "Harmony"]
+        },
+        "Saturn": {
+            title: "Soul of Endurance & Karma Yoga",
+            summary: "Saturn as Atmakaraka indicates an ancient, resilient soul chosen for deep spiritual realization through perseverance. Your path is Karma Yoga—patiently serving humanity, embracing simplicity, and finding supreme liberation through selfless duty.",
+            keywords: ["Karma Yoga", "Patience & Duty", "Selfless Service", "Humility", "Endurance"]
+        }
+    },
+    AmK: {
+        "Sun": {
+            title: "Executive Leader & Public Administrator",
+            summary: "With Sun as Amatyakaraka, your worldly career flourishes in government administration, top-tier executive leadership, entrepreneurship, and authoritative management. You are destined to hold responsibility and steer organizations with visionary resolve.",
+            keywords: ["Governance", "Executive Leadership", "Entrepreneurship", "Public Eminence"]
+        },
+        "Moon": {
+            title: "Humanitarian, Creative & Public Relations Maven",
+            summary: "With Moon as Amatyakaraka, your career thrives through public outreach, psychology, healthcare, hospitality, creative media, and counseling. Your instinctive emotional intelligence and grasp of human sentiment make you universally relatable.",
+            keywords: ["Public Relations", "Creative Arts", "Healthcare", "Counseling", "Human Touch"]
+        },
+        "Mars": {
+            title: "Technical Innovator, Engineer & Strategic Executive",
+            summary: "With Mars as Amatyakaraka, your professional path succeeds in engineering, technology, defense, surgery, real estate, and fast-paced project leadership. You excel where bold decisive execution and competitive courage are paramount.",
+            keywords: ["Engineering & Tech", "Operations", "Dynamic Execution", "Real Estate & Defense"]
+        },
+        "Mercury": {
+            title: "Financial Strategist, Media & Tech Specialist",
+            summary: "With Mercury as Amatyakaraka, your career excels in finance, corporate commerce, software, media, communication, analytics, and journalism. Your verbal agility and strategic calculation open remarkable professional avenues.",
+            keywords: ["Commerce & Finance", "Data & Software", "Journalism & Media", "Advisory"]
+        },
+        "Jupiter": {
+            title: "Chief Advisor, Legal & Financial Counselor",
+            summary: "With Jupiter as Amatyakaraka, your career reaches its highest potential in corporate advisory, law, wealth consulting, higher education, and mentorship. Your ethical judgment and farsighted perspective attract deep institutional trust.",
+            keywords: ["Corporate Advisory", "Legal Counsel", "Wealth Management", "Higher Education"]
+        },
+        "Venus": {
+            title: "Creative Director, Luxury & Diplomatic Strategist",
+            summary: "With Venus as Amatyakaraka, your career mission blossoms through creative arts, design, luxury branding, diplomacy, finance, entertainment, and public diplomacy. You excel at building prestigious alliances and elevating aesthetics.",
+            keywords: ["Creative Design", "Diplomacy & PR", "Luxury & Brand", "Finance & Partnerships"]
+        },
+        "Saturn": {
+            title: "Master Builder, Industry & Structural Strategist",
+            summary: "With Saturn as Amatyakaraka, your professional destiny is forged through enduring discipline in industry, manufacturing, infrastructure, institutional governance, and long-range development. Your success compounds steadily through diligence.",
+            keywords: ["Industrial Leadership", "Infrastructure", "Operations", "Long-term Planning"]
+        }
+    },
+    DK: {
+        "Sun": {
+            title: "Dignified, Self-Respecting & Noble Partner",
+            summary: "Sun as Darakaraka signifies a spouse with an inspiring presence, strong self-esteem, and natural leadership dignity. Your partner holds high ethical standards, carries an authoritative aura, and inspires you to live with royal integrity.",
+            keywords: ["Noble Presence", "Self-Respect", "Integrity", "Leadership Dignity"]
+        },
+        "Moon": {
+            title: "Gentle, Nurturing & Intuitive Soul Companion",
+            summary: "Moon as Darakaraka signifies a tender, deeply affectionate, and emotionally supportive life partner. Your spouse cherishes home sanctuary, emotional bonding, and provides a soothing, deeply understanding presence in your life.",
+            keywords: ["Deep Affection", "Home Sanctuary", "Intuitive Care", "Emotional Support"]
+        },
+        "Mars": {
+            title: "Dynamic, Passionate & Fiercely Loyal Partner",
+            summary: "Mars as Darakaraka signifies an energetic, ambitious, bold, and fiercely protective spouse. Your partner brings fiery passion, athletic vitality, and unwavering defense to your marriage, spurring active mutual accomplishment.",
+            keywords: ["Fierce Loyalty", "Vital Energy", "Protective Passion", "Bold Courage"]
+        },
+        "Mercury": {
+            title: "Witty, Youthful & Intellectually Engaging Partner",
+            summary: "Mercury as Darakaraka signifies a spouse who is intellectually sharp, humorous, articulate, and youthful at heart. Your marriage is anchored in sparkling conversations, shared laughter, curiosity, and continuous intellectual companionship.",
+            keywords: ["Intellectual Bond", "Humor & Wit", "Youthful Spirit", "Great Communicator"]
+        },
+        "Jupiter": {
+            title: "Wise, Spiritual & Auspicious Guide",
+            summary: "Jupiter as Darakaraka signifies a wise, virtuous, and spiritually minded spouse who acts as a trusted mentor and divine blessing. Your partnership brings spiritual elevation, profound mutual honor, and enduring prosperity.",
+            keywords: ["Spiritual Wisdom", "Dharma & Virtue", "Guiding Presence", "Enduring Prosperity"]
+        },
+        "Venus": {
+            title: "Charming, Romantic & Artistically Refined Partner",
+            summary: "Venus as Darakaraka signifies an exceptionally attractive, artistic, loving, and refined life partner. Your union is characterized by romantic warmth, aesthetic harmony, joyful companionship, and deep emotional sweetness.",
+            keywords: ["Romance & Charm", "Aesthetic Elegance", "Loving Tenderness", "Harmonious Union"]
+        },
+        "Saturn": {
+            title: "Grounded, Mature & Unshakably Faithful Partner",
+            summary: "Saturn as Darakaraka signifies a mature, dependable, practical, and profoundly faithful life companion. Your spouse brings stability, enduring patience, and unconditional loyalty, anchoring your life through every circumstance.",
+            keywords: ["Steadfast Loyalty", "Grounded Maturity", "Patience", "Enduring Foundation"]
+        }
+    }
+};
+
+const YOGINI_DETAILS = {
+    "Mangala": {
+        nature: "Supreme Benefic (Shubha)",
+        deity: "Goddess Mangala (Durga)",
+        theme: "Auspicious Celebrations, Peace of Mind & Prosperity",
+        coreMeaning: "Mangala is ruled by the Moon and brings auspicious ceremonies, inner mental peace, and family happiness. Obstacles diminish, spiritual interests blossom, and health and reputation flourish.",
+        effects: [
+            "Auspicious ceremonies, marriages, or family celebrations",
+            "Inner mental peace and relief from emotional anxiety",
+            "Spiritual inclination and divine protection",
+            "Favorable recognition from peers and elders"
+        ],
+        remedies: "Worship Goddess Durga or Parvati, chant 'Om Dum Durgayei Namaha', offer white flowers or milk sweets on Mondays."
+    },
+    "Pingala": {
+        nature: "Challenging & Transformative (Pitta / Agni)",
+        deity: "Goddess Pingala (Surya Shakti)",
+        theme: "Vitality Trials, Leadership Tests & High Energy",
+        coreMeaning: "Pingala is ruled by the Sun and tests endurance, physical vitality, and patience. While it can cause heat, restlessness, or friction with authority, it grants tremendous determination and leadership victory when guided constructively.",
+        effects: [
+            "High ambition and strong drive to conquer challenges",
+            "Tests of ego, patience, and authority relations",
+            "Health watch: manage stress, acidity, and physical fatigue",
+            "Eventual triumph over adversaries through willpower"
+        ],
+        remedies: "Recite Aditya Hridaya Stotram or Gayatri Mantra, offer water (Arghya) to Lord Surya at sunrise, donate jaggery or wheat on Sundays."
+    },
+    "Dhanya": {
+        nature: "Abundant Benefic (Dhana & Vriddhi)",
+        deity: "Goddess Dhanya (Lakshmi / Annapurna)",
+        theme: "Financial Abundance, Educational Honors & Divine Grace",
+        coreMeaning: "Dhanya is ruled by Jupiter and signifies a rich golden harvest in life. Wealth accumulates steadily, intellectual wisdom expands, virtuous mentors appear, and long-standing ambitions reach fruition.",
+        effects: [
+            "Steady rise in income, savings, and assets",
+            "Academic or professional honors and career elevation",
+            "Blessings from spiritual mentors and family elders",
+            "Birth of children or joyful family milestones"
+        ],
+        remedies: "Worship Lord Vishnu and Goddess Annapurna, chant 'Om Namo Bhagavate Vasudevaya', feed cows, donate yellow lentils or books on Thursdays."
+    },
+    "Bhramari": {
+        nature: "Turbulent & Restless (Chala / Motion)",
+        deity: "Goddess Bhramari (The Sacred Bee Goddess)",
+        theme: "Travel, Relocation, Dynamic Changes & Resilience",
+        coreMeaning: "Bhramari is ruled by Mars and brings wanderlust, rapid changes, travels, or relocations. It creates high physical energy and ambition, but requires discipline to avoid hasty decisions or scattered expenses.",
+        effects: [
+            "Frequent journeys, relocations, or foreign exploration",
+            "Fluctuating fortunes requiring careful financial budgeting",
+            "High stamina and courage to face unfamiliar environments",
+            "Dynamic personal transformation through new experiences"
+        ],
+        remedies: "Recite Hanuman Chalisa, worship Lord Kartikeya, practice patience before big moves, donate red lentils on Tuesdays."
+    },
+    "Bhadrika": {
+        nature: "Deeply Auspicious & Protective (Kalyana)",
+        deity: "Goddess Bhadrika (Bhadrakali / Saraswati)",
+        theme: "Career Advancement, Sharp Intellect & Faithful Friends",
+        coreMeaning: "Bhadrika is ruled by Mercury and represents auspicious welfare and refined intelligence. Career status ascends, commercial ventures succeed, and true friends provide crucial support.",
+        effects: [
+            "Rapid career advancement, promotions, and status rise",
+            "Intellectual clarity, successful examinations, and business wins",
+            "Strengthening of helpful friendships and professional networks",
+            "Domestic happiness and sound health recovery"
+        ],
+        remedies: "Worship Goddess Saraswati and Lord Ganesha, chant 'Om Gam Ganapataye Namaha', feed green vegetables to cows on Wednesdays."
+    },
+    "Ulka": {
+        nature: "Karmic Purification & Discipline (Tapas)",
+        deity: "Goddess Ulka (Chandi)",
+        theme: "Patience, Hard Labor, Karmic Clearance & Inner Strength",
+        coreMeaning: "Ulka is ruled by Saturn and acts like a fiery cleansing meteor burning off past karma. It requires hard work, patience, and humility. Those who stay steady emerge with permanent inner resilience and wisdom.",
+        effects: [
+            "Heavy workloads requiring persistent, uncomplaining effort",
+            "Delays in long-term goals that test your endurance",
+            "Health watch: care for joints, bones, teeth, and fatigue",
+            "Profound spiritual maturation and karmic liberation"
+        ],
+        remedies: "Recite Hanuman Chalisa or Shani Stotram, light a mustard oil lamp under a Peepal tree on Saturday evenings, serve the elderly and disadvantaged."
+    },
+    "Siddha": {
+        nature: "Crown Jewel of Yogini (Sarva Siddhi / Supreme Fulfillment)",
+        deity: "Goddess Siddha (Maha Lakshmi / Tripurasundari)",
+        theme: "Total Success, Desires Fulfilled, Wealth, Romance & Renown",
+        coreMeaning: "Siddha is ruled by Venus and is regarded as the most prosperous and joyful period in Yogini Dasha. Noble endeavors succeed effortlessly, wealth and luxuries arrive, romance blossoms, and heartfelt aspirations are fulfilled.",
+        effects: [
+            "Material prosperity, acquisition of vehicles, jewelry, and luxury",
+            "Marital bliss, romantic fulfillment, and high social charm",
+            "Artistic, creative, and professional public acclaim",
+            "Effortless fulfillment of long-cherished dreams (Siddhi)"
+        ],
+        remedies: "Worship Goddess Maha Lakshmi and Lalita Tripurasundari, chant 'Om Shreem Mahalakshmiyei Namaha', wear clean light/pastel clothing on Fridays, respect women and donate sweets."
+    },
+    "Sankata": {
+        nature: "Crucial Karmic Crucible & Deep Awakening",
+        deity: "Goddess Sankata (Vankal Mata / Maha Kali)",
+        theme: "Unpredictable Shifts, Attachment Release & Spiritual Power",
+        coreMeaning: "Sankata is the longest Yogini period (8 years) ruled by Rahu. It brings unexpected plot twists, shifts in lifestyle, and tests that shatter false illusions. Through spiritual surrender and faith, it transforms into an impenetrable shield of divine grace.",
+        effects: [
+            "Sudden changes in surroundings, career direction, or relationships",
+            "Mental turbulence pushing you toward deeper spiritual inquiry",
+            "Awakening of intuition and profound occult or philosophical insight",
+            "Immense spiritual strength discovered after weathering storms"
+        ],
+        remedies: "Worship Goddess Durga or Maha Kali, recite Durga Chalisa, feed stray dogs on Saturdays, perform Rahu charitable donations (coconut, black sesame)."
+    }
 };
 
 const NAKSHATRA_DATA = {
@@ -324,6 +660,9 @@ export default function CalculatorClient({ type: propType }) {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [activeTab, setActiveTab] = useState("day"); // For Hora / Choghadiya (day vs night)
+    const [selectedYogini, setSelectedYogini] = useState(null); // For Yogini Dasha period summary popup
+    const [timingTab, setTimingTab] = useState("marriage"); // For Marriage & Career timing ("marriage" vs "career")
+    const [showAllTimings, setShowAllTimings] = useState(false); // Toggle to show more/all favorable windows
 
     // Dedicated state for Live Gochar (No birth form, works like web)
     const [gocharViewMode, setGocharViewMode] = useState("cosmos"); // 'cosmos', 'chart', or 'table'
@@ -384,6 +723,28 @@ export default function CalculatorClient({ type: propType }) {
             }
         }
     }, [isInitialized, birthDetails]);
+
+    // Reset scroll to top on mount and whenever result or type changes
+    useEffect(() => {
+        const scrollToTop = () => {
+            const container = document.getElementById("main-scroll-container");
+            if (container) {
+                container.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+        };
+
+        scrollToTop();
+        const rAF = requestAnimationFrame(scrollToTop);
+        const timer = setTimeout(scrollToTop, 60);
+
+        return () => {
+            cancelAnimationFrame(rAF);
+            clearTimeout(timer);
+        };
+    }, [result, type]);
 
     // Handle Sade Sati redirect if user navigated here with sade-sati-calculator
     useEffect(() => {
@@ -503,6 +864,254 @@ export default function CalculatorClient({ type: propType }) {
         }));
     };
 
+    const handleShareMoonSign = async () => {
+        if (!result) return;
+        const sign = result.moonSignName || (result.planets?.Moon?.sign ? SIGNS[result.planets.Moon.sign - 1] : "Moon");
+        const star = result.nakshatraName || result.dashas?.birthNakshatra || "-";
+        const moonDeg = result.moonDeg || ((result.planets?.Moon?.longitude || 0) % 30).toFixed(2);
+
+        let pada = result.pada || result.charts?.D9?.Moon?.nakshatraPada || result.planets?.Moon?.nakshatraPada;
+        const moonLong = result.planets?.Moon?.longitude || 0;
+        if (!pada && moonLong > 0) {
+            pada = Math.floor((moonLong % (40 / 3)) / (10 / 3)) + 1;
+        }
+        if (!pada || pada < 1 || pada > 4) pada = 1;
+
+        const rasiPada = result.rasiPada || Math.floor((moonLong % 30) / (10 / 3)) + 1;
+        const rashiMeta = RASHI_DATA[sign] || {};
+
+        const shareTitle = `My Vedic Moon Sign is ${sign} Rashi`;
+        const shareText = `🌙 My Vedic Moon Sign: ${sign} Rashi ${rashiMeta.sanskrit ? `(${rashiMeta.sanskrit})` : ''}\n⭐ Birth Star (Nakshatra): ${star}\n🔢 Rasi Paada: Pada ${pada} (Charan ${pada})\n📐 Moon Degree: ${moonDeg}°\n🪐 Ruling Planet: ${rashiMeta.lord || 'Moon'}\n✨ Element: ${rashiMeta.element || '-'}\n\nDiscover your Vedic Moon Sign & Nakshatra on Way2Astro:`;
+        const shareUrl = "https://way2astro.com/calculators/moon-sign-calculator";
+
+        const shareOptions = {
+            title: shareTitle,
+            text: `${shareText}\n${shareUrl}`,
+            url: shareUrl,
+            dialogTitle: "Share Your Moon Sign (Rashi)"
+        };
+
+        try {
+            const canShare = await Share.canShare().catch(() => ({ value: false }));
+            if (canShare && canShare.value) {
+                await Share.share(shareOptions);
+                return;
+            }
+            if (typeof navigator !== "undefined" && navigator.share) {
+                await navigator.share(shareOptions);
+                return;
+            }
+        } catch (err) {
+            if (err && err.name !== 'AbortError') {
+                console.error("Share error:", err);
+            } else {
+                return;
+            }
+        }
+
+        // Fallback: Copy to clipboard
+        try {
+            if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success("Rashi details copied to clipboard!");
+                return;
+            }
+        } catch (copyErr) {
+            console.error("Clipboard copy error:", copyErr);
+        }
+        toast.success(`${sign} Rashi details ready to share!`);
+    };
+
+    const handleShareAtmakaraka = async () => {
+        if (!result?.karakas) return;
+        const ak = result.karakas.find(k => k.key === 'AK');
+        const amk = result.karakas.find(k => k.key === 'AmK');
+        const dk = result.karakas.find(k => k.key === 'DK');
+
+        const akPlanet = ak?.planet || "Sun";
+        const amkPlanet = amk?.planet || "Venus";
+        const dkPlanet = dk?.planet || "Jupiter";
+
+        const shareTitle = `My Jaimini Karakas: AK (${akPlanet}), AmK (${amkPlanet}), DK (${dkPlanet})`;
+        const shareText = `🔮 My Jaimini Karakas (Soul & Life Indicators):\n\n👑 Atmakaraka (Soul Planet): ${akPlanet} - Soul's purpose & spiritual evolution\n💼 Amatyakaraka (Career Planet): ${amkPlanet} - Worldly vocation & professional status\n💍 Darakaraka (Spouse Planet): ${dkPlanet} - Sacred life partner & marriage blessing\n\nCalculate your Jaimini 7 Karakas on Way2Astro:`;
+        const shareUrl = "https://way2astro.com/calculators/atmakaraka";
+
+        const shareOptions = {
+            title: shareTitle,
+            text: `${shareText}\n${shareUrl}`,
+            url: shareUrl,
+            dialogTitle: "Share Jaimini Karakas"
+        };
+
+        try {
+            const canShare = await Share.canShare().catch(() => ({ value: false }));
+            if (canShare && canShare.value) {
+                await Share.share(shareOptions);
+                return;
+            }
+            if (typeof navigator !== "undefined" && navigator.share) {
+                await navigator.share(shareOptions);
+                return;
+            }
+        } catch (err) {
+            if (err && err.name !== 'AbortError') {
+                console.error("Share error:", err);
+            } else {
+                return;
+            }
+        }
+
+        // Fallback: Copy to clipboard
+        try {
+            if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success("Jaimini Karakas copied to clipboard!");
+                return;
+            }
+        } catch (copyErr) {
+            console.error("Clipboard copy error:", copyErr);
+        }
+        toast.success("Jaimini Karakas ready to share!");
+    };
+
+    const handleShareYoginiDasha = async () => {
+        if (!result?.list) return;
+        const currentYogini = result.list.find(y => new Date() >= new Date(y.start) && new Date() <= new Date(y.end)) || result.list[0];
+        const info = YOGINI_DETAILS[currentYogini?.name] || {};
+
+        const shareTitle = `My Current Yogini Dasha: ${currentYogini?.name} (${currentYogini?.lord})`;
+        const shareText = `🔮 My Vedic Yogini Dasha Analysis:\n\n✨ Current Period: ${currentYogini?.name} (${currentYogini?.lord})\n📅 Duration: ${currentYogini?.start} to ${currentYogini?.end} (${currentYogini?.duration} Years)\n🌟 Nature: ${info.nature || 'Auspicious'}\n📜 Core Influence: ${info.coreMeaning || 'Major life shifts governed by ' + currentYogini?.lord}\n\nCalculate your Yogini Dasha on Way2Astro:`;
+        const shareUrl = "https://way2astro.com/calculators/yogini-dasha";
+
+        const shareOptions = {
+            title: shareTitle,
+            text: `${shareText}\n${shareUrl}`,
+            url: shareUrl,
+            dialogTitle: "Share Yogini Dasha"
+        };
+
+        try {
+            const canShare = await Share.canShare().catch(() => ({ value: false }));
+            if (canShare && canShare.value) {
+                await Share.share(shareOptions);
+                return;
+            }
+            if (typeof navigator !== "undefined" && navigator.share) {
+                await navigator.share(shareOptions);
+                return;
+            }
+        } catch (err) {
+            if (err && err.name !== 'AbortError') {
+                console.error("Share error:", err);
+            } else {
+                return;
+            }
+        }
+
+        try {
+            if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success("Yogini Dasha details copied to clipboard!");
+                return;
+            }
+        } catch (copyErr) {
+            console.error("Clipboard copy error:", copyErr);
+        }
+        toast.success("Yogini Dasha ready to share!");
+    };
+
+    const handleShareSpecificYogini = async (yogini) => {
+        if (!yogini) return;
+        const info = YOGINI_DETAILS[yogini.name] || {};
+        const shareTitle = `Yogini Dasha: ${yogini.name} (${yogini.lord})`;
+        const shareText = `🔮 Yogini Dasha Period: ${yogini.name} (${yogini.lord})\n📅 Duration: ${yogini.start} to ${yogini.end} (${yogini.duration} Years)\n🌟 Nature: ${info.nature || 'Auspicious'}\n📜 Core Influence: ${info.coreMeaning || 'Major life cycle governed by ' + yogini.lord}\n\nDiscover your Yogini Dasha timeline on Way2Astro:`;
+        const shareUrl = "https://way2astro.com/calculators/yogini-dasha";
+
+        const shareOptions = {
+            title: shareTitle,
+            text: `${shareText}\n${shareUrl}`,
+            url: shareUrl,
+            dialogTitle: `Share ${yogini.name} Dasha`
+        };
+
+        try {
+            const canShare = await Share.canShare().catch(() => ({ value: false }));
+            if (canShare && canShare.value) {
+                await Share.share(shareOptions);
+                return;
+            }
+            if (typeof navigator !== "undefined" && navigator.share) {
+                await navigator.share(shareOptions);
+                return;
+            }
+        } catch (err) {
+            if (err && err.name !== 'AbortError') console.error(err);
+            else return;
+        }
+
+        try {
+            if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success(`${yogini.name} Dasha copied!`);
+                return;
+            }
+        } catch (e) {}
+        toast.success(`${yogini.name} Dasha ready!`);
+    };
+
+    const handleShareTiming = async () => {
+        if (!result) return;
+        const topMarriage = result.marriage?.[0];
+        const topCareer = result.career?.[0];
+
+        let shareText = `🔮 My Vedic Marriage & Career Auspicious Timing (Way2Astro):\n`;
+        if (result.meta?.seventhLord) {
+            shareText += `💍 7th House Lord (Marriage): ${result.meta.seventhLord}\n`;
+        }
+        if (result.meta?.tenthLord) {
+            shareText += `💼 10th House Lord (Career): ${result.meta.tenthLord}\n`;
+        }
+        if (topMarriage) {
+            shareText += `\n💍 Auspicious Marriage Window: ${topMarriage.mahadasha}-${topMarriage.antardasha} (${topMarriage.start} to ${topMarriage.end}) [${topMarriage.strength} Favorability]\n`;
+        }
+        if (topCareer) {
+            shareText += `💼 Favorable Career Window: ${topCareer.mahadasha}-${topCareer.antardasha} (${topCareer.start} to ${topCareer.end}) [${topCareer.strength} Favorability]\n`;
+        }
+        shareText += `\nDiscover your favorable astrological windows on Way2Astro:`;
+        const shareUrl = "https://way2astro.com/calculators/marriage-career";
+
+        const shareOptions = {
+            title: "My Marriage & Career Timing Analysis",
+            text: `${shareText}\n${shareUrl}`,
+            url: shareUrl,
+            dialogTitle: "Share Auspicious Timing"
+        };
+
+        try {
+            const canShare = await Share.canShare().catch(() => ({ value: false }));
+            if (canShare && canShare.value) {
+                await Share.share(shareOptions);
+                return;
+            }
+            if (typeof navigator !== "undefined" && navigator.share) {
+                await navigator.share(shareOptions);
+                return;
+            }
+        } catch (err) {
+            if (err && err.name !== 'AbortError') console.error(err);
+            else return;
+        }
+
+        try {
+            if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+                toast.success("Timing analysis copied to clipboard!");
+                return;
+            }
+        } catch (e) {}
+        toast.success("Timing analysis ready!");
+    };
+
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
@@ -558,7 +1167,8 @@ export default function CalculatorClient({ type: propType }) {
                 time: formData.time,
                 lat: formData.lat,
                 lng: formData.lng,
-                timezone: formData.timezone
+                timezone: formData.timezone,
+                gender: formData.gender
             });
 
             if (res.data?.success) {
@@ -629,6 +1239,62 @@ export default function CalculatorClient({ type: propType }) {
                         yoga,
                         karana,
                         ...metaData
+                    });
+                }
+                // 3. MOON SIGN / RASHI: FULL WEB & PAADA INFORMATION
+                else if (type === "moon-sign") {
+                    const moonSignIndex = apiData.planets?.Moon?.sign || 1;
+                    const moonSignName = SIGNS[moonSignIndex - 1] || "Aries";
+                    const moonLongitude = apiData.planets?.Moon?.longitude || 0;
+                    const moonDeg = ((moonLongitude % 30) || 0).toFixed(2);
+                    const nakshatraName = apiData.dashas?.birthNakshatra || apiData.panchang?.nakshatra || "-";
+
+                    // Accurate Pada calculation (1 to 4)
+                    let pada = apiData.charts?.D9?.Moon?.nakshatraPada || apiData.planets?.Moon?.nakshatraPada;
+                    if (!pada && moonLongitude > 0) {
+                        const degInNak = moonLongitude % (40 / 3);
+                        pada = Math.floor(degInNak / (10 / 3)) + 1;
+                    }
+                    if (!pada || pada < 1 || pada > 4) pada = 1;
+
+                    // Rasi Pada (1 to 9): each Rashi contains 9 padas
+                    const rasiPada = Math.floor(((moonLongitude % 30) || 0) / (10 / 3)) + 1;
+
+                    const tithi = apiData.panchang?.tithi || "-";
+                    const vara = apiData.panchang?.vara || "-";
+                    const yoga = apiData.panchang?.yoga || "-";
+                    const karana = apiData.panchang?.karana || "-";
+                    const relation = apiData.planets?.Moon?.relation || "Neutral";
+
+                    const rashiMeta = RASHI_DATA[moonSignName] || {
+                        sanskrit: "Chandra Rashi",
+                        lord: "Moon",
+                        element: "Water",
+                        quality: "Chara (Movable)",
+                        symbol: "🌙",
+                        deity: "Lord Shiva",
+                        traits: "Your Moon sign reflects your inner emotions, instincts, intuitive intellect, and mental disposition."
+                    };
+
+                    const nakshatraMeta = NAKSHATRA_DATA[nakshatraName] || null;
+
+                    setResult({
+                        ...apiData,
+                        moonSignName,
+                        moonSignIndex,
+                        moonDeg,
+                        nakshatraName,
+                        pada,
+                        rasiPada,
+                        tithi,
+                        vara,
+                        yoga,
+                        karana,
+                        relation,
+                        ...rashiMeta,
+                        nakshatraLord: nakshatraMeta?.lord || "-",
+                        nakshatraDeity: nakshatraMeta?.deity || "-",
+                        nakshatraGana: nakshatraMeta?.gana || "-"
                     });
                 } else {
                     setResult(apiData);
@@ -1583,32 +2249,243 @@ export default function CalculatorClient({ type: propType }) {
                             )}
 
                             {/* 4. ATMAKARAKA / JAIMINI KARAKAS RESULT */}
-                            {type === "atmakaraka" && result?.karakas && (
-                                <CosmicCard noHover className="p-5 space-y-4">
-                                    <div className="text-center">
-                                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest">Jaimini Karakas</span>
-                                        <h3 className="text-lg font-black text-white mt-0.5">Your Soul & Life Indicators</h3>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {result.karakas.map((k) => (
-                                            <div key={k.key} className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${k.key === 'AK' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow' : 'bg-white/[0.06] text-slate-300'}`}>
-                                                        {k.key}
+                            {type === "atmakaraka" && result?.karakas && (() => {
+                                const ak = result.karakas.find(k => k.key === 'AK');
+                                const amk = result.karakas.find(k => k.key === 'AmK');
+                                const dk = result.karakas.find(k => k.key === 'DK');
+
+                                const akPlanet = ak?.planet || "Sun";
+                                const amkPlanet = amk?.planet || "Venus";
+                                const dkPlanet = dk?.planet || "Jupiter";
+
+                                const akMeaning = JAIMINI_PLANET_MEANINGS.AK[akPlanet] || {
+                                    title: "Soul Purpose & Spiritual Journey",
+                                    summary: `${akPlanet} as your Atmakaraka represents your core soul essence, inner spiritual lessons, and self-realization path in this life.`,
+                                    keywords: ["Soul Purpose", "Spiritual Growth", "Self-Realization"]
+                                };
+
+                                const amkMeaning = JAIMINI_PLANET_MEANINGS.AmK[amkPlanet] || {
+                                    title: "Career Destiny & Worldly Mission",
+                                    summary: `${amkPlanet} as your Amatyakaraka guides your intellect, professional vocation, status, and worldly execution.`,
+                                    keywords: ["Career", "Intellect", "Professional Status"]
+                                };
+
+                                const dkMeaning = JAIMINI_PLANET_MEANINGS.DK[dkPlanet] || {
+                                    title: "Spouse & Sacred Partnerships",
+                                    summary: `${dkPlanet} as your Darakaraka reflects your life partner, relationship qualities, and soul connections in marriage.`,
+                                    keywords: ["Marriage", "Soul Partner", "Companionship"]
+                                };
+
+                                return (
+                                    <div className="space-y-4">
+                                        {/* Header Card */}
+                                        <CosmicCard noHover className="p-6 text-center space-y-3 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                                            <div className="w-16 h-16 rounded-3xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-3xl mx-auto shadow-inner text-amber-300 drop-shadow-[0_2px_12px_rgba(251,191,36,0.5)]">
+                                                <Crown size={32} />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-black text-amber-300 uppercase tracking-[0.25em] block">
+                                                    Jaimini 7 Karakas Analysis
+                                                </span>
+                                                <h2 className="text-2xl font-black text-white mt-1">
+                                                    Your Soul & Destiny Indicators
+                                                </h2>
+                                                <p className="text-xs text-slate-300 mt-1 max-w-xs mx-auto leading-relaxed">
+                                                    Revealing your Soul (AK), Career (AmK), and Spouse (DK) through Jaimini planetary degrees.
+                                                </p>
+                                            </div>
+                                        </CosmicCard>
+
+                                        {/* THE BIG THREE: AK, AmK, DK DETAILED SUMMARY CARDS */}
+                                        <div className="space-y-3">
+                                            {/* 1. ATMAKARAKA (AK) */}
+                                            <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-amber-950/20 border border-amber-400/30 shadow-lg relative overflow-hidden space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-8 h-8 rounded-xl bg-amber-400/25 border border-amber-400/50 flex items-center justify-center font-black text-xs text-amber-300 shadow">
+                                                            AK
+                                                        </span>
+                                                        <div>
+                                                            <span className="text-[9px] font-black uppercase text-amber-300 tracking-wider block">
+                                                                Soul Planet (The King)
+                                                            </span>
+                                                            <h3 className="text-base font-black text-white">
+                                                                Atmakaraka • {akPlanet}
+                                                            </h3>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <span className="text-xs font-bold text-white block">{k.name}</span>
-                                                        <span className="text-[10px] text-slate-400 font-medium block">{k.signifies}</span>
-                                                    </div>
+                                                    <span className="text-xs font-black text-amber-300 bg-amber-400/20 px-3 py-1 rounded-full border border-amber-400/30">
+                                                        {ak?.degree !== undefined ? `${Math.floor(ak.degree)}° ${Math.floor((ak.degree % 1) * 60)}'` : akPlanet}
+                                                    </span>
                                                 </div>
-                                                <span className="text-xs font-black text-amber-300 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20">
-                                                    {k.planet}
+
+                                                <div className="space-y-1.5 pt-1 border-t border-amber-400/15">
+                                                    <h4 className="text-xs font-bold text-amber-200 flex items-center gap-1.5">
+                                                        <Crown size={13} className="text-amber-300" />
+                                                        {akMeaning.title}
+                                                    </h4>
+                                                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                                                        {akMeaning.summary}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                                    {akMeaning.keywords.map((kw, i) => (
+                                                        <span key={i} className="text-[10px] font-bold bg-amber-400/10 text-amber-300 px-2 py-0.5 rounded-md border border-amber-400/20">
+                                                            #{kw}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* 2. AMATYAKARAKA (AmK) */}
+                                            <div className="p-5 rounded-3xl bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-950/20 border border-purple-400/30 shadow-lg relative overflow-hidden space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-8 h-8 rounded-xl bg-purple-400/25 border border-purple-400/50 flex items-center justify-center font-black text-xs text-purple-200 shadow">
+                                                            AmK
+                                                        </span>
+                                                        <div>
+                                                            <span className="text-[9px] font-black uppercase text-purple-300 tracking-wider block">
+                                                                Career Planet (The Minister)
+                                                            </span>
+                                                            <h3 className="text-base font-black text-white">
+                                                                Amatyakaraka • {amkPlanet}
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-xs font-black text-purple-200 bg-purple-400/20 px-3 py-1 rounded-full border border-purple-400/30">
+                                                        {amk?.degree !== undefined ? `${Math.floor(amk.degree)}° ${Math.floor((amk.degree % 1) * 60)}'` : amkPlanet}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-1.5 pt-1 border-t border-purple-400/15">
+                                                    <h4 className="text-xs font-bold text-purple-200 flex items-center gap-1.5">
+                                                        <Briefcase size={13} className="text-purple-300" />
+                                                        {amkMeaning.title}
+                                                    </h4>
+                                                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                                                        {amkMeaning.summary}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                                    {amkMeaning.keywords.map((kw, i) => (
+                                                        <span key={i} className="text-[10px] font-bold bg-purple-400/10 text-purple-300 px-2 py-0.5 rounded-md border border-purple-400/20">
+                                                            #{kw}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* 3. DARAKARAKA (DK) */}
+                                            <div className="p-5 rounded-3xl bg-gradient-to-br from-rose-500/15 via-pink-500/10 to-rose-950/20 border border-rose-400/30 shadow-lg relative overflow-hidden space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-8 h-8 rounded-xl bg-rose-400/25 border border-rose-400/50 flex items-center justify-center font-black text-xs text-rose-200 shadow">
+                                                            DK
+                                                        </span>
+                                                        <div>
+                                                            <span className="text-[9px] font-black uppercase text-rose-300 tracking-wider block">
+                                                                Spouse & Partner Planet
+                                                            </span>
+                                                            <h3 className="text-base font-black text-white">
+                                                                Darakaraka • {dkPlanet}
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-xs font-black text-rose-200 bg-rose-400/20 px-3 py-1 rounded-full border border-rose-400/30">
+                                                        {dk?.degree !== undefined ? `${Math.floor(dk.degree)}° ${Math.floor((dk.degree % 1) * 60)}'` : dkPlanet}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-1.5 pt-1 border-t border-rose-400/15">
+                                                    <h4 className="text-xs font-bold text-rose-200 flex items-center gap-1.5">
+                                                        <Heart size={13} className="text-rose-300" fill="currentColor" />
+                                                        {dkMeaning.title}
+                                                    </h4>
+                                                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                                                        {dkMeaning.summary}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                                    {dkMeaning.keywords.map((kw, i) => (
+                                                        <span key={i} className="text-[10px] font-bold bg-rose-400/10 text-rose-300 px-2 py-0.5 rounded-md border border-rose-400/20">
+                                                            #{kw}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Complete 7 Jaimini Karakas Breakdown List */}
+                                        <CosmicCard noHover className="p-5 space-y-3">
+                                            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                                                <div>
+                                                    <h3 className="text-sm font-black text-white">Complete 7 Jaimini Karakas</h3>
+                                                    <p className="text-[10px] text-slate-400 font-medium">Calculated by Highest to Lowest Planetary Longitude</p>
+                                                </div>
+                                                <span className="text-[9px] font-extrabold uppercase bg-white/[0.06] text-amber-300 px-2 py-0.5 rounded-md border border-white/10">
+                                                    7 Scheme
                                                 </span>
                                             </div>
-                                        ))}
+                                            <div className="space-y-2">
+                                                {result.karakas.map((k) => (
+                                                    <div key={k.key} className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
+                                                                k.key === 'AK' ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow' :
+                                                                k.key === 'AmK' ? 'bg-purple-400/20 text-purple-300 border border-purple-400/40' :
+                                                                k.key === 'DK' ? 'bg-rose-400/20 text-rose-300 border border-rose-400/40' :
+                                                                'bg-white/[0.06] text-slate-300'
+                                                            }`}>
+                                                                {k.key}
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-xs font-bold text-white block">{k.name}</span>
+                                                                <span className="text-[10px] text-slate-400 font-medium block">{k.signifies}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className={`text-xs font-black px-2 py-0.5 rounded-lg border block ${
+                                                                k.key === 'AK' ? 'text-amber-300 bg-amber-400/10 border-amber-400/20' :
+                                                                k.key === 'AmK' ? 'text-purple-300 bg-purple-400/10 border-purple-400/20' :
+                                                                k.key === 'DK' ? 'text-rose-300 bg-rose-400/10 border-rose-400/20' :
+                                                                'text-white bg-white/[0.06] border-white/10'
+                                                            }`}>
+                                                                {k.planet}
+                                                            </span>
+                                                            {k.degree !== undefined && (
+                                                                <span className="text-[9px] font-mono text-slate-400 block mt-0.5">
+                                                                    {Math.floor(k.degree)}° {Math.floor((k.degree % 1) * 60)}'
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </CosmicCard>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-2.5">
+                                            <button
+                                                onClick={() => setResult(null)}
+                                                className="flex-1 py-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
+                                            >
+                                                <RotateCcw size={14} /> Calculate Again
+                                            </button>
+                                            <button
+                                                onClick={handleShareAtmakaraka}
+                                                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+                                            >
+                                                <Share2 size={14} /> Share Karakas
+                                            </button>
+                                        </div>
                                     </div>
-                                </CosmicCard>
-                            )}
+                                );
+                            })()}
 
                             {/* 5. DASHA PERIODS RESULT */}
                             {type === "dasha-periods" && result?.dashas?.list && (
@@ -1650,66 +2527,403 @@ export default function CalculatorClient({ type: propType }) {
                                 </CosmicCard>
                             )}
 
-                            {/* 6. YOGINI DASHA RESULT */}
+                            {/* 6. YOGINI DASHA RESULT WITH POPUP & SHARE */}
                             {type === "yogini-dasha" && result?.list && (
-                                <CosmicCard noHover className="p-5 space-y-4">
-                                    <div className="text-center">
-                                        <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Yogini Dasha (36 Years)</span>
-                                        <h3 className="text-lg font-black text-white mt-0.5">8 Sacred Yogini Deities</h3>
+                                <div className="space-y-4">
+                                    <CosmicCard noHover className="p-5 space-y-4">
+                                        <div className="text-center">
+                                            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Yogini Dasha (36 Years)</span>
+                                            <h3 className="text-lg font-black text-white mt-0.5">8 Sacred Yogini Deities</h3>
+                                            <p className="text-[10px] text-purple-200/70 mt-1">Tap the CURRENT period (or any period) to view in-depth summary, effects & remedies</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {result.list.map((y, idx) => {
+                                                const isCurrent = new Date() >= new Date(y.start) && new Date() <= new Date(y.end);
+                                                return (
+                                                    <div 
+                                                        key={idx}
+                                                        onClick={() => setSelectedYogini(y)}
+                                                        className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] ${
+                                                            isCurrent 
+                                                                ? 'bg-purple-600/30 border-purple-400/60 shadow-lg shadow-purple-500/15 hover:border-purple-300 ring-1 ring-purple-400/30' 
+                                                                : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20'
+                                                        }`}
+                                                    >
+                                                        <div>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-xs font-bold text-white">
+                                                                    {y.name} ({y.lord})
+                                                                </span>
+                                                                {isCurrent && (
+                                                                    <span className="text-[8px] bg-purple-400/25 text-purple-200 px-2 py-0.5 rounded-full border border-purple-400/40 uppercase font-black tracking-wider animate-pulse flex items-center gap-1">
+                                                                        <Sparkles size={8} /> Current • Tap Summary
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[10px] text-slate-400 block mt-0.5">
+                                                                {y.start} to {y.end} ({y.duration} yrs)
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-lg border ${
+                                                                isCurrent 
+                                                                    ? 'bg-purple-400/20 text-purple-200 border-purple-400/40' 
+                                                                    : 'bg-white/[0.04] text-slate-400 border-white/10'
+                                                            }`}>
+                                                                {isCurrent ? "Active" : `${y.duration}y`}
+                                                            </span>
+                                                            <Info size={14} className={isCurrent ? "text-purple-300" : "text-slate-500"} />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </CosmicCard>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2.5">
+                                        <button
+                                            onClick={() => setResult(null)}
+                                            className="flex-1 py-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
+                                        >
+                                            <RotateCcw size={14} /> Calculate Again
+                                        </button>
+                                        <button
+                                            onClick={handleShareYoginiDasha}
+                                            className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-purple-500/20 cursor-pointer"
+                                        >
+                                            <Share2 size={14} /> Share Yogini Dasha
+                                        </button>
                                     </div>
-                                    <div className="space-y-2">
-                                        {result.list.map((y, idx) => {
-                                            const isCurrent = new Date() >= new Date(y.start) && new Date() <= new Date(y.end);
-                                            return (
-                                                <div 
-                                                    key={idx}
-                                                    className={`p-3 rounded-2xl border flex items-center justify-between ${
-                                                        isCurrent 
-                                                            ? 'bg-purple-600/25 border-purple-400/40 shadow-sm' 
-                                                            : 'bg-white/[0.03] border-white/10'
-                                                    }`}
+
+                                    {/* YOGINI DASHA SUMMARY POPUP MODAL */}
+                                    <AnimatePresence>
+                                        {selectedYogini && (
+                                            <div 
+                                                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+                                                onClick={() => setSelectedYogini(null)}
+                                            >
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-full max-w-md max-h-[88vh] overflow-y-auto bg-[#0d1020] border border-purple-500/30 rounded-3xl p-6 shadow-2xl relative text-left space-y-4"
                                                 >
-                                                    <div>
-                                                        <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                                                            {y.name} ({y.lord})
-                                                            {isCurrent && <span className="text-[8px] bg-purple-400/20 text-purple-300 px-1.5 py-0.5 rounded-full border border-purple-400/30 uppercase font-extrabold">Current</span>}
-                                                        </span>
-                                                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                                                            {y.start} to {y.end} ({y.duration} yrs)
+                                                    {/* Close Button */}
+                                                    <button
+                                                        onClick={() => setSelectedYogini(null)}
+                                                        className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+
+                                                    {/* Header */}
+                                                    <div className="flex items-center gap-3 pr-8">
+                                                        <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-xl text-purple-300 shadow">
+                                                            <Sparkles size={22} className="text-purple-300" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="text-xl font-black text-white">
+                                                                    {selectedYogini.name} Dasha
+                                                                </h3>
+                                                                {(() => {
+                                                                    const isCur = new Date() >= new Date(selectedYogini.start) && new Date() <= new Date(selectedYogini.end);
+                                                                    return isCur ? (
+                                                                        <span className="text-[8px] bg-purple-400/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-400/40 uppercase font-black tracking-wider">
+                                                                            Current
+                                                                        </span>
+                                                                    ) : null;
+                                                                })()}
+                                                            </div>
+                                                            <span className="text-xs text-purple-200/80 font-semibold block">
+                                                                Governed by {selectedYogini.lord} • {selectedYogini.duration} Years Cycle
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Date Span Badge */}
+                                                    <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between text-xs">
+                                                        <div>
+                                                            <span className="text-[9px] text-slate-400 uppercase font-bold block">Period Duration</span>
+                                                            <span className="font-extrabold text-white">{selectedYogini.start} to {selectedYogini.end}</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                                            {selectedYogini.duration} Years
                                                         </span>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </CosmicCard>
+
+                                                    {/* Nature & Key Themes */}
+                                                    {(() => {
+                                                        const info = YOGINI_DETAILS[selectedYogini.name] || {};
+                                                        return (
+                                                            <>
+                                                                {/* Nature Pill */}
+                                                                {info.nature && (
+                                                                    <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-500/15 via-indigo-500/10 to-transparent border border-purple-400/20">
+                                                                        <span className="text-[9px] text-amber-300 font-black uppercase tracking-wider block">
+                                                                            Cosmic Nature & Deity
+                                                                        </span>
+                                                                        <p className="text-xs font-bold text-white mt-0.5">
+                                                                            {info.nature} • {info.deity || selectedYogini.lord}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Core Meaning & Summary */}
+                                                                <div className="space-y-1.5">
+                                                                    <span className="text-[9px] text-purple-300 font-black uppercase tracking-wider block">
+                                                                        Core Meaning & Influence
+                                                                    </span>
+                                                                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                                                                        {info.coreMeaning || "This Yogini period brings key karmic developments aligned with its planetary ruler."}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Key Manifestations */}
+                                                                {info.effects && info.effects.length > 0 && (
+                                                                    <div className="space-y-1.5">
+                                                                        <span className="text-[9px] text-amber-300 font-black uppercase tracking-wider block">
+                                                                            Key Manifestations & Themes
+                                                                        </span>
+                                                                        <div className="grid grid-cols-1 gap-1.5">
+                                                                            {info.effects.map((eff, i) => (
+                                                                                <div key={i} className="text-xs text-slate-300 flex items-start gap-2 bg-white/[0.03] p-2 rounded-xl border border-white/5">
+                                                                                    <span className="text-purple-400 font-black">•</span>
+                                                                                    <span>{eff}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Remedies */}
+                                                                {info.remedies && (
+                                                                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/25 space-y-1">
+                                                                        <span className="text-[9px] text-amber-300 font-black uppercase tracking-wider flex items-center gap-1.5">
+                                                                            <Shield size={12} /> Spiritual Remedies & Best Practices
+                                                                        </span>
+                                                                        <p className="text-xs text-amber-100/90 leading-relaxed font-medium">
+                                                                            {info.remedies}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
+
+                                                    {/* Sub-Periods (Antardashas) Preview if available */}
+                                                    {selectedYogini.subPeriods && selectedYogini.subPeriods.length > 0 && (
+                                                        <div className="space-y-2 pt-2 border-t border-white/10">
+                                                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">
+                                                                Sub-Periods (Antardashas in {selectedYogini.name})
+                                                            </span>
+                                                            <div className="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pr-1">
+                                                                {selectedYogini.subPeriods.map((sub, sIdx) => {
+                                                                    const isSubCur = new Date() >= new Date(sub.start) && new Date() <= new Date(sub.end);
+                                                                    return (
+                                                                        <div 
+                                                                            key={sIdx}
+                                                                            className={`p-2 rounded-xl text-[10px] border ${
+                                                                                isSubCur 
+                                                                                    ? 'bg-purple-600/30 border-purple-400/50 text-white font-bold' 
+                                                                                    : 'bg-white/[0.03] border-white/5 text-slate-300'
+                                                                            }`}
+                                                                        >
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span>{sub.name}</span>
+                                                                                {isSubCur && <span className="text-[8px] text-purple-300 font-black uppercase">Now</span>}
+                                                                            </div>
+                                                                            <span className="text-[9px] text-slate-400 block mt-0.5">{sub.start}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Modal Action Buttons */}
+                                                    <div className="flex gap-2.5 pt-2">
+                                                        <button
+                                                            onClick={() => setSelectedYogini(null)}
+                                                            className="flex-1 py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                                                        >
+                                                            Close
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleShareSpecificYogini(selectedYogini)}
+                                                            className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shadow-purple-500/20 cursor-pointer"
+                                                        >
+                                                            <Share2 size={13} /> Share Period
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            </div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
                             )}
 
-                            {/* 7. MOON SIGN / RASHI RESULT */}
-                            {type === "moon-sign" && result?.planets?.Moon && (
-                                <CosmicCard noHover className="p-6 text-center space-y-4">
-                                    <div className="w-16 h-16 rounded-3xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-3xl mx-auto shadow-inner text-purple-300">
-                                        {ZODIAC_SYMBOLS[SIGNS[result.planets.Moon.sign - 1]] || "🌙"}
-                                    </div>
-                                    <div>
-                                        <span className="text-[10px] font-extrabold text-purple-300 uppercase tracking-widest">Your Vedic Moon Sign</span>
-                                        <h2 className="text-3xl font-black text-white mt-1">{SIGNS[result.planets.Moon.sign - 1]} Rashi</h2>
-                                        <p className="text-xs text-slate-300 mt-2 max-w-xs mx-auto leading-relaxed">
-                                            Your Moon sign reflects your inner emotions, instincts, intuitive intellect, and mental disposition.
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 pt-2 text-left">
-                                        <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                                            <span className="text-[9px] text-slate-400 font-bold uppercase block">Birth Star</span>
-                                            <span className="text-xs font-bold text-white block mt-0.5">{result.dashas?.birthNakshatra || "-"}</span>
+                            {/* 7. MOON SIGN / RASHI RESULT - FULL DETAILS & SHARE */}
+                            {type === "moon-sign" && (result?.planets?.Moon || result?.moonSignName) && (() => {
+                                const signIndex = (result.planets?.Moon?.sign || 1) - 1;
+                                const moonSign = result.moonSignName || SIGNS[signIndex] || "Aries";
+                                const moonLong = result.planets?.Moon?.longitude || 0;
+                                const moonDeg = result.moonDeg || (moonLong % 30).toFixed(2);
+                                const birthStar = result.nakshatraName || result.dashas?.birthNakshatra || result.panchang?.nakshatra || "-";
+
+                                let pada = result.pada || result.charts?.D9?.Moon?.nakshatraPada || result.planets?.Moon?.nakshatraPada;
+                                if (!pada && moonLong > 0) {
+                                    const degInNak = moonLong % (40 / 3);
+                                    pada = Math.floor(degInNak / (10 / 3)) + 1;
+                                }
+                                if (!pada || pada < 1 || pada > 4) pada = 1;
+
+                                const rasiPada = result.rasiPada || Math.floor((moonLong % 30) / (10 / 3)) + 1;
+                                const tithi = result.tithi || result.panchang?.tithi || "-";
+                                const vara = result.vara || result.panchang?.vara || "-";
+                                const relation = result.relation || result.planets?.Moon?.relation || "Neutral";
+
+                                const rashiInfo = RASHI_DATA[moonSign] || {
+                                    sanskrit: "Chandra Rashi",
+                                    lord: "Moon",
+                                    element: "Water",
+                                    quality: "Chara (Movable)",
+                                    symbol: "🌙",
+                                    deity: "Lord Shiva",
+                                    traits: "Your Moon sign reflects your inner emotions, instincts, intuitive intellect, and mental disposition."
+                                };
+
+                                const nakMeta = NAKSHATRA_DATA[birthStar] || {};
+                                const nakLord = result.nakshatraLord || nakMeta.lord || "-";
+                                const nakDeity = result.nakshatraDeity || nakMeta.deity || "-";
+
+                                return (
+                                    <div className="space-y-4">
+                                        <CosmicCard noHover className="p-6 text-center space-y-4 relative overflow-hidden">
+                                            {/* Glow Accent */}
+                                            <div className="absolute top-0 right-0 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+                                            {/* Zodiac Symbol */}
+                                            <div className="w-20 h-20 rounded-3xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-4xl mx-auto shadow-inner text-purple-300 drop-shadow-[0_2px_12px_rgba(168,85,247,0.5)]">
+                                                {ZODIAC_SYMBOLS[moonSign] || "🌙"}
+                                            </div>
+
+                                            <div>
+                                                <span className="text-[10px] font-black text-purple-300 uppercase tracking-[0.25em] block">
+                                                    Your Vedic Moon Sign
+                                                </span>
+                                                <h2 className="text-3xl font-black text-white mt-1 tracking-tight">
+                                                    {moonSign} Rashi
+                                                </h2>
+                                                {rashiInfo.sanskrit && (
+                                                    <p className="text-xs font-semibold text-purple-200/80 mt-0.5">
+                                                        {rashiInfo.sanskrit}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-purple-500/25 text-purple-200 border border-purple-500/40 shadow-sm">
+                                                        <Star size={12} className="text-amber-300" fill="currentColor" />
+                                                        {birthStar} • Pada {pada}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/[0.06] text-slate-300 border border-white/10">
+                                                        Rasi Paada {rasiPada} of 9
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Astrological Identity Grid (Matching Web!) */}
+                                            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 text-left space-y-3 mt-4">
+                                                <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                                                    <Sparkles size={14} className="text-purple-300" />
+                                                    <h4 className="text-xs font-black text-white uppercase tracking-wider">
+                                                        Astrological Identity & Panchang
+                                                    </h4>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Moon Sign (Rashi)</p>
+                                                        <p className="text-xs font-extrabold text-purple-300 mt-0.5">{moonSign} Rashi</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Birth Star (Nakshatra)</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{birthStar}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Rasi Paada (Charan)</p>
+                                                        <p className="text-xs font-extrabold text-amber-300 mt-0.5">Pada {pada}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Moon Celestial Degree</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{moonDeg}°</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Rashi Lord (Ruling Planet)</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{rashiInfo.lord}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Elemental Tattva</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{rashiInfo.element}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Sign Nature / Quality</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{rashiInfo.quality}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Moon Dignity (Status)</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{relation}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Birth Tithi</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{tithi}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Birth Vara (Day)</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{vara}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Nakshatra Lord</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{nakLord}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Presiding Deity</p>
+                                                        <p className="text-xs font-extrabold text-white mt-0.5">{nakDeity}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Emotional Nature & Mind Profile Card */}
+                                            <div className="bg-gradient-to-r from-purple-600/15 via-indigo-600/10 to-transparent border border-purple-500/20 rounded-2xl p-4 text-left space-y-1.5">
+                                                <span className="text-[9px] font-black uppercase text-purple-300 tracking-wider">
+                                                    Emotional Nature & Mind Profile
+                                                </span>
+                                                <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                                                    {rashiInfo.traits}
+                                                </p>
+                                            </div>
+                                        </CosmicCard>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-2.5">
+                                            <button
+                                                onClick={() => setResult(null)}
+                                                className="flex-1 py-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
+                                            >
+                                                <RotateCcw size={14} /> Calculate Again
+                                            </button>
+                                            <button
+                                                onClick={handleShareMoonSign}
+                                                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-purple-500/20 cursor-pointer"
+                                            >
+                                                <Share2 size={14} /> Share Rashi
+                                            </button>
                                         </div>
-                                        <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                                            <span className="text-[9px] text-slate-400 font-bold uppercase block">Moon Degree</span>
-                                            <span className="text-xs font-bold text-white block mt-0.5">{(result.planets.Moon.longitude % 30).toFixed(2)}°</span>
-                                        </div>
                                     </div>
-                                </CosmicCard>
-                            )}
+                                );
+                            })()}
 
                             {/* 8. NUMEROLOGY RESULT */}
                             {type === "numerology" && result?.lifePath && (
@@ -1794,36 +3008,229 @@ export default function CalculatorClient({ type: propType }) {
                             )}
 
                             {/* 12. MARRIAGE & CAREER TIMING RESULT */}
-                            {type === "marriage-career" && result?.marriage && (
-                                <CosmicCard noHover className="p-5 space-y-4">
-                                    <div className="text-center">
-                                        <span className="text-[10px] font-bold text-rose-300 uppercase tracking-widest">Favorable Astrological Windows</span>
-                                        <h3 className="text-lg font-black text-white mt-0.5">Upcoming Auspicious Timings</h3>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {result.marriage.slice(0, 4).map((m, idx) => (
-                                            <div key={idx} className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 space-y-1">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold text-white">{m.mahadasha} - {m.antardasha}</span>
-                                                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border ${m.strength === 'High' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'}`}>
-                                                        {m.strength} Favorability
-                                                    </span>
+                            {type === "marriage-career" && result && (
+                                <div className="space-y-4">
+                                    {/* Astrological Identity Banner (7th Lord & 10th Lord) */}
+                                    <CosmicCard noHover className="p-4 space-y-3">
+                                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500/20 to-purple-500/20 border border-rose-500/30 flex items-center justify-center text-rose-300">
+                                                    <Sparkles size={16} />
                                                 </div>
-                                                <span className="text-[10px] text-slate-400 block">{m.start} to {m.end}</span>
-                                                {m.reason && <p className="text-[10px] text-slate-300">{m.reason}</p>}
+                                                <div>
+                                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">
+                                                        Astrological Significators
+                                                    </span>
+                                                    <h3 className="text-sm font-black text-white">
+                                                        Ruling House Lords & Karakas
+                                                    </h3>
+                                                </div>
                                             </div>
-                                        ))}
+                                            <span className="text-[10px] font-bold text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                                                D1 & Vimshottari
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2.5">
+                                            <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                                                <div className="flex items-center gap-1.5 text-rose-300 mb-0.5">
+                                                    <Heart size={12} />
+                                                    <span className="text-[9px] font-black uppercase tracking-wider">7th Lord (Marriage)</span>
+                                                </div>
+                                                <p className="text-sm font-black text-white">
+                                                    {result.meta?.seventhLord || "Venus"}
+                                                </p>
+                                                <span className="text-[9px] text-slate-400 block mt-0.5 truncate">
+                                                    Significators: {result.meta?.marriageKarakas?.join(", ") || "Venus, 7th Lord"}
+                                                </span>
+                                            </div>
+
+                                            <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                                <div className="flex items-center gap-1.5 text-blue-300 mb-0.5">
+                                                    <Briefcase size={12} />
+                                                    <span className="text-[9px] font-black uppercase tracking-wider">10th Lord (Career)</span>
+                                                </div>
+                                                <p className="text-sm font-black text-white">
+                                                    {result.meta?.tenthLord || "Sun"}
+                                                </p>
+                                                <span className="text-[9px] text-slate-400 block mt-0.5 truncate">
+                                                    Significators: {result.meta?.careerKarakas?.join(", ") || "Sun, Saturn, 10th Lord"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </CosmicCard>
+
+                                    {/* Tabs for Marriage and Career Favorables */}
+                                    <div className="flex p-1.5 bg-white/[0.06] rounded-2xl border border-white/10 gap-1.5">
+                                        <button
+                                            onClick={() => setTimingTab("marriage")}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                                timingTab === "marriage"
+                                                    ? "bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/25 ring-1 ring-rose-400/50"
+                                                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                                            }`}
+                                        >
+                                            <Heart size={14} className={timingTab === "marriage" ? "text-white fill-white/20" : "text-rose-400"} />
+                                            <span>Marriage ({result.marriage?.length || 0})</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setTimingTab("career")}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                                timingTab === "career"
+                                                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 ring-1 ring-blue-400/50"
+                                                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                                            }`}
+                                        >
+                                            <Briefcase size={14} className={timingTab === "career" ? "text-white" : "text-blue-400"} />
+                                            <span>Career ({result.career?.length || 0})</span>
+                                        </button>
                                     </div>
-                                </CosmicCard>
+
+                                    {/* Tab Content Header / Explanatory Note */}
+                                    <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                                        timingTab === "marriage"
+                                            ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
+                                            : "bg-blue-500/10 border-blue-500/20 text-blue-200"
+                                    }`}>
+                                        <p className="font-medium text-[11px]">
+                                            {timingTab === "marriage" 
+                                                ? "Favorable marriage periods calculated through the 7th house lord, natural significators (Venus/Jupiter), and Vimshottari Mahadasha/Antardasha alignments."
+                                                : "Professional expansion and promotion windows calculated through the 10th house lord, career karakas (Sun, Saturn, Mercury), and supporting dasha transits."
+                                            }
+                                        </p>
+                                    </div>
+
+                                    {/* Favorable Periods List */}
+                                    <CosmicCard noHover className="p-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                {timingTab === "marriage" ? (
+                                                    <Heart size={16} className="text-rose-400" />
+                                                ) : (
+                                                    <Briefcase size={16} className="text-blue-400" />
+                                                )}
+                                                <h3 className="text-sm font-black text-white">
+                                                    {timingTab === "marriage" ? "Auspicious Marriage Windows" : "Favorable Career Windows"}
+                                                </h3>
+                                            </div>
+                                            <span className="text-[10px] font-extrabold text-slate-400">
+                                                {timingTab === "marriage" 
+                                                    ? `${result.marriage?.length || 0} Periods` 
+                                                    : `${result.career?.length || 0} Periods`}
+                                            </span>
+                                        </div>
+
+                                        {(() => {
+                                            const periods = (timingTab === "marriage" ? result.marriage : result.career) || [];
+                                            const displayedPeriods = showAllTimings ? periods : periods.slice(0, 6);
+
+                                            if (periods.length === 0) {
+                                                return (
+                                                    <div className="py-8 text-center text-slate-400 text-xs">
+                                                        No specific favorable periods identified in this dasha cycle.
+                                                    </div>
+                                                );
+                                            }
+
+                                            const now = new Date();
+
+                                            return (
+                                                <div className="space-y-2.5">
+                                                    {displayedPeriods.map((p, idx) => {
+                                                        const isCurrent = now >= new Date(p.start) && now <= new Date(p.end);
+                                                        const isVeryHigh = p.strength === "Very High";
+
+                                                        return (
+                                                            <div 
+                                                                key={idx} 
+                                                                className={`p-3.5 rounded-2xl border transition-all ${
+                                                                    isCurrent
+                                                                        ? "bg-purple-600/20 border-purple-400/50 shadow-md shadow-purple-500/10 ring-1 ring-purple-400/30"
+                                                                        : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05]"
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-start justify-between gap-2">
+                                                                    <div>
+                                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                                            <span className="px-2 py-0.5 rounded-md bg-indigo-500/25 border border-indigo-500/40 text-indigo-200 text-xs font-bold">
+                                                                                {p.mahadasha}
+                                                                            </span>
+                                                                            <span className="text-slate-400 text-xs">/</span>
+                                                                            <span className="px-2 py-0.5 rounded-md bg-purple-500/25 border border-purple-500/40 text-purple-200 text-xs font-bold">
+                                                                                {p.antardasha}
+                                                                            </span>
+                                                                            {isCurrent && (
+                                                                                <span className="bg-purple-400/25 text-purple-200 border border-purple-400/40 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider animate-pulse flex items-center gap-1">
+                                                                                    <Sparkles size={8} /> Active Now
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1.5 font-medium">
+                                                                            <Calendar size={11} className="text-slate-500" />
+                                                                            <span>{p.start} to {p.end}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                                                                        isVeryHigh 
+                                                                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" 
+                                                                            : "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                                                                    }`}>
+                                                                        {p.strength} Favorability
+                                                                    </span>
+                                                                </div>
+
+                                                                {p.reason && (
+                                                                    <div className="mt-2 pt-2 border-t border-white/5 flex items-start gap-1.5">
+                                                                        <Info size={12} className="text-slate-400 mt-0.5 shrink-0" />
+                                                                        <p className="text-[10px] text-slate-300 leading-relaxed font-medium">
+                                                                            {p.reason}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+
+                                                    {periods.length > 6 && (
+                                                        <button
+                                                            onClick={() => setShowAllTimings(!showAllTimings)}
+                                                            className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-bold text-xs transition-all cursor-pointer"
+                                                        >
+                                                            {showAllTimings ? "Show Less" : `View All ${periods.length} Favorable Windows`}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+                                    </CosmicCard>
+
+                                    {/* Action Buttons: Calculate Again & Share */}
+                                    <div className="flex gap-2.5">
+                                        <button
+                                            onClick={() => setResult(null)}
+                                            className="flex-1 py-3.5 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
+                                        >
+                                            <RotateCcw size={14} /> Calculate Again
+                                        </button>
+                                        <button
+                                            onClick={handleShareTiming}
+                                            className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-purple-500/20 cursor-pointer"
+                                        >
+                                            <Share2 size={14} /> Share Timings
+                                        </button>
+                                    </div>
+                                </div>
                             )}
 
-                            {/* Recalculate Button */}
-                            <button
-                                onClick={() => setResult(null)}
-                                className="w-full py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-                            >
-                                <RotateCcw size={14} /> Calculate Again / Change Details
-                            </button>
+                            {/* Recalculate Button for other calculators */}
+                            {type !== "ascendant" && type !== "nakshatra" && type !== "moon-sign" && type !== "atmakaraka" && type !== "yogini-dasha" && type !== "marriage-career" && (
+                                <button
+                                    onClick={() => setResult(null)}
+                                    className="w-full py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                                >
+                                    <RotateCcw size={14} /> Calculate Again / Change Details
+                                </button>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

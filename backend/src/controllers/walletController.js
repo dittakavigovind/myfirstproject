@@ -118,13 +118,27 @@ exports.verifyPayment = async (req, res) => {
                 return res.status(200).json({ success: true, message: 'Payment already verified' });
             }
 
-            // 2. Update Transaction
+            // 2. Fetch Payment Method & Details from Razorpay if available
+            let paymentMethod = req.body.paymentMethod || null;
+            try {
+                const payment = await razorpay.payments.fetch(razorpay_payment_id);
+                if (payment && payment.method) {
+                    paymentMethod = payment.method;
+                }
+            } catch (fetchErr) {
+                console.warn('Could not fetch payment method from Razorpay:', fetchErr.message);
+            }
+
+            // 3. Update Transaction
             transaction.status = 'success';
             transaction.paymentId = razorpay_payment_id;
+            if (paymentMethod) {
+                transaction.paymentMethod = paymentMethod;
+            }
             transaction.description = 'Wallet Recharge - Success';
             await transaction.save();
 
-            // 3. Update User Balance
+            // 4. Update User Balance
             const user = await User.findByIdAndUpdate(
                 req.user.id,
                 { $inc: { walletBalance: transaction.amount + (transaction.bonusAmount || 0) } },

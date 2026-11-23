@@ -131,8 +131,55 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: null, totalBalance: { $sum: '$walletBalance' } } }
         ]);
 
+        // Online Paid Recharges (Gateway transactions, excluding manual admin adjustments)
+        const onlineRechargeAgg = await Transaction.aggregate([
+            {
+                $match: {
+                    status: 'success',
+                    referenceModel: { $in: ['Recharge', 'WalletRecharge'] },
+                    description: { $not: /manual/i },
+                    ...dateFilter
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaid: {
+                        $sum: {
+                            $ifNull: [
+                                '$totalAmount',
+                                { $add: ['$amount', { $ifNull: ['$gstAmount', 0] }] }
+                            ]
+                        }
+                    },
+                    totalBase: { $sum: '$amount' },
+                    totalGst: { $sum: { $ifNull: ['$gstAmount', 0] } }
+                }
+            }
+        ]);
+
+        // Manual Wallet Recharges granted by admin (no payment gateway / GST)
+        const manualRechargeAgg = await Transaction.aggregate([
+            {
+                $match: {
+                    status: 'success',
+                    $or: [
+                        { description: /manual/i },
+                        { referenceModel: 'ManualWallet' }
+                    ],
+                    ...dateFilter
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalManual: { $sum: '$amount' }
+                }
+            }
+        ]);
+
         const gstAggregate = await Transaction.aggregate([
-            { $match: { status: 'success', referenceModel: { $in: ['Recharge', 'WalletRecharge'] }, ...dateFilter } },
+            { $match: { status: 'success', referenceModel: { $in: ['Recharge', 'WalletRecharge'] }, description: { $not: /manual/i }, ...dateFilter } },
             { $group: { _id: null, totalGst: { $sum: '$gstAmount' } } }
         ]);
 
@@ -141,6 +188,7 @@ exports.getDashboardStats = async (req, res) => {
                 $match: {
                     status: 'success',
                     referenceModel: { $in: ['Recharge', 'WalletRecharge'] },
+                    description: { $not: /manual/i },
                     ...todayFilter
                 }
             },
@@ -162,7 +210,10 @@ exports.getDashboardStats = async (req, res) => {
             activeChats,
             totalChatMinutes: Math.floor((revenueAggregate[0]?.totalDuration || 0) / 60),
             totalUserWallets: walletAggregate[0]?.totalBalance || 0,
-            totalGst: gstAggregate[0]?.totalGst || 0,
+            totalOnlinePaid: onlineRechargeAgg[0]?.totalPaid || 0,
+            totalOnlineRechargeBase: onlineRechargeAgg[0]?.totalBase || 0,
+            totalManualRecharge: manualRechargeAgg[0]?.totalManual || 0,
+            totalGst: onlineRechargeAgg[0]?.totalGst || gstAggregate[0]?.totalGst || 0,
             todayGst: todayGstAggregate[0]?.todayGst || 0,
             totalDormantFunds: dormantAggregate[0]?.totalDormantFunds || 0
         });
@@ -616,6 +667,127 @@ exports.getAllTransactions = async (req, res) => {
     } catch (error) {
         console.error('GetAllTransactions Error:', error);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Sync / Check transaction status with Razorpay
+// @route   POST /api/admin/transactions/:id/sync-status
+// @access  Private/Admin
+exports.syncTransactionStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const transaction = await Transaction.findById(id).populate('user', 'name email phone role isDeleted');
+        if (!transaction) {
+            return res.status(404).json({ success: false, message: 'Transaction not found' });
+        }
+
+        const Razorpay = require('razorpay');
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        let updated = false;
+        let razorpayInfo = null;
+
+        // 1. If paymentId exists, fetch directly from Razorpay
+        if (transaction.paymentId) {
+            try {
+                const payment = await razorpay.payments.fetch(transaction.paymentId);
+                if (payment) {
+                    razorpayInfo = {
+                        paymentId: payment.id,
+                        status: payment.status,
+                        method: payment.method,
+                        amount: payment.amount / 100
+                    };
+
+                    if (payment.method && transaction.paymentMethod !== payment.method) {
+                        transaction.paymentMethod = payment.method;
+                        updated = true;
+                    }
+
+                    if (payment.status === 'captured' && transaction.status !== 'success') {
+                        transaction.status = 'success';
+                        transaction.description = 'Wallet Recharge - Success (Synced)';
+                        await User.findByIdAndUpdate(
+                            transaction.user._id,
+                            { $inc: { walletBalance: transaction.amount + (transaction.bonusAmount || 0) } }
+                        );
+                        updated = true;
+                    } else if (payment.status === 'failed' && transaction.status === 'pending') {
+                        transaction.status = 'failed';
+                        transaction.description = 'Wallet Recharge - Failed (Synced)';
+                        updated = true;
+                    }
+                }
+            } catch (pErr) {
+                console.warn('Sync payment fetch error:', pErr.message);
+            }
+        }
+
+        // 2. If orderId exists and (pending or missing paymentMethod)
+        if (transaction.orderId) {
+            try {
+                const orderPayments = await razorpay.orders.fetchPayments(transaction.orderId);
+                if (orderPayments && orderPayments.items && orderPayments.items.length > 0) {
+                    const capturedPayment = orderPayments.items.find(p => p.status === 'captured');
+                    if (capturedPayment) {
+                        transaction.paymentId = capturedPayment.id;
+                        transaction.paymentMethod = capturedPayment.method;
+                        razorpayInfo = {
+                            paymentId: capturedPayment.id,
+                            status: capturedPayment.status,
+                            method: capturedPayment.method,
+                            amount: capturedPayment.amount / 100
+                        };
+
+                        if (transaction.status !== 'success') {
+                            transaction.status = 'success';
+                            transaction.description = 'Wallet Recharge - Success (Synced via Order)';
+                            await User.findByIdAndUpdate(
+                                transaction.user._id,
+                                { $inc: { walletBalance: transaction.amount + (transaction.bonusAmount || 0) } }
+                            );
+                        }
+                        updated = true;
+                    } else {
+                        const allFailed = orderPayments.items.every(p => p.status === 'failed');
+                        if (allFailed && transaction.status === 'pending') {
+                            transaction.status = 'failed';
+                            transaction.description = 'Wallet Recharge - Failed (All attempts failed)';
+                            const latestPayment = orderPayments.items[0];
+                            if (latestPayment?.method) transaction.paymentMethod = latestPayment.method;
+                            updated = true;
+                        }
+                    }
+                } else if (transaction.status === 'pending') {
+                    const ageInMs = Date.now() - new Date(transaction.createdAt).getTime();
+                    if (ageInMs > 30 * 60 * 1000) {
+                        transaction.status = 'failed';
+                        transaction.description = 'Wallet Recharge - Expired (Checkout Abandoned)';
+                        updated = true;
+                    }
+                }
+            } catch (oErr) {
+                console.warn('Sync order payments fetch error:', oErr.message);
+            }
+        }
+
+        if (updated) {
+            await transaction.save();
+        }
+
+        res.json({
+            success: true,
+            updated,
+            message: updated ? 'Transaction status synced with Razorpay' : 'Transaction already up to date',
+            transaction,
+            razorpayInfo
+        });
+    } catch (error) {
+        console.error('Sync Transaction Status Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error syncing transaction status' });
     }
 };
 

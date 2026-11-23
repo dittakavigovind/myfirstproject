@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function PullToRefresh({ onRefresh, children }) {
+    const pathname = usePathname();
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [pullProgress, setPullProgress] = useState(0);
     const controls = useAnimation();
@@ -18,20 +20,33 @@ export default function PullToRefresh({ onRefresh, children }) {
     const threshold = 100;
     const maxPull = 150;
 
+    // Reset container scroll position and animations on route changes
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.scrollTop = 0;
+        }
+        controls.set({ y: 0 });
+        spinnerControls.set({ y: -50, rotate: 0, opacity: 0 });
+    }, [pathname]);
+
     useEffect(() => {
         // We attach listeners to the container
         const container = containerRef.current;
         if (!container) return;
 
         const handleTouchStart = (e) => {
-            if (container.scrollTop <= 0) {
-                startY.current = e.touches[0].clientY;
-                isPulling.current = true;
+            if (container.scrollTop <= 0 && e.touches.length > 0) {
+                const y = e.touches[0].clientY;
+                startY.current = y;
+                currentY.current = y;
+                isPulling.current = false;
+            } else {
+                isPulling.current = false;
             }
         };
 
         const handleTouchMove = (e) => {
-            if (!isPulling.current || isRefreshing) return;
+            if (isRefreshing || e.touches.length === 0) return;
 
             if (container.scrollTop > 0) {
                 isPulling.current = false;
@@ -44,8 +59,9 @@ export default function PullToRefresh({ onRefresh, children }) {
             currentY.current = e.touches[0].clientY;
             const deltaY = currentY.current - startY.current;
 
-            if (deltaY > 0) {
-                const pullDistance = Math.min(deltaY * 0.4, maxPull);
+            if (deltaY > 15) {
+                isPulling.current = true;
+                const pullDistance = Math.min((deltaY - 15) * 0.4, maxPull);
                 controls.set({ y: pullDistance });
 
                 const progress = Math.min(pullDistance / threshold, 1);
@@ -57,17 +73,29 @@ export default function PullToRefresh({ onRefresh, children }) {
                     opacity: progress
                 });
             } else {
+                isPulling.current = false;
                 controls.set({ y: 0 });
                 spinnerControls.set({ y: -50, rotate: 0, opacity: 0 });
             }
         };
 
         const handleTouchEnd = async () => {
-            if (!isPulling.current || isRefreshing) return;
+            if (!isPulling.current || isRefreshing) {
+                isPulling.current = false;
+                startY.current = 0;
+                currentY.current = 0;
+                controls.start({ y: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+                spinnerControls.start({ y: -50, opacity: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+                setPullProgress(0);
+                return;
+            }
             isPulling.current = false;
 
             const deltaY = currentY.current - startY.current;
-            const pullDistance = Math.min(deltaY * 0.4, maxPull);
+            const pullDistance = Math.min(Math.max(deltaY - 15, 0) * 0.4, maxPull);
+
+            startY.current = 0;
+            currentY.current = 0;
 
             if (pullDistance >= threshold) {
                 setIsRefreshing(true);
@@ -94,10 +122,6 @@ export default function PullToRefresh({ onRefresh, children }) {
                 spinnerControls.start({ y: -50, opacity: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
                 setPullProgress(0);
             }
-
-            // Reset Y coordinates
-            startY.current = 0;
-            currentY.current = 0;
         };
 
         container.addEventListener("touchstart", handleTouchStart, { passive: true });

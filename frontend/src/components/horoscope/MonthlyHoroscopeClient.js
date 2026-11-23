@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import API from '@/lib/api';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Droplet, Calendar as CalendarIcon, Briefcase, Heart, Activity } from 'lucide-react';
+import { Droplet, Calendar as CalendarIcon, Briefcase, Heart, Activity, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { format, addMonths, subMonths } from 'date-fns';
 import FeaturedAstrologerCard from '@/components/horoscope/FeaturedAstrologerCard';
 import HeroSection from '@/components/common/HeroSection';
@@ -81,6 +83,37 @@ export default function MonthlyHoroscopeClient() {
 
     const theme = ZODIAC_THEMES[selectedSign] || ZODIAC_THEMES['aries'];
 
+    const handleShare = async () => {
+        const signObj = SIGNS.find(s => s.name.toLowerCase() === selectedSign);
+        const signName = signObj?.name || selectedSign;
+        const signIcon = signObj?.icon || '✨';
+        const monthStr = format(currentDate, 'MMMM yyyy');
+
+        const shareTitle = `Way2Astro • Monthly Horoscope for ${signName} (${monthStr})`;
+        const shareText = `🔮 Way2Astro • Monthly Horoscope 🔮\n${signIcon} ${signName} • ${monthStr}\n\n"${horoscopeData?.title || 'Monthly Cosmic Vision'}"\n\n📜 Overview:\n${horoscopeData?.overview || ''}\n\n💼 Career: ${horoscopeData?.career || ''}\n💍 Love: ${horoscopeData?.love || ''}\n🌿 Health: ${horoscopeData?.health || ''}\n\n✨ Discover your Vedic monthly horoscope & Kundli on Way2Astro:`;
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://way2astro.com/monthly-horoscope';
+
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            try {
+                await navigator.share({
+                    title: shareTitle,
+                    text: `${shareText}\n${shareUrl}`,
+                    url: shareUrl
+                });
+                return;
+            } catch (e) {
+                if (e?.name === 'AbortError') return;
+            }
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            toast.success(`${signName} Horoscope copied to clipboard!`);
+        } else {
+            toast.success("Horoscope ready to share!");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 pb-20 overflow-x-hidden">
             {/* Premium Hero Section */}
@@ -126,8 +159,23 @@ export default function MonthlyHoroscopeClient() {
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
-                    className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-2 md:p-2 mb-12 flex flex-col items-center gap-8"
+                    className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-2 md:p-3 mb-12 flex flex-col items-center gap-6"
                 >
+                    {/* Timeframe Switcher Tabs & Share Button */}
+                    <div className="w-full flex items-center justify-between px-3 pt-2 pb-1 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                            <Link href="/daily-horoscope" className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all">Daily</Link>
+                            <Link href="/weekly-horoscope" className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all">Weekly</Link>
+                            <span className="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white shadow-sm">Monthly</span>
+                        </div>
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold shadow-sm hover:from-indigo-600 hover:to-purple-700 transition-all cursor-pointer active:scale-95"
+                        >
+                            <Share2 size={14} /> Share
+                        </button>
+                    </div>
+
                     {/* Sign Selector */}
                     <div className="w-full">
                         <div className="flex overflow-x-auto gap-3 py-2 px-2 no-scrollbar md:grid md:grid-cols-6 lg:grid-cols-12 md:gap-3 md:justify-items-center snap-x md:snap-none">

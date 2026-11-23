@@ -53,6 +53,13 @@ exports.getAstrologerReviews = async (req, res) => {
             reviewerName: r.reviewerName || (r.userId && r.userId.name) || 'Anonymous',
             reviewerGender: r.reviewerGender || null,
             profileImage: (r.userId && r.userId.profileImage) || null,
+            reply: r.reply && r.reply.comment ? {
+                comment: r.reply.comment,
+                createdAt: r.reply.createdAt,
+                updatedAt: r.reply.updatedAt,
+                editCount: r.reply.editCount || 0,
+                isEdited: r.reply.isEdited || false
+            } : null,
             createdAt: r.createdAt
         }));
 
@@ -79,6 +86,13 @@ exports.getMyReviews = async (req, res) => {
             comment: r.comment,
             reviewerName: r.reviewerName || (r.userId && r.userId.name) || 'Anonymous',
             profileImage: (r.userId && r.userId.profileImage) || null,
+            reply: r.reply && r.reply.comment ? {
+                comment: r.reply.comment,
+                createdAt: r.reply.createdAt,
+                updatedAt: r.reply.updatedAt,
+                editCount: r.reply.editCount || 0,
+                isEdited: r.reply.isEdited || false
+            } : null,
             createdAt: r.createdAt
         }));
 
@@ -159,6 +173,131 @@ exports.deleteReview = async (req, res) => {
         res.json({ success: true, message: 'Review deleted successfully' });
     } catch (err) {
         console.error('Delete Review Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// Astrologer: Reply to a review (Allowed only once)
+exports.replyToReview = async (req, res) => {
+    try {
+        const { comment } = req.body;
+        const { id: reviewId } = req.params;
+
+        if (!comment || !comment.trim()) {
+            return res.status(400).json({ success: false, message: 'Reply comment is required' });
+        }
+
+        // 1. Verify authenticated user is an astrologer
+        const astrologer = await Astrologer.findOne({ userId: req.user.id || req.user._id });
+        if (!astrologer) {
+            return res.status(403).json({ success: false, message: 'Only astrologers can reply to reviews' });
+        }
+
+        // 2. Fetch the review
+        const review = await Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({ success: false, message: 'Review not found' });
+        }
+
+        // 3. Authorization check: Only the astrologer who received the review can reply
+        if (review.astrologerId.toString() !== astrologer._id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Unauthorized: You can only reply to reviews on your own profile' 
+            });
+        }
+
+        // 4. One-time reply check: Cannot reply if a reply already exists
+        if (review.reply && review.reply.comment) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'You have already replied to this review. You can only edit your existing reply once.' 
+            });
+        }
+
+        // 5. Save the reply
+        review.reply = {
+            comment: comment.trim(),
+            createdAt: new Date(),
+            updatedAt: null,
+            editCount: 0,
+            isEdited: false
+        };
+
+        await review.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Reply posted successfully',
+            data: review.reply
+        });
+    } catch (err) {
+        console.error('Reply To Review Error:', err);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// Astrologer: Modify reply (Allowed only once)
+exports.updateReviewReply = async (req, res) => {
+    try {
+        const { comment } = req.body;
+        const { id: reviewId } = req.params;
+
+        if (!comment || !comment.trim()) {
+            return res.status(400).json({ success: false, message: 'Updated reply comment is required' });
+        }
+
+        // 1. Verify authenticated user is an astrologer
+        const astrologer = await Astrologer.findOne({ userId: req.user.id || req.user._id });
+        if (!astrologer) {
+            return res.status(403).json({ success: false, message: 'Only astrologers can modify replies' });
+        }
+
+        // 2. Fetch the review
+        const review = await Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({ success: false, message: 'Review not found' });
+        }
+
+        // 3. Authorization check: Only the astrologer who received the review can modify
+        if (review.astrologerId.toString() !== astrologer._id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Unauthorized: You can only edit replies on your own profile reviews' 
+            });
+        }
+
+        // 4. Verify reply exists
+        if (!review.reply || !review.reply.comment) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No existing reply found to edit. Please post a reply first.' 
+            });
+        }
+
+        // 5. Strict modification check: Allowed to modify only once
+        if (review.reply.editCount >= 1) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'You have already modified your reply once. Further modifications are not permitted.' 
+            });
+        }
+
+        // 6. Update the reply and increment editCount
+        review.reply.comment = comment.trim();
+        review.reply.updatedAt = new Date();
+        review.reply.editCount = (review.reply.editCount || 0) + 1;
+        review.reply.isEdited = true;
+
+        await review.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Reply modified successfully',
+            data: review.reply
+        });
+    } catch (err) {
+        console.error('Update Review Reply Error:', err);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };

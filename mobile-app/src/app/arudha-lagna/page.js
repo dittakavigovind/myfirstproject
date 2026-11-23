@@ -14,8 +14,10 @@ import {
     Info, 
     CheckCircle2, 
     Star, 
-    RotateCcw 
+    RotateCcw,
+    Share2
 } from "lucide-react";
+import { Share } from "@capacitor/share";
 import { useBirthDetails } from "@/context/BirthDetailsContext";
 import LocationSearch from "@/components/LocationSearch";
 import CosmicCard from "@/components/CosmicCard";
@@ -46,6 +48,28 @@ export default function ArudhaLagnaPage() {
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+
+    // Reset scroll to top on mount and whenever result changes
+    useEffect(() => {
+        const scrollToTop = () => {
+            const container = document.getElementById("main-scroll-container");
+            if (container) {
+                container.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+        };
+
+        scrollToTop();
+        const rAF = requestAnimationFrame(scrollToTop);
+        const timer = setTimeout(scrollToTop, 60);
+
+        return () => {
+            cancelAnimationFrame(rAF);
+            clearTimeout(timer);
+        };
+    }, [result]);
 
     useEffect(() => {
         if (isInitialized && birthDetails) {
@@ -110,6 +134,36 @@ export default function ArudhaLagnaPage() {
     };
 
     const signInterpretation = result ? arudhaInterpretations[result.signName] : null;
+
+    const handleShare = async () => {
+        if (!result) return;
+        const shareText = `🛡️ My Arudha Lagna (AL - Public Image & Persona):\n\n✨ Arudha Sign: ${result.signName} (${ZODIAC_SYMBOLS[result.signName] || ''})\n👑 Lagna Sign: ${result.lagnaSignName} (${result.lagnaSign})\n🪐 Lagna Lord: ${result.lagnaLord}\n${signInterpretation?.keyTraits ? `🌟 Key Aura: ${signInterpretation.keyTraits.join(', ')}\n` : ''}\nDiscover what the cosmos projects about you in the world on Way2Astro:\nhttps://way2astro.com/arudha-lagna`;
+
+        try {
+            if (typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform()) {
+                await Share.share({
+                    title: "My Arudha Lagna (Way2Astro)",
+                    text: shareText,
+                    dialogTitle: "Share Arudha Lagna Result"
+                });
+            } else if (navigator.share) {
+                await navigator.share({
+                    title: "My Arudha Lagna (Way2Astro)",
+                    text: shareText,
+                });
+            } else {
+                await navigator.clipboard.writeText(shareText);
+                toast.success("Result copied to clipboard!");
+            }
+        } catch (e) {
+            if (e?.name !== "AbortError") {
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    toast.success("Result copied to clipboard!");
+                } catch (_) {}
+            }
+        }
+    };
 
     return (
         <div className="space-y-4 animate-in fade-in duration-500 pb-24 overflow-x-hidden">
@@ -371,13 +425,28 @@ export default function ArudhaLagnaPage() {
                             </div>
                         )}
 
-                        {/* Recalculate Button */}
-                        <button
-                            onClick={() => setResult(null)}
-                            className="w-full py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-                        >
-                            <RotateCcw size={14} /> Calculate Again / Change Details
-                        </button>
+                        {/* Share & Recalculate Buttons */}
+                        <div className="space-y-2.5 pt-2">
+                            <button
+                                type="button"
+                                onClick={handleShare}
+                                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-black font-black text-xs flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(245,158,11,0.35)] active:scale-95 transition-all cursor-pointer"
+                            >
+                                <Share2 size={16} className="text-black" /> Share Arudha Lagna Result
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setResult(null);
+                                    const container = document.getElementById("main-scroll-container");
+                                    if (container) container.scrollTop = 0;
+                                }}
+                                className="w-full py-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                            >
+                                <RotateCcw size={14} /> Calculate Again / Change Details
+                            </button>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

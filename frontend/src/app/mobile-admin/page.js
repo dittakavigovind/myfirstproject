@@ -1,11 +1,29 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Activity, Users, DollarSign, Clock, Receipt, X, Video, Phone, List, Radio } from 'lucide-react';
+import Link from 'next/link';
+import { 
+    Activity, Users, DollarSign, Clock, Receipt, X, Video, Phone, List, 
+    Radio, CreditCard, Gift, Filter, ShieldCheck, ArrowRight 
+} from 'lucide-react';
 import API from '../../lib/api';
 
 export default function MobileAdminDashboard() {
-    const [stats, setStats] = useState({ users: 0, astrologers: 0, revenue: 0, totalChatMinutes: 0, activeChats: 0, totalUserWallets: 0 });
+    const [stats, setStats] = useState({ 
+        users: 0, 
+        astrologers: 0, 
+        revenue: 0, 
+        totalChatMinutes: 0, 
+        activeChats: 0, 
+        totalUserWallets: 0,
+        totalOnlinePaid: 0,
+        totalOnlineRechargeBase: 0,
+        totalManualRecharge: 0,
+        totalGst: 0,
+        todayGst: 0,
+        totalDormantFunds: 0
+    });
+    const [vaultFilter, setVaultFilter] = useState('all'); // 'all', 'online', 'manual', 'gst'
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -93,6 +111,67 @@ export default function MobileAdminDashboard() {
 
     const isFiltered = Boolean(startDate && endDate);
 
+    const vaultConfig = {
+        all: {
+            title: "Total Ecosystem Vault (Locked User Liquidity)",
+            badge: "ALL VAULT LIQUIDITY",
+            amount: stats.totalUserWallets || 0,
+            description: "Sum total of all active user wallet balances available to be spent across consultations and chats.",
+            breakdown: `Includes Gateway Paid (₹${Number(stats.totalOnlineRechargeBase || 0).toFixed(2)}) + Admin Grants (₹${Number(stats.totalManualRecharge || 0).toFixed(2)})`,
+            gradient: "from-emerald-950/70 via-slate-900 to-teal-950/50",
+            border: "border-emerald-500/40",
+            accentText: "text-emerald-400",
+            bgIcon: "bg-emerald-500/20 border-emerald-500/30 text-emerald-400",
+            icon: DollarSign,
+            link: "/mobile-admin/finance",
+            linkText: "View Financial Ledger"
+        },
+        online: {
+            title: "Online Paid Recharges (Gateway Revenue)",
+            badge: "RAZORPAY GATEWAY PAID",
+            amount: stats.totalOnlinePaid || 0,
+            description: "Total gross revenue collected from users through Razorpay (Base wallet credit + 18% statutory GST).",
+            breakdown: `Base Wallet: ₹${Number(stats.totalOnlineRechargeBase || 0).toFixed(2)} | 18% GST: ₹${Number(stats.totalGst || 0).toFixed(2)}`,
+            gradient: "from-blue-950/70 via-slate-900 to-indigo-950/50",
+            border: "border-blue-500/40",
+            accentText: "text-blue-400",
+            bgIcon: "bg-blue-500/20 border-blue-500/30 text-blue-400",
+            icon: CreditCard,
+            link: "/mobile-admin/finance?type=paid_recharges&status=success",
+            linkText: "View Online Paid Recharges"
+        },
+        manual: {
+            title: "Manual Wallet Grants (Promotional/Free Credits)",
+            badge: "ADMIN MANUAL GRANTS",
+            amount: stats.totalManualRecharge || 0,
+            description: "Promotional and test wallet balances granted manually by admin. Excluded from GST and gateway revenue.",
+            breakdown: "100% Platform Sponsored • Zero Gateway Fee • Zero GST",
+            gradient: "from-amber-950/70 via-slate-900 to-orange-950/50",
+            border: "border-amber-500/40",
+            accentText: "text-amber-400",
+            bgIcon: "bg-amber-500/20 border-amber-500/30 text-amber-400",
+            icon: Gift,
+            link: "/mobile-admin/finance?type=manual&status=success",
+            linkText: "View Manual Grants Ledger"
+        },
+        gst: {
+            title: "Total GST Collected (18% Statutory Tax)",
+            badge: "STATUTORY TAX (18%)",
+            amount: stats.totalGst || 0,
+            description: "18% Goods & Services Tax collected strictly on online recharges for government compliance.",
+            breakdown: "18% Statutory Tax on Online Recharges • Zero Tax on Free Manual Grants",
+            gradient: "from-purple-950/70 via-slate-900 to-fuchsia-950/50",
+            border: "border-purple-500/40",
+            accentText: "text-purple-400",
+            bgIcon: "bg-purple-500/20 border-purple-500/30 text-purple-400",
+            icon: Receipt,
+            link: "/mobile-admin/finance?type=gst_recharges&status=success",
+            linkText: "View GST Paid Transactions"
+        }
+    };
+    const currentVault = vaultConfig[vaultFilter] || vaultConfig.all;
+    const CurrentVaultIcon = currentVault.icon;
+
     if (loading) return <div>Loading Analytics...</div>;
 
     return (
@@ -127,15 +206,189 @@ export default function MobileAdminDashboard() {
                 </div>
             </div>
 
-            <div className="bg-gradient-to-r from-emerald-900/50 to-teal-900/50 border border-emerald-500/30 p-8 rounded-3xl shadow-2xl flex items-center gap-6">
-                 <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center shrink-0 border border-emerald-500/20">
-                     <DollarSign size={32} />
-                 </div>
-                 <div>
-                     <p className="text-emerald-400 font-bold uppercase tracking-widest text-xs">Total Ecosystem Vault (Locked User Liquidity)</p>
-                     <h2 className="text-5xl font-black text-white mt-2 tracking-tight">₹ {(stats.totalUserWallets || 0).toLocaleString()}</h2>
-                     <p className="text-slate-400 text-sm mt-2">Sum total of all active user wallet balances available to be spent on the platform.</p>
-                 </div>
+            {/* Interactive Ecosystem Vault Card */}
+            <div className={`bg-gradient-to-r ${currentVault.gradient} border ${currentVault.border} p-6 sm:p-8 rounded-3xl shadow-2xl transition-all duration-300 relative overflow-hidden`}>
+                {/* Background decorative glow */}
+                <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                {/* Filter Tab Bar at Top of Card */}
+                <div className="flex items-center justify-between flex-wrap gap-3 pb-5 mb-6 border-b border-white/10 relative z-10">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5 mr-1">
+                            <Filter size={14} className={currentVault.accentText} /> Vault Filter:
+                        </span>
+                        <div className="inline-flex p-1 bg-slate-950/80 rounded-xl border border-slate-800 flex-wrap gap-1">
+                            <button
+                                onClick={() => setVaultFilter('all')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                                    vaultFilter === 'all'
+                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                                }`}
+                            >
+                                <DollarSign size={13} /> All Vault
+                            </button>
+                            <button
+                                onClick={() => setVaultFilter('online')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                                    vaultFilter === 'online'
+                                        ? 'bg-blue-500/20 text-blue-300 border border-blue-400/50 shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                                }`}
+                            >
+                                <CreditCard size={13} /> Online Paid
+                            </button>
+                            <button
+                                onClick={() => setVaultFilter('manual')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                                    vaultFilter === 'manual'
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                                }`}
+                            >
+                                <Gift size={13} /> Manual
+                            </button>
+                            <button
+                                onClick={() => setVaultFilter('gst')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                                    vaultFilter === 'gst'
+                                        ? 'bg-purple-500/20 text-purple-300 border border-purple-400/50 shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                                }`}
+                            >
+                                <Receipt size={13} /> GST (18%)
+                            </button>
+                        </div>
+                    </div>
+
+                    <Link
+                        href={currentVault.link}
+                        className={`text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 bg-white/5 hover:bg-white/10 ${currentVault.accentText} border border-white/10 shadow-sm`}
+                    >
+                        <span>{currentVault.linkText}</span>
+                        <ArrowRight size={13} />
+                    </Link>
+                </div>
+
+                {/* Hero Metric & Description */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    <div className="flex items-start gap-4 sm:gap-6">
+                        <div className={`w-16 h-16 sm:w-20 sm:h-20 ${currentVault.bgIcon} rounded-2xl flex items-center justify-center shrink-0 border shadow-lg transition-transform hover:scale-105`}>
+                            <CurrentVaultIcon size={36} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-white/10 ${currentVault.accentText}`}>
+                                    {currentVault.badge}
+                                </span>
+                                <span className="text-slate-400 text-xs font-medium">{currentVault.title}</span>
+                            </div>
+                            <h2 className="text-4xl sm:text-5xl font-black text-white mt-1.5 tracking-tight">
+                                ₹ {Number(currentVault.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </h2>
+                            <p className="text-slate-300 text-sm mt-1.5 max-w-2xl">{currentVault.description}</p>
+                            <div className="mt-2.5 flex items-center gap-2 text-xs font-mono text-slate-300 bg-black/30 px-3 py-1 rounded-lg w-fit border border-white/10">
+                                <ShieldCheck size={14} className={currentVault.accentText} />
+                                <span>{currentVault.breakdown}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Interactive 4-Card Selector Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10 relative z-10">
+                    {/* 1. All Vault */}
+                    <div
+                        onClick={() => setVaultFilter('all')}
+                        className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                            vaultFilter === 'all'
+                                ? 'bg-emerald-950/70 border-emerald-500/70 ring-2 ring-emerald-500/50 shadow-lg'
+                                : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                                <DollarSign size={12} /> All Vault
+                            </span>
+                            {vaultFilter === 'all' && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">ACTIVE</span>
+                            )}
+                        </div>
+                        <p className="text-lg sm:text-xl font-black text-white tracking-tight">
+                            ₹ {Number(stats.totalUserWallets || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">Total Active Liquidity</p>
+                    </div>
+
+                    {/* 2. Online Paid */}
+                    <div
+                        onClick={() => setVaultFilter('online')}
+                        className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                            vaultFilter === 'online'
+                                ? 'bg-blue-950/70 border-blue-500/70 ring-2 ring-blue-500/50 shadow-lg'
+                                : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
+                                <CreditCard size={12} /> Online Paid
+                            </span>
+                            {vaultFilter === 'online' && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">ACTIVE</span>
+                            )}
+                        </div>
+                        <p className="text-lg sm:text-xl font-black text-white tracking-tight">
+                            ₹ {Number(stats.totalOnlinePaid || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">Razorpay Gross Paid</p>
+                    </div>
+
+                    {/* 3. Manual Added */}
+                    <div
+                        onClick={() => setVaultFilter('manual')}
+                        className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                            vaultFilter === 'manual'
+                                ? 'bg-amber-950/70 border-amber-500/70 ring-2 ring-amber-500/50 shadow-lg'
+                                : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                                <Gift size={12} /> Manual Grants
+                            </span>
+                            {vaultFilter === 'manual' && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">ACTIVE</span>
+                            )}
+                        </div>
+                        <p className="text-lg sm:text-xl font-black text-white tracking-tight">
+                            ₹ {Number(stats.totalManualRecharge || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">Admin Promotional</p>
+                    </div>
+
+                    {/* 4. GST */}
+                    <div
+                        onClick={() => setVaultFilter('gst')}
+                        className={`cursor-pointer p-3.5 rounded-2xl border transition-all ${
+                            vaultFilter === 'gst'
+                                ? 'bg-purple-950/70 border-purple-500/70 ring-2 ring-purple-500/50 shadow-lg'
+                                : 'bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1">
+                                <Receipt size={12} /> Total GST (18%)
+                            </span>
+                            {vaultFilter === 'gst' && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">ACTIVE</span>
+                            )}
+                        </div>
+                        <p className="text-lg sm:text-xl font-black text-white tracking-tight">
+                            ₹ {Number(stats.totalGst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">18% Online Tax</p>
+                    </div>
+                </div>
             </div>
 
             <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 p-8 rounded-3xl shadow-2xl flex justify-between items-center flex-wrap gap-6">

@@ -39,6 +39,29 @@ const reviewSchema = new mongoose.Schema({
     isPublished: {
         type: Boolean,
         default: true
+    },
+    reply: {
+        comment: {
+            type: String,
+            trim: true,
+            default: null
+        },
+        createdAt: {
+            type: Date,
+            default: null
+        },
+        updatedAt: {
+            type: Date,
+            default: null
+        },
+        editCount: {
+            type: Number,
+            default: 0
+        },
+        isEdited: {
+            type: Boolean,
+            default: false
+        }
     }
 }, { timestamps: true });
 

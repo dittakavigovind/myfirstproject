@@ -111,12 +111,14 @@ export default function WalletPage() {
     };
 
     const handleRechargeClick = () => {
+        if (processing) return;
         const amount = getRechargeAmount();
         if (amount <= 0) return;
         setShowBreakdown(true);
     };
 
     const handleConfirmRecharge = async () => {
+        if (processing) return;
         const amount = getRechargeAmount();
         if (amount <= 0) return;
         
@@ -131,14 +133,20 @@ export default function WalletPage() {
             const res = await API.post('/wallet/recharge', payload);
             if (res.data.success) {
                 const orderId = res.data.order_id;
+                const totalPayPaise = Math.round((res.data.totalAmount || (amount * (gstConfig.enabled ? (1 + gstConfig.percentage / 100) : 1))) * 100);
                 
                 const options = {
                     key: res.data.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-                    amount: (amount * 100).toString(),
+                    amount: totalPayPaise.toString(),
                     currency: 'INR',
                     name: 'Way2Astro',
                     description: 'Wallet Recharge',
                     order_id: orderId,
+                    prefill: {
+                        name: user?.name || '',
+                        email: user?.email || '',
+                        contact: user?.phone || ''
+                    },
                     theme: { color: '#6b21a8' }
                 };
 
@@ -170,6 +178,7 @@ export default function WalletPage() {
                         console.error('Verify error:', verifyError);
                     }
                 } catch (error) {
+                    console.warn('Checkout cancelled or error:', error);
                     toast.error('Payment Cancelled or Failed');
                     try {
                         await API.post('/wallet/cancel-payment', { order_id: orderId });
@@ -389,8 +398,9 @@ export default function WalletPage() {
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="w-full max-w-md bg-astro-dark border-t border-white/10 rounded-t-[2.5rem] p-6 pb-32 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-300 relative">
                         <button 
-                            onClick={() => setShowBreakdown(false)}
-                            className="absolute top-4 right-4 p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10"
+                            onClick={() => !processing && setShowBreakdown(false)}
+                            disabled={processing}
+                            className="absolute top-4 right-4 p-2 bg-white/5 rounded-full text-white/60 hover:bg-white/10 disabled:opacity-40"
                         >
                             <span className="sr-only">Close</span>
                             <Plus size={20} className="rotate-45" />
@@ -423,9 +433,17 @@ export default function WalletPage() {
 
                         <button
                             onClick={handleConfirmRecharge}
-                            className="w-full h-14 rounded-[2rem] bg-gradient-to-r from-solar-gold to-orange-500 text-astro-navy font-black text-lg shadow-xl shadow-solar-gold/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                            disabled={processing}
+                            className="w-full h-14 rounded-[2rem] bg-gradient-to-r from-solar-gold to-orange-500 text-astro-navy font-black text-lg shadow-xl shadow-solar-gold/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            Proceed to Pay ₹{(getRechargeAmount() * (gstConfig.enabled ? (1 + gstConfig.percentage / 100) : 1)).toFixed(2)}
+                            {processing ? (
+                                <span className="flex items-center gap-2">
+                                    <span className="w-5 h-5 border-2 border-astro-navy border-t-transparent rounded-full animate-spin" />
+                                    Opening Payment Gateway...
+                                </span>
+                            ) : (
+                                `Proceed to Pay ₹${(getRechargeAmount() * (gstConfig.enabled ? (1 + gstConfig.percentage / 100) : 1)).toFixed(2)}`
+                            )}
                         </button>
                     </div>
                 </div>

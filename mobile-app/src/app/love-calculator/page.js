@@ -29,6 +29,28 @@ export default function LoveCalculatorPage() {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // Reset scroll to top on mount and whenever result changes
+    useEffect(() => {
+        const scrollToTop = () => {
+            const container = document.getElementById("main-scroll-container");
+            if (container) {
+                container.scrollTop = 0;
+            }
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+        };
+
+        scrollToTop();
+        const rAF = requestAnimationFrame(scrollToTop);
+        const timer = setTimeout(scrollToTop, 60);
+
+        return () => {
+            cancelAnimationFrame(rAF);
+            clearTimeout(timer);
+        };
+    }, [result]);
+
     const calculateLove = (e) => {
         e.preventDefault();
         if (!names.name1.trim() || !names.name2.trim()) return;

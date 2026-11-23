@@ -21,7 +21,8 @@ import {
     Ban,
     Flag,
     Unlock,
-    AlertCircle
+    AlertCircle,
+    CornerDownRight
 } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import api from "@/lib/api";
@@ -588,6 +589,20 @@ export default function AstrologerProfileClient() {
                                     </div>
                                 </div>
                                 <p className="text-xs text-slate-300 leading-relaxed font-normal">{rev.comment}</p>
+
+                                {rev.reply && rev.reply.comment && (
+                                    <div className="mt-2.5 pt-2 border-t border-white/5 pl-2.5 border-l-2 border-l-electric-violet/50 bg-white/[0.02] rounded-r-xl p-2.5">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-[10px] font-bold text-electric-violet flex items-center gap-1">
+                                                <CornerDownRight size={10} /> Astrologer&apos;s Response
+                                            </span>
+                                            {rev.reply.isEdited && (
+                                                <span className="text-[8px] text-slate-500 italic">(Edited)</span>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-slate-300 leading-relaxed font-normal">{rev.reply.comment}</p>
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}

@@ -85,15 +85,21 @@ export default function Home() {
     if (user && user.role !== 'astrologer' && !user.isGuest) {
       const pollInterval = setInterval(pollAstrologers, 15000);
 
-      // Fetch following list
-      api.get("/users/following").then(res => {
+      // Fetch following list silently
+      api.get("/users/following", {
+        headers: { 'X-Silent-Error': 'true' },
+        silent: true
+      }).then(res => {
         if (res.data && res.data.success && res.data.following) {
           setFollowingIds(res.data.following.map(a => a._id || a.id));
         }
       }).catch(err => console.warn("Failed to fetch following", err));
 
-      // Fetch chat history for most interacted
-      api.get("/chat/history").then(res => {
+      // Fetch chat history for most interacted silently
+      api.get("/chat/history", {
+        headers: { 'X-Silent-Error': 'true' },
+        silent: true
+      }).then(res => {
         if (res.data && res.data.success && res.data.sessions) {
           const counts = {};
           res.data.sessions.forEach(session => {
@@ -111,10 +117,15 @@ export default function Home() {
   }, [user]);
 
   const fetchDashboardData = async () => {
+    // Safety timer: ensure loading spinner never gets stuck indefinitely
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 6000);
+
     try {
       const isAstro = user?.role === 'astrologer';
 
-      // Fetch horoscope, astrologers (if applicable), and blogs in parallel
+      // Fetch horoscope, astrologers (if applicable), and blogs in parallel with safe fallbacks
       const fetchPromises = [
         api.get("/horoscope-manager/daily").catch(() => ({ data: { data: null } })),
         api.get("/blog/posts?limit=5").catch(() => ({ data: { data: [] } })),
@@ -132,24 +143,25 @@ export default function Home() {
       const settingsRes = results[2];
       const astroRes = !isAstro ? results[3] : { data: { data: [] } };
 
-      if (horoscopeRes.data && horoscopeRes.data.data) {
+      if (horoscopeRes?.data && horoscopeRes.data.data) {
         setHoroscope(horoscopeRes.data.data);
       }
 
-      if (settingsRes.data && settingsRes.data.settings) {
+      if (settingsRes?.data && settingsRes.data.settings) {
         setSiteSettings(settingsRes.data.settings);
       }
 
-      if (!isAstro && astroRes.data && astroRes.data.data) {
+      if (!isAstro && astroRes?.data && astroRes.data.data) {
         setAstrologers(astroRes.data.data);
       }
 
-      if (blogRes.data && blogRes.data.data) {
+      if (blogRes?.data && blogRes.data.data) {
         setBlogs(blogRes.data.data);
       }
     } catch (error) {
       console.warn("Notice: Error fetching dashboard data:", error);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
   };
@@ -157,8 +169,11 @@ export default function Home() {
   const pollAstrologers = async () => {
     if (user?.role === 'astrologer') return;
     try {
-      const astroRes = await api.get("/astro/astrologers");
-      if (astroRes.data && astroRes.data.data) {
+      const astroRes = await api.get("/astro/astrologers", {
+        headers: { 'X-Silent-Error': 'true' },
+        silent: true
+      });
+      if (astroRes?.data && astroRes.data.data) {
         setAstrologers(astroRes.data.data);
       }
     } catch (error) {
@@ -467,7 +482,16 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 text-center py-4">No live astrologers right now.</p>
+            <div className="text-center py-4 space-y-2">
+              <p className="text-xs text-slate-400">No live astrologers right now.</p>
+              <button
+                type="button"
+                onClick={() => { setLoading(true); fetchDashboardData(); }}
+                className="px-3 py-1 rounded-full bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 text-[10px] font-bold active:scale-95 transition-all"
+              >
+                ↻ Refresh
+              </button>
+            </div>
           )}
         </div>
       )}
