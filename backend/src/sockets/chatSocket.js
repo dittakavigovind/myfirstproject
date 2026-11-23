@@ -375,8 +375,23 @@ function chatSocket(io) {
 
             const pricePerMinute = session.pricePerMinute;
             const user = await User.findById(session.userId);
+            if (!user) return false;
+
+            // Strict protection against duplicate/over-billing:
+            // Calculate how many minutes are permitted based on actual elapsed time from startTime
+            const now = new Date();
+            const elapsedSeconds = session.startTime ? Math.max(0, Math.floor((now - session.startTime) / 1000)) : 0;
+            // At 0-59s elapsed -> max 1 minute billed. At 60-119s -> max 2 minutes billed, etc.
+            const maxAllowedMinutes = Math.floor(elapsedSeconds / 60) + 1;
+            const currentBilledMinutes = pricePerMinute > 0 ? Math.round((session.totalAmountDeducted || 0) / pricePerMinute) : 0;
+
+            if (currentBilledMinutes >= maxAllowedMinutes) {
+                console.log(`[BillingEngine] Room ${roomId} already billed ${currentBilledMinutes} min(s) for elapsed ${elapsedSeconds}s (max allowed ${maxAllowedMinutes}). Skipping redundant deduction.`);
+                return true;
+            }
 
             if (user.walletBalance < pricePerMinute) {
+                console.log(`[BillingEngine] Insufficient balance for user ${user._id} in room ${roomId}. Ending session.`);
                 await terminateSession(roomId, io, 'Insufficient wallet balance', 'system');
                 return false;
             }
@@ -402,14 +417,19 @@ function chatSocket(io) {
             const platformFee = (pricePerMinute * platformFeePercentage) / 100;
             const earnings = pricePerMinute - platformFee;
 
-            // Update Session amount and shares
-            await Session.findByIdAndUpdate(session._id, {
-                $inc: {
-                    totalAmountDeducted: pricePerMinute,
-                    platformShare: platformFee,
-                    astrologerShare: earnings
-                }
-            });
+            // Atomically update Session amount, shares and duration in ONE atomic operation
+            const updatedSessionDoc = await Session.findByIdAndUpdate(
+                session._id,
+                {
+                    $inc: {
+                        totalAmountDeducted: pricePerMinute,
+                        platformShare: platformFee,
+                        astrologerShare: earnings,
+                        totalDuration: 60
+                    }
+                },
+                { new: true }
+            );
 
             // Add to Astrologer earnings
             await Astrologer.findByIdAndUpdate(session.astrologerId, {
@@ -420,9 +440,11 @@ function chatSocket(io) {
             });
 
             // Also update the User record for the astrologer so the profile page shows the balance
-            await User.findByIdAndUpdate(astrologerInfo.userId, {
-                $inc: { walletBalance: earnings }
-            });
+            if (astrologerInfo.userId) {
+                await User.findByIdAndUpdate(astrologerInfo.userId, {
+                    $inc: { walletBalance: earnings }
+                });
+            }
 
             // Record Transactions
             await Transaction.findOneAndUpdate(
@@ -442,30 +464,28 @@ function chatSocket(io) {
                 { upsert: true, new: true }
             );
 
-            await Transaction.findOneAndUpdate(
-                {
-                    user: astrologerInfo.userId,
-                    referenceModel: 'Session',
-                    referenceId: session._id,
-                    type: 'credit'
-                },
-                {
-                    $inc: { amount: earnings },
-                    $set: {
-                        status: 'success',
-                        description: `Chat earning for session ${roomId}`
-                    }
-                },
-                { upsert: true, new: true }
-            );
-
-            // Update Session duration
-            session.totalDuration += 60;
-            await session.save();
+            if (astrologerInfo.userId) {
+                await Transaction.findOneAndUpdate(
+                    {
+                        user: astrologerInfo.userId,
+                        referenceModel: 'Session',
+                        referenceId: session._id,
+                        type: 'credit'
+                    },
+                    {
+                        $inc: { amount: earnings },
+                        $set: {
+                            status: 'success',
+                            description: `Chat earning for session ${roomId}`
+                        }
+                    },
+                    { upsert: true, new: true }
+                );
+            }
 
             // Notify Room with actual elapsed time, not billed time
-            const actualElapsedSeconds = session.startTime
-                ? Math.floor((new Date() - session.startTime) / 1000)
+            const actualElapsedSeconds = updatedSessionDoc.startTime
+                ? Math.floor((new Date() - updatedSessionDoc.startTime) / 1000)
                 : 0;
 
             const socketIo = io || globalIo;
@@ -493,13 +513,27 @@ function chatSocket(io) {
         if (!session) return null;
         const roomId = session.roomId;
 
-        if (session.status === 'active') {
-            console.log(`[SessionActivate] Session ${roomId} is already active.`);
-            return session;
-        }
-        if (['completed', 'terminated', 'failed', 'missed', 'declined'].includes(session.status)) {
-            console.log(`[SessionActivate] Session ${roomId} is already ended (${session.status}), cannot activate.`);
-            return session;
+        // Atomic transition from 'initiated' to 'active' using findOneAndUpdate to prevent duplicate activation races
+        const sessionStartTime = startTimeOverride ? new Date(startTimeOverride) : new Date();
+        const activatedSession = await Session.findOneAndUpdate(
+            { roomId, status: 'initiated' },
+            {
+                $set: {
+                    status: 'active',
+                    startTime: sessionStartTime
+                }
+            },
+            { new: true }
+        );
+
+        if (!activatedSession) {
+            console.log(`[SessionActivate] Session ${roomId} already active or not initiated.`);
+            const current = await Session.findOne({ roomId });
+            // Recovery check: if already active but billing engine not running (e.g. server restart)
+            if (current && current.status === 'active' && !activeSessions.has(roomId)) {
+                startBillingEngine(roomId, current._id, socketIo);
+            }
+            return current;
         }
 
         console.log(`[SessionActivate] Activating session ${roomId}`);
@@ -507,7 +541,7 @@ function chatSocket(io) {
 
         // Reset consecutive missed sessions for the astrologer
         try {
-            const astro = await Astrologer.findById(session.astrologerId);
+            const astro = await Astrologer.findById(activatedSession.astrologerId);
             if (astro && astro.userId) {
                 await resetConsecutiveMissed(astro.userId);
             }
@@ -515,19 +549,14 @@ function chatSocket(io) {
             console.error('[SessionActivate] Error resetting consecutive missed:', e);
         }
 
-        const sessionStartTime = startTimeOverride ? new Date(startTimeOverride) : new Date();
-        session.status = 'active';
-        session.startTime = sessionStartTime;
-        await session.save();
-
         // Start billing engine
-        startBillingEngine(roomId, session._id, socketIo);
+        startBillingEngine(roomId, activatedSession._id, socketIo);
 
         // Mark Astrologer as Busy
-        await Astrologer.findByIdAndUpdate(session.astrologerId, { isBusy: true });
+        await Astrologer.findByIdAndUpdate(activatedSession.astrologerId, { isBusy: true });
         if (socketIo) {
-            socketIo.emit('astrologer_status_changed', { astrologerId: session.astrologerId.toString(), isBusy: true });
-            socketIo.to(roomId).emit('session_started', { startTime: session.startTime });
+            socketIo.emit('astrologer_status_changed', { astrologerId: activatedSession.astrologerId.toString(), isBusy: true });
+            socketIo.to(roomId).emit('session_started', { startTime: activatedSession.startTime });
         }
 
         // Update Firestore chat_sessions doc with status active so mobile / web onSnapshot listeners react instantly
@@ -538,7 +567,7 @@ function chatSocket(io) {
             if (getApps().length > 0) {
                 await getFirestore().collection('chat_sessions').doc(roomId).set({
                     status: 'active',
-                    startTime: session.startTime.getTime(),
+                    startTime: activatedSession.startTime.getTime(),
                     updatedAt: Date.now()
                 }, { merge: true });
             }
@@ -546,27 +575,62 @@ function chatSocket(io) {
             console.error('[SessionActivate] Error updating Firestore on session activate:', fsErr);
         }
 
-        return session;
+        return activatedSession;
     }
 
     async function startBillingEngine(roomId, sessionId, io) {
-        if (activeSessions.has(roomId)) return;
+        if (activeSessions.has(roomId)) {
+            console.log(`[BillingEngine] Engine already active for room ${roomId}`);
+            return;
+        }
 
-        // 1. Immediate first-minute deduction
-        const success = await performDeduction(roomId, sessionId, io);
-        if (!success) return;
+        // Acquire in-memory synchronous lock immediately before any async gap
+        activeSessions.set(roomId, 'initializing');
 
-        // 2. Interval for subsequent minutes
-        const intervalId = setInterval(async () => {
-            await performDeduction(roomId, sessionId, io);
-        }, 60000);
+        try {
+            const session = await Session.findById(sessionId);
+            if (!session || session.status !== 'active') {
+                activeSessions.delete(roomId);
+                return;
+            }
 
-        activeSessions.set(roomId, intervalId);
+            // Only deduct initial minute if no amount has been deducted yet
+            if ((session.totalAmountDeducted || 0) === 0) {
+                const success = await performDeduction(roomId, sessionId, io);
+                if (!success) {
+                    activeSessions.delete(roomId);
+                    return;
+                }
+            }
+
+            // If stopBillingEngine was called while deduction was executing
+            if (!activeSessions.has(roomId)) {
+                return;
+            }
+
+            // Setup interval for subsequent minutes
+            const intervalId = setInterval(async () => {
+                await performDeduction(roomId, sessionId, io);
+            }, 60000);
+
+            // Double check if room was terminated during interval creation
+            if (activeSessions.get(roomId) === 'initializing') {
+                activeSessions.set(roomId, intervalId);
+            } else {
+                clearInterval(intervalId);
+            }
+        } catch (err) {
+            console.error(`[BillingEngine] Error starting billing engine for ${roomId}:`, err);
+            activeSessions.delete(roomId);
+        }
     }
 
     function stopBillingEngine(roomId) {
         if (activeSessions.has(roomId)) {
-            clearInterval(activeSessions.get(roomId));
+            const interval = activeSessions.get(roomId);
+            if (interval && interval !== 'initializing') {
+                clearInterval(interval);
+            }
             activeSessions.delete(roomId);
         }
     }

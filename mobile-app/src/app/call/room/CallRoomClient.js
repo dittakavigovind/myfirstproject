@@ -55,6 +55,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     const remoteAudioTrackRef = useRef(null);
     const localStartTimeRef = useRef(null);
     const isReadOnlyRef = useRef(false);
+    const hasTriggeredStartRef = useRef(false);
 
     const formatTime = (seconds) => {
         if (seconds < 0) return "00:00";
@@ -340,7 +341,8 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     // Effect to start session specifically when astrologer joins and session isn't active
     useEffect(() => {
-        if (user?.role === 'astrologer' && !sessionActive && !isReadOnlyRef.current) {
+        if (user?.role === 'astrologer' && !sessionActive && !isReadOnlyRef.current && !hasTriggeredStartRef.current) {
+            hasTriggeredStartRef.current = true;
             if (socket) {
                 socket.emit("start_chat_session", { roomId, astrologerId: user._id });
             }
