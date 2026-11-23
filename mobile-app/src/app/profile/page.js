@@ -211,7 +211,10 @@ export default function Profile() {
         if (!isAstrologer) return;
         const fetchTodayStats = async () => {
             try {
-                const { data } = await api.get('/activity/stats/dashboard');
+                const { data } = await api.get('/activity/stats/dashboard', {
+                    headers: { 'X-Silent-Error': 'true' },
+                    silent: true
+                });
                 if (data.success) {
                     setTodayStats(data.data);
                     setLastUpdated(new Date());
@@ -222,7 +225,10 @@ export default function Profile() {
         };
         fetchTodayStats();
         // Poll every 2 minutes for updates
-        const interval = setInterval(fetchTodayStats, 120000);
+        const interval = setInterval(() => {
+            if (typeof document !== "undefined" && document.hidden) return;
+            fetchTodayStats();
+        }, 120000);
         return () => clearInterval(interval);
     }, [isAstrologer]);
 

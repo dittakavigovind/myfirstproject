@@ -15,6 +15,44 @@ export const clearApiToken = () => {
 
 export const getApiToken = () => cachedToken;
 
+// Track app resume time to provide a grace period after waking from background
+let lastResumedAt = typeof Date !== "undefined" ? Date.now() : 0;
+
+if (typeof window !== "undefined") {
+    // 1. Standard web visibility change listener
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            lastResumedAt = Date.now();
+            // Clear any lingering network error toast immediately when user returns to app
+            toast.dismiss("network-error");
+        } else {
+            toast.dismiss("network-error");
+        }
+    });
+
+    // 2. Window focus listener
+    window.addEventListener("focus", () => {
+        lastResumedAt = Date.now();
+        toast.dismiss("network-error");
+    });
+
+    // 3. Native Capacitor App state listener for background / foreground lifecycle
+    if (window.Capacitor?.isNativePlatform?.()) {
+        import("@capacitor/app")
+            .then(({ App }) => {
+                App.addListener("appStateChange", ({ isActive }) => {
+                    if (isActive) {
+                        lastResumedAt = Date.now();
+                        toast.dismiss("network-error");
+                    } else {
+                        toast.dismiss("network-error");
+                    }
+                }).catch(() => {});
+            })
+            .catch(() => {});
+    }
+}
+
 // Use environment variable for the API URL, fallback to production API if not set
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.way2astro.com/api";
 
@@ -88,12 +126,19 @@ api.interceptors.response.use(
             }
         } else if (error.response?.status >= 500) {
             const url = error.config?.url || '';
-            if (!isSilent && typeof window !== "undefined" && !url.includes('/auth/firebase-token')) {
+            const isHidden = typeof document !== "undefined" && (document.hidden || document.visibilityState === "hidden");
+            if (!isSilent && !isHidden && typeof window !== "undefined" && !url.includes('/auth/firebase-token')) {
                 toast.error("Server error. Please try again later.", { id: 'server-error' });
             }
         } else if (error.message === "Network Error" || error.code === "ECONNABORTED" || error.code === "ERR_NETWORK") {
-            // Deduplicate network error toast so parallel calls don't spam the UI
-            if (!isSilent && typeof window !== "undefined") {
+            const isHidden = typeof document !== "undefined" && (document.hidden || document.visibilityState === "hidden");
+            const isJustResumed = Date.now() - lastResumedAt < 3000;
+
+            // Never show network error toast if:
+            // 1. Request was marked as silent (e.g. background polling / intervals / prefetching)
+            // 2. The app is currently hidden/in the background (OS suspends sockets in background)
+            // 3. The app just resumed within 3 seconds (OS re-establishes radio / TCP sockets)
+            if (!isSilent && !isHidden && !isJustResumed && typeof window !== "undefined") {
                 toast.error("Network error. Please check your connection.", { id: 'network-error' });
             }
         }

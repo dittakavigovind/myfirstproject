@@ -30,7 +30,10 @@ export default function DailyBlessingWrapper() {
                 const isTestMode = window.location.search.includes('test_blessing=1');
 
                 if (lastShownDate !== today || isTestMode) {
-                    const response = await api.get('/daily-blessing/today');
+                    const response = await api.get('/daily-blessing/today', {
+                        headers: { 'X-Silent-Error': 'true' },
+                        silent: true
+                    });
                     if (response.data && response.data.success && response.data.blessing) {
                         setBlessing(response.data.blessing);
                         setIsModalOpen(true);

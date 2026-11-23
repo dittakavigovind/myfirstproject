@@ -1,0 +1,71 @@
+<en-IN>
+What's New in Way2Astro v1.2.21:
+• Refreshed splash screen and brand new visual launch experience
+• Astrologer Review Replies: Read personalized responses and guidance from your astrologers
+• Enhanced Vedic Calculators: Upgraded Atmakaraka, Yogini Dasha, and Marriage & Career reports
+• Refined Kundli, Matchmaking, and Horoscope screens with smoother navigation and pull-to-refresh
+• Performance optimizations and bug fixes for a seamless experience
+</en-IN>
+
+<en-US>
+What's New in Way2Astro v1.2.21:
+• Refreshed splash screen and brand new visual launch experience
+• Astrologer Review Replies: Read personalized responses and guidance from your astrologers
+• Enhanced Vedic Calculators: Upgraded Atmakaraka, Yogini Dasha, and Marriage & Career reports
+• Refined Kundli, Matchmaking, and Horoscope screens with smoother navigation and pull-to-refresh
+• Performance optimizations and bug fixes for a seamless experience
+</en-US>
+
+<hi-IN>
+Way2Astro v1.2.21 में नया क्या है:
+• नया स्प्लैश स्क्रीन और बेहतर ऐप लोडिंग अनुभव
+• ज्योतिषी समीक्षा उत्तर: अपने ज्योतिषियों से सीधे मार्गदर्शन और प्रतिक्रिया प्राप्त करें
+• उन्नत वैदिक कैलकुलेटर: आत्मकारक, योगिनी दशा, विवाह और करियर रिपोर्ट में सुधार
+• कुंडली, गुण मिलान और दैनिक राशिफल का अधिक सुगम और नया इंटरफेस
+• बेहतर परफॉर्मेंस और बग फिक्स
+</hi-IN>
+
+<te-IN>
+Way2Astro v1.2.21 లో కొత్త విశేషాలు:
+• సరికొత్త స్ప్లాష్ స్క్రీన్ మరియు మెరుగైన దృశ్య అనుభవం
+• జ్యోతిష్యుల ప్రత్యుత్తరాలు: మీ రివ్యూలకు జ్యోతిష్యుల నుండి సమాధానాలు మరియు సలహాలు
+• అప్‌గ్రేడ్ చేసిన వేద కాలిక్యులేటర్లు: ఆత్మకారక, యోగినీ దశ, వివాహ & కెరీర్ ఫలితాలు
+• కుండలి, వివాహ పొంతన మరియు రాశిఫలాల మెరుగైన డిజైన్
+• వేగవంతమైన పనితీరు మరియు బగ్ పరిష్కారాలు
+</te-IN>
+
+<ta-IN>
+Way2Astro v1.2.21 இல் புதியவை:
+• புதிய ஸ்பிளாஷ் திரை மற்றும் மேம்படுத்தப்பட்ட துவக்க அனுபவம்
+• ஜோதிடர் பதில்கள்: உங்கள் ஜோதிடர்களிடமிருந்து நேரடி ஆலோசனைகள் மற்றும் பதில்கள்
+• மேம்பட்ட வேத கணிப்பான்கள்: ஆத்மகாரகன், யோகினி தசா, திருமணம் மற்றும் தொழில் கணிப்புகள்
+• ஜாதகம், திருமண பொருத்தம் மற்றும் ராசிபலன் திரைகளில் மென்மையான வடிவமைப்பு
+• வேகமான செயல்பாடு மற்றும் பிழை திருத்தங்கள்
+</ta-IN>
+
+<kn-IN>
+Way2Astro v1.2.21 ನಲ್ಲಿ ಹೊಸತೇನಿದೆ:
+• ಹೊಚ್ಚ ಹೊಸ ಸ್ಪ್ಲಾಶ್ ಸ್ಕ್ರೀನ್ ಮತ್ತು ಸುಧಾರಿತ ಲಾಂಚ್ ಅನುಭವ
+• ಜ್ಯೋತಿಷಿಗಳ ಉತ್ತರಗಳು: ನಿಮ್ಮ ವಿಮರ್ಶೆಗಳಿಗೆ ಜ್ಯೋತಿಷಿಗಳಿಂದ ಮಾರ್ಗದರ್ಶನ
+• ಸುಧಾರಿತ ವೈದಿಕ ಕ್ಯಾಲ್ಕುಲೇಟರ್‌ಗಳು: ಆತ್ಮಕಾರಕ, ಯೋಗಿನಿ ದಶಾ, ಮದುವೆ ಮತ್ತು ವೃತ್ತಿ ವರದಿಗಳು
+• ಕುಂಡಲಿ, ಹೊಂದಾಣಿಕೆ ಮತ್ತು ಜಾತಕ ಪರದೆಗಳಲ್ಲಿ ನಯವಾದ ವಿನ್ಯಾಸ
+• ಅತ್ಯುತ್ತಮ ಕಾರ್ಯಕ್ಷಮತೆ ಮತ್ತು ದೋಷ ಪರಿಹಾರಗಳು
+</kn-IN>
+
+<mr-IN>
+Way2Astro v1.2.21 मध्ये नवीन काय आहे:
+• नवीन स्प्लॅश स्क्रीन आणि अधिक वेगवान अनुभव
+• ज्योतिषी प्रतिसाद: तुमच्या रिव्ह्यूजवर ज्योतिषांचे थेट मार्गदर्शन आणि उत्तरे
+• प्रगत वैदिक कॅल्क्युलेटर: आत्मकारक, योगिनी दशा, विवाह आणि करिअर अहवालात सुधारणा
+• कुंडली, गुणमिलन आणि राशीभविष्य साठी अधिक सुलभ इंटरफेस
+• उत्तम परफॉर्मन्स आणि बग फिक्स
+</mr-IN>
+
+<bn-BD>
+Way2Astro v1.2.21-এ নতুন কী আছে:
+• নতুন স্প্ল্যাশ স্ক্রিন এবং দ্রুত অ্যাপ ওপেনিং অভিজ্ঞতা
+• জ্যোতিষীদের প্রতিক্রিয়া: আপনার মতামতে জ্যোতিষীদের কাছ থেকে সরাসরি পরামর্শ ও উত্তর
+• উন্নত বৈদিক ক্যালকুলেটর: আত্মকারক, যোগিনী দশা, বিবাহ ও ক্যারিয়ার রিপোর্ট
+• কোষ্ঠী, যোটक বিচার ও রাশিফলের আরও মসৃণ ইন্টারফেস
+• কর্মক্ষমতা বৃদ্ধি এবং ত্রুটি সংশোধন
+</bn-BD>

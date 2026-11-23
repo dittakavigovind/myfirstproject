@@ -83,7 +83,10 @@ export default function Home() {
 
   useEffect(() => {
     if (user && user.role !== 'astrologer' && !user.isGuest) {
-      const pollInterval = setInterval(pollAstrologers, 15000);
+      const pollInterval = setInterval(() => {
+        if (typeof document !== "undefined" && document.hidden) return;
+        pollAstrologers();
+      }, 15000);
 
       // Fetch following list silently
       api.get("/users/following", {
@@ -127,14 +130,14 @@ export default function Home() {
 
       // Fetch horoscope, astrologers (if applicable), and blogs in parallel with safe fallbacks
       const fetchPromises = [
-        api.get("/horoscope-manager/daily").catch(() => ({ data: { data: null } })),
-        api.get("/blog/posts?limit=5").catch(() => ({ data: { data: [] } })),
-        api.get("/site-settings").catch(() => ({ data: { settings: null } }))
+        api.get("/horoscope-manager/daily", { silent: true, headers: { 'X-Silent-Error': 'true' } }).catch(() => ({ data: { data: null } })),
+        api.get("/blog/posts?limit=5", { silent: true, headers: { 'X-Silent-Error': 'true' } }).catch(() => ({ data: { data: [] } })),
+        api.get("/site-settings", { silent: true, headers: { 'X-Silent-Error': 'true' } }).catch(() => ({ data: { settings: null } }))
       ];
 
       // Only fetch live astrologers if the user is NOT an astrologer
       if (!isAstro) {
-        fetchPromises.push(api.get("/astro/astrologers").catch(() => ({ data: { data: [] } })));
+        fetchPromises.push(api.get("/astro/astrologers", { silent: true, headers: { 'X-Silent-Error': 'true' } }).catch(() => ({ data: { data: [] } })));
       }
 
       const results = await Promise.all(fetchPromises);

@@ -24,7 +24,10 @@ export default function VersionCheckOverlay() {
         const checkVersion = async () => {
             try {
                 // 1. Fetch public config
-                const res = await api.get('/auth/public-config');
+                const res = await api.get('/auth/public-config', {
+                    headers: { 'X-Silent-Error': 'true' },
+                    silent: true
+                });
                 const config = res.data.config;
 
                 if (!config) return;

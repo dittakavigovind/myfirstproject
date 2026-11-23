@@ -57,17 +57,20 @@ export default function Explore() {
 
     useEffect(() => {
         if (user && user.role !== 'astrologer' && !user.isGuest) {
-            const pollInterval = setInterval(fetchAstrologersSilent, 15000);
+            const pollInterval = setInterval(() => {
+                if (typeof document !== "undefined" && document.hidden) return;
+                fetchAstrologersSilent();
+            }, 15000);
             
             // Fetch following list
-            api.get("/users/following").then(res => {
+            api.get("/users/following", { headers: { 'X-Silent-Error': 'true' }, silent: true }).then(res => {
                 if (res.data && res.data.success && res.data.following) {
                     setFollowingIds(res.data.following.map(a => a._id || a.id));
                 }
             }).catch(err => console.warn("Failed to fetch following", err));
 
             // Fetch chat history for most interacted
-            api.get("/chat/history").then(res => {
+            api.get("/chat/history", { headers: { 'X-Silent-Error': 'true' }, silent: true }).then(res => {
                 if (res.data && res.data.success && res.data.sessions) {
                     const counts = {};
                     res.data.sessions.forEach(session => {
@@ -86,7 +89,10 @@ export default function Explore() {
 
     const fetchAstrologers = async () => {
         try {
-            const { data } = await api.get("/astro/astrologers");
+            const { data } = await api.get("/astro/astrologers", {
+                headers: { 'X-Silent-Error': 'true' },
+                silent: true
+            });
             setAstrologers(data.data || []);
         } catch (error) {
             console.error("Failed to fetch astrologers", error);
@@ -97,7 +103,10 @@ export default function Explore() {
 
     const fetchAstrologersSilent = async () => {
         try {
-            const { data } = await api.get("/astro/astrologers");
+            const { data } = await api.get("/astro/astrologers", {
+                headers: { 'X-Silent-Error': 'true' },
+                silent: true
+            });
             if (data && data.success) {
                 setAstrologers(data.data || []);
             }

@@ -27,7 +27,10 @@ export default function SessionBanner() {
     useEffect(() => {
         if (user && !user.isGuest && !isChatPage) {
             checkActiveSession();
-            const interval = setInterval(checkActiveSession, 30000); // Check every 30s
+            const interval = setInterval(() => {
+                if (typeof document !== "undefined" && document.hidden) return;
+                checkActiveSession();
+            }, 30000); // Check every 30s
             return () => clearInterval(interval);
         } else {
             setActiveSession(null);
@@ -68,7 +71,10 @@ export default function SessionBanner() {
 
     const checkActiveSession = async () => {
         try {
-            const { data } = await api.get("/chat/active-session");
+            const { data } = await api.get("/chat/active-session", {
+                headers: { 'X-Silent-Error': 'true' },
+                silent: true
+            });
             if (data.success && data.session) {
                 setActiveSession(data.session);
                 if (data.session.status === 'active' && data.session.startTime) {
