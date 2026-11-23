@@ -217,6 +217,33 @@ function AdminFinanceDashboardContent() {
         return matchesSearch && matchesDate;
     });
 
+    // Dynamic totals for currently filtered transactions
+    const filteredTotals = useMemo(() => {
+        let totalPaid = 0;
+        let totalBase = 0;
+        let totalGst = 0;
+
+        filteredTransactions.forEach(t => {
+            const isManual = Boolean(
+                (t.description && t.description.toLowerCase().includes('manual')) ||
+                t.referenceModel === 'ManualWallet'
+            );
+            const isRecharge = Boolean(
+                t.referenceModel === 'Recharge' || 
+                t.referenceModel === 'WalletRecharge' || 
+                (t.description && t.description.toLowerCase().includes('recharge'))
+            );
+            const gst = !isManual && t.gstAmount != null ? t.gstAmount : (!isManual && isRecharge && t.totalAmount && t.amount ? (t.totalAmount - t.amount) : 0);
+            const total = isManual ? 0 : (t.totalAmount != null ? t.totalAmount : (isRecharge ? ((t.amount || 0) + (gst || 0)) : (t.amount || 0)));
+
+            totalPaid += (total || 0);
+            totalBase += (t.amount || 0);
+            totalGst += (gst > 0 ? gst : 0);
+        });
+
+        return { totalPaid, totalBase, totalGst };
+    }, [filteredTransactions]);
+
     const handleExport = () => {
         try {
             const headers = [
@@ -713,8 +740,8 @@ function AdminFinanceDashboardContent() {
                 </div>
             </div>
 
-            {/* Results Count Bar */}
-            <div className="flex items-center justify-between bg-slate-900/70 border border-slate-800 px-4 py-2 rounded-xl text-xs text-slate-400">
+            {/* Results Count Bar & Live Filtered Totals */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-900/80 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-400">
                 <div className="flex items-center gap-2 flex-wrap">
                     <span>
                         Showing <strong className="text-white">{filteredTransactions.length}</strong> of{' '}
@@ -726,20 +753,29 @@ function AdminFinanceDashboardContent() {
                         </span>
                     )}
                 </div>
-                {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate) && (
-                    <button 
-                        onClick={() => {
-                            setSearchTerm('');
-                            setStatusFilter('all');
-                            setTypeFilter('all');
-                            setStartDate('');
-                            setEndDate('');
-                        }} 
-                        className="text-indigo-400 hover:text-indigo-300 underline font-medium cursor-pointer text-xs"
-                    >
-                        Reset all filters
-                    </button>
-                )}
+
+                <div className="flex items-center gap-2.5 flex-wrap sm:justify-end">
+                    <div className="flex items-center gap-2 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-[11px]">
+                        <span>Filtered Total: <strong className="text-emerald-400 font-bold font-mono">₹{filteredTotals.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                        <span className="text-slate-600">|</span>
+                        <span>GST: <strong className="text-purple-400 font-bold font-mono">₹{filteredTotals.totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                    </div>
+
+                    {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate) && (
+                        <button 
+                            onClick={() => {
+                                setSearchTerm('');
+                                setStatusFilter('all');
+                                setTypeFilter('all');
+                                setStartDate('');
+                                setEndDate('');
+                            }} 
+                            className="text-indigo-400 hover:text-indigo-300 underline font-medium cursor-pointer text-xs ml-1"
+                        >
+                            Reset all filters
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Responsive Table - NO horizontal scroll, 5 smart columns */}

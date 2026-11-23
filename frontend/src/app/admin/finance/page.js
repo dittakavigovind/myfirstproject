@@ -214,6 +214,33 @@ function AdminFinanceDashboardContent() {
         return matchesSearch && matchesDate;
     });
 
+    // Dynamic totals for currently filtered transactions
+    const filteredTotals = useMemo(() => {
+        let totalPaid = 0;
+        let totalBase = 0;
+        let totalGst = 0;
+
+        filteredTransactions.forEach(t => {
+            const isManual = Boolean(
+                (t.description && t.description.toLowerCase().includes('manual')) ||
+                t.referenceModel === 'ManualWallet'
+            );
+            const isRecharge = Boolean(
+                t.referenceModel === 'Recharge' || 
+                t.referenceModel === 'WalletRecharge' || 
+                (t.description && t.description.toLowerCase().includes('recharge'))
+            );
+            const gst = !isManual && t.gstAmount != null ? t.gstAmount : (!isManual && isRecharge && t.totalAmount && t.amount ? (t.totalAmount - t.amount) : 0);
+            const total = isManual ? 0 : (t.totalAmount != null ? t.totalAmount : (isRecharge ? ((t.amount || 0) + (gst || 0)) : (t.amount || 0)));
+
+            totalPaid += (total || 0);
+            totalBase += (t.amount || 0);
+            totalGst += (gst > 0 ? gst : 0);
+        });
+
+        return { totalPaid, totalBase, totalGst };
+    }, [filteredTransactions]);
+
     const handleExport = () => {
         try {
             const headers = [
@@ -700,6 +727,44 @@ function AdminFinanceDashboardContent() {
                     >
                         <XCircle size={12} /> Cancelled ({metrics.failedCount})
                     </button>
+                </div>
+            </div>
+
+            {/* Results Count Bar & Live Filtered Totals */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-xs text-slate-600">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span>
+                        Showing <strong className="text-slate-900 font-bold">{filteredTransactions.length}</strong> of{' '}
+                        <strong className="text-slate-500">{transactions.length}</strong> transactions
+                    </span>
+                    {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate) && (
+                        <span className="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-200 text-[11px]">
+                            Filtered: {typeFilter === 'gst_recharges' ? 'GST Paid Only' : typeFilter === 'paid_recharges' ? 'Online Paid Only' : typeFilter}
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap sm:justify-end">
+                    <div className="flex items-center gap-2 bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] shadow-sm">
+                        <span>Filtered Total: <strong className="text-emerald-600 font-bold font-mono">₹{filteredTotals.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                        <span className="text-slate-300">|</span>
+                        <span>GST: <strong className="text-purple-600 font-bold font-mono">₹{filteredTotals.totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                    </div>
+
+                    {(searchTerm || statusFilter !== 'all' || typeFilter !== 'all' || startDate || endDate) && (
+                        <button 
+                            onClick={() => {
+                                setSearchTerm('');
+                                setStatusFilter('all');
+                                setTypeFilter('all');
+                                setStartDate('');
+                                setEndDate('');
+                            }} 
+                            className="text-indigo-600 hover:text-indigo-800 underline font-medium cursor-pointer text-xs ml-1"
+                        >
+                            Reset all filters
+                        </button>
+                    )}
                 </div>
             </div>
 

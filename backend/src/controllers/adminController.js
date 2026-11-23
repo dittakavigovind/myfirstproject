@@ -292,27 +292,98 @@ exports.updateAstrologerSettings = async (req, res) => {
 exports.getAllSessions = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 50;
-        const skip = (page - 1) * limit;
+        const limit = req.query.limit !== undefined ? parseInt(req.query.limit) : 200;
+        const skip = limit > 0 ? (page - 1) * limit : 0;
 
         const query = {};
-        if (req.query.status) {
+
+        // Status filter
+        if (req.query.status && req.query.status !== 'all') {
             query.status = req.query.status;
         }
 
-        const sessions = await Session.find(query)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate('userId', 'name email phone')
-            .populate('astrologerId', 'displayName email');
+        // Session Type filter
+        if (req.query.sessionType && req.query.sessionType !== 'all') {
+            if (req.query.sessionType === 'voice' || req.query.sessionType === 'audio') {
+                query.sessionType = { $in: ['voice', 'audio'] };
+            } else {
+                query.sessionType = req.query.sessionType;
+            }
+        }
 
+        // Date range filter on createdAt
+        if (req.query.startDate || req.query.endDate) {
+            query.createdAt = {};
+            if (req.query.startDate) {
+                const sDate = new Date(req.query.startDate);
+                sDate.setHours(0, 0, 0, 0);
+                query.createdAt.$gte = sDate;
+            }
+            if (req.query.endDate) {
+                const eDate = new Date(req.query.endDate);
+                eDate.setHours(23, 59, 59, 999);
+                query.createdAt.$lte = eDate;
+            }
+        }
+
+        // Search filter across user name/phone/email, astrologer name/displayName, roomId, and ObjectId
+        if (req.query.search && req.query.search.trim()) {
+            const searchTerm = req.query.search.trim();
+            const searchRegex = new RegExp(searchTerm, 'i');
+
+            // Find matching users
+            const matchingUsers = await User.find({
+                $or: [
+                    { name: searchRegex },
+                    { phone: searchRegex },
+                    { email: searchRegex }
+                ]
+            }).select('_id');
+            const userIds = matchingUsers.map(u => u._id);
+
+            // Find matching astrologers
+            const matchingAstros = await Astrologer.find({
+                $or: [
+                    { displayName: searchRegex },
+                    { name: searchRegex },
+                    { email: searchRegex }
+                ]
+            }).select('_id');
+            const astroIds = matchingAstros.map(a => a._id);
+
+            const orConditions = [
+                { roomId: searchRegex }
+            ];
+
+            if (mongoose.Types.ObjectId.isValid(searchTerm)) {
+                orConditions.push({ _id: new mongoose.Types.ObjectId(searchTerm) });
+            }
+            if (userIds.length > 0) {
+                orConditions.push({ userId: { $in: userIds } });
+            }
+            if (astroIds.length > 0) {
+                orConditions.push({ astrologerId: { $in: astroIds } });
+            }
+
+            query.$or = orConditions;
+        }
+
+        let sessionQuery = Session.find(query)
+            .sort({ createdAt: -1 })
+            .populate('userId', 'name email phone')
+            .populate('astrologerId', 'displayName name email phone image');
+
+        if (limit > 0) {
+            sessionQuery = sessionQuery.skip(skip).limit(limit);
+        }
+
+        const sessions = await sessionQuery;
         const total = await Session.countDocuments(query);
 
         res.json({
             success: true,
             data: sessions,
-            pagination: { total, page, pages: Math.ceil(total / limit) }
+            pagination: { total, page, pages: limit > 0 ? Math.ceil(total / limit) : 1 }
         });
     } catch (error) {
         console.error('GetAllSessions Error:', error);
