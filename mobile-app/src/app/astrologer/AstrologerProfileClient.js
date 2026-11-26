@@ -263,6 +263,10 @@ export default function AstrologerProfileClient() {
     if (!astrologer) return <div className="p-10 text-center text-slate-400 font-bold uppercase tracking-widest">Astrologer not found</div>;
 
     const rating = parseFloat(astrologer.rating) || 4.9;
+    const chatRate = astrologer.charges?.chatPerMinute || astrologer.chatRate || 25;
+    const callRate = astrologer.charges?.callPerMinute || astrologer.callRate || 25;
+    const showChat = user?.globalFeatures?.chatEnabled !== false && astrologer?.features?.chatEnabled !== false;
+    const showCall = user?.globalFeatures?.voiceEnabled !== false && astrologer?.features?.voiceEnabled !== false;
 
     // Use actual gallery if available, otherwise fallback to profile image
     const galleryImages = (astrologer.gallery && astrologer.gallery.length > 0)
@@ -414,7 +418,7 @@ export default function AstrologerProfileClient() {
                     </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex items-stretch gap-3">
                     <button
                         onClick={handleFollowToggle}
                         disabled={followLoading}
@@ -422,10 +426,33 @@ export default function AstrologerProfileClient() {
                     >
                         {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
                     </button>
-                    <div className="flex-1 py-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center gap-1 backdrop-blur-xl">
-                        <span className="text-sm font-black text-white">₹{astrologer.charges?.chatPerMinute || 25}</span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">/min</span>
-                    </div>
+                    {(showChat || showCall) && (
+                        <div className="flex-1 px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-center gap-1 backdrop-blur-xl">
+                            {showChat && (
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-blue-300 uppercase tracking-wider">
+                                        <MessageCircle size={11} className="shrink-0" />
+                                        Chat
+                                    </span>
+                                    <span className="text-xs font-black text-white whitespace-nowrap">
+                                        ₹{chatRate}<span className="text-[9px] text-slate-400 font-bold">/min</span>
+                                    </span>
+                                </div>
+                            )}
+                            {showChat && showCall && <div className="h-px bg-white/10" />}
+                            {showCall && (
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 uppercase tracking-wider">
+                                        <Phone size={11} className="shrink-0" />
+                                        Call
+                                    </span>
+                                    <span className="text-xs font-black text-white whitespace-nowrap">
+                                        ₹{callRate}<span className="text-[9px] text-slate-400 font-bold">/min</span>
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Inline Action Buttons */}
@@ -448,30 +475,30 @@ export default function AstrologerProfileClient() {
                         </button>
                     ) : (
                         <>
-                            {user?.globalFeatures?.chatEnabled !== false && astrologer?.features?.chatEnabled !== false && (
+                            {showChat && (
                                 <button
                                     disabled={initiating}
-                                    onClick={() => startChat(astrologer._id, astrologer.charges?.chatPerMinute || 25)}
-                                    className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/25 border border-white/15"
+                                    onClick={() => startChat(astrologer._id, chatRate)}
+                                    className="flex-1 py-2.5 px-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/25 border border-white/15"
                                 >
-                                    <div className="flex items-center gap-1.5">
-                                        <MessageCircle size={14} className="text-white" />
-                                        <span className="text-xs font-black text-white leading-none">Chat</span>
+                                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                        <MessageCircle size={14} className="text-white shrink-0" />
+                                        <span className="text-xs font-black text-white leading-none">Chat • ₹{chatRate}/min</span>
                                     </div>
                                     <span className="text-[8px] font-bold text-white/80 uppercase tracking-widest mt-1">
                                         {astrologer.isBusy ? 'Busy' : astrologer.isChatOnline ? 'Available' : 'Offline'}
                                     </span>
                                 </button>
                             )}
-                            {user?.globalFeatures?.voiceEnabled !== false && astrologer?.features?.voiceEnabled !== false && (
+                            {showCall && (
                                 <button
                                     disabled={initiating}
-                                    onClick={() => startCall(astrologer._id, astrologer.charges?.callPerMinute || 25)}
-                                    className="flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/25 border border-white/15"
+                                    onClick={() => startCall(astrologer._id, callRate)}
+                                    className="flex-1 py-2.5 px-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 flex flex-col items-center justify-center active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/25 border border-white/15"
                                 >
-                                    <div className="flex items-center gap-1.5">
-                                        <Phone size={14} className="text-white" />
-                                        <span className="text-xs font-black text-white leading-none">Call</span>
+                                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                        <Phone size={14} className="text-white shrink-0" />
+                                        <span className="text-xs font-black text-white leading-none">Call • ₹{callRate}/min</span>
                                     </div>
                                     <span className="text-[8px] font-bold text-white/80 uppercase tracking-widest mt-1">
                                         {astrologer.isBusy ? 'Busy' : astrologer.isVoiceOnline ? 'Available' : 'Offline'}
