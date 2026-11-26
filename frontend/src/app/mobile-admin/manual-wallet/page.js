@@ -52,9 +52,9 @@ export default function MobileManualWalletDashboard() {
         setIsAdding(true);
         try {
             const res = await API.post('/admin/manual-wallet', {
-                searchKey,
+                searchKey: searchKey.trim(),
                 amount: Number(amount),
-                description: description || "Manual Wallet Recharge"
+                description: description.trim() || "Manual Wallet Recharge"
             });
             
             if (res.data.success) {
@@ -188,7 +188,9 @@ export default function MobileManualWalletDashboard() {
                                         </span>
                                     </td>
                                     <td className="p-4">
-                                        <span className="font-bold text-emerald-400">+{tx.amount}</span>
+                                        <span className={`font-bold ${tx.type === 'debit' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                            {tx.type === 'debit' ? `-${tx.amount}` : `+${tx.amount}`}
+                                        </span>
                                     </td>
                                     <td className="p-4 text-slate-400">{tx.description}</td>
                                     <td className="p-4">

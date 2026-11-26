@@ -15,35 +15,49 @@ const ArchivedUser = require('../models/ArchivedUser');
 exports.addManualWalletBalance = async (req, res) => {
     try {
         const { searchKey, amount, description } = req.body;
-        
-        if (!searchKey || !amount || amount <= 0) {
+        const trimmedKey = String(searchKey || '').trim();
+        const parsedAmount = Number(amount);
+
+        if (!trimmedKey || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
             return res.status(400).json({ success: false, message: 'Invalid search key or amount' });
         }
 
-        const searchPattern = new RegExp(searchKey, 'i');
-        const user = await User.findOne({
-            $or: [
-                { phone: { $regex: searchPattern } },
-                { mobileNumber: { $regex: searchPattern } },
-                { email: { $regex: searchPattern } }
-            ]
-        });
+        const escapedKey = trimmedKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchPattern = new RegExp(escapedKey, 'i');
+        const digitsOnly = trimmedKey.replace(/\D/g, '');
+        const orConditions = [
+            { phone: { $regex: searchPattern } },
+            { mobileNumber: { $regex: searchPattern } },
+            { email: { $regex: searchPattern } },
+            { name: { $regex: searchPattern } }
+        ];
+
+        if (digitsOnly.length >= 6) {
+            const last10 = digitsOnly.length > 10 ? digitsOnly.slice(-10) : digitsOnly;
+            const digitsRegex = new RegExp(`${last10}$`);
+            orConditions.push(
+                { phone: { $regex: digitsRegex } },
+                { mobileNumber: { $regex: digitsRegex } }
+            );
+        }
+
+        const user = await User.findOne({ $or: orConditions });
 
         if (!user) {
             return res.status(404).json({ success: false, message: 'User/Astrologer not found' });
         }
 
-        user.walletBalance += Number(amount);
+        user.walletBalance = (user.walletBalance || 0) + parsedAmount;
         await user.save();
 
         const transaction = await Transaction.create({
             user: user._id,
-            amount: Number(amount),
-            totalAmount: Number(amount),
+            amount: parsedAmount,
+            totalAmount: parsedAmount,
             type: 'credit',
             status: 'success',
-            description: description || 'Manual Wallet Recharge',
-            referenceModel: 'WalletRecharge'
+            description: (description && String(description).trim()) || 'Manual Wallet Recharge',
+            referenceModel: 'ManualWallet'
         });
 
         res.json({ success: true, message: 'Wallet balance added successfully', user, transaction });
@@ -58,7 +72,13 @@ exports.addManualWalletBalance = async (req, res) => {
 // @access  Private/Admin
 exports.getManualWalletTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find({ description: { $regex: /Manual Wallet Recharge/i } })
+        const transactions = await Transaction.find({
+            $or: [
+                { referenceModel: 'ManualWallet' },
+                { referenceModel: 'WalletRecharge', paymentId: null, orderId: null },
+                { description: { $regex: /Manual/i } }
+            ]
+        })
             .populate('user', 'name email phone role')
             .sort({ createdAt: -1 });
 
