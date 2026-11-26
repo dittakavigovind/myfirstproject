@@ -65,9 +65,8 @@ const blogPostSchema = mongoose.Schema({
 });
 
 // Populate category and author on find
-blogPostSchema.pre(/^find/, function (next) {
+blogPostSchema.pre(/^find/, function () {
     this.populate('categories', 'name slug').populate('author', 'name');
-    next();
 });
 
 module.exports = mongoose.model('BlogPost', blogPostSchema);

@@ -100,7 +100,7 @@ const templeSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Pre-save hook to create slug from name if not provided
-templeSchema.pre('validate', function (next) {
+templeSchema.pre('validate', function () {
     if (this.name && !this.slug) {
         this.slug = this.name
             .toLowerCase()
@@ -108,7 +108,6 @@ templeSchema.pre('validate', function (next) {
             .replace(/ +/g, '-')     // Replace spaces with hyphens
             .replace(/^-+|-+$/g, ''); // Trim hyphens
     }
-    next();
 });
 
 module.exports = mongoose.model('Temple', templeSchema);

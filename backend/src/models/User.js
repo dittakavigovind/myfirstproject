@@ -171,11 +171,10 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Pre-validate hook to lowercase gender
-userSchema.pre('validate', function (next) {
+userSchema.pre('validate', function () {
     if (this.gender) {
         this.gender = this.gender.toLowerCase();
     }
-    next();
 });
 
 // Centralized Astrological Calculation Helper
@@ -232,7 +231,7 @@ const calculateCosmicIdentity = async (birthDetails) => {
 };
 
 // Pre-save hook for normal save/create
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     if (this.isModified('birthDetails')) {
         const cosmic = await calculateCosmicIdentity(this.birthDetails);
         if (cosmic) {
@@ -246,13 +245,12 @@ userSchema.pre('save', async function (next) {
             this.birthDetails.karana = cosmic.karana || this.birthDetails.karana;
         }
     }
-    next();
 });
 
 // Pre-findOneAndUpdate hook for findByIdAndUpdate/findOneAndUpdate
-userSchema.pre('findOneAndUpdate', async function (next) {
+userSchema.pre('findOneAndUpdate', async function () {
     const update = this.getUpdate();
-    if (!update) return next();
+    if (!update) return;
 
     // Check if any birthDetails fields are being updated
     const isBirthUpdate = update.birthDetails ||
@@ -262,7 +260,7 @@ userSchema.pre('findOneAndUpdate', async function (next) {
         try {
             // Fetch the current user to merge updates with existing data
             const currentUser = await this.model.findOne(this.getQuery());
-            if (!currentUser) return next();
+            if (!currentUser) return;
 
             // Prepare merged birth details for calculation
             const mergedBirth = { ...(currentUser.birthDetails?.toObject() || {}) };
@@ -310,7 +308,6 @@ userSchema.pre('findOneAndUpdate', async function (next) {
             console.error('Error in pre-findOneAndUpdate cosmic identity hook:', err);
         }
     }
-    next();
 });
 
 module.exports = mongoose.model('User', userSchema);
