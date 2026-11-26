@@ -46,6 +46,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeakerOn, setIsSpeakerOn] = useState(true);
     const [connectionState, setConnectionState] = useState("Connecting...");
+    const [agoraStatusNote, setAgoraStatusNote] = useState(null);
     const [callData, setCallData] = useState(null); // astrologer or user details
     const [showAIInsights, setShowAIInsights] = useState(false);
     const [showKundli, setShowKundli] = useState(false);
@@ -56,6 +57,11 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     const localStartTimeRef = useRef(null);
     const isReadOnlyRef = useRef(false);
     const hasTriggeredStartRef = useRef(false);
+    const initInFlightRef = useRef(false);
+    const isMutedRef = useRef(false);
+    const activeRoomRef = useRef(null);
+    const userId = user?._id;
+    const userRole = user?.role;
 
     const formatTime = (seconds) => {
         if (seconds < 0) return "00:00";
@@ -80,13 +86,17 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     };
 
     useEffect(() => {
-        if (!user || !roomId) return;
+        if (!userId || !roomId) return;
+        activeRoomRef.current = roomId;
+        isReadOnlyRef.current = false;
+        setIsReadOnly(false);
         fetchSessionData();
 
         return () => {
+            activeRoomRef.current = null;
             cleanupCall();
         };
-    }, [user, roomId]);
+    }, [userId, roomId]);
 
     const fetchSessionData = async () => {
         try {
@@ -127,7 +137,88 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
         }
     };
 
+    const enableCallBackgroundMode = async () => {
+        if (typeof window === 'undefined' || !window.Capacitor?.isNativePlatform?.()) return;
+        try {
+            if (typeof BackgroundMode.requestNotificationsPermission === 'function') {
+                await BackgroundMode.requestNotificationsPermission().catch(() => {});
+            }
+            let allowMic = true;
+            if (typeof BackgroundMode.requestMicrophonePermission === 'function') {
+                const micPerm = await BackgroundMode.requestMicrophonePermission().catch(() => null);
+                if (micPerm && micPerm.microphone !== 'granted') {
+                    allowMic = false;
+                }
+            }
+
+            const baseOptions = {
+                title: "Active Consultation",
+                text: "Audio call in progress...",
+                resume: true,
+                hidden: false,
+                disableWebViewOptimization: true,
+            };
+
+            try {
+                await BackgroundMode.enable({
+                    ...baseOptions,
+                    allowMicrophoneInBackground: allowMic,
+                });
+            } catch (micBgErr) {
+                if (allowMic) {
+                    await BackgroundMode.enable({
+                        ...baseOptions,
+                        allowMicrophoneInBackground: false,
+                    });
+                } else {
+                    throw micBgErr;
+                }
+            }
+
+            if (BackgroundMode.disableWebViewOptimizations) {
+                await BackgroundMode.disableWebViewOptimizations().catch(() => {});
+            }
+        } catch (e) {
+            console.error("Background mode error", e);
+        }
+    };
+
+    const createAndPublishLocalAudio = async (Agora, client) => {
+        if (!Agora || !client || isReadOnlyRef.current) return null;
+        if (localAudioTrackRef.current) {
+            try {
+                localAudioTrackRef.current.stop();
+                localAudioTrackRef.current.close();
+            } catch {}
+            localAudioTrackRef.current = null;
+        }
+        const track = await Agora.createMicrophoneAudioTrack({
+            AEC: true,
+            ANS: true,
+            AGC: true,
+        });
+        if (isMutedRef.current) {
+            track.setMuted(true);
+        }
+        track.on("track-ended", async () => {
+            if (isReadOnlyRef.current || !clientRef.current) return;
+            console.warn("Local microphone track ended by OS. Recreating...");
+            try {
+                await clientRef.current.unpublish([track]).catch(() => {});
+                await createAndPublishLocalAudio(Agora, clientRef.current);
+            } catch (recreateErr) {
+                console.error("Failed to recover local audio track:", recreateErr);
+                setAgoraStatusNote("Microphone interrupted. Tap Mute/Unmute to retry.");
+            }
+        });
+        localAudioTrackRef.current = track;
+        await client.publish([track]);
+        return track;
+    };
+
     const initAgoraCall = async () => {
+        if (initInFlightRef.current || clientRef.current || isReadOnlyRef.current) return;
+        initInFlightRef.current = true;
         try {
             // Check if environment supports WebRTC in a secure context
             // iOS Safari requires HTTPS or localhost for WebRTC audio tracks
@@ -147,56 +238,54 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
             const Agora = getAgoraRTC();
             if (!Agora || clientRef.current) return;
             setConnectionState("Initializing call...");
+
+            Agora.onAutoplayFailed = () => {
+                setAgoraStatusNote("Audio paused by device — tap to resume");
+            };
+
             const { data } = await api.post('/agora/token', {
                 channelName: roomId,
                 sessionType: 'voice',
-                uid: user._id
+                uid: userId
             });
 
             if (!data.success) {
                 throw new Error("Failed to get token");
             }
 
-            try {
-                if (typeof window !== 'undefined' && window.Capacitor) {
-                    await BackgroundMode.enable({
-                        title: "Active Consultation",
-                        text: "Call in progress...",
-                        resume: true,
-                        hidden: false,
-                        disableWebViewOptimization: true,
-                        allowMicrophoneInBackground: true
-                    });
-                    
-                    // Crucial for WebRTC audio to continue while app is minimized
-                    if (BackgroundMode.disableWebViewOptimizations) {
-                        await BackgroundMode.disableWebViewOptimizations();
-                    }
-                }
-            } catch (e) {
-                console.error("Background mode error", e);
-            }
+            await enableCallBackgroundMode();
+
+            if (isReadOnlyRef.current || activeRoomRef.current !== roomId) return;
 
             const client = Agora.createClient({ mode: "rtc", codec: "vp8" });
             clientRef.current = client;
 
             client.on("user-published", async (remoteUser, mediaType) => {
-                await client.subscribe(remoteUser, mediaType);
-                if (mediaType === "audio") {
-                    setRemoteUserJoined(true);
-                    setConnectionState("Connected");
-                    remoteAudioTrackRef.current = remoteUser.audioTrack;
-                    remoteUser.audioTrack.play();
-                    console.log("Remote audio track played automatically");
-                    
-                    try {
-                        if (typeof window !== 'undefined' && window.Capacitor) {
-                            await AudioToggle.setSpeakerOn({ speakerOn: true });
-                            setIsSpeakerOn(true);
+                try {
+                    await client.subscribe(remoteUser, mediaType);
+                    if (mediaType === "audio" && remoteUser.audioTrack) {
+                        setRemoteUserJoined(true);
+                        setConnectionState("Connected");
+                        setAgoraStatusNote(null);
+                        remoteAudioTrackRef.current = remoteUser.audioTrack;
+                        try {
+                            remoteUser.audioTrack.play();
+                        } catch (playErr) {
+                            console.warn("Remote audio play error:", playErr);
+                            setAgoraStatusNote("Tap anywhere to resume audio");
                         }
-                    } catch (e) {
-                        console.error("Failed to set speaker on", e);
+
+                        try {
+                            if (typeof window !== 'undefined' && window.Capacitor) {
+                                await AudioToggle.setSpeakerOn({ speakerOn: true });
+                                setIsSpeakerOn(true);
+                            }
+                        } catch (e) {
+                            console.error("Failed to set speaker on", e);
+                        }
                     }
+                } catch (subErr) {
+                    console.error("Subscribe error:", subErr);
                 }
             });
 
@@ -204,21 +293,66 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                 if (mediaType === "audio") {
                     setRemoteUserJoined(false);
                     setConnectionState("Reconnecting...");
+                    setAgoraStatusNote("Other party audio paused / reconnecting...");
                 }
             });
 
             client.on("user-left", () => {
                 setRemoteUserJoined(false);
                 setConnectionState("User left");
+                setAgoraStatusNote("Other party temporarily disconnected...");
             });
 
-            await client.join(data.appID, roomId, data.rtcToken, user._id);
+            client.on("connection-state-change", async (curState, revState, reason) => {
+                if (isReadOnlyRef.current) return;
+                if (curState === "RECONNECTING") {
+                    setConnectionState("Reconnecting audio...");
+                    setAgoraStatusNote("Reconnecting audio...");
+                } else if (curState === "CONNECTED") {
+                    setConnectionState("Connected");
+                    setAgoraStatusNote(null);
+                    if (!localAudioTrackRef.current) {
+                        try {
+                            await createAndPublishLocalAudio(Agora, client);
+                        } catch {}
+                    }
+                } else if (curState === "DISCONNECTED" && reason !== "LEAVE") {
+                    setAgoraStatusNote("Audio connection dropped. Reconnecting...");
+                    try {
+                        const tokenRes = await api.post('/agora/token', {
+                            channelName: roomId,
+                            sessionType: 'voice',
+                            uid: userId
+                        });
+                        if (tokenRes.data?.success && clientRef.current === client && !isReadOnlyRef.current) {
+                            await client.join(tokenRes.data.appID, roomId, tokenRes.data.rtcToken, userId);
+                            await createAndPublishLocalAudio(Agora, client);
+                        }
+                    } catch (rejoinErr) {
+                        console.error("Agora rejoin failed:", rejoinErr);
+                    }
+                }
+            });
 
-            let localAudioTrack;
+            client.on("token-privilege-will-expire", async () => {
+                try {
+                    const tokenRes = await api.post('/agora/token', {
+                        channelName: roomId,
+                        sessionType: 'voice',
+                        uid: userId
+                    });
+                    if (tokenRes.data?.success && tokenRes.data.rtcToken && clientRef.current === client) {
+                        await client.renewToken(tokenRes.data.rtcToken);
+                    }
+                } catch (renewErr) {
+                    console.error("Failed to renew Agora token:", renewErr);
+                }
+            });
+
+            await client.join(data.appID, roomId, data.rtcToken, userId);
+
             try {
-                localAudioTrack = await Agora.createMicrophoneAudioTrack();
-                localAudioTrackRef.current = localAudioTrack;
-                await client.publish([localAudioTrack]);
+                await createAndPublishLocalAudio(Agora, client);
             } catch (micError) {
                 console.error("Microphone Access Error:", micError);
                 toast.error("Microphone not found or in use. You can hear but cannot speak.");
@@ -226,7 +360,6 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
             }
 
             if (client.remoteUsers && client.remoteUsers.length > 0) {
-                // If there are already users in the channel when we join
                 setConnectionState("Connected");
                 setRemoteUserJoined(true);
             } else {
@@ -242,22 +375,31 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                 toast.error("Call connection notice: " + (error?.message || "Check connection"));
                 setConnectionState(`Status: ${error?.message || "Failed"}`);
             }
+        } finally {
+            initInFlightRef.current = false;
         }
     };
 
     const cleanupCall = () => {
         if (localAudioTrackRef.current) {
-            localAudioTrackRef.current.stop();
-            localAudioTrackRef.current.close();
+            try {
+                localAudioTrackRef.current.stop();
+                localAudioTrackRef.current.close();
+            } catch {}
             localAudioTrackRef.current = null;
         }
+        remoteAudioTrackRef.current = null;
         if (clientRef.current) {
-            clientRef.current.leave();
+            try {
+                clientRef.current.removeAllListeners?.();
+                clientRef.current.leave();
+            } catch {}
             clientRef.current = null;
         }
-        
+
         try {
             if (typeof window !== 'undefined' && window.Capacitor) {
+                AudioToggle.reset?.().catch?.(() => {});
                 BackgroundMode.disable();
             }
         } catch (e) {
@@ -265,24 +407,39 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
         }
     };
 
-    // Socket Event Listeners for Session End & Timer Sync
+    // Socket Event Listeners for Session End & Timer Sync (decoupled from Agora lifecycle)
     useEffect(() => {
-        if (!socket || !roomId || !user) return;
+        if (!socket || !roomId || !userId) return;
 
         const joinRoom = () => {
             if (socket.connected) {
-                socket.emit("join_chat_session", { roomId, userId: user._id, role: user.role });
+                socket.emit("join_chat_session", { roomId, userId, role: userRole });
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (typeof document !== 'undefined' && !document.hidden) {
+                joinRoom();
+                if (remoteAudioTrackRef.current) {
+                    try {
+                        remoteAudioTrackRef.current.play();
+                    } catch {}
+                }
             }
         };
 
         joinRoom();
         socket.on('connect', joinRoom);
-        
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+        }
+
         // Timer/Status handlers
         const handleSessionEnded = (data) => {
             setIsReadOnly(true);
             isReadOnlyRef.current = true;
             setSessionActive(false);
+            setAgoraStatusNote(null);
             setConnectionState("Call Ended");
             cleanupCall();
             let msg = data?.reason || "Call Terminated";
@@ -294,7 +451,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                     onCallEnded();
                     return;
                 }
-                if (user?.role === 'astrologer') {
+                if (userRole === 'astrologer') {
                     router.replace('/astrologer');
                 } else {
                     router.replace('/explore');
@@ -302,53 +459,64 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
             }, 2000);
         };
 
-        const handleSessionStarted = (data) => {
+        const handleSessionStarted = () => {
             setSessionActive(true);
             setConnectionState("Connected");
             setDuration(0); // initialize duration
             localStartTimeRef.current = Date.now();
         };
 
+        const handleSessionRestored = (data) => {
+            setSessionActive(true);
+            const elapsed = data?.actualElapsedSeconds ?? data?.duration ?? 0;
+            setDuration(elapsed);
+            localStartTimeRef.current = Date.now() - (elapsed * 1000);
+        };
+
         const handleTimerUpdate = (data) => {
             if (!isReadOnlyRef.current) {
-                if (!localStartTimeRef.current && data?.duration) {
+                if (data?.duration !== undefined) {
+                    setDuration(data.duration);
                     localStartTimeRef.current = Date.now() - (data.duration * 1000);
                 }
             }
         };
 
         const handleLowBalanceWarning = (data) => {
-            if (user?.role === 'user') {
+            if (userRole === 'user') {
                 toast.error(`Low Balance! ${data?.minutesLeft} minute(s) left.`, { duration: 5000 });
             }
         };
 
         socket.on("session_ended", handleSessionEnded);
         socket.on("session_started", handleSessionStarted);
+        socket.on("session_restored", handleSessionRestored);
         socket.on("timer_update", handleTimerUpdate);
         socket.on("low_balance_warning", handleLowBalanceWarning);
 
         return () => {
             socket.off('connect', joinRoom);
+            if (typeof document !== 'undefined') {
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+            }
             socket.off("session_ended", handleSessionEnded);
             socket.off("session_started", handleSessionStarted);
+            socket.off("session_restored", handleSessionRestored);
             socket.off("timer_update", handleTimerUpdate);
             socket.off("low_balance_warning", handleLowBalanceWarning);
-            cleanupCall();
-            cleanupCall();
         };
-    }, [socket, roomId, user]);
+    }, [socket, roomId, userId, userRole]);
 
     // Effect to start session specifically when astrologer joins and session isn't active
     useEffect(() => {
-        if (user?.role === 'astrologer' && !sessionActive && !isReadOnlyRef.current && !hasTriggeredStartRef.current) {
+        if (userRole === 'astrologer' && !sessionActive && !isReadOnlyRef.current && !hasTriggeredStartRef.current) {
             hasTriggeredStartRef.current = true;
             if (socket) {
-                socket.emit("start_chat_session", { roomId, astrologerId: user._id });
+                socket.emit("start_chat_session", { roomId, astrologerId: userId });
             }
             api.post(`/chat/session/${roomId}/start`).catch(() => {});
         }
-    }, [socket, user, roomId, sessionActive]);
+    }, [socket, userId, userRole, roomId, sessionActive]);
 
     // Client-side timer
     useEffect(() => {
@@ -364,18 +532,28 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
         return () => clearInterval(interval);
     }, [sessionActive, isReadOnly]);
 
-    const toggleMute = () => {
+    const toggleMute = async () => {
+        const newState = !isMuted;
+        isMutedRef.current = newState;
         if (localAudioTrackRef.current) {
-            const newState = !isMuted;
             localAudioTrackRef.current.setMuted(newState);
             setIsMuted(newState);
+        } else if (clientRef.current && getAgoraRTC()) {
+            try {
+                await createAndPublishLocalAudio(getAgoraRTC(), clientRef.current);
+                setIsMuted(newState);
+                setAgoraStatusNote(null);
+            } catch (e) {
+                console.error("Failed to re-acquire mic on toggle:", e);
+            }
         }
     };
 
     const forcePlayRemoteAudio = () => {
         if (remoteAudioTrackRef.current) {
             remoteAudioTrackRef.current.play();
-            toast.success("Attempted to play remote audio");
+            setAgoraStatusNote(null);
+            toast.success("Resumed remote audio");
         } else {
             toast.error("No remote audio track found");
         }
@@ -499,7 +677,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                 </div>
 
                 {/* Live Timer or State Capsule */}
-                <div className="mb-2">
+                <div className="mb-2 flex flex-col items-center gap-2">
                     {sessionActive ? (
                         <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 backdrop-blur-2xl shadow-lg">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -514,6 +692,16 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                                 {connectionState}
                             </span>
                         </div>
+                    )}
+                    {agoraStatusNote && !isReadOnly && (
+                        <button
+                            type="button"
+                            onClick={forcePlayRemoteAudio}
+                            className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-semibold backdrop-blur-xl"
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            {agoraStatusNote}
+                        </button>
                     )}
                 </div>
 

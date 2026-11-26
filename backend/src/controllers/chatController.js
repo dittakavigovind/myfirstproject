@@ -848,9 +848,30 @@ exports.endSessionApi = async (req, res) => {
                 sockets.forEach(s => s.leave(roomId));
             }
             
-            // Also explicitly stop the billing engine from chatSocket if possible
-            // We can emit an internal server event to stop it, or just let it naturally die
-            // since the DB status is now 'completed', the next tick will see it and stop.
+            // Explicitly stop the billing engine and sync Firestore status
+            try {
+                const { stopBillingEngine } = require('../sockets/chatSocket');
+                stopBillingEngine(roomId);
+            } catch (e) {
+                console.error('Error stopping billing engine in endSessionApi:', e);
+            }
+
+            try {
+                require('../config/firebase');
+                const { getApps } = require('firebase-admin/app');
+                const { getFirestore } = require('firebase-admin/firestore');
+                if (getApps().length > 0) {
+                    await getFirestore().collection('chat_sessions').doc(roomId).set({
+                        status: 'completed',
+                        terminationReason: reason,
+                        endedBy: req.user.role,
+                        endedAt: Date.now(),
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                }
+            } catch (fsErr) {
+                console.error('Failed to update Firestore room on endSessionApi:', fsErr);
+            }
         }
 
         res.status(200).json({ success: true, message: 'Session terminated successfully' });

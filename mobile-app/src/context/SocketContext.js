@@ -70,7 +70,12 @@ export function SocketProvider({ children }) {
             const BACKEND_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://api.way2astro.com";
 
             newSocket = io(BACKEND_URL, {
-                auth: { token }
+                auth: { token },
+                reconnection: true,
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000
             });
 
             newSocket.on("incoming_session", async (data) => {
@@ -120,7 +125,9 @@ export function SocketProvider({ children }) {
                 }
             });
 
-            newSocket.on("connect", () => setSocket(newSocket));
+            newSocket.on("connect", () => {
+                setSocket((prev) => prev || newSocket);
+            });
             setSocket(newSocket);
         };
 

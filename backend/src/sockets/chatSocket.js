@@ -14,6 +14,55 @@ const { clearPendingSessionTimer, resetConsecutiveMissed } = require('../control
 const activeSessions = new Map(); // Store interval IDs by roomId
 const disconnectTimers = new Map(); // Store timeout IDs for auto-ending sessions
 const offlineTimers = new Map(); // Store timeout IDs for 10s grace period before marking offline
+const DISCONNECT_GRACE_MS = 60000; // 60s grace period for mobile network switches / backgrounding
+
+async function syncFirestoreSessionStatus(roomId, fields) {
+    try {
+        require('../config/firebase');
+        const { getApps } = require('firebase-admin/app');
+        const { getFirestore } = require('firebase-admin/firestore');
+        if (getApps().length > 0) {
+            await getFirestore().collection('chat_sessions').doc(roomId).set({
+                ...fields,
+                updatedAt: Date.now()
+            }, { merge: true });
+        }
+    } catch (fsErr) {
+        console.error(`[FirestoreSync] Error syncing room ${roomId}:`, fsErr);
+    }
+}
+
+async function recordDisconnectEvent(filter, role) {
+    try {
+        await Session.updateMany(
+            { ...filter, status: { $in: ['initiated', 'active'] } },
+            { $push: { disconnectHistory: { role, disconnectedAt: new Date() } } }
+        );
+    } catch (err) {
+        console.error('[Socket] Failed to record disconnect event:', err);
+    }
+}
+
+async function recordReconnectEvent(filter, role) {
+    try {
+        const sessions = await Session.find({
+            ...filter,
+            status: { $in: ['initiated', 'active'] },
+            'disconnectHistory.role': role
+        });
+        for (const s of sessions) {
+            const lastOpen = [...(s.disconnectHistory || [])]
+                .reverse()
+                .find(entry => entry.role === role && !entry.reconnectedAt);
+            if (lastOpen) {
+                lastOpen.reconnectedAt = new Date();
+                await s.save();
+            }
+        }
+    } catch (err) {
+        console.error('[Socket] Failed to record reconnect event:', err);
+    }
+}
 
 let globalIo = null;
 
@@ -59,6 +108,7 @@ function chatSocket(io) {
                 disconnectTimers.delete(astrologerId);
                 console.log(`[Socket] Cleared disconnect timer for Astrologer ${astrologerId}`);
             }
+            recordReconnectEvent({ astrologerId }, 'astrologer');
 
             // Clear any pending offline timer
             if (offlineTimers.has(astrologerId)) {
@@ -119,6 +169,11 @@ function chatSocket(io) {
                     disconnectTimers.delete(roomId);
                     console.log(`Cleared disconnect timer for room ${roomId}`);
                 }
+                if (socket.user.role === 'astrologer' && socket.astrologerId && disconnectTimers.has(socket.astrologerId)) {
+                    clearTimeout(disconnectTimers.get(socket.astrologerId));
+                    disconnectTimers.delete(socket.astrologerId);
+                }
+                await recordReconnectEvent({ roomId }, socket.user.role === 'astrologer' ? 'astrologer' : 'user');
 
                 if (session.status === 'initiated') {
                     // If it's an audio or video call, and the astrologer joins, activate session!
@@ -319,43 +374,87 @@ function chatSocket(io) {
                     });
 
                     if (activeOngoingSessions.length > 0) {
-                        // Wait 30 seconds before terminating active ongoing consultations (Grace Period for reconnection)
+                        await recordDisconnectEvent({ astrologerId, status: 'active' }, 'astrologer');
+
+                        if (disconnectTimers.has(astrologerId)) {
+                            clearTimeout(disconnectTimers.get(astrologerId));
+                        }
+
+                        // Wait 60 seconds before terminating active ongoing consultations (Grace Period for mobile reconnection)
                         const timeoutId = setTimeout(async () => {
-                            console.log(`[Socket] Grace period ended for ${astrologerId}. Terminating dropped ongoing sessions.`);
+                            disconnectTimers.delete(astrologerId);
                             try {
-                                for (const session of activeOngoingSessions) {
+                                const currentAstroSockets = await io.in(`astro_${astrologerId}`).fetchSockets();
+                                if (currentAstroSockets.length > 0) {
+                                    console.log(`[Socket] Astrologer ${astrologerId} reconnected before grace timeout. Keeping session alive.`);
+                                    return;
+                                }
+
+                                const stillActiveSessions = await Session.find({
+                                    astrologerId,
+                                    status: 'active'
+                                });
+                                if (stillActiveSessions.length === 0) return;
+
+                                console.log(`[Socket] Grace period ended for ${astrologerId}. Terminating dropped ongoing sessions.`);
+                                for (const session of stillActiveSessions) {
                                     console.log(`[Socket] Forcing termination of active session ${session._id} due to astrologer disconnect`);
                                     await terminateSession(session.roomId, io, 'Astrologer disconnected', 'system');
                                 }
-                                disconnectTimers.delete(astrologerId);
                             } catch (err) {
                                 console.error('Error in Astrologer disconnect timeout:', err);
                             }
-                        }, 30000);
+                        }, DISCONNECT_GRACE_MS);
 
                         disconnectTimers.set(astrologerId, timeoutId);
                     }
                 }
             }
 
-            // Start a 30-second grace period timer to auto-end session on prolonged disconnect (for Users)
+            // Start a 60-second grace period timer to auto-end session on prolonged disconnect (for Users)
             if (socket.roomId && socket.user.role === 'user') {
-                const session = await Session.findOne({ roomId: socket.roomId });
+                const roomId = socket.roomId;
+                const userId = socket.user.id;
+                const session = await Session.findOne({ roomId });
                 if (session && (session.status === 'active' || session.status === 'initiated')) {
-                    console.log(`Socket disconnected for user in room ${socket.roomId}. Starting 30s auto-end timer.`);
+                    // Check if the user still has another socket in the same room before starting disconnect grace timer
+                    const roomSockets = await io.in(roomId).fetchSockets();
+                    const userStillInRoom = roomSockets.some(s => s.user && s.user.id === userId);
+                    if (userStillInRoom) {
+                        return;
+                    }
+
+                    console.log(`Socket disconnected for user in room ${roomId}. Starting ${DISCONNECT_GRACE_MS / 1000}s auto-end timer.`);
+                    await recordDisconnectEvent({ roomId }, 'user');
 
                     // Clear existing timer if any (e.g. multiple tabs disconnecting)
-                    if (disconnectTimers.has(socket.roomId)) {
-                        clearTimeout(disconnectTimers.get(socket.roomId));
+                    if (disconnectTimers.has(roomId)) {
+                        clearTimeout(disconnectTimers.get(roomId));
                     }
 
                     const timeoutId = setTimeout(async () => {
-                        console.log(`Auto-ending session ${socket.roomId} due to prolonged disconnect.`);
-                        await terminateSession(socket.roomId, io, 'Terminated due to participant disconnection', 'system');
-                        disconnectTimers.delete(socket.roomId);
-                    }, 30000);
+                        disconnectTimers.delete(roomId);
+                        try {
+                            const currentRoomSockets = await io.in(roomId).fetchSockets();
+                            const reconnectedInRoom = currentRoomSockets.some(s => s.user && s.user.id === userId);
+                            if (reconnectedInRoom) {
+                                console.log(`User ${userId} reconnected to room ${roomId} before grace timeout. Keeping session alive.`);
+                                return;
+                            }
 
-                    disconnectTimers.set(socket.roomId, timeoutId);
+                            const latestSession = await Session.findOne({ roomId });
+                            if (!latestSession || (latestSession.status !== 'active' && latestSession.status !== 'initiated')) {
+                                return;
+                            }
+
+                            console.log(`Auto-ending session ${roomId} due to prolonged disconnect.`);
+                            await terminateSession(roomId, io, 'Terminated due to participant disconnection', 'system');
+                        } catch (err) {
+                            console.error('Error in User disconnect timeout:', err);
+                        }
+                    }, DISCONNECT_GRACE_MS);
+
+                    disconnectTimers.set(roomId, timeoutId);
                 }
             }
         });
@@ -560,20 +659,10 @@ function chatSocket(io) {
         }
 
         // Update Firestore chat_sessions doc with status active so mobile / web onSnapshot listeners react instantly
-        try {
-            require('../config/firebase');
-            const { getApps } = require('firebase-admin/app');
-            const { getFirestore } = require('firebase-admin/firestore');
-            if (getApps().length > 0) {
-                await getFirestore().collection('chat_sessions').doc(roomId).set({
-                    status: 'active',
-                    startTime: activatedSession.startTime.getTime(),
-                    updatedAt: Date.now()
-                }, { merge: true });
-            }
-        } catch (fsErr) {
-            console.error('[SessionActivate] Error updating Firestore on session activate:', fsErr);
-        }
+        await syncFirestoreSessionStatus(roomId, {
+            status: 'active',
+            startTime: activatedSession.startTime.getTime()
+        });
 
         return activatedSession;
     }
@@ -653,7 +742,7 @@ function chatSocket(io) {
 
         try {
             const session = await Session.findOneAndUpdate(
-                { roomId },
+                { roomId, status: { $in: ['initiated', 'active'] } },
                 {
                     status: 'completed',
                     endTime: new Date(),
@@ -665,6 +754,12 @@ function chatSocket(io) {
             );
 
             if (session) {
+                await syncFirestoreSessionStatus(roomId, {
+                    status: 'completed',
+                    terminationReason: reason,
+                    endedBy,
+                    endedAt: Date.now()
+                });
                 // Re-calculate exact duration if ending mid-minute?
                 // Standard logic just charges by full minute on start/intervals.
 

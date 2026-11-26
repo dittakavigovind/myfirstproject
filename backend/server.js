@@ -290,7 +290,10 @@ const io = new Server(server, {
     cors: {
         origin: "*", // allow all for dev
         methods: ["GET", "POST"]
-    }
+    },
+    pingTimeout: 45000,
+    pingInterval: 25000,
+    connectTimeout: 45000
 });
 
 // Attach io to app for use in controllers
