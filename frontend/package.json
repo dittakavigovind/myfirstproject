@@ -20,7 +20,7 @@
         "@capacitor/share": "^8.0.1",
         "agora-rtc-sdk-ng": "^4.23.0",
         "agora-rtm-sdk": "^2.2.3-1",
-        "axios": "^1.6.2",
+        "axios": "^1.21.1",
         "colorthief": "^2.6.0",
         "date-fns": "^4.1.0",
         "firebase": "^12.13.0",
