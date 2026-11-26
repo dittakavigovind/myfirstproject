@@ -45,6 +45,82 @@ index c951d92..c45297e 100644
          }
      }
      lintOptions {
+diff --git a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager.java b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager.java
+index 9970f9a..5fce8eb 100644
+--- a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager.java
++++ b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager.java
+@@ -7,6 +7,7 @@ import android.media.AudioDeviceCallback;
+ import android.media.AudioDeviceInfo;
+ import android.media.AudioFocusRequest;
+ import android.media.AudioManager;
++import android.os.Build;
+ import android.util.Log;
+ import androidx.appcompat.app.AppCompatActivity;
+ 
+@@ -46,13 +47,19 @@ public abstract class AudioDeviceManager {
+         audioManager.registerAudioDeviceCallback(this.audioDeviceCallback, null);
+     }
+ 
++    @SuppressWarnings("deprecation")
+     protected void setAudioFocus(int sleep) {
+         if (audioRequest == null) {
+             try {
+                 Thread.sleep(sleep);
+-                this.audioRequest = AudioDeviceFocusRequest.get();
++                int res;
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++                    this.audioRequest = AudioDeviceFocusRequest.get();
++                    res = audioManager.requestAudioFocus(audioRequest);
++                } else {
++                    res = audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
++                }
+ 
+-                int res = audioManager.requestAudioFocus(audioRequest);
+                 if (res == AUDIOFOCUS_REQUEST_GRANTED) {
+                     savedMode = audioManager.getMode();
+                     savedMicrophone = audioManager.isMicrophoneMute();
+@@ -66,14 +73,19 @@ public abstract class AudioDeviceManager {
+         }
+     }
+ 
++    @SuppressWarnings("deprecation")
+     protected void reset() {
+         audioManager.setMode(savedMode);
+         audioManager.setMicrophoneMute(savedMicrophone);
+-        if (audioRequest != null) {
+-            int res = audioManager.abandonAudioFocusRequest(audioRequest);
+-            if (res == AUDIOFOCUS_REQUEST_GRANTED) {
+-                audioRequest = null;
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
++            if (audioRequest != null) {
++                int res = audioManager.abandonAudioFocusRequest(audioRequest);
++                if (res == AUDIOFOCUS_REQUEST_GRANTED) {
++                    audioRequest = null;
++                }
+             }
++        } else {
++            audioManager.abandonAudioFocus(null);
+         }
+     }
+ 
+diff --git a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager29.java b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager29.java
+index 937e625..42449dc 100644
+--- a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager29.java
++++ b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager29.java
+@@ -28,11 +28,12 @@ public class AudioDeviceManager29 extends AudioDeviceManager implements AudioDev
+             timer = new Timer();
+             task =
+                 new TimerTask() {
++                    @SuppressWarnings("deprecation")
+                     @Override
+                     public void run() {
+                         setAudioFocus(1000);
++                        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                         audioManager.setSpeakerphoneOn(turnOn);
+-                        audioManager.setMode(AudioManager.MODE_NORMAL);
+                         notifySpeakerStatus();
+                     }
+                 };
 diff --git a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager31.java b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager31.java
 index 92f8192..0266705 100644
 --- a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager31.java
@@ -96,7 +172,7 @@ index 92f8192..0266705 100644
          }
      }
 diff --git a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager33.java b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager33.java
-index ab4eeaa..5347fff 100644
+index ab4eeaa..6d55f57 100644
 --- a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager33.java
 +++ b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManager33.java
 @@ -32,6 +32,7 @@ public class AudioDeviceManager33
@@ -176,7 +252,7 @@ index ab4eeaa..5347fff 100644
                      }
                  };
  
-@@ -107,6 +48,46 @@ public class AudioDeviceManager33
+@@ -107,6 +48,48 @@ public class AudioDeviceManager33
          }
      }
  
@@ -190,13 +266,15 @@ index ab4eeaa..5347fff 100644
 +        AudioDeviceInfo target = null;
 +
 +        if (!turnOn) {
++            AudioDeviceInfo bleHeadsetDevice = getAudioDevice(AudioDeviceInfo.TYPE_BLE_HEADSET);
 +            AudioDeviceInfo bluetoothScoDevice = getAudioDevice(AudioDeviceInfo.TYPE_BLUETOOTH_SCO);
 +            AudioDeviceInfo bluetoothAD2PDevice = getAudioDevice(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP);
 +            AudioDeviceInfo wiredHeadphonesDevice = getAudioDevice(AudioDeviceInfo.TYPE_WIRED_HEADPHONES);
 +            AudioDeviceInfo wiredHeadsetDevice = getAudioDevice(AudioDeviceInfo.TYPE_WIRED_HEADSET);
 +            AudioDeviceInfo earpieceDevice = getAudioDevice(AudioDeviceInfo.TYPE_BUILTIN_EARPIECE);
 +
-+            if (bluetoothScoDevice != null) target = bluetoothScoDevice;
++            if (bleHeadsetDevice != null) target = bleHeadsetDevice;
++            else if (bluetoothScoDevice != null) target = bluetoothScoDevice;
 +            else if (bluetoothAD2PDevice != null) target = bluetoothAD2PDevice;
 +            else if (wiredHeadphonesDevice != null) target = wiredHeadphonesDevice;
 +            else if (wiredHeadsetDevice != null) target = wiredHeadsetDevice;
@@ -223,3 +301,15 @@ index ab4eeaa..5347fff 100644
      @Override
      public void reset() {
          stopTimer();
+diff --git a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManagerService.java b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManagerService.java
+index e161840..7659a87 100644
+--- a/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManagerService.java
++++ b/node_modules/@anuradev/capacitor-audio-toggle/android/src/main/java/ar/com/anura/plugins/audiotoggle/audiodevicemanager/AudioDeviceManagerService.java
+@@ -18,6 +18,6 @@ public class AudioDeviceManagerService {
+             return new AudioDeviceManager29(activity);
+         }
+ 
+-        return null;
++        return new AudioDeviceManager29(activity);
+     }
+ }

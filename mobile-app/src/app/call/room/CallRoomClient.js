@@ -397,6 +397,9 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
             try {
                 await createAndPublishLocalAudio(Agora, client);
+                if (typeof window !== 'undefined' && window.Capacitor) {
+                    await AudioToggle.setSpeakerOn({ speakerOn: isSpeakerOnRef.current }).catch(() => {});
+                }
             } catch (micError) {
                 console.error("Microphone Access Error:", micError);
                 toast.error("Microphone not found or in use. You can hear but cannot speak.");
