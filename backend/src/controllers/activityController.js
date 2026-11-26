@@ -150,7 +150,9 @@ exports.getDashboardStats = async (req, res) => {
         // 2. Get Active Session (Separate query to ensure we catch it even if date differs)
         const activeSession = await Session.findOne({
             astrologerId,
-            endTime: { $exists: false }
+            status: 'active',
+            endTime: { $exists: false },
+            startTime: { $ne: null }
         });
 
         // 3. Calculate History (Completed sessions today)
@@ -161,10 +163,12 @@ exports.getDashboardStats = async (req, res) => {
 
         // 4. Calculate Current Session Duration
         let currentSessionSeconds = 0;
-        if (activeSession) {
-            const nowTime = new Date().getTime();
+        if (activeSession && activeSession.startTime) {
+            const nowTime = Date.now();
             const startTime = new Date(activeSession.startTime).getTime();
-            currentSessionSeconds = Math.floor((nowTime - startTime) / 1000);
+            if (!Number.isNaN(startTime) && startTime > 0) {
+                currentSessionSeconds = Math.max(0, Math.floor((nowTime - startTime) / 1000));
+            }
         }
 
         // 5. Calculate Real Online Duration (from AstrologerOnlineSession)
@@ -176,12 +180,15 @@ exports.getDashboardStats = async (req, res) => {
         let todayOnlineSeconds = 0;
         let isActuallyOnline = false;
         todayOnlineSessions.forEach(s => {
+            if (!s.loginTime) return;
+            const loginMs = new Date(s.loginTime).getTime();
+            if (Number.isNaN(loginMs) || loginMs <= 0) return;
             if (s.status === 'completed' || s.status === 'auto_closed') {
-                const logout = s.logoutTime ? new Date(s.logoutTime).getTime() : new Date().getTime();
-                todayOnlineSeconds += Math.floor((logout - new Date(s.loginTime).getTime()) / 1000);
+                const logout = s.logoutTime ? new Date(s.logoutTime).getTime() : Date.now();
+                todayOnlineSeconds += Math.max(0, Math.floor((logout - loginMs) / 1000));
             } else if (s.status === 'active') {
                 isActuallyOnline = true;
-                todayOnlineSeconds += Math.floor((new Date().getTime() - new Date(s.loginTime).getTime()) / 1000);
+                todayOnlineSeconds += Math.max(0, Math.floor((Date.now() - loginMs) / 1000));
             }
         });
 

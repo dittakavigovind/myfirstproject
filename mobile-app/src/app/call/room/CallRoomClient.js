@@ -58,7 +58,9 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     const isReadOnlyRef = useRef(false);
     const hasTriggeredStartRef = useRef(false);
     const initInFlightRef = useRef(false);
+    const micMutexRef = useRef(null);
     const isMutedRef = useRef(false);
+    const isSpeakerOnRef = useRef(true);
     const activeRoomRef = useRef(null);
     const userId = user?._id;
     const userRole = user?.role;
@@ -106,7 +108,9 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
                 if (data.session.status === 'active' && data.session.startTime) {
                     const start = new Date(data.session.startTime).getTime();
-                    const elapsed = Math.max(0, Math.floor((Date.now() - start) / 1000));
+                    const elapsed = !Number.isNaN(start) && start > 0
+                        ? Math.max(0, Math.floor((Date.now() - start) / 1000))
+                        : 0;
                     setDuration(elapsed);
                     localStartTimeRef.current = Date.now() - (elapsed * 1000);
                     setSessionActive(true);
@@ -185,35 +189,67 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
     const createAndPublishLocalAudio = async (Agora, client) => {
         if (!Agora || !client || isReadOnlyRef.current) return null;
-        if (localAudioTrackRef.current) {
-            try {
-                localAudioTrackRef.current.stop();
-                localAudioTrackRef.current.close();
-            } catch {}
-            localAudioTrackRef.current = null;
+        if (micMutexRef.current) {
+            return micMutexRef.current;
         }
-        const track = await Agora.createMicrophoneAudioTrack({
-            AEC: true,
-            ANS: true,
-            AGC: true,
-        });
-        if (isMutedRef.current) {
-            track.setMuted(true);
-        }
-        track.on("track-ended", async () => {
-            if (isReadOnlyRef.current || !clientRef.current) return;
-            console.warn("Local microphone track ended by OS. Recreating...");
+
+        micMutexRef.current = (async () => {
             try {
-                await clientRef.current.unpublish([track]).catch(() => {});
-                await createAndPublishLocalAudio(Agora, clientRef.current);
-            } catch (recreateErr) {
-                console.error("Failed to recover local audio track:", recreateErr);
-                setAgoraStatusNote("Microphone interrupted. Tap Mute/Unmute to retry.");
+                // Unpublish and close any existing local audio tracks to prevent duplicate live mic streams
+                const existingTracks = [
+                    ...(client.localTracks || []).filter(t => t.trackMediaType === 'audio'),
+                    ...(localAudioTrackRef.current ? [localAudioTrackRef.current] : [])
+                ];
+                const uniqueTracks = [...new Set(existingTracks)];
+                if (uniqueTracks.length > 0) {
+                    await client.unpublish(uniqueTracks).catch(() => {});
+                    for (const t of uniqueTracks) {
+                        try {
+                            t.stop();
+                            t.close();
+                        } catch {}
+                    }
+                }
+                localAudioTrackRef.current = null;
+
+                const track = await Agora.createMicrophoneAudioTrack({
+                    AEC: true,
+                    ANS: true,
+                    AGC: true,
+                });
+                if (isReadOnlyRef.current || activeRoomRef.current !== roomId) {
+                    try {
+                        track.stop();
+                        track.close();
+                    } catch {}
+                    return null;
+                }
+                if (isMutedRef.current) {
+                    await track.setMuted(true).catch(() => {});
+                    const rawTrack = track.getMediaStreamTrack?.();
+                    if (rawTrack) rawTrack.enabled = false;
+                }
+                track.on("track-ended", async () => {
+                    if (isReadOnlyRef.current || !clientRef.current || localAudioTrackRef.current !== track) return;
+                    console.warn("Local microphone track ended by OS. Recreating...");
+                    try {
+                        await clientRef.current.unpublish([track]).catch(() => {});
+                        localAudioTrackRef.current = null;
+                        await createAndPublishLocalAudio(Agora, clientRef.current);
+                    } catch (recreateErr) {
+                        console.error("Failed to recover local audio track:", recreateErr);
+                        setAgoraStatusNote("Microphone interrupted. Tap Mute/Unmute to retry.");
+                    }
+                });
+                localAudioTrackRef.current = track;
+                await client.publish([track]);
+                return track;
+            } finally {
+                micMutexRef.current = null;
             }
-        });
-        localAudioTrackRef.current = track;
-        await client.publish([track]);
-        return track;
+        })();
+
+        return micMutexRef.current;
     };
 
     const initAgoraCall = async () => {
@@ -277,11 +313,11 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
 
                         try {
                             if (typeof window !== 'undefined' && window.Capacitor) {
-                                await AudioToggle.setSpeakerOn({ speakerOn: true });
-                                setIsSpeakerOn(true);
+                                await AudioToggle.setSpeakerOn({ speakerOn: isSpeakerOnRef.current });
+                                setIsSpeakerOn(isSpeakerOnRef.current);
                             }
                         } catch (e) {
-                            console.error("Failed to set speaker on", e);
+                            console.error("Failed to apply speaker setting", e);
                         }
                     }
                 } catch (subErr) {
@@ -311,7 +347,7 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
                 } else if (curState === "CONNECTED") {
                     setConnectionState("Connected");
                     setAgoraStatusNote(null);
-                    if (!localAudioTrackRef.current) {
+                    if (!initInFlightRef.current && !localAudioTrackRef.current && !micMutexRef.current) {
                         try {
                             await createAndPublishLocalAudio(Agora, client);
                         } catch {}
@@ -352,6 +388,14 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
             await client.join(data.appID, roomId, data.rtcToken, userId);
 
             try {
+                if (typeof window !== 'undefined' && window.Capacitor) {
+                    await AudioToggle.setSpeakerOn({ speakerOn: isSpeakerOnRef.current });
+                }
+            } catch (e) {
+                console.error("Initial speaker routing error", e);
+            }
+
+            try {
                 await createAndPublishLocalAudio(Agora, client);
             } catch (micError) {
                 console.error("Microphone Access Error:", micError);
@@ -381,6 +425,9 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     };
 
     const cleanupCall = () => {
+        micMutexRef.current = null;
+        isMutedRef.current = false;
+        isSpeakerOnRef.current = true;
         if (localAudioTrackRef.current) {
             try {
                 localAudioTrackRef.current.stop();
@@ -535,16 +582,35 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     const toggleMute = async () => {
         const newState = !isMuted;
         isMutedRef.current = newState;
-        if (localAudioTrackRef.current) {
-            localAudioTrackRef.current.setMuted(newState);
-            setIsMuted(newState);
+        setIsMuted(newState);
+
+        const audioTracks = new Set([
+            ...(localAudioTrackRef.current ? [localAudioTrackRef.current] : []),
+            ...((clientRef.current?.localTracks || []).filter(t => t.trackMediaType === 'audio'))
+        ]);
+
+        if (audioTracks.size > 0) {
+            for (const track of audioTracks) {
+                try {
+                    const rawTrack = track.getMediaStreamTrack?.();
+                    if (rawTrack) rawTrack.enabled = !newState;
+                    await track.setMuted(newState);
+                } catch (err) {
+                    console.warn("setMuted failed, falling back to setEnabled:", err);
+                    try {
+                        await track.setEnabled(!newState);
+                    } catch (err2) {
+                        console.error("Failed to toggle mic track:", err2);
+                    }
+                }
+            }
         } else if (clientRef.current && getAgoraRTC()) {
             try {
                 await createAndPublishLocalAudio(getAgoraRTC(), clientRef.current);
-                setIsMuted(newState);
                 setAgoraStatusNote(null);
             } catch (e) {
                 console.error("Failed to re-acquire mic on toggle:", e);
+                toast.error("Could not access microphone");
             }
         }
     };
@@ -560,20 +626,13 @@ export default function CallRoomClient({ globalRoomId, onMinimize, onCallEnded }
     };
 
     const toggleSpeaker = async () => {
+        const nextSpeaker = !isSpeakerOn;
+        isSpeakerOnRef.current = nextSpeaker;
+        setIsSpeakerOn(nextSpeaker);
         try {
-            if (isSpeakerOn) {
-                // switch to earpiece
-                await AudioToggle.setSpeakerOn({ speakerOn: false });
-                setIsSpeakerOn(false);
-            } else {
-                // switch to speaker
-                await AudioToggle.setSpeakerOn({ speakerOn: true });
-                setIsSpeakerOn(true);
-            }
+            await AudioToggle.setSpeakerOn({ speakerOn: nextSpeaker });
         } catch (e) {
             console.error("Audio toggle failed:", e);
-            // Even if native plugin fails (e.g. on web), toggle the UI state
-            setIsSpeakerOn(!isSpeakerOn);
         }
     };
 

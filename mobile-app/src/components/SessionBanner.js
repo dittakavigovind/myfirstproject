@@ -78,9 +78,9 @@ export default function SessionBanner() {
             if (data.success && data.session) {
                 setActiveSession(data.session);
                 if (data.session.status === 'active' && data.session.startTime) {
-                    const start = new Date(data.session.startTime);
-                    const now = new Date();
-                    setDuration(Math.floor((now - start) / 1000));
+                    const start = new Date(data.session.startTime).getTime();
+                    const now = Date.now();
+                    setDuration(!Number.isNaN(start) && start > 0 ? Math.max(0, Math.floor((now - start) / 1000)) : 0);
                 } else {
                     setDuration(0);
                 }
