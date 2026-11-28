@@ -55,6 +55,6 @@
     "ip-address": "^10.7.4",
     "glob": "^14.0.2",
     "minimatch": "^11.0.1",
-    "websocket-driver": "^0.8.0"
+    "websocket-driver": "^0.8.1"
   }
 }
