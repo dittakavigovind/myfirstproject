@@ -114,7 +114,7 @@ exports.sendProfileSetupWhatsapp = async (user, targetPath = '/') => {
         const safePath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
         const buttonSuffix = safePath === '/' ? 'open' : `open?to=${encodeURIComponent(safePath)}`;
 
-        const nameParamKey = process.env.MSG91_PROFILE_SETUP_NAME_PARAM ?? 'text';
+        const nameParamKey = process.env.MSG91_PROFILE_SETUP_NAME_PARAM ?? 'positional';
         const bodyParam =
             nameParamKey && nameParamKey !== 'positional'
                 ? { type: "text", text: userName, parameter_name: nameParamKey }
