@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { Lock, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { TermsModal, PrivacyModal } from "./LegalModals";
+import AppLogo from "@/components/AppLogo";
 
 export default function AuthPage() {
     const [step, setStep] = useState(1);
@@ -131,8 +132,7 @@ export default function AuthPage() {
                         
                         {/* Squircle App Icon Badge */}
                         <div className="relative w-20 h-20 rounded-[26px] bg-gradient-to-b from-white/20 to-white/5 p-[1.5px] shadow-[0_12px_36px_rgba(249,115,22,0.35)] backdrop-blur-xl">
-                            <img
-                                src="/icons/app-icon.webp"
+                            <AppLogo
                                 alt="Way2Astro"
                                 width={80}
                                 height={80}

@@ -38,6 +38,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { getImageUrl } from "@/lib/utils";
+import AppLogo from "@/components/AppLogo";
 
 export default function ModernHeader() {
     const { user, logout } = useAuth();
@@ -196,12 +197,11 @@ export default function ModernHeader() {
                             <div className="p-6 border-b border-white/10 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500/40 via-amber-400/30 to-rose-500/30 p-[1px] shadow-[0_4px_16px_rgba(249,115,22,0.3)] shrink-0">
-                                        <img 
-                                            src="/icons/app-icon.webp" 
-                                            alt="Way2Astro" 
-                                            width={40} 
-                                            height={40} 
-                                            className="w-full h-full rounded-[15px] object-cover" 
+                                        <AppLogo
+                                            alt="Way2Astro"
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full rounded-[15px] object-cover"
                                         />
                                     </div>
                                     <div>

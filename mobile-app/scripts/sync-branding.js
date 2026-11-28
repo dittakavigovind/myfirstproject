@@ -95,6 +95,57 @@ const syncBranding = async () => {
                 stdio: 'inherit' 
             });
             console.log("Native assets generated successfully!");
+
+            // Sync web-facing app icons in public/ so login, drawer, manifest, and apple-touch-icon stay in sync
+            const sourceIcon = path.join(ASSETS_DIR, 'icon.png');
+            const publicDir = path.join(__dirname, '../public');
+            const publicIconsDir = path.join(publicDir, 'icons');
+            const generatedIconsDir = path.join(__dirname, '../icons');
+
+            if (fs.existsSync(sourceIcon)) {
+                fs.mkdirSync(publicIconsDir, { recursive: true });
+                try {
+                    const sharp = require('sharp');
+
+                    await sharp(sourceIcon)
+                        .resize(256, 256, { fit: 'cover' })
+                        .webp({ quality: 92 })
+                        .toFile(path.join(publicIconsDir, 'app-icon.webp'));
+
+                    const appleTouchBuf = await sharp(sourceIcon)
+                        .resize(180, 180, { fit: 'cover' })
+                        .png({ compressionLevel: 9 })
+                        .toBuffer();
+                    fs.writeFileSync(path.join(publicDir, 'apple-touch-icon.png'), appleTouchBuf);
+                    fs.writeFileSync(path.join(publicDir, 'apple-touch-icon-precomposed.png'), appleTouchBuf);
+
+                    console.log("Updated public/icons/app-icon.webp and apple-touch-icon.png.");
+                } catch (iconErr) {
+                    console.warn("Sharp web icon sync failed:", iconErr.message);
+                }
+            }
+
+            if (fs.existsSync(generatedIconsDir)) {
+                fs.mkdirSync(publicIconsDir, { recursive: true });
+                for (const file of fs.readdirSync(generatedIconsDir)) {
+                    if (file.endsWith('.webp')) {
+                        fs.copyFileSync(
+                            path.join(generatedIconsDir, file),
+                            path.join(publicIconsDir, file)
+                        );
+                    }
+                }
+                console.log("Copied generated PWA icons into public/icons/.");
+            }
+
+            const manifestPath = path.join(publicDir, 'manifest.webmanifest');
+            if (fs.existsSync(manifestPath)) {
+                const manifestText = fs.readFileSync(manifestPath, 'utf8');
+                const updatedManifest = manifestText.replaceAll('../icons/', '/icons/');
+                if (updatedManifest !== manifestText) {
+                    fs.writeFileSync(manifestPath, updatedManifest, 'utf8');
+                }
+            }
             
             // Automatically patch Android 12 splash screen with optimized 512x512 square image
             const sourceSplash = path.join(ASSETS_DIR, 'splash.png');

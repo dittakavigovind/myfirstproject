@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Smartphone, Download, ExternalLink, Sparkles, ArrowRight } from "lucide-react";
 import {
     PLAY_STORE_URL,
@@ -7,6 +8,7 @@ import {
     buildAndroidIntentUrl,
     sanitizeInternalPath,
 } from "../lib/appLinks";
+import { API_BASE, resolveImageUrl } from "../lib/urlHelper";
 
 export default function MobileAppLanding({
     platform = "android",
@@ -15,6 +17,23 @@ export default function MobileAppLanding({
 }) {
     const safeTarget = sanitizeInternalPath(targetPath);
     const androidIntentUrl = buildAndroidIntentUrl(safeTarget);
+    const [appIconUrl, setAppIconUrl] = useState(null);
+
+    useEffect(() => {
+        let active = true;
+        fetch(`${API_BASE}/site-settings`)
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                const rawUrl = data?.settings?.mobileAppIconUrl;
+                if (active && rawUrl) {
+                    setAppIconUrl(resolveImageUrl(rawUrl));
+                }
+            })
+            .catch(() => {});
+        return () => {
+            active = false;
+        };
+    }, []);
 
     return (
         <div className="fixed inset-0 z-[1000] min-h-screen bg-gradient-to-b from-[#0b1026] via-[#13183b] to-[#050716] text-white flex flex-col items-center justify-center p-5 overflow-y-auto">
@@ -23,8 +42,17 @@ export default function MobileAppLanding({
             <div className="fixed bottom-[-15%] right-[-10%] w-72 h-72 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
 
             <div className="relative w-full max-w-md bg-white/5 border border-white/10 rounded-3xl p-7 shadow-2xl backdrop-blur-xl text-center">
-                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                    <Sparkles className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30 overflow-hidden">
+                    {appIconUrl ? (
+                        <img
+                            src={appIconUrl}
+                            alt="Way2Astro"
+                            className="w-full h-full object-cover"
+                            onError={() => setAppIconUrl(null)}
+                        />
+                    ) : (
+                        <Sparkles className="w-8 h-8 text-white" />
+                    )}
                 </div>
 
                 <h1 className="text-2xl font-bold tracking-tight mb-2">
