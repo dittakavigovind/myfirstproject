@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.way2astro.mobile",
+      "sha256_cert_fingerprints": [
+        "96:33:71:BA:E1:0C:3B:71:EF:8D:11:6A:7B:2C:4E:D3:F8:27:95:58:26:DE:41:48:0D:D7:2D:8C:BA:B6:E3:18",
+        "AE:F3:DE:92:EC:E6:39:1A:BF:92:98:41:3A:11:63:8F:8B:39:20:00:BC:45:FE:DC:95:FC:55:15:39:6D:D1:80"
+      ]
+    }
+  }
+]

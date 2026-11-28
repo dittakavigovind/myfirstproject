@@ -167,7 +167,10 @@ const userSchema = new mongoose.Schema({
     isDeleted: { type: Boolean, default: false },
     
     // Session tracking to restrict multi-device login
-    sessionVersion: { type: Number, default: 0 }
+    sessionVersion: { type: Number, default: 0 },
+
+    // Track one-time WhatsApp message after initial profile setup
+    profileWelcomeWhatsappSent: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Pre-validate hook to lowercase gender

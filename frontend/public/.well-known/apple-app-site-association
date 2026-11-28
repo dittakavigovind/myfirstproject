@@ -1,0 +1,24 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "TEAM_ID.com.way2astro.mobile"
+        ],
+        "components": [
+          { "/": "/open*" },
+          { "/": "/horoscope*" },
+          { "/": "/daily-horoscope*" },
+          { "/": "/kundli*" },
+          { "/": "/matchmaking*" },
+          { "/": "/panchang*" },
+          { "/": "/astrologer*" },
+          { "/": "/astrologers*" },
+          { "/": "/online-pooja*" },
+          { "/": "/blog*" },
+          { "/": "/wallet*" }
+        ]
+      }
+    ]
+  }
+}

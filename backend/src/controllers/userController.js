@@ -3,6 +3,7 @@ const Astrologer = require('../models/Astrologer');
 const AstrologerActivity = require('../models/AstrologerActivity');
 const ActivityLog = require('../models/ActivityLog');
 const ArchivedUser = require('../models/ArchivedUser');
+const whatsappService = require('../services/whatsappService');
 
 exports.getRecentActivity = async (req, res) => {
     try {
@@ -171,6 +172,7 @@ exports.updateProfile = async (req, res) => {
         delete updates.role;
         delete updates.walletBalance;
         delete updates.password;
+        delete updates.profileWelcomeWhatsappSent;
 
         if (updates.displayName && !updates.name) {
             updates.name = updates.displayName;
@@ -194,6 +196,41 @@ exports.updateProfile = async (req, res) => {
                 { userId: userId },
                 { $set: astrologerUpdates }
             );
+        }
+
+        // Send a one-time WhatsApp welcome link when a seeker completes initial profile setup
+        const isProfileComplete =
+            user.role === 'user' &&
+            Boolean(user.name && user.name !== 'User') &&
+            Boolean(user.gender) &&
+            Boolean(user.birthDetails?.date) &&
+            Boolean(user.birthDetails?.time);
+
+        if (isProfileComplete && !user.profileWelcomeWhatsappSent && (user.phone || user.mobileNumber)) {
+            const claimed = await User.findOneAndUpdate(
+                { _id: user._id, profileWelcomeWhatsappSent: { $ne: true } },
+                { $set: { profileWelcomeWhatsappSent: true } },
+                { new: true }
+            );
+            if (claimed) {
+                whatsappService
+                    .sendProfileSetupWhatsapp(claimed, '/')
+                    .then(async (sent) => {
+                        if (!sent) {
+                            await User.updateOne(
+                                { _id: claimed._id },
+                                { $set: { profileWelcomeWhatsappSent: false } }
+                            ).catch(() => {});
+                        }
+                    })
+                    .catch(async (err) => {
+                        console.error('Profile setup WhatsApp failed:', err);
+                        await User.updateOne(
+                            { _id: claimed._id },
+                            { $set: { profileWelcomeWhatsappSent: false } }
+                        ).catch(() => {});
+                    });
+            }
         }
 
         res.status(200).json({ success: true, message: 'Profile updated', user });

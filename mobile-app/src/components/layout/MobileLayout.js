@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import VersionCheckOverlay from "./VersionCheckOverlay";
 import PullToRefresh from "../PullToRefresh";
+import { resolveDeepLinkTarget } from "@/lib/deepLink";
 
 export default function MobileLayout({ children }) {
     const pathname = usePathname();
@@ -60,39 +61,69 @@ export default function MobileLayout({ children }) {
         setupStatusBar();
     }, []);
 
-    // Handle Hardware Back Button & Edge Swipe in Capacitor
+    // Handle Hardware Back Button & Deep Links (Android App Links / iOS Universal Links) in Capacitor
     useEffect(() => {
-        let listenerObj = null;
-        
-        const setupBackButton = async () => {
+        let backListener = null;
+        let urlListener = null;
+        let isActive = true;
+
+        const navigateFromDeepLink = (url) => {
+            const target = resolveDeepLinkTarget(url);
+            if (!target) return;
+            const currentFull = `${window.location.pathname}${window.location.search}`;
+            if (target !== currentFull) {
+                router.push(target);
+            }
+        };
+
+        const setupAppListeners = async () => {
             if (typeof window !== "undefined" && window.Capacitor) {
                 try {
                     const { App } = await import("@capacitor/app");
-                    listenerObj = await App.addListener("backButton", () => {
+                    if (!isActive) return;
+
+                    backListener = await App.addListener("backButton", () => {
                         // Define which paths should exit the app when back is pressed
                         const exitPaths = ["/", "/auth", "/explore", "/wallet", "/profile"];
-                        
-                        // Use window.location.pathname to get the current actual path, 
+
+                        // Use window.location.pathname to get the current actual path,
                         // as Next's usePathname in useEffect closure might be stale
                         const currentPath = window.location.pathname;
-                        
+
                         if (exitPaths.includes(currentPath)) {
                             App.exitApp();
                         } else {
                             router.back();
                         }
                     });
+
+                    urlListener = await App.addListener("appUrlOpen", (event) => {
+                        navigateFromDeepLink(event?.url);
+                    });
+
+                    // Handle cold start when launched directly from a WhatsApp / browser link
+                    if (typeof window !== "undefined" && !window.__way2astroLaunchUrlHandled) {
+                        window.__way2astroLaunchUrlHandled = true;
+                        const launch = await App.getLaunchUrl();
+                        if (launch?.url) {
+                            navigateFromDeepLink(launch.url);
+                        }
+                    }
                 } catch (e) {
-                    console.error("Failed to setup capacitor back button:", e);
+                    console.error("Failed to setup capacitor app listeners:", e);
                 }
             }
         };
-        
-        setupBackButton();
-        
+
+        setupAppListeners();
+
         return () => {
-            if (listenerObj && typeof listenerObj.remove === "function") {
-                listenerObj.remove();
+            isActive = false;
+            if (backListener && typeof backListener.remove === "function") {
+                backListener.remove();
+            }
+            if (urlListener && typeof urlListener.remove === "function") {
+                urlListener.remove();
             }
         };
     }, [router]);
